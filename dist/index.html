@@ -1,163 +1,353 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Zavora Fashion is launching soon with premium streetwear designed for everyday luxury.">
-    <title>Zavora Fashion | Coming Soon</title>
-    <style>
-      :root {
-        color-scheme: dark;
-        --gold: #c9a227;
-        --ink: #050505;
-        --muted: rgba(255,255,255,.72);
-        --line: rgba(255,255,255,.18);
+    <meta name="description" content="Zavora Fashion is a premium USA streetwear and luxury essentials ecommerce experience. Shop new arrivals, oversized fits, limited drops, and best sellers.">
+    <meta name="theme-color" content="#000000">
+    <title>Zavora Fashion | Luxury Streetwear</title>
+    <link rel="preconnect" href="https://images.unsplash.com">
+    <link rel="stylesheet" href="styles.css">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Store",
+        "name": "Zavora Fashion",
+        "url": "https://zavorafashion.example",
+        "description": "Luxury minimal streetwear for the USA market.",
+        "currenciesAccepted": "USD",
+        "paymentAccepted": "Card, Apple Pay, PayPal"
       }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Arial, Helvetica, sans-serif;
-        color: #fff;
-        background: #000;
-      }
-      .launch {
-        min-height: 100vh;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(360px, 44vw);
-      }
-      .content {
-        padding: clamp(28px, 5vw, 74px);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 44px;
-        background:
-          linear-gradient(135deg, rgba(201,162,39,.16), transparent 34%),
-          linear-gradient(180deg, #090909, #000);
-      }
-      .brand {
-        margin: 0;
-        font: 800 clamp(28px, 5vw, 58px)/1 Georgia, 'Times New Roman', serif;
-        letter-spacing: .26em;
-      }
-      .eyebrow {
-        color: var(--gold);
-        letter-spacing: .28em;
-        text-transform: uppercase;
-        font-size: 12px;
-        font-weight: 800;
-      }
-      h1 {
-        max-width: 900px;
-        margin: 18px 0;
-        font: clamp(52px, 9vw, 126px)/.88 Georgia, 'Times New Roman', serif;
-        letter-spacing: 0;
-      }
-      p {
-        max-width: 620px;
-        color: var(--muted);
-        line-height: 1.75;
-        font-size: 18px;
-      }
-      form {
-        display: flex;
-        max-width: 560px;
-        margin-top: 30px;
-        border: 1px solid var(--line);
-        background: rgba(255,255,255,.05);
-      }
-      input {
-        flex: 1;
-        min-width: 0;
-        border: 0;
-        background: transparent;
-        color: #fff;
-        padding: 18px;
-        font: inherit;
-        outline: 0;
-      }
-      button {
-        border: 0;
-        background: #fff;
-        color: #000;
-        padding: 0 24px;
-        font-weight: 800;
-        letter-spacing: .12em;
-        text-transform: uppercase;
-        cursor: pointer;
-      }
-      .meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-      }
-      .meta span,
-      .contact a {
-        border: 1px solid var(--line);
-        color: #fff;
-        text-decoration: none;
-        padding: 10px 12px;
-      }
-      .visual {
-        position: relative;
-        min-height: 420px;
-        background:
-          linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.72)),
-          url('https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1400&q=84') center/cover;
-      }
-      .visual::after {
-        content: 'Designed in the USA. Crafted for Everyday Luxury.';
-        position: absolute;
-        left: 28px;
-        right: 28px;
-        bottom: 28px;
-        padding-top: 18px;
-        border-top: 1px solid var(--line);
-        font: 30px/1.1 Georgia, 'Times New Roman', serif;
-      }
-      .contact {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        color: var(--muted);
-      }
-      @media (max-width: 860px) {
-        .launch { grid-template-columns: 1fr; }
-        .brand { letter-spacing: .16em; }
-        form { display: grid; }
-        button { min-height: 52px; }
-      }
-    </style>
+    </script>
   </head>
   <body>
-    <main class="launch">
-      <section class="content">
-        <header>
-          <p class="brand">ZAVORA FASHION</p>
-        </header>
-        <div>
-          <p class="eyebrow">Launching Soon</p>
-          <h1>Premium streetwear is almost here.</h1>
-          <p>Zavora Fashion is preparing a refined online shopping experience with luxury essentials, oversized silhouettes, gift cards, secure checkout, and private drop access.</p>
-          <form>
-            <input type="email" placeholder="Email for launch access" aria-label="Email for launch access">
-            <button type="button">Notify Me</button>
-          </form>
+    <header class="site-header" id="siteHeader">
+      <button class="icon-button mobile-menu" data-open-menu aria-label="Open menu">
+        <span></span><span></span>
+      </button>
+      <a class="brand" href="index.html" aria-label="Zavora Fashion home">ZAVORA</a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a class="nav-link" href="women.html" data-mega="women">Women</a>
+        <a class="nav-link" href="men.html" data-mega="men">Men</a>
+        <a href="new-arrivals.html">New</a>
+        <a href="collections.html">Collections</a>
+        <a href="best-sellers.html">Best Sellers</a>
+        <a href="limited.html">Limited</a>
+        <a href="journal.html">Journal</a>
+      </nav>
+      <div class="header-actions">
+        <select aria-label="Currency selector">
+          <option>USD</option>
+          <option>EUR</option>
+          <option>INR</option>
+        </select>
+        <select aria-label="Country selector">
+          <option>USA</option>
+          <option>India</option>
+          <option>UK</option>
+        </select>
+        <button class="icon-button" data-search aria-label="Search"></button>
+        <button class="icon-button" data-dark aria-label="Toggle dark mode"></button>
+        <button class="icon-button" data-panel="accountPanel" aria-label="Account"></button>
+        <button class="cart-button" data-cart aria-label="Open cart">Bag <span id="cartCount">0</span></button>
+      </div>
+    </header>
+
+    <aside class="mega-menu" id="megaMenu" aria-hidden="true">
+      <div>
+        <p class="eyebrow">Zavora edit</p>
+        <h2>Luxury layers, clean cuts, limited drops.</h2>
+      </div>
+      <div class="mega-grid">
+        <a href="shop.html">Oversized Hoodies</a>
+        <a href="shop.html">Tailored Outerwear</a>
+        <a href="shop.html">Minimal Tees</a>
+        <a href="shop.html">Cargo Pants</a>
+        <a href="shop.html">Accessories</a>
+        <a href="gift-cards.html">Gift Cards</a>
+      </div>
+    </aside>
+
+    <div class="mobile-panel" id="mobilePanel" aria-hidden="true">
+      <button class="close" data-close-mobile aria-label="Close menu"></button>
+      <a href="index.html">Home</a>
+      <a href="women.html">Women</a>
+      <a href="men.html">Men</a>
+      <a href="new-arrivals.html">New</a>
+      <a href="collections.html">Collections</a>
+      <a href="best-sellers.html">Best Sellers</a>
+      <a href="trending.html">Trending</a>
+      <a href="limited.html">Limited Edition</a>
+      <a href="journal.html">Fashion Journal</a>
+      <a href="track-order.html">Order Tracking</a>
+    </div>
+
+    <section class="search-overlay" id="searchOverlay" aria-hidden="true">
+      <button class="close" data-close-search aria-label="Close search"></button>
+      <label for="searchInput">Search Zavora</label>
+      <input id="searchInput" type="search" placeholder="Try oversized hoodie, black cargo, gold logo...">
+      <div class="suggestions" id="suggestions"></div>
+    </section>
+
+    <main>
+      <section class="hero" id="home">
+        <picture>
+          <source media="(max-width: 720px)" srcset="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80">
+          <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1800&q=82" alt="Zavora Fashion luxury streetwear campaign">
+        </picture>
+        <div class="hero-content">
+          <p class="eyebrow">Summer 2026 Drop</p>
+          <h1>Zavora Fashion</h1>
+          <p>Luxury minimal streetwear for evenings, airports, city walks, and everything that needs confidence.</p>
+          <a class="primary-cta" href="shop.html">Shop Collection</a>
         </div>
-        <footer>
-          <div class="meta">
-            <span>USA Launch</span>
-            <span>Premium Streetwear</span>
-            <span>Secure Checkout</span>
-          </div>
-          <p class="contact">
-            <a href="mailto:zavoraofficial@zavorafashion.com">zavoraofficial@zavorafashion.com</a>
-            <a href="mailto:support@zavorafashion.com">support@zavorafashion.com</a>
-          </p>
-        </footer>
       </section>
-      <aside class="visual" aria-label="Zavora Fashion campaign image"></aside>
+
+      <section class="promo-strip" aria-label="Store benefits">
+        <span>Free USA shipping over $120</span>
+        <span>Secure checkout</span>
+        <span>Easy 14-day returns</span>
+        <span>Back in stock alerts</span>
+      </section>
+
+      <section class="section intro-section" id="new">
+        <div>
+          <p class="eyebrow">New arrivals</p>
+          <h2>Quiet luxury with street-level energy.</h2>
+        </div>
+        <a class="text-link" href="new-arrivals.html">View all</a>
+      </section>
+
+      <section class="campaign-grid">
+        <article class="campaign tall">
+          <img loading="lazy" src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1000&q=80" alt="Oversized streetwear outfit">
+          <div>
+            <p>Oversized Collection</p>
+            <a href="shop.html">Shop relaxed fits</a>
+          </div>
+        </article>
+        <article class="campaign">
+          <img loading="lazy" src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=900&q=80" alt="Premium black jacket">
+          <div>
+            <p>Best Sellers</p>
+            <a href="shop.html">Shop icons</a>
+          </div>
+        </article>
+        <article class="campaign dark" id="limited">
+          <div>
+            <p>Limited Edition</p>
+            <h3>Gold label essentials. Small batch. No restock.</h3>
+            <a href="limited.html">Explore drop</a>
+          </div>
+        </article>
+      </section>
+
+      <section class="shop-layout section" id="shop">
+        <aside class="filters" aria-label="Product filters">
+          <div class="filter-head">
+            <h2>Shop</h2>
+            <button id="clearFilters">Clear</button>
+          </div>
+          <label>Category
+            <select id="categoryFilter">
+              <option value="all">All</option>
+              <option value="hoodies">Hoodies</option>
+              <option value="tees">T-Shirts</option>
+              <option value="pants">Pants</option>
+              <option value="outerwear">Outerwear</option>
+              <option value="accessories">Accessories</option>
+            </select>
+          </label>
+          <label>Collection
+            <select id="collectionFilter">
+              <option value="all">All</option>
+              <option value="new">New Arrivals</option>
+              <option value="trending">Trending</option>
+              <option value="oversized">Oversized</option>
+              <option value="limited">Limited</option>
+              <option value="best">Best Selling</option>
+            </select>
+          </label>
+          <label>Color
+            <select id="colorFilter">
+              <option value="all">All</option>
+              <option value="black">Black</option>
+              <option value="white">White</option>
+              <option value="gray">Gray</option>
+              <option value="gold">Gold</option>
+            </select>
+          </label>
+          <label>Size
+            <select id="sizeFilter">
+              <option value="all">All</option>
+              <option>XS</option>
+              <option>S</option>
+              <option>M</option>
+              <option>L</option>
+              <option>XL</option>
+            </select>
+          </label>
+          <label>Under amount
+            <input id="priceFilter" type="range" min="40" max="400" value="400">
+            <span id="priceValue">$400</span>
+          </label>
+          <label class="check">
+            <input id="saleFilter" type="checkbox">
+            Sale discount only
+          </label>
+          <label>Sort
+            <select id="sortFilter">
+              <option value="newest">Newest</option>
+              <option value="best">Best Selling</option>
+              <option value="popular">Popularity</option>
+              <option value="low">Price low to high</option>
+              <option value="high">Price high to low</option>
+            </select>
+          </label>
+        </aside>
+
+        <div class="product-area">
+          <div class="product-toolbar">
+            <p><span id="productCount">0</span> curated pieces</p>
+            <button class="secondary-btn" id="loadMore">Infinite load</button>
+          </div>
+          <div class="product-grid" id="productGrid"></div>
+        </div>
+      </section>
+
+      <section class="banner section" id="trending">
+        <div>
+          <p class="eyebrow">AI recommendations</p>
+          <h2>Styled for your next city night.</h2>
+          <p>Smart suggestions combine recent views, best sellers, and limited-stock pieces.</p>
+        </div>
+        <button class="primary-cta" data-recommend>Refresh picks</button>
+      </section>
+
+      <section class="section categories">
+        <div class="section-title">
+          <p class="eyebrow">Featured categories</p>
+          <h2>Build the wardrobe.</h2>
+        </div>
+        <div class="category-grid">
+          <a href="shop.html">Hoodies</a>
+          <a href="shop.html">Outerwear</a>
+          <a href="shop.html">Cargo Pants</a>
+          <a href="shop.html">Accessories</a>
+        </div>
+      </section>
+
+      <section class="section lookbook">
+        <div class="section-title">
+          <p class="eyebrow">Lookbook</p>
+          <h2>Campaign gallery</h2>
+        </div>
+        <div class="gallery">
+          <img loading="lazy" src="https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=600&q=80" alt="Fashion gallery look one">
+          <img loading="lazy" src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=600&q=80" alt="Fashion gallery look two">
+          <img loading="lazy" src="https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=600&q=80" alt="Fashion gallery look three">
+          <img loading="lazy" src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=600&q=80" alt="Fashion gallery look four">
+        </div>
+      </section>
+
+      <section class="section reviews">
+        <article>
+          <p>"The black hoodie feels heavy, clean, and expensive. Shipping was fast in California."</p>
+          <span>Amelia R.</span>
+        </article>
+        <article>
+          <p>"Minimal design, sharp fit, and the gold details are subtle. Exactly my style."</p>
+          <span>Marcus T.</span>
+        </article>
+        <article>
+          <p>"Bought cargos and tee together. The whole outfit looks premium without shouting."</p>
+          <span>Jordan K.</span>
+        </article>
+      </section>
+
+      <section class="section newsletter">
+        <p class="eyebrow">Private list</p>
+        <h2>Get early access to limited drops.</h2>
+        <form>
+          <input type="email" placeholder="Email address" aria-label="Email address">
+          <button type="submit">Join</button>
+        </form>
+      </section>
+
+      <section class="section service-grid" id="journal">
+        <article><h3><a href="journal.html">Fashion Journal</a></h3><p>Drop stories, outfit edits, and city guides.</p></article>
+        <article><h3><a href="style-guide.html">Style Guide</a></h3><p>Fit notes, size guide, and care instructions.</p></article>
+        <article id="track"><h3><a href="track-order.html">Order Tracking</a></h3><p>Track shipments, returns, and exchanges.</p></article>
+        <article><h3><a href="store-locator.html">Store Locator</a></h3><p>Find upcoming pop-up events across the USA.</p></article>
+      </section>
     </main>
+
+    <aside class="drawer" id="cartDrawer" aria-hidden="true" aria-label="Shopping cart">
+      <div class="drawer-head">
+        <h2>Your Bag</h2>
+        <button class="close" data-close-cart aria-label="Close cart"></button>
+      </div>
+      <div class="shipping">
+        <span id="shippingText">Add $120 for free shipping</span>
+        <div><i id="shippingProgress"></i></div>
+      </div>
+      <div id="cartItems" class="cart-items"></div>
+      <label class="promo">Discount code<input placeholder="ZAVORA10"></label>
+      <div class="cart-total"><span>Estimated total</span><strong id="cartTotal">$0</strong></div>
+      <button class="checkout">Checkout securely</button>
+      <p class="payment">Visa - Mastercard - Apple Pay - PayPal</p>
+    </aside>
+
+    <aside class="quick-view" id="quickView" aria-hidden="true">
+      <button class="close" data-close-view aria-label="Close quick view"></button>
+      <div id="quickViewContent"></div>
+    </aside>
+
+    <aside class="account-panel" id="accountPanel" aria-hidden="true">
+      <button class="close" data-close-panel aria-label="Close account"></button>
+      <h2>Account</h2>
+      <a>Dashboard</a>
+      <a>Orders</a>
+      <a>Wishlist</a>
+      <a>Addresses</a>
+      <a>Returns</a>
+      <a>Settings</a>
+    </aside>
+
+    <footer class="footer">
+  <section class="footer-top">
+    <div class="footer-brand"><strong>ZAVORA FASHION</strong><p>Premium Streetwear.<br>Designed for the USA.</p></div>
+    <img class="footer-hero-img" src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80" alt="Zavora premium fashion campaign">
+  </section>
+  <section class="footer-gallery" aria-label="Zavora premium lifestyle images">
+    <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle one"><span>Shop Now</span></a>
+    <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle two"><span>Shop Now</span></a>
+    <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle three"><span>Shop Now</span></a>
+    <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle four"><span>Shop Now</span></a>
+  </section>
+  <section class="instagram-grid" aria-label="Follow Zavora Fashion">
+    <img src="https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 1">
+    <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 2">
+    <img src="https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 3">
+    <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 4">
+    <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 5">
+    <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 6">
+    <img src="https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 7">
+    <img src="https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 8">
+    <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 9">
+    <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 10">
+    <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 11">
+    <img src="https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 12">
+  </section>
+  <section class="footer-bottom">
+    <nav class="footer-links" aria-label="Footer navigation"><a href="shop.html">Shop</a><a href="about.html">About</a><a href="journal.html">Journal</a><a href="track-order.html">Track Order</a><a href="return-refund-policy.html">Returns</a><a href="privacy-policy.html">Privacy</a><a href="terms-conditions.html">Terms</a><a href="contact.html">Contact</a></nav>
+    <p class="footer-copy">Follow @ZavoraFashion<br>© 2026 Zavora Fashion</p>
+    <form class="footer-newsletter"><input type="email" placeholder="Email" aria-label="Newsletter email"><button type="button">Join</button></form>
+  </section>
+</footer>
+
+    <script src="script.js" defer></script>
+    <script src="page-script.js" defer></script>
   </body>
 </html>
