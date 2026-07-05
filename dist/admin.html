@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zavora Admin | Control Center</title>
+    <link rel="stylesheet" href="admin.css">
+  </head>
+  <body>
+    <div class="admin-shell">
+      <aside class="admin-sidebar" data-sidebar>
+        <a class="admin-logo" href="admin.html">ZAVORA<span>FASHION ADMIN</span></a>
+        <nav class="admin-nav" aria-label="Admin navigation">
+          <button class="active" data-section="dashboard">Dashboard</button>
+          <button data-section="products">Products</button>
+          <button data-section="categories">Categories</button>
+          <button data-section="orders">Orders</button>
+          <button data-section="customers">Customers</button>
+          <button data-section="payments">Payments</button>
+          <button data-section="shipping">Shipping</button>
+          <button data-section="coupons">Coupons</button>
+          <button data-section="wishlist">Wishlist</button>
+          <button data-section="reviews">Reviews</button>
+          <button data-section="emails">Email Center</button>
+          <button data-section="notifications">Notifications</button>
+          <button data-section="analytics">Analytics</button>
+          <button data-section="homepage">Homepage Builder</button>
+          <button data-section="content">Content</button>
+          <button data-section="localization">Localization</button>
+          <button data-section="media">Media Library</button>
+          <button data-section="ai">AI Features</button>
+          <button data-section="settings">Website Settings</button>
+          <button data-section="admin">Admin Settings</button>
+        </nav>
+        <button class="logout-btn">Logout</button>
+      </aside>
+
+      <main class="admin-main">
+        <header class="admin-topbar">
+          <button class="mobile-admin-menu" data-toggle-sidebar aria-label="Open admin menu"><span></span><span></span></button>
+          <div>
+            <p class="admin-eyebrow">Premium control center</p>
+            <h1 data-page-title>Zavora Dashboard</h1>
+          </div>
+          <div class="admin-tools">
+            <label class="admin-search">
+              <span>Search</span>
+              <input id="adminSearch" type="search" placeholder="Products, orders, customers">
+            </label>
+            <button class="admin-icon-btn" data-toast="3 new notifications">Bell</button>
+            <button class="admin-profile" data-toast="Admin profile opened">Admin</button>
+          </div>
+        </header>
+
+        <section class="admin-section active" data-panel="dashboard">
+          <div class="stats-grid">
+            <article class="stat-card"><span>Total Sales</span><strong>$128,420</strong><small>+18.4% this month</small></article>
+            <article class="stat-card"><span>Today's Orders</span><strong>47</strong><small>12 pending review</small></article>
+            <article class="stat-card"><span>Total Customers</span><strong>8,942</strong><small>USA market active</small></article>
+            <article class="stat-card warning"><span>Low Stock Alert</span><strong>14</strong><small>Restock recommended</small></article>
+          </div>
+          <div class="admin-grid two">
+            <article class="admin-card">
+              <div class="card-head"><h2>Revenue Chart</h2><button data-toast="Report exported">Export</button></div>
+              <div class="bar-chart" aria-label="Revenue chart">
+                <span style="height:46%"></span><span style="height:70%"></span><span style="height:58%"></span><span style="height:82%"></span><span style="height:64%"></span><span style="height:92%"></span><span style="height:76%"></span>
+              </div>
+            </article>
+            <article class="admin-card">
+              <div class="card-head"><h2>Website Visitors</h2><button data-toast="Live visitor feed refreshed">Refresh</button></div>
+              <div class="metric-list">
+                <p><strong>24,810</strong><span>Visitors this week</span></p>
+                <p><strong>68%</strong><span>Mobile traffic</span></p>
+                <p><strong>4.7%</strong><span>Checkout conversion</span></p>
+              </div>
+            </article>
+          </div>
+          <div class="admin-grid two">
+            <article class="admin-card">
+              <div class="card-head"><h2>Recent Orders</h2><button data-section-jump="orders">View all</button></div>
+              <table class="admin-table">
+                <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th>Total</th></tr></thead>
+                <tbody>
+                  <tr><td>#ZAV-1048</td><td>Mia Carter</td><td><span class="pill">Processing</span></td><td>$286</td></tr>
+                  <tr><td>#ZAV-1047</td><td>Ethan Reed</td><td><span class="pill green">Shipped</span></td><td>$168</td></tr>
+                  <tr><td>#ZAV-1046</td><td>Ava Brooks</td><td><span class="pill gold">Pending</span></td><td>$52</td></tr>
+                </tbody>
+              </table>
+            </article>
+            <article class="admin-card">
+              <div class="card-head"><h2>Top Selling Products</h2><button data-section-jump="products">Manage</button></div>
+              <div class="product-rank">
+                <p><span>Noir Oversized Hoodie</span><strong>1,204 sold</strong></p>
+                <p><span>Ivory Heavyweight Tee</span><strong>940 sold</strong></p>
+                <p><span>Monogram Cap</span><strong>771 sold</strong></p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-section" data-panel="products">
+          <div class="admin-grid two">
+            <article class="admin-card">
+              <div class="card-head"><h2>Add Product</h2><button data-toast="Draft product saved">Save draft</button></div>
+              <form class="admin-form">
+                <input placeholder="Product name">
+                <div class="form-row"><input placeholder="SKU" value="ZAV-2026-001"><button type="button" data-toast="SKU generated">Generate SKU</button></div>
+                <div class="form-row"><input placeholder="Price"><input placeholder="Sale price"></div>
+                <div class="form-row"><select><option>Women</option><option>Men</option><option>Limited Edition</option></select><select><option>New Arrivals</option><option>Best Sellers</option><option>Essentials</option></select></div>
+                <textarea placeholder="Product description"></textarea>
+                <button type="button" class="primary-admin" data-toast="Product added">Add Product</button>
+              </form>
+            </article>
+            <article class="admin-card">
+              <div class="card-head"><h2>Inventory Controls</h2><button data-toast="Bulk editor opened">Bulk edit</button></div>
+              <div class="control-grid">
+                <button data-toast="Bulk upload ready">Bulk Upload</button>
+                <button data-toast="Images manager opened">Product Images</button>
+                <button data-toast="Videos manager opened">Product Videos</button>
+                <button data-toast="SEO settings opened">SEO Settings</button>
+                <button data-toast="Stock synced">Stock Management</button>
+                <button data-toast="Color and size matrix opened">Colors and Sizes</button>
+              </div>
+            </article>
+          </div>
+          <article class="admin-card">
+            <div class="card-head"><h2>All Products</h2><button data-toast="Selected products deleted">Delete selected</button></div>
+            <table class="admin-table">
+              <thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>Noir Oversized Hoodie</td><td>Hoodies</td><td>42</td><td><span class="pill green">Active</span></td><td><button data-toast="Product editor opened">Edit</button></td></tr>
+                <tr><td>Gold Label Tee</td><td>T-Shirts</td><td>9</td><td><span class="pill gold">Low Stock</span></td><td><button data-toast="Product editor opened">Edit</button></td></tr>
+                <tr><td>Zavora Cropped Jacket</td><td>Limited</td><td>0</td><td><span class="pill">Draft</span></td><td><button data-toast="Product editor opened">Edit</button></td></tr>
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section class="admin-section" data-panel="orders">
+          <article class="admin-card">
+            <div class="card-head"><h2>Order Management</h2><button data-toast="Shipping labels queued">Print labels</button></div>
+            <div class="status-tabs">
+              <button class="active">Pending</button><button>Processing</button><button>Packed</button><button>Shipped</button><button>Delivered</button><button>Cancelled</button><button>Returned</button><button>Refunded</button>
+            </div>
+            <table class="admin-table">
+              <thead><tr><th>Order ID</th><th>Customer Details</th><th>Payment</th><th>Tracking</th><th>Documents</th></tr></thead>
+              <tbody>
+                <tr><td>#ZAV-1048</td><td>Mia Carter<br><span>mia@example.com</span></td><td>PayPal Paid</td><td>UPS 1Z9408</td><td><button data-toast="Invoice PDF generated">Invoice PDF</button></td></tr>
+                <tr><td>#ZAV-1047</td><td>Ethan Reed<br><span>ethan@example.com</span></td><td>PayPal Paid</td><td>USPS 9400</td><td><button data-toast="Shipping label printed">Print Label</button></td></tr>
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section class="admin-section" data-panel="customers">
+          <div class="admin-grid three">
+            <article class="admin-card"><h2>Customer List</h2><p class="large-number">8,942</p><button data-toast="Customer export started">Export customers</button></article>
+            <article class="admin-card"><h2>Lifetime Value</h2><p class="large-number">$184</p><button data-toast="Segment builder opened">Create segment</button></article>
+            <article class="admin-card"><h2>Reward Points</h2><p class="large-number">2.4M</p><button data-toast="Rewards settings opened">Manage rewards</button></article>
+          </div>
+          <article class="admin-card">
+            <table class="admin-table">
+              <thead><tr><th>Customer</th><th>Orders</th><th>Wishlist</th><th>Address</th><th>Control</th></tr></thead>
+              <tbody>
+                <tr><td>Ava Brooks</td><td>12</td><td>6 items</td><td>Los Angeles, CA</td><td><button data-toast="Customer blocked">Block</button></td></tr>
+                <tr><td>Noah Stone</td><td>4</td><td>2 items</td><td>Brooklyn, NY</td><td><button data-toast="Order history opened">History</button></td></tr>
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section class="admin-section" data-panel="homepage">
+          <div class="builder-layout">
+            <article class="admin-card">
+              <div class="card-head"><h2>Homepage Builder</h2><button data-toast="Homepage published">Publish</button></div>
+              <div class="builder-list">
+                <label><input type="checkbox" checked> Hero Banner</label>
+                <label><input type="checkbox" checked> Featured Products</label>
+                <label><input type="checkbox" checked> New Arrivals</label>
+                <label><input type="checkbox" checked> Best Sellers</label>
+                <label><input type="checkbox" checked> Limited Drops</label>
+                <label><input type="checkbox"> Announcement Bar</label>
+                <label><input type="checkbox"> Popup</label>
+                <label><input type="checkbox" checked> Newsletter Section</label>
+              </div>
+            </article>
+            <article class="admin-card homepage-preview">
+              <span>Live Preview</span>
+              <h2>Designed in the USA. Crafted for Everyday Luxury.</h2>
+              <button data-toast="Preview opened">Open preview</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-section" data-panel="emails">
+          <div class="admin-grid three">
+            <article class="admin-card"><h2>OTP Emails</h2><p>support@zavorafashion.com</p><button data-toast="OTP template tested">Test OTP</button></article>
+            <article class="admin-card"><h2>Welcome Email</h2><p>hello@zavorafashion.com</p><button data-toast="Welcome email tested">Test Welcome</button></article>
+            <article class="admin-card"><h2>Order Emails</h2><p>order@zavorafashion.com</p><button data-toast="Order confirmation tested">Test Order</button></article>
+            <article class="admin-card"><h2>Shipping Email</h2><p>tracking@zavorafashion.com</p><button data-toast="Shipping template opened">Edit</button></article>
+            <article class="admin-card"><h2>Refund Email</h2><p>returns@zavorafashion.com</p><button data-toast="Refund template opened">Edit</button></article>
+            <article class="admin-card"><h2>Newsletter</h2><p>info@zavorafashion.com</p><button data-toast="Newsletter composer opened">Compose</button></article>
+          </div>
+        </section>
+
+        <section class="admin-section" data-panel="analytics">
+          <div class="admin-grid two">
+            <article class="admin-card"><h2>Sales Report</h2><div class="line-chart"><i></i></div></article>
+            <article class="admin-card"><h2>Device Analytics</h2><div class="donut"><span>68% Mobile</span></div></article>
+          </div>
+          <div class="admin-grid three">
+            <article class="stat-card"><span>Revenue</span><strong>$128K</strong><small>Quarter to date</small></article>
+            <article class="stat-card"><span>Customer Growth</span><strong>22%</strong><small>USA focus</small></article>
+            <article class="stat-card"><span>Country Sales</span><strong>USA</strong><small>Primary market</small></article>
+          </div>
+        </section>
+
+        <section class="admin-section" data-panel="ai">
+          <div class="admin-grid three">
+            <article class="admin-card"><h2>AI Description Generator</h2><button data-toast="Description generated">Generate</button></article>
+            <article class="admin-card"><h2>AI SEO Generator</h2><button data-toast="SEO metadata generated">Generate</button></article>
+            <article class="admin-card"><h2>AI Image Compression</h2><button data-toast="Images optimized">Optimize</button></article>
+            <article class="admin-card"><h2>AI Background Removal</h2><button data-toast="Background removed">Remove</button></article>
+            <article class="admin-card"><h2>AI Sales Insights</h2><button data-toast="Insights refreshed">Analyze</button></article>
+          </div>
+        </section>
+
+        <section class="admin-section" data-panel="settings">
+          <div class="admin-grid two">
+            <article class="admin-card">
+              <h2>Website Settings</h2>
+              <form class="admin-form">
+                <input value="Zavora Fashion" placeholder="Logo text">
+                <input value="#000000" placeholder="Brand color">
+                <input value="#D4AF37" placeholder="Gold accent">
+                <input value="@ZavoraFashion" placeholder="Social link">
+                <button type="button" class="primary-admin" data-toast="Website settings saved">Save settings</button>
+              </form>
+            </article>
+            <article class="admin-card">
+              <h2>SEO and Tracking</h2>
+              <div class="control-grid">
+                <button data-toast="SEO editor opened">SEO</button>
+                <button data-toast="Google Analytics connected">Google Analytics</button>
+                <button data-toast="Facebook Pixel connected">Facebook Pixel</button>
+                <button data-toast="Favicon updated">Favicon</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-section" data-panel="admin">
+          <div class="admin-grid three">
+            <article class="admin-card"><h2>Admin Users</h2><p>3 active admins</p><button data-toast="Invite sent">Invite Admin</button></article>
+            <article class="admin-card"><h2>Roles and Permissions</h2><p>Owner, Manager, Support</p><button data-toast="Permissions editor opened">Manage</button></article>
+            <article class="admin-card"><h2>Login Security</h2><p>OTP and activity logs enabled</p><button data-toast="Security settings saved">Update</button></article>
+            <article class="admin-card"><h2>Backup</h2><p>Daily backup ready</p><button data-toast="Backup started">Run Backup</button></article>
+            <article class="admin-card"><h2>API Keys</h2><p>Resend and PayPal protected in Vercel env</p><button data-toast="API key guide opened">Open Guide</button></article>
+            <article class="admin-card"><h2>Activity Logs</h2><p>Last update: Homepage builder published</p><button data-toast="Activity logs opened">View Logs</button></article>
+          </div>
+        </section>
+
+        <section class="admin-section" data-panel="categories"></section>
+        <section class="admin-section" data-panel="payments"></section>
+        <section class="admin-section" data-panel="shipping"></section>
+        <section class="admin-section" data-panel="coupons"></section>
+        <section class="admin-section" data-panel="wishlist"></section>
+        <section class="admin-section" data-panel="reviews"></section>
+        <section class="admin-section" data-panel="notifications"></section>
+        <section class="admin-section" data-panel="content"></section>
+        <section class="admin-section" data-panel="localization"></section>
+        <section class="admin-section" data-panel="media"></section>
+      </main>
+    </div>
+    <div class="toast" data-toast-box>Admin action ready</div>
+    <script src="admin.js" defer></script>
+  </body>
+</html>
