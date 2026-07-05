@@ -1,0 +1,8 @@
+{
+  "name": "zavora-fashion",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "vercel-build": "echo Static site ready"
+  }
+}
