@@ -247,6 +247,19 @@ async function requestWelcomeEmail(email, name) {
   }
 }
 
+async function requestPasswordReset(email) {
+  try {
+    const response = await fetch('/api/send-password-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: email })
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
 function renderSignupOtpStep(form, payload, sentByApi = false) {
   form.classList.add('otp-mode');
   form.innerHTML = `
@@ -735,7 +748,7 @@ document.addEventListener('change', (event) => {
   }
 });
 
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   const dropdownOption = event.target.closest('[data-dropdown-value]');
   if (dropdownOption) {
     event.preventDefault();
@@ -857,6 +870,27 @@ document.addEventListener('click', (event) => {
     localStorage.setItem(AUTH_KEY, 'true');
     localStorage.setItem('zavoraUserEmail', email);
     window.location.href = 'dashboard.html';
+    return;
+  }
+
+  const resetTrigger = event.target.closest('.auth-card .primary-cta');
+  if (resetTrigger && window.location.pathname.endsWith('forgot-password.html')) {
+    event.preventDefault();
+    const form = resetTrigger.closest('.form-panel');
+    const email = form?.querySelector('input[type="email"]')?.value.trim().toLowerCase();
+    const note = otpErrorNode(form);
+    if (!email || !email.includes('@')) {
+      note.textContent = 'Enter your account email to receive a reset link.';
+      return;
+    }
+    resetTrigger.textContent = 'Sending...';
+    resetTrigger.setAttribute('aria-busy', 'true');
+    const sent = await requestPasswordReset(email);
+    resetTrigger.textContent = 'Send Reset Link';
+    resetTrigger.removeAttribute('aria-busy');
+    note.textContent = sent
+      ? `Password reset email sent from ${SUPPORT_EMAIL}. Check inbox and spam folder.`
+      : `Email service is not ready. Please contact ${SUPPORT_EMAIL}.`;
     return;
   }
 
