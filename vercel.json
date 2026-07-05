@@ -1,6 +1,16 @@
 {
   "version": 2,
   "outputDirectory": "public",
+  "rewrites": [
+    {
+      "source": "/admin.html",
+      "destination": "/api/admin-page"
+    },
+    {
+      "source": "/admin",
+      "destination": "/api/admin-page"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

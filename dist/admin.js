@@ -21,6 +21,11 @@ const sectionTitles = {
   admin: 'Admin Settings'
 };
 
+const ADMIN_SESSION_KEY = 'zavoraAdminSession';
+const ADMIN_EMAIL_KEY = 'zavoraAdminEmail';
+
+document.body.classList.remove('admin-locked');
+
 const quickPanels = {
   categories: ['Men', 'Women', 'Hoodies', 'T-Shirts', 'Pants', 'Accessories', 'Limited Edition', 'New Arrivals', 'Best Sellers'],
   payments: ['PayPal active', 'Apple Pay coming soon', 'Google Pay coming soon', 'Visa coming soon', 'Mastercard coming soon', 'Refund Management', 'Payment Logs'],
@@ -75,6 +80,13 @@ function renderQuickPanels() {
 }
 
 document.addEventListener('click', (event) => {
+  if (event.target.closest('.logout-btn')) {
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    localStorage.removeItem(ADMIN_EMAIL_KEY);
+    window.location.href = '/api/admin-logout';
+    return;
+  }
+
   const nav = event.target.closest('[data-section]');
   if (nav) {
     setSection(nav.dataset.section);
