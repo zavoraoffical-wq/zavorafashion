@@ -234,6 +234,19 @@ async function requestSignupOtp(email, otp) {
   }
 }
 
+async function requestWelcomeEmail(email, name) {
+  try {
+    const response = await fetch('/api/send-welcome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: email, name })
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
 function renderSignupOtpStep(form, payload, sentByApi = false) {
   form.classList.add('otp-mode');
   form.innerHTML = `
@@ -876,7 +889,9 @@ document.addEventListener('click', (event) => {
     localStorage.setItem('zavoraUserEmail', pending.email);
     localStorage.setItem('zavoraUserName', pending.name);
     clearPendingSignupOtp();
-    window.location.href = 'dashboard.html';
+    requestWelcomeEmail(pending.email, pending.name).finally(() => {
+      window.location.href = 'dashboard.html';
+    });
     return;
   }
 
