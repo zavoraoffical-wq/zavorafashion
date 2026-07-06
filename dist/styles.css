@@ -55,11 +55,23 @@ img { display: block; max-width: 100%; }
   backdrop-filter: blur(18px);
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 26px;
   letter-spacing: 5px;
   font-weight: 700;
   white-space: nowrap;
+}
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+.brand span {
+  line-height: 1;
 }
 .nav-links, .header-actions {
   display: flex;
@@ -954,7 +966,9 @@ h2 {
   padding: 54px 28px 28px;
 }
 .footer-brand strong {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 12px;
   letter-spacing: 4px;
 }
@@ -2276,7 +2290,9 @@ h2 {
     letter-spacing: 3px;
     line-height: 1;
     text-overflow: clip;
+    gap: 8px;
   }
+  .brand-mark { width: 26px; height: 26px; }
   .header-actions,
   .page-header .header-actions {
     gap: 6px;

@@ -28,6 +28,7 @@ const ORDER_HISTORY_KEY = 'zavoraOrders';
 const SUPPORT_EMAIL = 'support@zavorafashion.com';
 const LEGAL_EMAIL = 'legal@zavorafashion.com';
 const OFFICIAL_EMAIL = 'zavoraofficial@zavorafashion.com';
+const ZAVORA_LOGO = 'assets/zavora-logo.svg';
 const accountRedirects = {
   'my-account.html': 'dashboard',
   'wishlist.html': 'wishlist',
@@ -120,8 +121,20 @@ function cartQuantity() {
 }
 
 function normalizeHeaderSelectors() {
+  if (!document.querySelector('link[rel="icon"]')) {
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.type = 'image/svg+xml';
+    favicon.href = ZAVORA_LOGO;
+    document.head.appendChild(favicon);
+  }
   document.querySelectorAll('.brand').forEach((brand) => {
-    brand.textContent = 'ZAVORA FASHION';
+    if (brand.querySelector('.brand-mark')) return;
+    brand.innerHTML = `<img class="brand-mark" src="${ZAVORA_LOGO}" alt="" aria-hidden="true"><span>ZAVORA FASHION</span>`;
+  });
+  document.querySelectorAll('.footer-brand strong').forEach((brand) => {
+    if (brand.querySelector('.brand-mark')) return;
+    brand.innerHTML = `<img class="brand-mark" src="${ZAVORA_LOGO}" alt="" aria-hidden="true"><span>ZAVORA FASHION</span>`;
   });
   document.querySelectorAll('.header-actions select').forEach((select) => {
     const values = [...select.options].map((option) => option.textContent.trim()).filter(Boolean);

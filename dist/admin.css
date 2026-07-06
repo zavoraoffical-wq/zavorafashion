@@ -40,7 +40,9 @@ button { cursor: pointer; }
 }
 .admin-logo {
   display: grid;
-  gap: 7px;
+  grid-template-columns: 38px 1fr;
+  gap: 6px 10px;
+  align-items: center;
   padding: 0 10px 22px;
   border-bottom: 1px solid rgba(255,255,255,.12);
   color: #fff;
@@ -49,6 +51,14 @@ button { cursor: pointer; }
   font-size: 24px;
   letter-spacing: 5px;
   font-weight: 700;
+}
+.admin-logo img {
+  width: 38px;
+  height: 38px;
+  grid-row: span 2;
+}
+.admin-logo strong {
+  font: inherit;
 }
 .admin-logo span {
   font: 700 10px/1.4 Arial, sans-serif;
@@ -419,6 +429,11 @@ button { cursor: pointer; }
 .admin-login-card h1 {
   margin: 0;
   font: clamp(46px, 8vw, 78px)/.92 Georgia, serif;
+}
+.admin-login-logo {
+  width: 74px;
+  height: 74px;
+  object-fit: contain;
 }
 .admin-login-card p {
   margin: 0;
