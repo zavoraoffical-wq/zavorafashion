@@ -30,7 +30,6 @@ const NOREPLY_EMAIL = 'noreply@zavorafashion.com';
 const LEGAL_EMAIL = 'legal@zavorafashion.com';
 const OFFICIAL_EMAIL = 'zavoraofficial@zavorafashion.com';
 const ZAVORA_LOGO = 'assets/zavora-logo.png';
-const LAUNCH_PREVIEW_KEY = 'zavoraLaunchPreview';
 const LAUNCH_PREVIEW_CODE = 'zavora-live';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const accountRedirects = {
@@ -48,15 +47,8 @@ function initLaunchGate() {
 
   const params = new URLSearchParams(window.location.search);
   if (params.get('preview') === LAUNCH_PREVIEW_CODE) {
-    localStorage.setItem(LAUNCH_PREVIEW_KEY, 'true');
-    params.delete('preview');
-    const cleanUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ''}${window.location.hash}`;
-    window.history.replaceState(null, '', cleanUrl);
+    return false;
   }
-  if (params.get('comingsoon') === '1') {
-    localStorage.removeItem(LAUNCH_PREVIEW_KEY);
-  }
-  if (localStorage.getItem(LAUNCH_PREVIEW_KEY) === 'true') return false;
 
   document.body.className = 'coming-soon-body';
   document.body.innerHTML = `
