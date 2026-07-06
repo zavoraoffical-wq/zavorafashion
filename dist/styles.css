@@ -2293,8 +2293,25 @@ h2 {
     overflow: visible;
     transform: none;
   }
-  .site-header { grid-template-columns: 42px minmax(0, 1fr) auto; }
-  .page-header { grid-template-columns: minmax(0, 1fr) auto; }
+  .site-header,
+  .page-header { grid-template-columns: 42px minmax(0, 1fr) auto; }
+  .page-header .mobile-menu {
+    grid-column: 1;
+    grid-row: 1;
+    display: block;
+    justify-self: start;
+  }
+  .page-header .brand {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .page-header .header-actions {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .page-header .nav-links {
+    display: none;
+  }
   .brand,
   .page-header .brand {
     justify-self: start;
@@ -2371,6 +2388,15 @@ h2 {
   }
   .campaign, .campaign.tall { min-height: 430px; grid-row: auto; }
   .shop-layout { padding: 54px 18px; }
+  .product-detail {
+    padding-top: 86px;
+  }
+  .product-buy {
+    position: static;
+  }
+  .product-buy h1 {
+    font-size: 40px;
+  }
   .product-grid, .reviews, .category-grid, .gallery, .service-grid { grid-template-columns: 1fr; }
   .product-toolbar { align-items: flex-start; gap: 14px; flex-direction: column; }
   .newsletter form { display: grid; }
@@ -2433,7 +2459,8 @@ h2 {
     padding: 0 8px;
     gap: 6px;
   }
-  .site-header { grid-template-columns: 38px minmax(0, 1fr) auto; }
+  .site-header,
+  .page-header { grid-template-columns: 38px minmax(0, 1fr) auto; }
   .brand,
   .page-header .brand {
     font-size: 13px;

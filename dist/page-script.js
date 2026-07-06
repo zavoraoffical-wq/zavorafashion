@@ -129,6 +129,34 @@ function normalizeHeaderSelectors() {
     favicon.href = ZAVORA_LOGO;
     document.head.appendChild(favicon);
   }
+  if (pageHeader && !pageHeader.querySelector('[data-page-open-menu]')) {
+    const menu = document.createElement('button');
+    menu.className = 'icon-button mobile-menu';
+    menu.type = 'button';
+    menu.dataset.pageOpenMenu = 'true';
+    menu.setAttribute('aria-label', 'Open menu');
+    menu.innerHTML = '<span></span><span></span>';
+    pageHeader.prepend(menu);
+  }
+  if (pageHeader && !document.querySelector('#mobilePanel')) {
+    const panel = document.createElement('div');
+    panel.className = 'mobile-panel';
+    panel.id = 'mobilePanel';
+    panel.setAttribute('aria-hidden', 'true');
+    panel.innerHTML = `
+      <button class="close" data-page-close-mobile aria-label="Close menu"></button>
+      <a href="index.html">Home</a>
+      <a href="women.html">Women</a>
+      <a href="men.html">Men</a>
+      <a href="new-arrivals.html">New</a>
+      <a href="collections.html">Collections</a>
+      <a href="best-sellers.html">Best Sellers</a>
+      <a href="limited.html">Limited</a>
+      <a href="journal.html">Journal</a>
+      <a href="track-order.html">Order Tracking</a>
+    `;
+    pageHeader.insertAdjacentElement('afterend', panel);
+  }
   document.querySelectorAll('.brand').forEach((brand) => {
     if (brand.querySelector('.brand-mark')) return;
     brand.innerHTML = `<img class="brand-mark" src="${ZAVORA_LOGO}" alt="" aria-hidden="true"><span>ZAVORA FASHION</span>`;
@@ -197,6 +225,26 @@ function hydrateCloseIcons(scope = document) {
   scope.querySelectorAll('.close').forEach((button) => {
     button.innerHTML = icons.close;
   });
+}
+
+function initPageMobileMenu() {
+  const panel = document.querySelector('#mobilePanel');
+  if (!panel) return;
+  const open = () => {
+    panel.classList.add('open');
+    document.body.classList.add('mobile-menu-open');
+  };
+  const close = () => {
+    panel.classList.remove('open');
+    document.body.classList.remove('mobile-menu-open');
+  };
+  document.querySelectorAll('[data-page-open-menu], [data-open-menu]').forEach((button) => {
+    button.addEventListener('click', open);
+  });
+  document.querySelectorAll('[data-page-close-mobile], [data-close-mobile]').forEach((button) => {
+    button.addEventListener('click', close);
+  });
+  panel.querySelectorAll('a').forEach((link) => link.addEventListener('click', close));
 }
 
 function syncPageHeader() {
@@ -457,6 +505,7 @@ syncPageHeader();
 normalizeHeaderSelectors();
 hydrateHeaderIcons();
 hydrateCloseIcons();
+initPageMobileMenu();
 syncHeaderCounts();
 enforceAuthState();
 initDashboardTabs();
