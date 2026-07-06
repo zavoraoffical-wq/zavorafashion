@@ -325,6 +325,19 @@ async function requestWelcomeEmail(email, name) {
   }
 }
 
+async function requestNewsletterEmail(email) {
+  try {
+    const response = await fetch('/api/send-newsletter-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: email })
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
 async function requestPasswordReset(email) {
   try {
     const response = await fetch('/api/send-password-reset', {
@@ -830,6 +843,33 @@ document.addEventListener('change', (event) => {
 });
 
 document.addEventListener('click', async (event) => {
+  const newsletterButton = event.target.closest('.footer-newsletter button, .newsletter button');
+  if (newsletterButton) {
+    event.preventDefault();
+    const form = newsletterButton.closest('form') || newsletterButton.closest('.newsletter');
+    const input = form?.querySelector('input[type="email"], input');
+    const email = input?.value.trim().toLowerCase();
+    let note = form?.querySelector('[data-newsletter-note]');
+    if (!note && form) {
+      note = document.createElement('p');
+      note.dataset.newsletterNote = 'true';
+      note.className = 'newsletter-note';
+      form.appendChild(note);
+    }
+    if (!email || !email.includes('@')) {
+      if (note) note.textContent = 'Enter a valid email for newsletter access.';
+      return;
+    }
+    const originalText = newsletterButton.textContent;
+    newsletterButton.textContent = 'Joining...';
+    const sent = await requestNewsletterEmail(email);
+    newsletterButton.textContent = originalText || 'Join';
+    if (note) note.textContent = sent
+      ? 'Newsletter confirmation sent from hello@zavorafashion.com.'
+      : 'Newsletter saved. Email service is not ready yet.';
+    return;
+  }
+
   const dropdownOption = event.target.closest('[data-dropdown-value]');
   if (dropdownOption) {
     event.preventDefault();

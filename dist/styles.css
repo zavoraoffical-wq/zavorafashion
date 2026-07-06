@@ -1049,6 +1049,14 @@ h2 {
   color: #fff;
   padding: 0 18px;
 }
+.newsletter-note {
+  flex-basis: 100%;
+  width: 100%;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
 .footer-copy { color: var(--muted); text-align: center; }
 
 .page-shell {
