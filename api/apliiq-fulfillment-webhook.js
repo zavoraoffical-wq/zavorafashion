@@ -39,6 +39,14 @@ function verifyApliiqSignature(rawBody, signature) {
 }
 
 module.exports = async function handler(req, res) {
+  if (req.method === 'GET') {
+    return json(res, 200, {
+      ok: true,
+      service: 'Zavora Fashion Apliiq fulfillment webhook',
+      message: 'Webhook is ready. Apliiq must send tracking updates with POST and x-apliiq-hmac.'
+    });
+  }
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return json(res, 405, { error: 'Method not allowed' });
