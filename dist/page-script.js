@@ -96,6 +96,25 @@ function createTestOrder(method = 'PayPal') {
   return order;
 }
 
+async function requestOrderConfirmation(order) {
+  try {
+    const response = await fetch('/api/send-order-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: order.email,
+        orderId: order.id,
+        method: order.method,
+        total: order.total,
+        items: order.items
+      })
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
 function cartQuantity() {
   return getSavedCart().reduce((sum, item) => sum + Number(item.qty || 1), 0);
 }
@@ -1008,6 +1027,7 @@ document.addEventListener('click', async (event) => {
     const selected = document.querySelector('input[name="payment"]:checked')?.value || 'paypal';
     const method = selected === 'cod' ? 'COD' : 'PayPal';
     const order = createTestOrder(method);
+    requestOrderConfirmation(order);
     if (method === 'COD') {
       localStorage.removeItem(PAGE_CART_KEY);
       window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=cod`;
