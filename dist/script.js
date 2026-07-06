@@ -328,8 +328,19 @@ $('[data-search]').addEventListener('click', () => {
   $('#searchInput').focus();
 });
 $('[data-close-search]').addEventListener('click', () => $('#searchOverlay').classList.remove('open'));
-$('[data-open-menu]').addEventListener('click', () => $('#mobilePanel').classList.add('open'));
-$('[data-close-mobile]').addEventListener('click', () => $('#mobilePanel').classList.remove('open'));
+function openMobileMenu() {
+  $('#mobilePanel').classList.add('open');
+  document.body.classList.add('mobile-menu-open');
+}
+
+function closeMobileMenu() {
+  $('#mobilePanel').classList.remove('open');
+  document.body.classList.remove('mobile-menu-open');
+}
+
+$('[data-open-menu]').addEventListener('click', openMobileMenu);
+$('[data-close-mobile]').addEventListener('click', closeMobileMenu);
+$$('#mobilePanel a').forEach((link) => link.addEventListener('click', closeMobileMenu));
 $('#searchInput').addEventListener('input', (event) => renderSuggestions(event.target.value));
 
 $$('[data-mega]').forEach(button => {
