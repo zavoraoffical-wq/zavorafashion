@@ -29,7 +29,7 @@ const SUPPORT_EMAIL = 'support@zavorafashion.com';
 const NOREPLY_EMAIL = 'noreply@zavorafashion.com';
 const LEGAL_EMAIL = 'legal@zavorafashion.com';
 const OFFICIAL_EMAIL = 'zavoraofficial@zavorafashion.com';
-const ZAVORA_LOGO = 'assets/zavora-logo.svg';
+const ZAVORA_LOGO = 'assets/zavora-logo.png';
 const accountRedirects = {
   'my-account.html': 'dashboard',
   'wishlist.html': 'wishlist',
