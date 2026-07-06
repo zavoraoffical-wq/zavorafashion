@@ -104,13 +104,13 @@
           <div class="admin-grid two">
             <article class="admin-card">
               <div class="card-head"><h2>Add Product</h2><button data-toast="Draft product saved">Save draft</button></div>
-              <form class="admin-form">
-                <input placeholder="Product name">
-                <div class="form-row"><input placeholder="SKU" value="ZAV-2026-001"><button type="button" data-toast="SKU generated">Generate SKU</button></div>
-                <div class="form-row"><input placeholder="Price"><input placeholder="Sale price"></div>
-                <div class="form-row"><select><option>Women</option><option>Men</option><option>Limited Edition</option></select><select><option>New Arrivals</option><option>Best Sellers</option><option>Essentials</option></select></div>
-                <textarea placeholder="Product description"></textarea>
-                <button type="button" class="primary-admin" data-toast="Product added">Add Product</button>
+              <form class="admin-form" data-admin-product-form>
+                <input name="name" placeholder="Product name">
+                <div class="form-row"><input name="sku" placeholder="SKU" value="ZAV-2026-001"><button type="button" data-generate-sku>Generate SKU</button></div>
+                <div class="form-row"><input name="price" placeholder="Price"><input name="salePrice" placeholder="Sale price"></div>
+                <div class="form-row"><select name="category"><option value="women">Women</option><option value="men">Men</option><option value="limited">Limited Edition</option></select><select name="collection"><option value="new">New Arrivals</option><option value="best">Best Sellers</option><option value="essentials">Essentials</option></select></div>
+                <textarea name="description" placeholder="Product description"></textarea>
+                <button type="submit" class="primary-admin">Add Product</button>
               </form>
             </article>
             <article class="admin-card">
@@ -129,7 +129,7 @@
             <div class="card-head"><h2>All Products</h2><button data-toast="Selected products deleted">Delete selected</button></div>
             <table class="admin-table">
               <thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody>
+              <tbody data-admin-product-list>
                 <tr><td>Noir Oversized Hoodie</td><td>Hoodies</td><td>42</td><td><span class="pill green">Active</span></td><td><button data-toast="Product editor opened">Edit</button></td></tr>
                 <tr><td>Gold Label Tee</td><td>T-Shirts</td><td>9</td><td><span class="pill gold">Low Stock</span></td><td><button data-toast="Product editor opened">Edit</button></td></tr>
                 <tr><td>Zavora Cropped Jacket</td><td>Limited</td><td>0</td><td><span class="pill">Draft</span></td><td><button data-toast="Product editor opened">Edit</button></td></tr>
@@ -189,7 +189,7 @@
             <article class="admin-card homepage-preview">
               <span>Live Preview</span>
               <h2>Designed in the USA. Crafted for Everyday Luxury.</h2>
-              <button data-toast="Preview opened">Open preview</button>
+              <a class="primary-admin admin-preview-link" href="index.html?preview=zavora-live" target="_blank" rel="noopener">Open preview</a>
             </article>
           </div>
         </section>

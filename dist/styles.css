@@ -1694,6 +1694,83 @@ h2 {
   font-weight: 800;
   color: #fff;
 }
+.coming-soon-body {
+  min-height: 100vh;
+  margin: 0;
+  background: #050505;
+  color: #fff;
+}
+.launch-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.92), rgba(0,0,0,.58)),
+    url("https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1800&q=82") center/cover;
+}
+.launch-card {
+  width: min(760px, 100%);
+  display: grid;
+  gap: 22px;
+  padding: clamp(28px, 6vw, 72px);
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.54);
+  backdrop-filter: blur(18px);
+}
+.launch-logo {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+}
+.launch-card h1 {
+  margin: 0;
+  font: clamp(52px, 10vw, 112px)/.9 Georgia, 'Times New Roman', serif;
+  letter-spacing: 0;
+}
+.launch-card p:not(.eyebrow) {
+  max-width: 580px;
+  margin: 0;
+  color: rgba(255,255,255,.78);
+  font-size: 18px;
+  line-height: 1.7;
+}
+.launch-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  max-width: 560px;
+}
+.launch-form input {
+  min-height: 56px;
+  border: 1px solid rgba(255,255,255,.32);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  padding: 0 18px;
+  font: inherit;
+}
+.launch-form input::placeholder {
+  color: rgba(255,255,255,.68);
+}
+.launch-form button {
+  min-height: 56px;
+  border: 1px solid #fff;
+  background: #fff;
+  color: #000;
+  padding: 0 24px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.launch-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.launch-links a {
+  color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,.55);
+}
 .gift-layout {
   display: grid;
   grid-template-columns: 340px 1fr;
@@ -2451,6 +2528,9 @@ h2 {
   .gift-page { padding: 100px 18px 54px; }
   .gift-grid { grid-template-columns: 1fr; }
   .gift-preview strong { font-size: 46px; }
+  .launch-page { padding: 16px; }
+  .launch-form { grid-template-columns: 1fr; }
+  .launch-form button { width: 100%; }
 }
 
 @media (max-width: 380px) {

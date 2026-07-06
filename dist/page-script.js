@@ -30,6 +30,9 @@ const NOREPLY_EMAIL = 'noreply@zavorafashion.com';
 const LEGAL_EMAIL = 'legal@zavorafashion.com';
 const OFFICIAL_EMAIL = 'zavoraofficial@zavorafashion.com';
 const ZAVORA_LOGO = 'assets/zavora-logo.png';
+const LAUNCH_PREVIEW_KEY = 'zavoraLaunchPreview';
+const LAUNCH_PREVIEW_CODE = 'zavora-live';
+const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const accountRedirects = {
   'my-account.html': 'dashboard',
   'wishlist.html': 'wishlist',
@@ -37,6 +40,45 @@ const accountRedirects = {
   'saved-addresses.html': 'addresses',
   'change-password.html': 'change-password'
 };
+
+function initLaunchGate() {
+  const pageName = window.location.pathname.split('/').pop() || 'index.html';
+  const openPages = ['admin-login.html', 'admin.html'];
+  if (openPages.includes(pageName) || window.location.pathname.startsWith('/api/')) return false;
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('preview') === LAUNCH_PREVIEW_CODE) {
+    localStorage.setItem(LAUNCH_PREVIEW_KEY, 'true');
+    params.delete('preview');
+    const cleanUrl = `${window.location.pathname}${params.toString() ? `?${params}` : ''}${window.location.hash}`;
+    window.history.replaceState(null, '', cleanUrl);
+  }
+  if (params.get('comingsoon') === '1') {
+    localStorage.removeItem(LAUNCH_PREVIEW_KEY);
+  }
+  if (localStorage.getItem(LAUNCH_PREVIEW_KEY) === 'true') return false;
+
+  document.body.className = 'coming-soon-body';
+  document.body.innerHTML = `
+    <main class="launch-page">
+      <section class="launch-card">
+        <img src="${ZAVORA_LOGO}" alt="Zavora Fashion" class="launch-logo">
+        <p class="eyebrow">Launching Soon</p>
+        <h1>Zavora Fashion is getting ready.</h1>
+        <p>Premium streetwear, curated products, secure checkout, and private drops are being prepared for launch.</p>
+        <form class="launch-form">
+          <input type="email" placeholder="Email for launch updates" aria-label="Email for launch updates">
+          <button type="button">Notify Me</button>
+        </form>
+        <div class="launch-links">
+          <a href="admin-login.html">Admin</a>
+          <a href="mailto:support@zavorafashion.com">support@zavorafashion.com</a>
+        </div>
+      </section>
+    </main>
+  `;
+  return true;
+}
 
 function money(value) {
   return `$${Number(value || 0).toLocaleString('en-US')}`;
@@ -500,6 +542,7 @@ function initDashboardTabs() {
   setDashboardView(accountViews[hashView] ? hashView : 'dashboard');
 }
 
+if (!initLaunchGate()) {
 window.addEventListener('scroll', syncPageHeader);
 syncPageHeader();
 normalizeHeaderSelectors();
@@ -702,7 +745,14 @@ const catalogImages = [
   'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?auto=format&fit=crop&w=600&q=80'
 ];
 const catalogNames = ['Noir Oversized Hoodie', 'Gold Label Tee', 'Avenue Cargo Pant', 'Zavora Cropped Jacket', 'Monogram Cap', 'Ivory Heavyweight Tee', 'Studio Wide Trouser', 'City Rib Tank', 'Luxe Track Jacket', 'Everyday Cargo Skirt'];
-const catalogData = Array.from({ length: 60 }, (_, index) => ({
+function getAdminProducts() {
+  try {
+    return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+}
+const generatedCatalogData = Array.from({ length: 60 }, (_, index) => ({
   id: index + 101,
   name: `${catalogNames[index % catalogNames.length]} ${String(index + 1).padStart(2, '0')}`,
   category: ['women', 'men', 'new', 'limited', 'essentials'][index % 5],
@@ -712,6 +762,7 @@ const catalogData = Array.from({ length: 60 }, (_, index) => ({
   image: catalogImages[index % catalogImages.length],
   badge: index % 6 === 0 ? 'Limited' : index % 4 === 0 ? 'Best Seller' : index % 3 === 0 ? 'New' : 'Zavora'
 }));
+const catalogData = [...getAdminProducts(), ...generatedCatalogData];
 
 function catalogCard(item) {
   return `
@@ -750,7 +801,7 @@ function injectLargeCatalog() {
     </aside>
     <div class="catalog-area">
       <div class="catalog-toolbar">
-        <div><p class="eyebrow">60 Product Edit</p><h1>Premium streetwear catalog</h1></div>
+        <div><p class="eyebrow">${catalogData.length} Product Edit</p><h1>Premium streetwear catalog</h1></div>
         <span><strong data-catalog-count>${catalogData.length}</strong> results</span>
       </div>
       <div class="catalog-grid" data-catalog-grid>${catalogData.map(catalogCard).join('')}</div>
@@ -1714,3 +1765,4 @@ function initHomeBanners() {
 }
 
 initHomeBanners();
+}

@@ -23,6 +23,8 @@ const sectionTitles = {
 
 const ADMIN_SESSION_KEY = 'zavoraAdminSession';
 const ADMIN_EMAIL_KEY = 'zavoraAdminEmail';
+const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
+const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80';
 
 document.body.classList.remove('admin-locked');
 
@@ -79,6 +81,66 @@ function renderQuickPanels() {
   });
 }
 
+function getAdminProducts() {
+  try {
+    return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveAdminProducts(products) {
+  localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(products));
+}
+
+function renderAdminProducts() {
+  const list = document.querySelector('[data-admin-product-list]');
+  if (!list) return;
+  const savedProducts = getAdminProducts();
+  const savedRows = savedProducts.map((product) => `
+    <tr data-saved-product="${product.id}">
+      <td>${product.name}<br><span>${product.sku}</span></td>
+      <td>${product.category}</td>
+      <td>Preview</td>
+      <td><span class="pill green">Active</span></td>
+      <td><button data-remove-product="${product.id}">Remove</button></td>
+    </tr>
+  `).join('');
+  list.querySelectorAll('[data-saved-product]').forEach((row) => row.remove());
+  list.insertAdjacentHTML('afterbegin', savedRows);
+}
+
+function addAdminProduct(form) {
+  const data = new FormData(form);
+  const name = String(data.get('name') || '').trim();
+  const price = Number(String(data.get('price') || '').replace(/[^0-9.]/g, ''));
+  if (!name || !price) {
+    toast('Add product name and price first');
+    return;
+  }
+  const category = String(data.get('category') || 'women').toLowerCase();
+  const product = {
+    id: Date.now(),
+    name,
+    sku: String(data.get('sku') || `ZAV-${Date.now()}`).trim(),
+    category,
+    color: 'black',
+    size: 'M',
+    price,
+    image: DEFAULT_PRODUCT_IMAGE,
+    badge: String(data.get('collection') || 'new').replace(/^\w/, (letter) => letter.toUpperCase()),
+    description: String(data.get('description') || '').trim()
+  };
+  const products = getAdminProducts().filter((item) => item.id !== product.id);
+  products.unshift(product);
+  saveAdminProducts(products);
+  renderAdminProducts();
+  form.reset();
+  const sku = form.querySelector('[name="sku"]');
+  if (sku) sku.value = `ZAV-2026-${String(products.length + 1).padStart(3, '0')}`;
+  toast('Product added to live preview');
+}
+
 document.addEventListener('click', (event) => {
   if (event.target.closest('.logout-btn')) {
     localStorage.removeItem(ADMIN_SESSION_KEY);
@@ -109,6 +171,28 @@ document.addEventListener('click', (event) => {
   if (action) {
     toast(action.dataset.toast);
   }
+
+  const skuButton = event.target.closest('[data-generate-sku]');
+  if (skuButton) {
+    const sku = skuButton.closest('form')?.querySelector('[name="sku"]');
+    if (sku) sku.value = `ZAV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+    toast('SKU generated');
+    return;
+  }
+
+  const remove = event.target.closest('[data-remove-product]');
+  if (remove) {
+    saveAdminProducts(getAdminProducts().filter((product) => String(product.id) !== remove.dataset.removeProduct));
+    renderAdminProducts();
+    toast('Product removed from preview');
+  }
+});
+
+document.addEventListener('submit', (event) => {
+  const form = event.target.closest('[data-admin-product-form]');
+  if (!form) return;
+  event.preventDefault();
+  addAdminProduct(form);
 });
 
 document.addEventListener('input', (event) => {
@@ -120,4 +204,5 @@ document.addEventListener('input', (event) => {
 });
 
 renderQuickPanels();
+renderAdminProducts();
 setSection(window.location.hash.replace('#', '') || 'dashboard');
