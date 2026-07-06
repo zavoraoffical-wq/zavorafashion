@@ -794,6 +794,8 @@ h2 {
 .pay-icon.paypal::before { content: 'P'; color: #003087; font-size: 14px; font-style: italic; background: linear-gradient(135deg, #fff 0 52%, #009cde 53% 100%); }
 .pay-icon.apple::before { content: 'Apple'; color: #fff; background: #111; }
 .pay-icon.google::before { content: 'G'; color: #4285f4; font-size: 14px; background: conic-gradient(from 90deg, #4285f4, #34a853, #fbbc05, #ea4335, #4285f4); -webkit-text-stroke: 2px #fff; paint-order: stroke fill; }
+.pay-icon.cod::before { content: '$'; color: #111; font-size: 14px; background: linear-gradient(135deg, #fff 0 55%, var(--gold) 56% 100%); }
+.cod-method { border-color: var(--gold) !important; }
 .pay-now { width: 100%; margin-top: 12px; }
 .paypal-checkout {
   border: 1px solid var(--line);
@@ -909,6 +911,15 @@ h2 {
   display: block;
   color: var(--muted);
   margin-top: 4px;
+}
+.track-note {
+  margin: -8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.tracking-card[hidden],
+.paypal-checkout[hidden] {
+  display: none;
 }
 .quick-view img {
   width: 100%;

@@ -24,6 +24,7 @@ const AUTH_KEY = 'zavoraLoggedIn';
 const GIFT_CARD_KEY = 'zavoraGiftCards';
 const APPLIED_GIFT_KEY = 'zavoraAppliedGiftCard';
 const SIGNUP_OTP_KEY = 'zavoraSignupOtp';
+const ORDER_HISTORY_KEY = 'zavoraOrders';
 const SUPPORT_EMAIL = 'support@zavorafashion.com';
 const LEGAL_EMAIL = 'legal@zavorafashion.com';
 const OFFICIAL_EMAIL = 'zavoraofficial@zavorafashion.com';
@@ -49,6 +50,50 @@ function getSavedCart() {
 
 function saveSavedCart(cart) {
   localStorage.setItem(PAGE_CART_KEY, JSON.stringify(cart));
+}
+
+function getSavedOrders() {
+  try {
+    return JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveSavedOrders(orders) {
+  localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders));
+}
+
+function createTestOrder(method = 'PayPal') {
+  const cart = getSavedCart();
+  const activeCart = cart.length ? cart : [{
+    id: 8,
+    name: 'Studio Wide Trouser',
+    price: 168,
+    color: 'Black',
+    sizes: ['M'],
+    qty: 1,
+    img: 'assets/studio-wide-trouser.png'
+  }];
+  const total = activeCart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+  const email = document.querySelector('.checkout-form input[type="email"]')?.value.trim().toLowerCase()
+    || localStorage.getItem('zavoraUserEmail')
+    || 'customer@zavorafashion.com';
+  const order = {
+    id: `ZAV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+    email,
+    method,
+    total,
+    items: activeCart,
+    status: method === 'COD' ? 'Order confirmed - Cash on Delivery' : 'Payment received',
+    tracking: `ZV${String(Date.now()).slice(-8)}`,
+    createdAt: new Date().toISOString()
+  };
+  const orders = getSavedOrders().filter((item) => item.id !== order.id);
+  orders.unshift(order);
+  saveSavedOrders(orders);
+  localStorage.setItem('zavoraLastOrder', JSON.stringify(order));
+  return order;
 }
 
 function cartQuantity() {
@@ -503,7 +548,10 @@ function hydrateCheckoutSummary() {
     node.textContent = money(payable);
   });
   const pay = document.querySelector('[data-pay-total]');
-  if (pay) pay.textContent = payable ? `Pay ${money(payable)}` : 'Complete gift card order';
+  if (pay) {
+    pay.textContent = payable ? `Pay ${money(payable)}` : 'Complete gift card order';
+    pay.dataset.payTotal = pay.textContent;
+  }
 }
 
 function ensureWishlistDrawer() {
@@ -954,6 +1002,21 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  const payNow = event.target.closest('.pay-now');
+  if (payNow && window.location.pathname.endsWith('checkout.html')) {
+    event.preventDefault();
+    const selected = document.querySelector('input[name="payment"]:checked')?.value || 'paypal';
+    const method = selected === 'cod' ? 'COD' : 'PayPal';
+    const order = createTestOrder(method);
+    if (method === 'COD') {
+      localStorage.removeItem(PAGE_CART_KEY);
+      window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=cod`;
+      return;
+    }
+    window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=paypal`;
+    return;
+  }
+
   const optionButton = event.target.closest('.option-row button');
   if (optionButton) {
     event.preventDefault();
@@ -1183,6 +1246,121 @@ function initRealtimeTracking() {
   setInterval(update, 5000);
 }
 
+function trackingTemplate(order) {
+  const created = order.createdAt ? new Date(order.createdAt) : new Date();
+  const stageText = order.method === 'COD' ? 'COD order confirmed' : 'Payment received';
+  return `
+    <h2>#${order.id.replace(/^#/, '')}</h2>
+    <p>${order.items?.[0]?.name || 'Zavora order'} is active. Payment method: ${order.method || 'PayPal'}.</p>
+    <ol class="tracking-timeline">
+      <li class="done"><strong>Order confirmed</strong><span>${stageText} on ${created.toLocaleDateString()}</span></li>
+      <li class="done"><strong>Packing</strong><span>Zavora warehouse is preparing your item</span></li>
+      <li><strong>Shipped</strong><span>Tracking number ${order.tracking || 'will appear after dispatch'}</span></li>
+      <li><strong>Delivered</strong><span>Estimated in 3-5 business days</span></li>
+    </ol>
+  `;
+}
+
+function initTrackOrderLookup() {
+  if (!window.location.pathname.endsWith('track-order.html')) return;
+  const form = document.querySelector('.tracking-form .form-panel');
+  const card = document.querySelector('.tracking-card');
+  if (!form || !card) return;
+  card.hidden = true;
+  let note = form.querySelector('[data-track-note]');
+  if (!note) {
+    note = document.createElement('p');
+    note.dataset.trackNote = 'true';
+    note.className = 'track-note';
+    form.appendChild(note);
+  }
+  const button = form.querySelector('.primary-cta');
+  const inputs = [...form.querySelectorAll('input')];
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('order')) inputs[0].value = `#${params.get('order').replace(/^#/, '')}`;
+  if (params.get('email')) inputs[1].value = params.get('email');
+  function lookupOrder() {
+    const orderId = inputs[0]?.value.trim().replace(/^#/, '').toUpperCase();
+    const email = inputs[1]?.value.trim().toLowerCase();
+    if (!orderId || !email) {
+      note.textContent = 'Enter order ID and email to view tracking updates.';
+      card.hidden = true;
+      return;
+    }
+    const demoOrder = {
+      id: 'ZAV-2026-1048',
+      email,
+      method: 'PayPal',
+      total: 168,
+      tracking: 'ZV20261048',
+      createdAt: new Date().toISOString(),
+      items: [{ name: 'Studio Wide Trouser' }]
+    };
+    const orders = [demoOrder, ...getSavedOrders()];
+    const match = orders.find((order) => order.id.replace(/^#/, '').toUpperCase() === orderId && String(order.email || '').toLowerCase() === email);
+    if (!match) {
+      note.textContent = 'No matching order found. Check order ID and email address.';
+      card.hidden = true;
+      return;
+    }
+    note.textContent = 'Tracking found. Live updates are now active.';
+    card.innerHTML = trackingTemplate(match);
+    card.hidden = false;
+    initRealtimeTracking();
+  }
+  button?.addEventListener('click', lookupOrder);
+  if (params.get('order') && params.get('email')) lookupOrder();
+}
+
+function initOrderSuccessDetails() {
+  if (!window.location.pathname.endsWith('order-success.html')) return;
+  let order = null;
+  try {
+    order = JSON.parse(localStorage.getItem('zavoraLastOrder'));
+  } catch (error) {
+    order = null;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const paramOrder = params.get('order');
+  if (paramOrder && (!order || order.id !== paramOrder)) {
+    order = getSavedOrders().find((item) => item.id === paramOrder) || order;
+  }
+  if (!order) return;
+  const success = document.querySelector('.success-page');
+  if (success) {
+    const eyebrow = success.querySelector('.eyebrow');
+    const copy = success.querySelector('p:not(.eyebrow)');
+    const track = success.querySelector('a[href="track-order.html"]');
+    if (eyebrow) eyebrow.textContent = order.method === 'COD' ? 'Order Confirmed' : 'Payment Complete';
+    if (copy) copy.innerHTML = `Your Zavora order <strong>#${order.id}</strong> has been confirmed. ${order.method === 'COD' ? 'Cash on Delivery is selected.' : 'A receipt and shipping update will be sent to your email.'}`;
+    if (track) track.href = `track-order.html?order=${encodeURIComponent(order.id)}&email=${encodeURIComponent(order.email || '')}`;
+  }
+  const cards = document.querySelectorAll('.success-page + .section .page-card p');
+  if (cards[0]) cards[0].textContent = order.method === 'COD' ? 'Confirmed and waiting for COD delivery processing.' : 'Confirmed and moving to packing.';
+  if (cards[2]) cards[2].textContent = `${order.method || 'PayPal'} selected. Total: ${money(order.total || 0)}.`;
+}
+
+function initPaymentMethodUi() {
+  if (!window.location.pathname.endsWith('checkout.html')) return;
+  const methods = document.querySelector('.payment-methods');
+  const paypal = document.querySelector('.paypal-checkout');
+  const panel = document.querySelector('.coming-soon-panel');
+  const pay = document.querySelector('.pay-now');
+  if (!methods) return;
+  function update() {
+    const selected = methods.querySelector('input[name="payment"]:checked')?.value || 'paypal';
+    const cod = selected === 'cod';
+    if (paypal) paypal.hidden = cod;
+    if (panel) panel.textContent = cod
+      ? 'Cash on Delivery test mode is active. Place the order now and track it with order ID plus email.'
+      : 'Card, Apple Pay, and Google Pay checkout are coming soon. Please use PayPal or COD test mode today.';
+    if (pay && cod) pay.textContent = 'Place COD Order';
+    if (pay && !cod && pay.dataset.payTotal) pay.textContent = pay.dataset.payTotal;
+  }
+  methods.addEventListener('change', update);
+  update();
+}
+
 function initFaqAccordions() {
   document.querySelectorAll('[data-faq-question]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -1226,6 +1404,12 @@ function initCheckoutGiftUi() {
   if (subtotal) {
     subtotal.removeAttribute('data-checkout-total');
     subtotal.setAttribute('data-checkout-subtotal', '');
+  }
+  const methods = document.querySelector('.payment-methods');
+  if (methods && !methods.querySelector('[data-cod-method]')) {
+    methods.insertAdjacentHTML('beforeend', `
+      <label class="payment-active cod-method" data-cod-method><input type="radio" name="payment" value="cod"><span class="pay-icon cod">COD</span><small>Cash on Delivery test order</small></label>
+    `);
   }
 }
 
@@ -1348,6 +1532,9 @@ cleanAuthPageFooter();
 initCheckoutGiftUi();
 hydrateCheckoutSummary();
 initRealtimeTracking();
+initTrackOrderLookup();
+initOrderSuccessDetails();
+initPaymentMethodUi();
 initFaqAccordions();
 initProductOptions();
 
