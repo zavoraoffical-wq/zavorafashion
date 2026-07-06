@@ -26,6 +26,7 @@ const APPLIED_GIFT_KEY = 'zavoraAppliedGiftCard';
 const SIGNUP_OTP_KEY = 'zavoraSignupOtp';
 const ORDER_HISTORY_KEY = 'zavoraOrders';
 const SUPPORT_EMAIL = 'support@zavorafashion.com';
+const NOREPLY_EMAIL = 'noreply@zavorafashion.com';
 const LEGAL_EMAIL = 'legal@zavorafashion.com';
 const OFFICIAL_EMAIL = 'zavoraofficial@zavorafashion.com';
 const ZAVORA_LOGO = 'assets/zavora-logo.svg';
@@ -347,7 +348,7 @@ function renderSignupOtpStep(form, payload, sentByApi = false) {
       <input inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="6-digit code" data-signup-otp-input>
       <button class="primary-cta" type="button" data-verify-signup-otp>Verify & Create Account</button>
       <button class="text-link otp-link" type="button" data-resend-signup-otp>Resend OTP</button>
-      <p class="otp-note">${sentByApi ? `OTP sent from ${SUPPORT_EMAIL}.` : `Demo mode OTP: ${payload.otp}. Connect Resend backend at /api/send-otp for real email.`}</p>
+      <p class="otp-note">${sentByApi ? `OTP sent from ${NOREPLY_EMAIL}.` : `Demo mode OTP: ${payload.otp}. Connect Resend backend at /api/send-otp for real email.`}</p>
     </div>
   `;
   form.querySelector('[data-signup-otp-input]')?.focus();
@@ -1541,7 +1542,7 @@ function injectEmailContactCards() {
     <div>
       <p class="eyebrow">Zavora Contacts</p>
       <h2>Need help or legal support?</h2>
-      <p>For customer support, order help, OTP, returns, sizing, and payment questions use ${SUPPORT_EMAIL}. For policy, privacy, copyright, or legal questions use ${LEGAL_EMAIL}.</p>
+      <p>For customer support use support@zavorafashion.com. For orders use orders@zavorafashion.com, shipping use shipping@zavorafashion.com, returns use returns@zavorafashion.com, and general enquiries use info@zavorafashion.com. For policy or legal questions use ${LEGAL_EMAIL}.</p>
     </div>
     <div class="email-contact-actions">
       <a class="secondary-btn" href="mailto:${SUPPORT_EMAIL}">Email Support</a>

@@ -20,7 +20,7 @@ function money(value) {
 }
 
 function senderFromEnv() {
-  const configured = process.env.ORDER_FROM_EMAIL || process.env.ORDER_EMAIL || 'order@zavorafashion.com';
+  const configured = process.env.ORDER_FROM_EMAIL || process.env.ORDERS_EMAIL || 'orders@zavorafashion.com';
   return configured.includes('<') ? configured : `Zavora Orders <${configured}>`;
 }
 

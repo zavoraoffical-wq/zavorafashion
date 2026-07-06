@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.FROM_EMAIL || 'Zavora Fashion <zavoraofficial@zavorafashion.com>';
+  const from = process.env.NOREPLY_FROM_EMAIL || process.env.FROM_EMAIL || 'Zavora No Reply <noreply@zavorafashion.com>';
 
   if (!apiKey) {
     return json(res, 500, { error: 'RESEND_API_KEY is not configured' });

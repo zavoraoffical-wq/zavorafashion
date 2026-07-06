@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
     hash: sign(`${email}:${otp}:${expiresAt}`)
   })).toString('base64url');
 
-  const from = process.env.ADMIN_OTP_EMAIL || process.env.FROM_EMAIL || 'Zavora Support <support@zavorafashion.com>';
+  const from = process.env.ADMIN_OTP_EMAIL || process.env.NOREPLY_FROM_EMAIL || 'Zavora No Reply <noreply@zavorafashion.com>';
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
     headers: {

@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
 
   const origin = req.headers.origin || process.env.SITE_URL || 'https://zavorafashion.com';
   const resetUrl = `${origin.replace(/\/$/, '')}/forgot-password.html?reset=sent`;
-  const from = process.env.PASSWORD_RESET_EMAIL || process.env.FROM_EMAIL || 'Zavora Support <support@zavorafashion.com>';
+  const from = process.env.PASSWORD_RESET_EMAIL || process.env.NOREPLY_FROM_EMAIL || 'Zavora No Reply <noreply@zavorafashion.com>';
 
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
