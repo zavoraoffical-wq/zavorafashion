@@ -338,14 +338,48 @@ function closeMobileMenu() {
   document.body.classList.remove('mobile-menu-open');
 }
 
+const megaMenuData = {
+  women: {
+    label: 'Women edit',
+    title: 'Premium women streetwear, clean fits, everyday luxury.',
+    href: 'women.html',
+    items: ['Oversized Tees', 'Baby Tees', 'Hoodies', 'Cropped Hoodies', 'Cargo Pants', 'Sweatpants', 'Jackets', 'Accessories']
+  },
+  men: {
+    label: 'Men edit',
+    title: 'Structured essentials, heavyweight layers, and relaxed streetwear.',
+    href: 'men.html',
+    items: ['Oversized Tees', 'Heavyweight Tees', 'Hoodies', 'Zip Hoodies', 'Cargo Pants', 'Sweatpants', 'Jackets', 'Accessories']
+  }
+};
+
+function updateMegaMenu(type) {
+  const data = megaMenuData[type] || megaMenuData.women;
+  const menu = $('#megaMenu');
+  const eyebrow = menu.querySelector('.eyebrow');
+  const title = menu.querySelector('h2');
+  const grid = menu.querySelector('.mega-grid');
+  if (eyebrow) eyebrow.textContent = data.label;
+  if (title) title.textContent = data.title;
+  if (grid) {
+    grid.innerHTML = data.items.map((item) => `<a href="${data.href}">${item}</a>`).join('');
+  }
+}
+
 $('[data-open-menu]').addEventListener('click', openMobileMenu);
 $('[data-close-mobile]').addEventListener('click', closeMobileMenu);
 $$('#mobilePanel a').forEach((link) => link.addEventListener('click', closeMobileMenu));
 $('#searchInput').addEventListener('input', (event) => renderSuggestions(event.target.value));
 
 $$('[data-mega]').forEach(button => {
-  button.addEventListener('mouseenter', () => $('#megaMenu').classList.add('open'));
-  button.addEventListener('focus', () => $('#megaMenu').classList.add('open'));
+  button.addEventListener('mouseenter', () => {
+    updateMegaMenu(button.dataset.mega);
+    $('#megaMenu').classList.add('open');
+  });
+  button.addEventListener('focus', () => {
+    updateMegaMenu(button.dataset.mega);
+    $('#megaMenu').classList.add('open');
+  });
 });
 $('#megaMenu').addEventListener('mouseleave', () => $('#megaMenu').classList.remove('open'));
 
