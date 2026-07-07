@@ -115,6 +115,7 @@ const products = [
 
 const CART_KEY = 'zavoraCart';
 const HOME_AUTH_KEY = 'zavoraLoggedIn';
+const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const state = { cart: [], visible: 6 };
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
@@ -138,6 +139,70 @@ function saveCart() {
   localStorage.setItem(CART_KEY, JSON.stringify(state.cart));
 }
 
+function getAdminProducts() {
+  try {
+    return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function normalizeAdminProduct(product, index) {
+  const image = product.image || product.img || 'assets/studio-wide-trouser.png';
+  return {
+    id: Number(product.id || Date.now() + index),
+    name: product.name || 'Zavora Preview Product',
+    category: product.category || 'new',
+    collection: [product.collection || 'new', 'new'],
+    color: product.color || 'black',
+    sizes: product.sizes || ['S', 'M', 'L', 'XL'],
+    price: Number(product.price || 0),
+    sale: false,
+    popularity: 100,
+    badge: product.badge || 'New',
+    img: image,
+    alt: product.alt || image,
+    description: product.description || 'A premium Zavora Fashion piece prepared from the admin product preview.'
+  };
+}
+
+function getHomeProducts() {
+  return [...getAdminProducts().map(normalizeAdminProduct), ...products];
+}
+
+function dailyProduct(productsForDay) {
+  if (!productsForDay.length) return null;
+  const dayNumber = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000);
+  return productsForDay[dayNumber % productsForDay.length];
+}
+
+function renderDailyFeature() {
+  const anchor = document.querySelector('.campaign-grid');
+  if (!anchor || document.querySelector('.daily-feature')) return;
+  const product = dailyProduct(getHomeProducts());
+  if (!product) return;
+  anchor.insertAdjacentHTML('beforebegin', `
+    <section class="daily-feature section" aria-label="Daily featured product">
+      <div class="daily-feature-copy">
+        <p class="eyebrow">Daily Product Edit</p>
+        <h2>${product.name}</h2>
+        <p>${product.description || "Today rotating Zavora feature, selected for premium streetwear styling."}</p>
+        <div class="daily-feature-meta">
+          <span>${product.badge}</span>
+          <strong>${money(product.price)}</strong>
+        </div>
+        <div class="daily-feature-actions">
+          <button data-add="${product.id}">Add to Bag</button>
+          <a href="product.html">View Product</a>
+        </div>
+      </div>
+      <a class="daily-feature-media" href="product.html" aria-label="Open ${product.name}">
+        <img src="${product.img}" alt="${product.name}" loading="lazy">
+      </a>
+    </section>
+  `);
+}
+
 function renderProducts() {
   const category = $('#categoryFilter').value;
   const collection = $('#collectionFilter').value;
@@ -147,7 +212,7 @@ function renderProducts() {
   const sale = $('#saleFilter').checked;
   const sort = $('#sortFilter').value;
 
-  let filtered = products.filter((product) => {
+  let filtered = getHomeProducts().filter((product) => {
     return (category === 'all' || product.category === category)
       && (collection === 'all' || product.collection.includes(collection))
       && (color === 'all' || product.color === color)
@@ -203,7 +268,8 @@ function swatch(color) {
 }
 
 function addToCart(id) {
-  const product = products.find(item => item.id === Number(id));
+  const product = getHomeProducts().find(item => item.id === Number(id));
+  if (!product) return;
   const found = state.cart.find(item => item.id === product.id);
   if (found) found.qty += 1;
   else state.cart.push({ ...product, qty: 1 });
@@ -238,7 +304,8 @@ function syncHomeWishlistCount() {
 }
 
 function openQuickView(id) {
-  const product = products.find(item => item.id === Number(id));
+  const product = getHomeProducts().find(item => item.id === Number(id));
+  if (!product) return;
   $('#quickViewContent').innerHTML = `
     <img src="${product.img}" alt="${product.name}">
     <p class="eyebrow">${product.badge}</p>
@@ -391,6 +458,7 @@ $('[data-recommend]').addEventListener('click', () => {
 });
 
 loadSavedCart();
+renderDailyFeature();
 renderProducts();
 renderCart();
 syncHomeWishlistCount();
