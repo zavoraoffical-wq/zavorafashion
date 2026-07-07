@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /admin-login.html
+Disallow: /dashboard.html
+Disallow: /account.html
+Disallow: /my-account.html
+Disallow: /login.html
+Disallow: /register.html
+Disallow: /sign-up.html
+Disallow: /forgot-password.html
+Disallow: /cart.html
+Disallow: /checkout.html
+Disallow: /payment.html
+Disallow: /order-success.html
+Disallow: /orders.html
+Disallow: /order-history.html
+Disallow: /saved-addresses.html
+Disallow: /change-password.html
+Disallow: /profile.html
+Disallow: /logout.html
+Disallow: /site-preview.html
+
+Sitemap: https://www.zavorafashion.com/sitemap.xml
