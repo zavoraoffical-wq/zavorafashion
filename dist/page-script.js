@@ -43,35 +43,7 @@ const accountRedirects = {
 };
 
 function initLaunchGate() {
-  const pageName = window.location.pathname.split('/').pop() || 'index.html';
-  const openPages = ['admin-login.html', 'admin.html'];
-  if (openPages.includes(pageName) || window.location.pathname.startsWith('/api/')) return false;
-
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('preview') === LAUNCH_PREVIEW_CODE) {
-    return false;
-  }
-
-  document.body.className = 'coming-soon-body';
-  document.body.innerHTML = `
-    <main class="launch-page">
-      <section class="launch-card">
-        <img src="${ZAVORA_LOGO}" alt="Zavora Fashion" class="launch-logo">
-        <p class="eyebrow">Launching Soon</p>
-        <h1>Zavora Fashion is getting ready.</h1>
-        <p>Premium streetwear, curated products, secure checkout, and private drops are being prepared for launch.</p>
-        <form class="launch-form">
-          <input type="email" placeholder="Email for launch updates" aria-label="Email for launch updates">
-          <button type="button">Notify Me</button>
-        </form>
-        <div class="launch-links">
-          <a href="admin-login.html">Admin</a>
-          <a href="mailto:support@zavorafashion.com">support@zavorafashion.com</a>
-        </div>
-      </section>
-    </main>
-  `;
-  return true;
+  return false;
 }
 
 function money(value) {
