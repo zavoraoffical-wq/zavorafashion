@@ -31,6 +31,19 @@ async function printfulFetch(path) {
   return body;
 }
 
+async function tryPrintfulFetch(paths) {
+  const errors = [];
+  for (const path of paths) {
+    try {
+      const body = await printfulFetch(path);
+      return { body, path };
+    } catch (error) {
+      errors.push(`${path}: ${error.message}`);
+    }
+  }
+  throw new Error(errors.join(' | '));
+}
+
 function pickRule(name) {
   return categoryRules.find((rule) => rule.match.test(name)) || {
     category: 'tees',
@@ -90,12 +103,12 @@ function sizesFromVariants(variants = []) {
 }
 
 function normalizeProduct(product, index) {
-  const name = seoName(product?.name || product?.external_name || product?.sync_product?.name, index);
+  const name = seoName(product?.name || product?.external_name || product?.sync_product?.name || product?.title, index);
   const rule = pickRule(name);
   const variants = product?.sync_variants || product?.variants || [];
   return {
-    id: Number(product?.id || product?.sync_product?.id || Date.now() + index),
-    printfulId: product?.id || product?.sync_product?.id || null,
+    id: Number(product?.id || product?.template_id || product?.sync_product?.id || Date.now() + index),
+    printfulId: product?.id || product?.template_id || product?.sync_product?.id || null,
     name,
     category: rule.category,
     collection: [rule.collection, index < 6 ? 'new' : 'best'],
@@ -126,7 +139,7 @@ module.exports = async function handler(req, res) {
     const list = await printfulFetch(`/store/products?limit=${limit}&offset=${offset}`);
     const rows = Array.isArray(list.result) ? list.result : [];
 
-    const detailed = await Promise.all(rows.map(async (product) => {
+    let detailed = await Promise.all(rows.map(async (product) => {
       try {
         const detail = await printfulFetch(`/store/products/${product.id}`);
         return detail.result?.sync_product ? { ...detail.result.sync_product, sync_variants: detail.result.sync_variants || [] } : product;
@@ -135,8 +148,21 @@ module.exports = async function handler(req, res) {
       }
     }));
 
+    let source = 'printful-store';
+
+    if (!detailed.length) {
+      const templateResponse = await tryPrintfulFetch([
+        `/product-templates?limit=${limit}&offset=${offset}`,
+        `/v2/product-templates?limit=${limit}&offset=${offset}`,
+        `/products/templates?limit=${limit}&offset=${offset}`
+      ]);
+      const result = templateResponse.body.result || templateResponse.body.data || [];
+      detailed = Array.isArray(result) ? result : (result.items || result.templates || []);
+      source = `printful-templates:${templateResponse.path}`;
+    }
+
     const products = detailed.slice(0, limit).map(normalizeProduct);
-    response(res, 200, { ok: true, source: 'printful', page, limit, count: products.length, products });
+    response(res, 200, { ok: true, source, page, limit, count: products.length, products });
   } catch (error) {
     response(res, 500, { ok: false, error: error.message || 'Unable to import Printful products.' });
   }
