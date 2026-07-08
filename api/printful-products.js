@@ -51,6 +51,24 @@ async function tryPrintfulFetch(paths) {
   throw new Error(errors.join(' | '));
 }
 
+async function printfulCatalogFetch(path) {
+  const result = await fetch(`${PRINTFUL_API_BASE_URL}${path}`, {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  const body = await result.json().catch(() => ({}));
+  if (!result.ok) {
+    throw new Error(body?.error?.message || body?.message || `Printful catalog request failed: ${result.status}`);
+  }
+  return body;
+}
+
+function isMenCatalogProduct(product) {
+  const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
+  const apparel = /(men|men's|unisex|hoodie|tee|t-shirt|shirt|sweatshirt|pullover|jacket|pants|joggers|cap|hat|beanie)/i.test(text);
+  const excluded = /(women|women's|kids|youth|baby|toddler|dress|skirt|bikini|bra|legging|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|luggage)/i.test(text);
+  return apparel && !excluded && !product?.is_discontinued;
+}
+
 function pickRule(name) {
   return categoryRules.find((rule) => rule.match.test(name)) || {
     category: 'tees',
@@ -134,6 +152,17 @@ function normalizeProduct(product, index) {
   };
 }
 
+function normalizeCatalogProduct(product, index) {
+  return normalizeProduct({
+    id: product.id,
+    name: product.title || product.type_name,
+    title: product.title,
+    image: product.image,
+    price: product.retail_price,
+    description: product.description
+  }, index);
+}
+
 module.exports = async function handler(req, res) {
   if (!PRINTFUL_API_KEY) {
     return response(res, 500, { ok: false, error: 'PRINTFUL_API_KEY is missing in Vercel environment variables.' });
@@ -161,17 +190,28 @@ module.exports = async function handler(req, res) {
     let source = 'printful-store';
 
     if (!detailed.length) {
-      const templateResponse = await tryPrintfulFetch([
-        `/product-templates?limit=${limit}&offset=${offset}`,
-        `/v2/product-templates?limit=${limit}&offset=${offset}`,
-        `/products/templates?limit=${limit}&offset=${offset}`
-      ]);
-      const result = templateResponse.body.result || templateResponse.body.data || [];
-      detailed = Array.isArray(result) ? result : (result.items || result.templates || []);
-      source = `printful-templates:${templateResponse.path}`;
+      try {
+        const templateResponse = await tryPrintfulFetch([
+          `/product-templates?limit=${limit}&offset=${offset}`,
+          `/v2/product-templates?limit=${limit}&offset=${offset}`,
+          `/products/templates?limit=${limit}&offset=${offset}`
+        ]);
+        const result = templateResponse.body.result || templateResponse.body.data || [];
+        detailed = Array.isArray(result) ? result : (result.items || result.templates || []);
+        source = `printful-templates:${templateResponse.path}`;
+      } catch (error) {
+        detailed = [];
+      }
     }
 
-    const products = detailed.slice(0, limit).map(normalizeProduct);
+    if (!detailed.length) {
+      const catalog = await printfulCatalogFetch('/products');
+      const catalogRows = Array.isArray(catalog.result) ? catalog.result : [];
+      detailed = catalogRows.filter(isMenCatalogProduct).slice(offset, offset + limit).map(normalizeCatalogProduct);
+      source = 'printful-catalog';
+    }
+
+    const products = detailed.slice(0, limit).map((product, index) => product?.seoTitle ? product : normalizeProduct(product, index));
     response(res, 200, { ok: true, source, page, limit, count: products.length, products });
   } catch (error) {
     response(res, 500, { ok: false, error: error.message || 'Unable to import Printful products.' });
