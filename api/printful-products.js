@@ -19,6 +19,8 @@ function response(res, status, body) {
 }
 
 async function printfulFetch(path) {
+  const separator = path.includes('?') ? '&' : '?';
+  const scopedPath = PRINTFUL_STORE_ID ? `${path}${separator}store_id=${encodeURIComponent(PRINTFUL_STORE_ID)}` : path;
   const headers = {
     Authorization: `Bearer ${PRINTFUL_API_KEY}`,
     'Content-Type': 'application/json'
@@ -26,7 +28,7 @@ async function printfulFetch(path) {
   if (PRINTFUL_STORE_ID) {
     headers['X-PF-Store-Id'] = PRINTFUL_STORE_ID;
   }
-  const result = await fetch(`${PRINTFUL_API_BASE_URL}${path}`, {
+  const result = await fetch(`${PRINTFUL_API_BASE_URL}${scopedPath}`, {
     headers
   });
   const body = await result.json().catch(() => ({}));
