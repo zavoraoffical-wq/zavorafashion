@@ -1,3 +1,32 @@
+function initHomeLaunchGate() {
+  const pageName = window.location.pathname.split('/').pop() || 'index.html';
+  const isHome = pageName === 'index.html' || pageName === '';
+  const params = new URLSearchParams(window.location.search);
+  if (!isHome || params.get('preview') === 'zavora-live') return false;
+
+  document.body.className = 'coming-soon-body';
+  document.body.innerHTML = `
+    <main class="launch-page">
+      <section class="launch-card">
+        <img src="assets/zavora-logo.png" alt="Zavora Fashion" class="launch-logo">
+        <p class="eyebrow">Launching Soon</p>
+        <h1>Zavora Fashion is getting ready.</h1>
+        <p>Premium streetwear, curated products, secure checkout, and private drops are being prepared for launch.</p>
+        <form class="launch-form">
+          <input type="email" placeholder="Email for launch updates" aria-label="Email for launch updates">
+          <button type="button">Notify Me</button>
+        </form>
+        <div class="launch-links">
+          <a href="admin-login.html">Admin</a>
+          <a href="mailto:support@zavorafashion.com">support@zavorafashion.com</a>
+        </div>
+      </section>
+    </main>
+  `;
+  return true;
+}
+
+if (!initHomeLaunchGate()) {
 const products = [
   {
     id: 1,
@@ -110,15 +139,173 @@ const products = [
     badge: 'New',
     img: 'https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=700&q=80',
     alt: 'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 9,
+    name: 'Cropped Zip Hoodie',
+    category: 'hoodies',
+    collection: ['new', 'limited'],
+    color: 'gray',
+    sizes: ['XS', 'S', 'M', 'L'],
+    price: 124,
+    sale: false,
+    popularity: 84,
+    badge: 'New',
+    img: 'https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 10,
+    name: 'Heavyweight Box Tee',
+    category: 'tees',
+    collection: ['new', 'best'],
+    color: 'white',
+    sizes: ['S', 'M', 'L', 'XL'],
+    price: 86,
+    sale: false,
+    popularity: 89,
+    badge: 'Heavyweight',
+    img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 11,
+    name: 'Washed Cargo Trouser',
+    category: 'pants',
+    collection: ['trending', 'oversized'],
+    color: 'gray',
+    sizes: ['S', 'M', 'L', 'XL'],
+    price: 152,
+    sale: false,
+    popularity: 87,
+    badge: 'Trending',
+    img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 12,
+    name: 'Nylon Track Jacket',
+    category: 'outerwear',
+    collection: ['limited', 'best'],
+    color: 'black',
+    sizes: ['S', 'M', 'L', 'XL'],
+    price: 218,
+    sale: false,
+    popularity: 92,
+    badge: 'Best seller',
+    img: 'https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 13,
+    name: 'Baby Rib Tee',
+    category: 'tees',
+    collection: ['new', 'trending'],
+    color: 'white',
+    sizes: ['XS', 'S', 'M', 'L'],
+    price: 58,
+    sale: false,
+    popularity: 78,
+    badge: 'Women edit',
+    img: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 14,
+    name: 'Oversized Graphic Tee',
+    category: 'tees',
+    collection: ['oversized', 'new'],
+    color: 'white',
+    sizes: ['S', 'M', 'L', 'XL'],
+    price: 74,
+    sale: false,
+    popularity: 81,
+    badge: 'Oversized',
+    img: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 15,
+    name: 'Wide Leg Sweatpant',
+    category: 'pants',
+    collection: ['best', 'oversized'],
+    color: 'gray',
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    price: 118,
+    sale: false,
+    popularity: 85,
+    badge: 'Core',
+    img: 'https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 16,
+    name: 'Minimal Coach Jacket',
+    category: 'outerwear',
+    collection: ['new', 'limited'],
+    color: 'black',
+    sizes: ['S', 'M', 'L'],
+    price: 196,
+    sale: false,
+    popularity: 80,
+    badge: 'Limited',
+    img: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 17,
+    name: 'Gold Logo Beanie',
+    category: 'accessories',
+    collection: ['new', 'best'],
+    color: 'black',
+    sizes: ['M', 'L'],
+    price: 46,
+    sale: false,
+    popularity: 76,
+    badge: 'Gift pick',
+    img: 'https://images.unsplash.com/photo-1534215754734-18e55d13e346?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=700&q=80'
+  },
+  {
+    id: 18,
+    name: 'Luxury Tote Bag',
+    category: 'accessories',
+    collection: ['trending', 'limited'],
+    color: 'black',
+    sizes: ['M'],
+    price: 96,
+    sale: false,
+    popularity: 77,
+    badge: 'Zavora',
+    img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=80',
+    alt: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=700&q=80'
   }
 ];
 
 const CART_KEY = 'zavoraCart';
 const HOME_AUTH_KEY = 'zavoraLoggedIn';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
-const state = { cart: [], visible: 6 };
+const state = { cart: [], visible: 18 };
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
+const homeIcons = {
+  search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>',
+  moon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"></path></svg>',
+  heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 5.2c-1.8-1.7-4.7-1.6-6.4.2L12 6.6l-1.1-1.2c-1.7-1.8-4.6-1.9-6.4-.2-1.9 1.8-2 4.8-.2 6.7L12 19.7l7.7-7.8c1.8-1.9 1.7-4.9-.2-6.7Z"></path></svg>'
+};
+
+function hydrateHomeHeaderIcons() {
+  document.querySelectorAll('[data-search]').forEach((button) => { button.innerHTML = homeIcons.search; });
+  document.querySelectorAll('[data-dark]').forEach((button) => { button.innerHTML = homeIcons.moon; });
+  document.querySelectorAll('[data-panel]').forEach((button) => { button.innerHTML = homeIcons.heart; });
+}
+
+document.addEventListener('error', (event) => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement) || image.dataset.fallbackApplied) return;
+  image.dataset.fallbackApplied = 'true';
+  image.src = 'assets/studio-wide-trouser.png';
+}, true);
 
 const header = $('#siteHeader');
 window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 24));
@@ -319,10 +506,11 @@ function openQuickView(id) {
 }
 
 function renderSuggestions(term = '') {
-  const matches = products
+  const catalog = getHomeProducts();
+  const matches = catalog
     .filter(product => product.name.toLowerCase().includes(term.toLowerCase()) || product.category.includes(term.toLowerCase()))
     .slice(0, 6);
-  $('#suggestions').innerHTML = (matches.length ? matches : products.slice(0, 4)).map(product => `
+  $('#suggestions').innerHTML = (matches.length ? matches : catalog.slice(0, 4)).map(product => `
     <button data-view="${product.id}"><strong>${product.name}</strong><br>${money(product.price)} • ${product.category}</button>
   `).join('');
 }
@@ -330,7 +518,7 @@ function renderSuggestions(term = '') {
 $$('select, input[type="range"], input[type="checkbox"]').forEach(control => {
   control.addEventListener('input', () => {
     $('#priceValue').textContent = money(Number($('#priceFilter').value));
-    state.visible = 6;
+    state.visible = 18;
     renderProducts();
   });
 });
@@ -457,8 +645,10 @@ $('[data-recommend]').addEventListener('click', () => {
   renderProducts();
 });
 
+hydrateHomeHeaderIcons();
 loadSavedCart();
 renderDailyFeature();
 renderProducts();
 renderCart();
 syncHomeWishlistCount();
+}
