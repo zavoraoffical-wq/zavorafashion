@@ -1,11 +1,13 @@
 const pageHeader = document.querySelector('.page-header');
 const quickProducts = [
-  'Noir Oversized Hoodie',
-  'Gold Label Tee',
-  'Avenue Cargo Pant',
-  'Ivory Heavyweight Tee',
-  'Zavora Cropped Jacket',
-  'Monogram Cap',
+  'Oversized Tees',
+  'Heavyweight Tees',
+  'Hoodies',
+  'Zip Hoodies',
+  'Cargo Pants',
+  'Sweatpants',
+  'Jackets',
+  'Accessories',
   'Gift Cards'
 ];
 
@@ -102,16 +104,9 @@ function saveSavedOrders(orders) {
 
 function createTestOrder(method = 'PayPal') {
   const cart = getSavedCart();
-  const activeCart = cart.length ? cart : [{
-    id: 8,
-    name: 'Studio Wide Trouser',
-    price: 168,
-    color: 'Black',
-    sizes: ['M'],
-    qty: 1,
-    img: 'assets/studio-wide-trouser.png'
-  }];
-  const total = activeCart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+  if (!cart.length) return null;
+  const shippingCost = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
+  const total = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0) + shippingCost;
   const email = document.querySelector('.checkout-form input[type="email"]')?.value.trim().toLowerCase()
     || localStorage.getItem('zavoraUserEmail')
     || 'customer@zavorafashion.com';
@@ -120,7 +115,8 @@ function createTestOrder(method = 'PayPal') {
     email,
     method,
     total,
-    items: activeCart,
+    shipping: shippingCost,
+    items: cart,
     status: method === 'COD' ? 'Order confirmed - Cash on Delivery' : 'Payment received',
     tracking: `ZV${String(Date.now()).slice(-8)}`,
     createdAt: new Date().toISOString()
@@ -643,16 +639,9 @@ function hydrateCheckoutSummary() {
   const summary = document.querySelector('[data-checkout-summary]');
   if (!summary) return;
   const cart = getSavedCart();
-  const activeCart = cart.length ? cart : [{
-    id: 8,
-    name: 'Studio Wide Trouser',
-    color: 'black',
-    sizes: ['M'],
-    price: 168,
-    qty: 1,
-    img: 'assets/studio-wide-trouser.png'
-  }];
+  const activeCart = cart;
   const total = activeCart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+  const shippingCost = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
   let giftDiscount = 0;
   try {
     const appliedGift = JSON.parse(localStorage.getItem(APPLIED_GIFT_KEY));
@@ -660,19 +649,22 @@ function hydrateCheckoutSummary() {
   } catch (error) {
     giftDiscount = 0;
   }
-  const payable = Math.max(0, total - giftDiscount);
-  summary.innerHTML = activeCart.map((item) => `
+  const payable = Math.max(0, total + shippingCost - giftDiscount);
+  summary.innerHTML = activeCart.length ? activeCart.map((item) => `
     <a class="summary-product" href="product.html">
       <img src="${item.img || 'assets/studio-wide-trouser.png'}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'">
       <div><strong>${item.name}</strong><span>${item.color || 'Black'} / ${item.sizes?.[0] || 'M'} / Qty ${item.qty || 1}</span></div>
       <b>${money(Number(item.price || 0) * Number(item.qty || 1))}</b>
     </a>
-  `).join('');
+  `).join('') : '<p class="secure-note">Your bag is empty. Add Printful products before checkout.</p>';
   document.querySelectorAll('[data-checkout-subtotal]').forEach((node) => {
     node.textContent = money(total);
   });
   document.querySelectorAll('[data-gift-discount]').forEach((node) => {
     node.textContent = giftDiscount ? `-${money(giftDiscount)}` : '-$0';
+  });
+  document.querySelectorAll('[data-shipping-total]').forEach((node) => {
+    node.textContent = shippingCost ? money(shippingCost) : 'Free';
   });
   document.querySelectorAll('[data-checkout-total]').forEach((node) => {
     node.textContent = money(payable);
@@ -698,16 +690,7 @@ function ensureWishlistDrawer() {
       <button class="close" data-close-wishlist aria-label="Close wishlist">&times;</button>
     </div>
     <div class="cart-items">
-      <div class="cart-item">
-        <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=300&q=80" alt="Ivory Heavyweight Tee">
-        <div><h3>Ivory Heavyweight Tee</h3><span>$78 - Back in stock alert ready</span></div>
-        <button type="button" aria-label="Remove item">&times;</button>
-      </div>
-      <div class="cart-item">
-        <img src="https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=300&q=80" alt="Avenue Cargo Pant">
-        <div><h3>Avenue Cargo Pant</h3><span>$132 - Recommended with hoodies</span></div>
-        <button type="button" aria-label="Remove item">&times;</button>
-      </div>
+      <p>Wishlist is ready. Save Printful products from the catalog to build your edit.</p>
     </div>
     <button class="checkout" type="button" onclick="location.href='wishlist.html'">Open Wishlist Page</button>
     <p class="payment">Saved pieces, size alerts, and back-in-stock notifications.</p>
@@ -726,17 +709,6 @@ function productCard(title, price, image, tag) {
   `;
 }
 
-const catalogImages = [
-  'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?auto=format&fit=crop&w=600&q=80'
-];
-const catalogNames = ['Noir Oversized Hoodie', 'Gold Label Tee', 'Avenue Cargo Pant', 'Zavora Cropped Jacket', 'Monogram Cap', 'Ivory Heavyweight Tee', 'Studio Wide Trouser', 'City Rib Tank', 'Luxe Track Jacket', 'Everyday Cargo Skirt'];
 function getAdminProducts() {
   try {
     return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY)) || [];
@@ -744,17 +716,7 @@ function getAdminProducts() {
     return [];
   }
 }
-const generatedCatalogData = Array.from({ length: 60 }, (_, index) => ({
-  id: index + 101,
-  name: `${catalogNames[index % catalogNames.length]} ${String(index + 1).padStart(2, '0')}`,
-  category: ['women', 'men', 'new', 'limited', 'essentials'][index % 5],
-  color: ['black', 'white', 'gray', 'gold'][index % 4],
-  size: ['XS', 'S', 'M', 'L', 'XL'][index % 5],
-  price: 48 + (index % 12) * 18,
-  image: catalogImages[index % catalogImages.length],
-  badge: index % 6 === 0 ? 'Limited' : index % 4 === 0 ? 'Best Seller' : index % 3 === 0 ? 'New' : 'Zavora'
-}));
-const catalogData = [...getAdminProducts(), ...generatedCatalogData];
+const catalogData = [...getAdminProducts()];
 
 function catalogCard(item) {
   const image = item.image || item.img || 'assets/studio-wide-trouser.png';
@@ -768,7 +730,7 @@ function catalogCard(item) {
       <div>
         <h3><a href="product.html">${item.name}</a></h3>
         <p>${item.category} / ${item.color} / ${size}</p>
-        <strong>${money(item.price)}</strong>
+        <strong class="sale-price">${item.compareAt ? `<s>${money(item.compareAt)}</s> ` : ''}${money(item.price)}</strong>
       </div>
     </article>
   `;
@@ -782,7 +744,7 @@ async function loadPrintfulCatalog() {
     const response = await fetch('/api/printful-products?gender=men&limit=23&page=1');
     const data = await response.json();
     if (!response.ok || !data.ok || !Array.isArray(data.products) || !data.products.length) return;
-    grid.insertAdjacentHTML('afterbegin', data.products.map(catalogCard).join(''));
+    grid.innerHTML = data.products.map(catalogCard).join('');
     filterLargeCatalog();
   } catch (error) {
     grid.dataset.printfulLoaded = 'failed';
@@ -810,10 +772,10 @@ function injectLargeCatalog() {
     </aside>
     <div class="catalog-area">
       <div class="catalog-toolbar">
-        <div><p class="eyebrow">${catalogData.length} Product Edit</p><h1>Premium streetwear catalog</h1></div>
+        <div><p class="eyebrow">Printful Product Edit</p><h1>Premium streetwear catalog</h1></div>
         <span><strong data-catalog-count>${catalogData.length}</strong> results</span>
       </div>
-      <div class="catalog-grid" data-catalog-grid>${catalogData.map(catalogCard).join('')}</div>
+      <div class="catalog-grid" data-catalog-grid>${catalogData.length ? catalogData.map(catalogCard).join('') : '<p class="catalog-loading">Loading Printful products...</p>'}</div>
     </div>
   `;
   main.classList.add('catalog-main');
@@ -875,6 +837,7 @@ function injectProductFilters(beforeNode) {
 }
 
 function injectProductRails() {
+  return;
   const footer = document.querySelector('.footer');
   if (!footer || document.querySelector('.global-product-rails')) return;
   const pageName = window.location.pathname.split('/').pop();
@@ -1190,6 +1153,11 @@ document.addEventListener('click', async (event) => {
     const selected = document.querySelector('input[name="payment"]:checked')?.value || 'paypal';
     const method = selected === 'cod' ? 'COD' : 'PayPal';
     const order = createTestOrder(method);
+    if (!order) {
+      hydrateCheckoutSummary();
+      alert('Your bag is empty. Add a Printful product before checkout.');
+      return;
+    }
     requestOrderConfirmation(order);
     if (method === 'COD') {
       localStorage.removeItem(PAGE_CART_KEY);
@@ -1594,6 +1562,9 @@ function initCheckoutGiftUi() {
       <label class="payment-active cod-method" data-cod-method><input type="radio" name="payment" value="cod"><span class="pay-icon cod">COD</span><small>Cash on Delivery test order</small></label>
     `);
   }
+  document.querySelectorAll('input[name="shipping"]').forEach((input) => {
+    input.addEventListener('change', hydrateCheckoutSummary);
+  });
 }
 
 function renderGiftCardsPage() {

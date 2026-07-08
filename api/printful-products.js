@@ -1,13 +1,18 @@
 const PRINTFUL_API_BASE_URL = process.env.PRINTFUL_API_BASE_URL || 'https://api.printful.com';
 const PRINTFUL_API_KEY = process.env.PRINTFUL_API_KEY;
 const PRINTFUL_STORE_ID = process.env.PRINTFUL_STORE_ID;
+const INCLUDED_SHIPPING_COST = 14.99;
+const SELLING_MARKUP = 1.3;
+const COMPARE_AT_MARKUP = 2.3;
 
 const categoryRules = [
   { match: /zip|quarter-zip/i, category: 'hoodies', collection: 'limited', label: 'Zip Hoodie' },
   { match: /hoodie|sweatshirt|fleece|pullover/i, category: 'hoodies', collection: 'oversized', label: 'Hoodie' },
   { match: /tee|t-shirt|shirt|polo/i, category: 'tees', collection: 'new', label: 'Heavyweight Tee' },
+  { match: /short/i, category: 'pants', collection: 'new', label: 'Short' },
   { match: /pant|sweatpant|jogger|cargo/i, category: 'pants', collection: 'best', label: 'Pant' },
   { match: /jacket|windbreaker|coat/i, category: 'outerwear', collection: 'limited', label: 'Jacket' },
+  { match: /shoe|sneaker|flip-flop|flip flop|slide/i, category: 'accessories', collection: 'best', label: 'Footwear' },
   { match: /cap|hat|beanie/i, category: 'accessories', collection: 'best', label: 'Accessory' }
 ];
 
@@ -64,8 +69,8 @@ async function printfulCatalogFetch(path) {
 
 function isMenCatalogProduct(product) {
   const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
-  const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|cap|hat|beanie)/i.test(text);
-  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|shorts|swim|bikini|sock|shoe|sandal|slide|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|jersey|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|card)/i.test(text);
+  const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|shorts|shoe|sneaker|flip-flop|flip flop|slide|cap|hat|beanie)/i.test(text);
+  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|jersey|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|card)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
 }
 
@@ -104,11 +109,27 @@ function colorFromName(name, index) {
   return colors[index % colors.length];
 }
 
-function priceFromProduct(product, index) {
+function basePriceFromProduct(product, index) {
   const raw = product?.retail_price || product?.price || product?.sync_variants?.[0]?.retail_price;
   const value = Number(raw);
   if (Number.isFinite(value) && value > 0) return Math.round(value);
   return 58 + (index % 8) * 14;
+}
+
+function priceWithIncludedShipping(product, index) {
+  return basePriceFromProduct(product, index) + INCLUDED_SHIPPING_COST;
+}
+
+function roundedPrice(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function priceFromProduct(product, index) {
+  return roundedPrice(priceWithIncludedShipping(product, index) * SELLING_MARKUP);
+}
+
+function compareAtFromProduct(product, index) {
+  return roundedPrice(priceWithIncludedShipping(product, index) * COMPARE_AT_MARKUP);
 }
 
 function imageFromProduct(product) {
@@ -145,8 +166,11 @@ function normalizeProduct(product, index) {
     color: colorFromName(`${name} ${variants[0]?.name || ''}`, index),
     colors: ['black', 'white', 'gray', 'gold'],
     sizes: sizesFromVariants(variants),
+    basePrice: basePriceFromProduct(product, index),
+    includedShippingCost: INCLUDED_SHIPPING_COST,
     price: priceFromProduct(product, index),
-    sale: false,
+    compareAt: compareAtFromProduct(product, index),
+    sale: true,
     popularity: 90 - (index % 10),
     badge: index < 4 ? 'New' : rule.collection === 'limited' ? 'Limited' : 'Zavora',
     img: imageFromProduct(product),

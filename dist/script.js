@@ -285,7 +285,7 @@ const products = [
 const CART_KEY = 'zavoraCart';
 const HOME_AUTH_KEY = 'zavoraLoggedIn';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
-const state = { cart: [], visible: 23, printfulProducts: [] };
+const state = { cart: [], visible: 23, printfulProducts: [], printfulLoaded: false };
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
 const homeIcons = {
@@ -354,15 +354,20 @@ function normalizeAdminProduct(product, index) {
 }
 
 function getHomeProducts() {
-  return [...getAdminProducts().map(normalizeAdminProduct), ...state.printfulProducts, ...products];
+  return [...getAdminProducts().map(normalizeAdminProduct), ...state.printfulProducts];
 }
 
 async function loadPrintfulProducts() {
   try {
     const response = await fetch('/api/printful-products?gender=men&limit=23&page=1');
     const data = await response.json();
-    if (!response.ok || !data.ok || !Array.isArray(data.products)) return;
+    if (!response.ok || !data.ok || !Array.isArray(data.products)) {
+      state.printfulLoaded = true;
+      renderProducts();
+      return;
+    }
     state.printfulProducts = data.products;
+    state.printfulLoaded = true;
     const daily = document.querySelector('.daily-feature');
     if (daily) daily.remove();
     renderDailyFeature();
@@ -370,6 +375,8 @@ async function loadPrintfulProducts() {
     renderSuggestions($('#searchInput')?.value || '');
   } catch (error) {
     state.printfulProducts = [];
+    state.printfulLoaded = true;
+    renderProducts();
   }
 }
 
@@ -433,7 +440,11 @@ function renderProducts() {
   });
 
   $('#productCount').textContent = filtered.length;
-  $('#productGrid').innerHTML = filtered.slice(0, state.visible).map(productCard).join('');
+  if (!state.printfulLoaded && !filtered.length) {
+    $('#productGrid').innerHTML = '<p class="catalog-loading">Loading Printful products...</p>';
+    return;
+  }
+  $('#productGrid').innerHTML = filtered.length ? filtered.slice(0, state.visible).map(productCard).join('') : '<p class="catalog-loading">No Printful products found for this filter.</p>';
 }
 
 function productCard(product) {
@@ -449,7 +460,7 @@ function productCard(product) {
         <h3>${product.name}</h3>
         <div class="meta">
           <span>${product.category}</span>
-          <strong class="${product.sale ? 'sale' : ''}">${money(product.price)}</strong>
+          <strong class="${product.sale ? 'sale' : ''}">${product.compareAt ? `<s>${money(product.compareAt)}</s> ` : ''}${money(product.price)}</strong>
         </div>
         <div class="swatches" aria-label="Color variants">
           ${['black', 'white', 'gray', 'gold'].map(color => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}
