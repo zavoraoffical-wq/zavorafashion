@@ -110,8 +110,7 @@ function seoName(rawName, index) {
   return `${prefix}${base} ${rule.label}`;
 }
 
-function colorFromName(name, index) {
-  const colors = ['black', 'white', 'gray', 'blue'];
+function colorFromName(name) {
   const lower = String(name || '').toLowerCase();
   if (lower.includes('black')) return 'black';
   if (lower.includes('white')) return 'white';
@@ -119,27 +118,24 @@ function colorFromName(name, index) {
   if (lower.includes('blue') || lower.includes('navy')) return 'blue';
   if (lower.includes('green')) return 'green';
   if (lower.includes('red')) return 'red';
+  if (lower.includes('pink')) return 'pink';
+  if (lower.includes('purple')) return 'purple';
+  if (lower.includes('brown') || lower.includes('tan') || lower.includes('khaki')) return 'brown';
   if (lower.includes('gold') || lower.includes('yellow')) return 'gold';
-  return colors[index % colors.length];
+  return '';
 }
 
 function colorsFromVariants(variants = [], fallbackText = '') {
-  const colorOrder = ['black', 'white', 'gray', 'blue', 'green', 'red', 'gold'];
+  const colorOrder = ['black', 'white', 'gray', 'blue', 'green', 'red', 'pink', 'purple', 'brown', 'gold'];
   const found = new Set();
   const texts = variants.map((variant) => `${variant?.name || ''} ${variant?.variant_name || ''}`);
-  texts.push(fallbackText);
+  if (!variants.length && fallbackText) texts.push(fallbackText);
   texts.forEach((text) => {
-    const lower = String(text || '').toLowerCase();
-    if (lower.includes('black')) found.add('black');
-    if (lower.includes('white')) found.add('white');
-    if (lower.includes('gray') || lower.includes('grey') || lower.includes('heather')) found.add('gray');
-    if (lower.includes('blue') || lower.includes('navy')) found.add('blue');
-    if (lower.includes('green') || lower.includes('olive')) found.add('green');
-    if (lower.includes('red') || lower.includes('burgundy')) found.add('red');
-    if (lower.includes('gold') || lower.includes('yellow')) found.add('gold');
+    const color = colorFromName(text);
+    if (color) found.add(color);
   });
   const colors = colorOrder.filter((color) => found.has(color));
-  return colors.length ? colors.slice(0, 4) : ['black', 'white', 'gray', 'blue'];
+  return colors.length ? colors.slice(0, 4) : ['default'];
 }
 
 function basePriceFromProduct(product, index) {
@@ -166,10 +162,11 @@ function compareAtFromProduct(product, index) {
 }
 
 function imageFromProduct(product) {
-  return product?.thumbnail_url
+  return product?.sync_variants?.find((variant) => variant?.files?.[0]?.preview_url)?.files?.[0]?.preview_url
+    || product?.variants?.find((variant) => variant?.files?.[0]?.preview_url)?.files?.[0]?.preview_url
+    || product?.thumbnail_url
     || product?.image
     || product?.files?.[0]?.preview_url
-    || product?.sync_variants?.find((variant) => variant?.files?.[0]?.preview_url)?.files?.[0]?.preview_url
     || 'assets/studio-wide-trouser.png';
 }
 
@@ -183,12 +180,12 @@ function variantImage(variant, fallback) {
 function variantOptionsFromVariants(variants = [], fallbackImage = '') {
   return variants.slice(0, 24).map((variant, index) => {
     const text = `${variant?.name || ''} ${variant?.variant_name || ''}`;
-    const color = colorFromName(text, index);
+    const color = colorFromName(text) || 'default';
     const sizes = sizesFromVariants([variant]);
     return {
       id: variant?.id || variant?.variant_id || index,
       name: variant?.name || variant?.variant_name || `Variant ${index + 1}`,
-      color,
+    color,
       size: sizes[0] || 'M',
       image: variantImage(variant, fallbackImage),
       stock: 5,
@@ -216,15 +213,16 @@ function normalizeProduct(product, index) {
   const variants = product?.sync_variants || product?.variants || [];
   const colors = colorsFromVariants(variants, `${name} ${product?.description || ''}`);
   const image = imageFromProduct(product);
+  const sizes = rule.category === 'accessories' ? ['M'] : sizesFromVariants(variants);
   return {
     id: Number(product?.id || product?.template_id || product?.sync_product?.id || Date.now() + index),
     printfulId: product?.id || product?.template_id || product?.sync_product?.id || null,
     name,
     category: rule.category,
     collection: [rule.collection, index < 6 ? 'new' : 'best'],
-    color: colors[0] || colorFromName(`${name} ${variants[0]?.name || ''}`, index),
+    color: colors[0] || 'default',
     colors,
-    sizes: sizesFromVariants(variants),
+    sizes,
     basePrice: basePriceFromProduct(product, index),
     includedShippingCost: INCLUDED_SHIPPING_COST,
     price: priceFromProduct(product, index),

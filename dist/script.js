@@ -262,6 +262,7 @@ const CART_KEY = 'zavoraCart';
 const HOME_AUTH_KEY = 'zavoraLoggedIn';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const SELECTED_PRODUCT_KEY = 'zavoraSelectedProduct';
+const WISHLIST_KEY = 'zavoraWishlist';
 const state = { cart: [], visible: 23, printfulProducts: [], printfulLoaded: false };
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
@@ -306,6 +307,29 @@ function saveCart() {
 function rememberSelectedProduct(product) {
   if (!product) return;
   localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(product));
+}
+
+function getWishlist() {
+  try {
+    return JSON.parse(localStorage.getItem(WISHLIST_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveWishlist(items) {
+  localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
+}
+
+function addWishlistProduct(product) {
+  if (!product) return;
+  const wishlist = getWishlist();
+  const id = String(product.printfulId || product.id || product.name);
+  if (!wishlist.some((item) => String(item.printfulId || item.id || item.name) === id)) {
+    wishlist.push(product);
+    saveWishlist(wishlist);
+  }
+  syncHomeWishlistCount();
 }
 
 function getAdminProducts() {
@@ -430,14 +454,14 @@ function renderProducts() {
 }
 
 function productCard(product) {
-  const colors = (product.colors || [product.color || 'black']).slice(0, 4);
+  const colors = (product.colors || [product.color || 'default']).slice(0, 4);
   return `
     <article class="product-card" data-product-id="${product.id}">
       <div class="product-media">
         <img loading="lazy" src="${product.img}" alt="${product.name}">
         <img loading="lazy" class="alt" src="${product.alt}" alt="${product.name} alternate view">
         <span class="badge">${product.badge}</span>
-        <button class="wish" aria-label="Add ${product.name} to wishlist">♡</button>
+        <button class="wish" data-home-wishlist="${product.id}" aria-label="Add ${product.name} to wishlist">♡</button>
       </div>
       <div class="product-info">
         <h3>${product.name}</h3>
@@ -446,7 +470,7 @@ function productCard(product) {
           <strong class="${product.sale ? 'sale' : ''}">${product.compareAt ? `<s>${money(product.compareAt)}</s> ` : ''}${money(product.price)}</strong>
         </div>
         <div class="swatches" aria-label="Color variants">
-          ${colors.map(color => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}
+          ${colors.map(color => `<span class="swatch" title="${color === 'default' ? 'original' : color}" style="background:${swatch(color)}"></span>`).join('')}
         </div>
         <div class="sizes" aria-label="Size selector">
           ${product.sizes.map(size => `<button class="size">${size}</button>`).join('')}
@@ -461,7 +485,7 @@ function productCard(product) {
 }
 
 function swatch(color) {
-  return { black: '#050505', white: '#fff', gray: '#aaa', blue: '#2d5f9a', green: '#4f6f52', red: '#9b1c1c', gold: '#c9a227' }[color] || color || '#111';
+  return { black: '#050505', white: '#fff', gray: '#aaa', blue: '#2d5f9a', green: '#4f6f52', red: '#9b1c1c', pink: '#e6a4b4', purple: '#6a4c93', brown: '#8b6f47', default: 'linear-gradient(135deg,#111 0 50%,#fff 50% 100%)', gold: '#c9a227' }[color] || color || '#111';
 }
 
 function addToCart(id) {
@@ -492,11 +516,16 @@ function renderCart() {
 
 function syncHomeWishlistCount() {
   const wishlistButton = $('[data-panel]');
-  if (!wishlistButton || wishlistButton.querySelector('.header-count')) return;
-  const count = document.createElement('span');
+  if (!wishlistButton) return;
+  let count = wishlistButton.querySelector('.header-count');
+  if (!count) {
+    count = document.createElement('span');
+    count.className = 'header-count';
+    wishlistButton.appendChild(count);
+  }
   count.className = 'header-count';
-  count.textContent = '2';
-  wishlistButton.appendChild(count);
+  count.textContent = String(getWishlist().length);
+  count.hidden = getWishlist().length === 0;
   wishlistButton.setAttribute('aria-label', 'Wishlist');
 }
 
@@ -534,6 +563,14 @@ $$('select, input[type="range"], input[type="checkbox"]').forEach(control => {
 });
 
 document.addEventListener('click', (event) => {
+  const homeWishlist = event.target.closest('[data-home-wishlist]');
+  if (homeWishlist) {
+    event.preventDefault();
+    const product = getHomeProducts().find(item => String(item.id) === String(homeWishlist.dataset.homeWishlist));
+    addWishlistProduct(product);
+    homeWishlist.classList.add('active');
+    return;
+  }
   const homeOpenProduct = event.target.closest('[data-home-open-product]');
   if (homeOpenProduct) {
     const product = getHomeProducts().find(item => String(item.id) === String(homeOpenProduct.dataset.homeOpenProduct));
