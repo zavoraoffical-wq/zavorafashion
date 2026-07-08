@@ -141,6 +141,31 @@ function addAdminProduct(form) {
   toast('Product added to live preview');
 }
 
+async function importPrintfulProducts() {
+  try {
+    toast('Importing Printful products...');
+    const response = await fetch('/api/printful-products?gender=men&limit=23&page=1');
+    const data = await response.json();
+    if (!response.ok || !data.ok || !Array.isArray(data.products)) {
+      toast(data.error || 'Printful import failed');
+      return;
+    }
+    const existing = getAdminProducts();
+    const imported = data.products.map((product) => ({
+      ...product,
+      image: product.img,
+      sku: product.printfulId ? `PF-${product.printfulId}` : `PF-${product.id}`,
+      importedFrom: 'printful'
+    }));
+    const merged = [...imported, ...existing.filter((item) => item.importedFrom !== 'printful')];
+    saveAdminProducts(merged);
+    renderAdminProducts();
+    toast(`${imported.length} Printful products imported`);
+  } catch (error) {
+    toast('Printful import failed');
+  }
+}
+
 document.addEventListener('click', (event) => {
   if (event.target.closest('.logout-btn')) {
     localStorage.removeItem(ADMIN_SESSION_KEY);
@@ -170,6 +195,12 @@ document.addEventListener('click', (event) => {
   const action = event.target.closest('[data-toast]');
   if (action) {
     toast(action.dataset.toast);
+  }
+
+  const printfulImport = event.target.closest('[data-import-printful]');
+  if (printfulImport) {
+    importPrintfulProducts();
+    return;
   }
 
   const skuButton = event.target.closest('[data-generate-sku]');

@@ -757,19 +757,36 @@ const generatedCatalogData = Array.from({ length: 60 }, (_, index) => ({
 const catalogData = [...getAdminProducts(), ...generatedCatalogData];
 
 function catalogCard(item) {
+  const image = item.image || item.img || 'assets/studio-wide-trouser.png';
+  const size = item.size || item.sizes?.[0] || 'M';
   return `
-    <article class="catalog-card" data-catalog-card data-category="${item.category}" data-color="${item.color}" data-size="${item.size}" data-price="${item.price}">
+    <article class="catalog-card" data-catalog-card data-category="${item.category}" data-color="${item.color}" data-size="${size}" data-price="${item.price}">
       <a href="product.html" aria-label="Open ${item.name} detail page">
-        <img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'">
+        <img src="${image}" alt="${item.name}" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'">
         <span class="badge">${item.badge}</span>
       </a>
       <div>
         <h3><a href="product.html">${item.name}</a></h3>
-        <p>${item.category} / ${item.color} / ${item.size}</p>
+        <p>${item.category} / ${item.color} / ${size}</p>
         <strong>${money(item.price)}</strong>
       </div>
     </article>
   `;
+}
+
+async function loadPrintfulCatalog() {
+  const grid = document.querySelector('[data-catalog-grid]');
+  if (!grid || grid.dataset.printfulLoaded) return;
+  grid.dataset.printfulLoaded = 'true';
+  try {
+    const response = await fetch('/api/printful-products?gender=men&limit=23&page=1');
+    const data = await response.json();
+    if (!response.ok || !data.ok || !Array.isArray(data.products) || !data.products.length) return;
+    grid.insertAdjacentHTML('afterbegin', data.products.map(catalogCard).join(''));
+    filterLargeCatalog();
+  } catch (error) {
+    grid.dataset.printfulLoaded = 'failed';
+  }
 }
 
 function injectLargeCatalog() {
@@ -784,7 +801,7 @@ function injectLargeCatalog() {
         <h2>Shop Zavora</h2>
         <p><span data-catalog-count>${catalogData.length}</span> products available</p>
       </div>
-      <label>Category<select data-catalog-filter="category"><option value="all">All</option><option>women</option><option>men</option><option>new</option><option>limited</option><option>essentials</option></select></label>
+      <label>Category<select data-catalog-filter="category"><option value="all">All</option><option>women</option><option>men</option><option>hoodies</option><option>tees</option><option>pants</option><option>outerwear</option><option>accessories</option><option>new</option><option>limited</option><option>essentials</option></select></label>
       <label>Color<select data-catalog-filter="color"><option value="all">All</option><option>black</option><option>white</option><option>gray</option><option>gold</option></select></label>
       <label>Size<select data-catalog-filter="size"><option value="all">All</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></label>
       <label>Under amount<select data-catalog-filter="price"><option value="999">All</option><option value="100">Under $100</option><option value="160">Under $160</option><option value="240">Under $240</option></select></label>
@@ -1693,6 +1710,7 @@ injectEmailContactCards();
 enhanceFooter();
 injectLargeCatalog();
 filterLargeCatalog();
+loadPrintfulCatalog();
 injectProductRails();
 cleanAuthPageFooter();
 initCheckoutGiftUi();

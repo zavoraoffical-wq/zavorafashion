@@ -285,7 +285,7 @@ const products = [
 const CART_KEY = 'zavoraCart';
 const HOME_AUTH_KEY = 'zavoraLoggedIn';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
-const state = { cart: [], visible: 18 };
+const state = { cart: [], visible: 23, printfulProducts: [] };
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
 const homeIcons = {
@@ -354,7 +354,23 @@ function normalizeAdminProduct(product, index) {
 }
 
 function getHomeProducts() {
-  return [...getAdminProducts().map(normalizeAdminProduct), ...products];
+  return [...getAdminProducts().map(normalizeAdminProduct), ...state.printfulProducts, ...products];
+}
+
+async function loadPrintfulProducts() {
+  try {
+    const response = await fetch('/api/printful-products?gender=men&limit=23&page=1');
+    const data = await response.json();
+    if (!response.ok || !data.ok || !Array.isArray(data.products)) return;
+    state.printfulProducts = data.products;
+    const daily = document.querySelector('.daily-feature');
+    if (daily) daily.remove();
+    renderDailyFeature();
+    renderProducts();
+    renderSuggestions($('#searchInput')?.value || '');
+  } catch (error) {
+    state.printfulProducts = [];
+  }
 }
 
 function dailyProduct(productsForDay) {
@@ -518,7 +534,7 @@ function renderSuggestions(term = '') {
 $$('select, input[type="range"], input[type="checkbox"]').forEach(control => {
   control.addEventListener('input', () => {
     $('#priceValue').textContent = money(Number($('#priceFilter').value));
-    state.visible = 18;
+    state.visible = 23;
     renderProducts();
   });
 });
@@ -649,6 +665,7 @@ hydrateHomeHeaderIcons();
 loadSavedCart();
 renderDailyFeature();
 renderProducts();
+loadPrintfulProducts();
 renderCart();
 syncHomeWishlistCount();
 }
