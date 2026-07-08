@@ -65,7 +65,7 @@ async function printfulCatalogFetch(path) {
 function isMenCatalogProduct(product) {
   const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
   const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|cap|hat|beanie)/i.test(text);
-  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|shorts|swim|bikini|sock|shoe|sandal|slide|backpack|bag|tote|duffle|luggage|tag|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|card)/i.test(text);
+  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|shorts|swim|bikini|sock|shoe|sandal|slide|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|jersey|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|card)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
 }
 
@@ -81,7 +81,7 @@ function seoName(rawName, index) {
   const clean = String(rawName || `Printful Product ${index + 1}`)
     .replace(/\s+/g, ' ')
     .replace(/\s*\|\s*[^|]+$/g, '')
-    .replace(/\b(unisex|men'?s|adult|printful|dtg|dtfilm|adidas|a4|yupoong|gildan|bella canvas|bella \+ canvas|champion|hanes|jerzees|econscious|stanley\/stella)\b/gi, '')
+    .replace(/\b(all-over print|unisex|men'?s|adult|printful|dtg|dtfilm|adidas|a4|yupoong|gildan|bella canvas|bella \+ canvas|champion|hanes|jerzees|econscious|stanley\/stella)\b/gi, '')
     .replace(/\b[A-Z]{1,4}\d{2,5}[A-Z]?\b/g, '')
     .trim();
   const rule = pickRule(clean);
