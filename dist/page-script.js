@@ -741,7 +741,7 @@ async function loadPrintfulCatalog() {
   if (!grid || grid.dataset.printfulLoaded) return;
   grid.dataset.printfulLoaded = 'true';
   try {
-    const response = await fetch('/api/printful-products?gender=men&limit=23&page=1');
+    const response = await fetch('/api/printful-products?gender=men&limit=60&page=1');
     const data = await response.json();
     if (!response.ok || !data.ok || !Array.isArray(data.products) || !data.products.length) return;
     grid.innerHTML = data.products.map(catalogCard).join('');
@@ -763,7 +763,7 @@ function injectLargeCatalog() {
         <h2>Shop Zavora</h2>
         <p><span data-catalog-count>${catalogData.length}</span> products available</p>
       </div>
-      <label>Category<select data-catalog-filter="category"><option value="all">All</option><option>women</option><option>men</option><option>hoodies</option><option>tees</option><option>pants</option><option>outerwear</option><option>accessories</option><option>new</option><option>limited</option><option>essentials</option></select></label>
+      <label>Category<select data-catalog-filter="category"><option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Zip Hoodies</option><option value="pants">Cargo Pants</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="pants">Shorts</option><option value="accessories">Shoes</option><option value="accessories">Accessories</option></select></label>
       <label>Color<select data-catalog-filter="color"><option value="all">All</option><option>black</option><option>white</option><option>gray</option><option>gold</option></select></label>
       <label>Size<select data-catalog-filter="size"><option value="all">All</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></label>
       <label>Under amount<select data-catalog-filter="price"><option value="999">All</option><option value="100">Under $100</option><option value="160">Under $160</option><option value="240">Under $240</option></select></label>
@@ -772,7 +772,7 @@ function injectLargeCatalog() {
     </aside>
     <div class="catalog-area">
       <div class="catalog-toolbar">
-        <div><p class="eyebrow">Printful Product Edit</p><h1>Premium streetwear catalog</h1></div>
+        <div><h1>Premium streetwear catalog</h1></div>
         <span><strong data-catalog-count>${catalogData.length}</strong> results</span>
       </div>
       <div class="catalog-grid" data-catalog-grid>${catalogData.length ? catalogData.map(catalogCard).join('') : '<p class="catalog-loading">Loading Printful products...</p>'}</div>
@@ -1375,7 +1375,8 @@ function enhanceFooter() {
 
 function cleanAuthPageFooter() {
   const pageName = window.location.pathname.split('/').pop();
-  if (!plainCommercePages.includes(pageName)) return;
+  const isHome = pageName === 'index.html' || pageName === '';
+  if (isHome) return;
   document.querySelectorAll('.footer-top, .footer-gallery, .instagram-grid, .luxury-prefooter, .global-product-filters, .global-product-rails').forEach((section) => section.remove());
 }
 
