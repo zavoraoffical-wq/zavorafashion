@@ -755,7 +755,9 @@ async function loadPrintfulCatalog() {
   if (!grid || grid.dataset.printfulLoaded) return;
   grid.dataset.printfulLoaded = 'true';
   try {
-    const response = await fetch('/api/printful-products?gender=men&limit=60&page=1');
+    const pageName = window.location.pathname.split('/').pop();
+    const gender = pageName === 'women.html' ? 'women' : 'men';
+    const response = await fetch(`/api/printful-products?gender=${gender}&limit=60&page=1`);
     const data = await response.json();
     if (!response.ok || !data.ok || !Array.isArray(data.products) || !data.products.length) return;
     grid.innerHTML = data.products.map(catalogCard).join('');
@@ -769,6 +771,10 @@ function injectLargeCatalog() {
   const main = document.querySelector('main');
   const pageName = window.location.pathname.split('/').pop();
   if (!main || document.querySelector('.catalog-shop') || !catalogOnlyPages.includes(pageName)) return;
+  const isWomenPage = pageName === 'women.html';
+  const categoryOptions = isWomenPage
+    ? '<option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">T-Shirts</option><option value="hoodies">Hoodies</option><option value="hoodies">Cropped Hoodies</option><option value="pants">Sweatpants</option><option value="pants">Joggers</option>'
+    : '<option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Zip Hoodies</option><option value="pants">Cargo Pants</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="pants">Shorts</option><option value="accessories">Shoes</option><option value="accessories">Accessories</option>';
   const section = document.createElement('section');
   section.className = 'catalog-shop';
   section.innerHTML = `
@@ -777,7 +783,7 @@ function injectLargeCatalog() {
         <h2>Shop Zavora</h2>
         <p><span data-catalog-count>${catalogData.length}</span> products available</p>
       </div>
-      <label>Category<select data-catalog-filter="category"><option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Zip Hoodies</option><option value="pants">Cargo Pants</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="pants">Shorts</option><option value="accessories">Shoes</option><option value="accessories">Accessories</option></select></label>
+      <label>Category<select data-catalog-filter="category">${categoryOptions}</select></label>
       <label>Color<select data-catalog-filter="color"><option value="all">All</option><option>black</option><option>white</option><option>gray</option><option>blue</option><option>green</option><option>red</option><option>gold</option></select></label>
       <label>Size<select data-catalog-filter="size"><option value="all">All</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></label>
       <label>Under amount<select data-catalog-filter="price"><option value="999">All</option><option value="100">Under $100</option><option value="160">Under $160</option><option value="240">Under $240</option></select></label>

@@ -74,6 +74,17 @@ function isMenCatalogProduct(product) {
   return allowed && !blocked && !product?.is_discontinued;
 }
 
+function isWomenCatalogProduct(product) {
+  const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
+  const allowed = /(women|women's|ladies|female|hoodie|zip|quarter-zip|tee|t-shirt|shirt|sweatshirt|pullover|fleece|sweatpants|jogger)/i.test(text);
+  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|headband|neck gaiter|rash guard|jersey|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
+  return allowed && !blocked && !product?.is_discontinued;
+}
+
+function catalogPredicate(gender) {
+  return String(gender || '').toLowerCase() === 'women' ? isWomenCatalogProduct : isMenCatalogProduct;
+}
+
 function pickRule(name) {
   return categoryRules.find((rule) => rule.match.test(name)) || {
     category: 'tees',
@@ -224,6 +235,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    const gender = String(req.query.gender || 'men').toLowerCase();
     const limit = Math.min(Number(req.query.limit || 23), 60);
     const page = Math.max(Number(req.query.page || 1), 1);
     const offset = (page - 1) * limit;
@@ -259,8 +271,8 @@ module.exports = async function handler(req, res) {
     if (!detailed.length) {
       const catalog = await printfulCatalogFetch('/products');
       const catalogRows = Array.isArray(catalog.result) ? catalog.result : [];
-      detailed = catalogRows.filter(isMenCatalogProduct).slice(offset, offset + limit).map(normalizeCatalogProduct);
-      source = 'printful-catalog';
+      detailed = catalogRows.filter(catalogPredicate(gender)).slice(offset, offset + limit).map(normalizeCatalogProduct);
+      source = `printful-catalog:${gender}`;
     }
 
     const products = detailed.slice(0, limit).map((product, index) => product?.seoTitle ? product : normalizeProduct(product, index));
