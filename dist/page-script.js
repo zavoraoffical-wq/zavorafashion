@@ -718,18 +718,32 @@ function getAdminProducts() {
 }
 const catalogData = [...getAdminProducts()];
 
+function swatch(color) {
+  return {
+    black: '#050505',
+    white: '#fff',
+    gray: '#aaa',
+    blue: '#2d5f9a',
+    green: '#4f6f52',
+    red: '#9b1c1c',
+    gold: '#c9a227'
+  }[color] || color || '#111';
+}
+
 function catalogCard(item) {
   const image = item.image || item.img || 'assets/studio-wide-trouser.png';
   const size = item.size || item.sizes?.[0] || 'M';
+  const colors = Array.isArray(item.colors) && item.colors.length ? item.colors.slice(0, 4) : [item.color || 'black'];
   return `
-    <article class="catalog-card" data-catalog-card data-category="${item.category}" data-color="${item.color}" data-size="${size}" data-price="${item.price}">
+    <article class="catalog-card" data-catalog-card data-category="${item.category}" data-color="${colors.join(' ')}" data-size="${size}" data-price="${item.price}">
       <a href="product.html" aria-label="Open ${item.name} detail page">
         <img src="${image}" alt="${item.name}" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'">
         <span class="badge">${item.badge}</span>
       </a>
       <div>
         <h3><a href="product.html">${item.name}</a></h3>
-        <p>${item.category} / ${item.color} / ${size}</p>
+        <p>${item.category} / ${colors.join(', ')} / ${size}</p>
+        <div class="swatches" aria-label="Color variants">${colors.map((color) => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}</div>
         <strong class="sale-price">${item.compareAt ? `<s>${money(item.compareAt)}</s> ` : ''}${money(item.price)}</strong>
       </div>
     </article>
@@ -764,7 +778,7 @@ function injectLargeCatalog() {
         <p><span data-catalog-count>${catalogData.length}</span> products available</p>
       </div>
       <label>Category<select data-catalog-filter="category"><option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Zip Hoodies</option><option value="pants">Cargo Pants</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="pants">Shorts</option><option value="accessories">Shoes</option><option value="accessories">Accessories</option></select></label>
-      <label>Color<select data-catalog-filter="color"><option value="all">All</option><option>black</option><option>white</option><option>gray</option><option>gold</option></select></label>
+      <label>Color<select data-catalog-filter="color"><option value="all">All</option><option>black</option><option>white</option><option>gray</option><option>blue</option><option>green</option><option>red</option><option>gold</option></select></label>
       <label>Size<select data-catalog-filter="size"><option value="all">All</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></label>
       <label>Under amount<select data-catalog-filter="price"><option value="999">All</option><option value="100">Under $100</option><option value="160">Under $160</option><option value="240">Under $240</option></select></label>
       <label>Sort<select data-catalog-filter="sort"><option value="featured">Featured</option><option value="low">Price low to high</option><option value="high">Price high to low</option></select></label>
@@ -799,7 +813,7 @@ function filterLargeCatalog() {
   let visible = 0;
   document.querySelectorAll('[data-catalog-card]').forEach((card) => {
     const match = (values.category === 'all' || card.dataset.category === values.category)
-      && (values.color === 'all' || card.dataset.color === values.color)
+      && (values.color === 'all' || card.dataset.color.split(' ').includes(values.color))
       && (values.size === 'all' || card.dataset.size === values.size)
       && Number(card.dataset.price) <= Number(values.price || 999);
     card.hidden = !match;

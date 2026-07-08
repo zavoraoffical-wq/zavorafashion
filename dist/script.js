@@ -425,7 +425,7 @@ function renderProducts() {
   let filtered = getHomeProducts().filter((product) => {
     return (category === 'all' || product.category === category)
       && (collection === 'all' || product.collection.includes(collection))
-      && (color === 'all' || product.color === color)
+      && (color === 'all' || (product.colors || [product.color]).includes(color))
       && (size === 'all' || product.sizes.includes(size))
       && product.price <= under
       && (!sale || product.sale);
@@ -448,6 +448,7 @@ function renderProducts() {
 }
 
 function productCard(product) {
+  const colors = (product.colors || [product.color || 'black']).slice(0, 4);
   return `
     <article class="product-card">
       <div class="product-media">
@@ -463,7 +464,7 @@ function productCard(product) {
           <strong class="${product.sale ? 'sale' : ''}">${product.compareAt ? `<s>${money(product.compareAt)}</s> ` : ''}${money(product.price)}</strong>
         </div>
         <div class="swatches" aria-label="Color variants">
-          ${['black', 'white', 'gray', 'gold'].map(color => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}
+          ${colors.map(color => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}
         </div>
         <div class="sizes" aria-label="Size selector">
           ${product.sizes.map(size => `<button class="size">${size}</button>`).join('')}
@@ -478,7 +479,7 @@ function productCard(product) {
 }
 
 function swatch(color) {
-  return { black: '#050505', white: '#fff', gray: '#aaa', gold: '#c9a227' }[color];
+  return { black: '#050505', white: '#fff', gray: '#aaa', blue: '#2d5f9a', green: '#4f6f52', red: '#9b1c1c', gold: '#c9a227' }[color] || color || '#111';
 }
 
 function addToCart(id) {

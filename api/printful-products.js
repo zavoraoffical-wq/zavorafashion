@@ -70,7 +70,7 @@ async function printfulCatalogFetch(path) {
 function isMenCatalogProduct(product) {
   const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
   const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|shorts|shoe|sneaker|flip-flop|flip flop|slide|cap|hat|beanie)/i.test(text);
-  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|jersey|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|card)/i.test(text);
+  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|jersey|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
 }
 
@@ -100,13 +100,35 @@ function seoName(rawName, index) {
 }
 
 function colorFromName(name, index) {
-  const colors = ['black', 'white', 'gray', 'gold'];
+  const colors = ['black', 'white', 'gray', 'blue'];
   const lower = String(name || '').toLowerCase();
   if (lower.includes('black')) return 'black';
   if (lower.includes('white')) return 'white';
   if (lower.includes('gray') || lower.includes('grey')) return 'gray';
+  if (lower.includes('blue') || lower.includes('navy')) return 'blue';
+  if (lower.includes('green')) return 'green';
+  if (lower.includes('red')) return 'red';
   if (lower.includes('gold') || lower.includes('yellow')) return 'gold';
   return colors[index % colors.length];
+}
+
+function colorsFromVariants(variants = [], fallbackText = '') {
+  const colorOrder = ['black', 'white', 'gray', 'blue', 'green', 'red', 'gold'];
+  const found = new Set();
+  const texts = variants.map((variant) => `${variant?.name || ''} ${variant?.variant_name || ''}`);
+  texts.push(fallbackText);
+  texts.forEach((text) => {
+    const lower = String(text || '').toLowerCase();
+    if (lower.includes('black')) found.add('black');
+    if (lower.includes('white')) found.add('white');
+    if (lower.includes('gray') || lower.includes('grey') || lower.includes('heather')) found.add('gray');
+    if (lower.includes('blue') || lower.includes('navy')) found.add('blue');
+    if (lower.includes('green') || lower.includes('olive')) found.add('green');
+    if (lower.includes('red') || lower.includes('burgundy')) found.add('red');
+    if (lower.includes('gold') || lower.includes('yellow')) found.add('gold');
+  });
+  const colors = colorOrder.filter((color) => found.has(color));
+  return colors.length ? colors.slice(0, 4) : ['black', 'white', 'gray', 'blue'];
 }
 
 function basePriceFromProduct(product, index) {
@@ -157,14 +179,15 @@ function normalizeProduct(product, index) {
   const name = seoName(product?.name || product?.external_name || product?.sync_product?.name || product?.title, index);
   const rule = pickRule(name);
   const variants = product?.sync_variants || product?.variants || [];
+  const colors = colorsFromVariants(variants, `${name} ${product?.description || ''}`);
   return {
     id: Number(product?.id || product?.template_id || product?.sync_product?.id || Date.now() + index),
     printfulId: product?.id || product?.template_id || product?.sync_product?.id || null,
     name,
     category: rule.category,
     collection: [rule.collection, index < 6 ? 'new' : 'best'],
-    color: colorFromName(`${name} ${variants[0]?.name || ''}`, index),
-    colors: ['black', 'white', 'gray', 'gold'],
+    color: colors[0] || colorFromName(`${name} ${variants[0]?.name || ''}`, index),
+    colors,
     sizes: sizesFromVariants(variants),
     basePrice: basePriceFromProduct(product, index),
     includedShippingCost: INCLUDED_SHIPPING_COST,
