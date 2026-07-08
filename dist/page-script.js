@@ -34,6 +34,8 @@ const OFFICIAL_EMAIL = 'zavoraofficial@zavorafashion.com';
 const ZAVORA_LOGO = 'assets/zavora-logo.png';
 const LAUNCH_PREVIEW_CODE = 'zavora-live';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
+const SELECTED_PRODUCT_KEY = 'zavoraSelectedProduct';
+const PRODUCT_STOCK_KEY = 'zavoraProductStock';
 const accountRedirects = {
   'my-account.html': 'dashboard',
   'wishlist.html': 'wishlist',
@@ -60,6 +62,54 @@ function getSavedCart() {
 
 function saveSavedCart(cart) {
   localStorage.setItem(PAGE_CART_KEY, JSON.stringify(cart));
+}
+
+function productKey(product) {
+  return String(product?.printfulId || product?.id || product?.name || 'zavora-product');
+}
+
+function rememberSelectedProduct(product) {
+  if (!product) return;
+  localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(product));
+}
+
+function getSelectedProduct() {
+  try {
+    return JSON.parse(localStorage.getItem(SELECTED_PRODUCT_KEY));
+  } catch (error) {
+    return null;
+  }
+}
+
+function getProductStockMap() {
+  try {
+    return JSON.parse(localStorage.getItem(PRODUCT_STOCK_KEY)) || {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function getProductStock(product) {
+  const stockMap = getProductStockMap();
+  const saved = Number(stockMap[productKey(product)]);
+  if (Number.isFinite(saved)) return saved;
+  return Number(product?.stock || 5);
+}
+
+function setProductStock(product, stock) {
+  const stockMap = getProductStockMap();
+  stockMap[productKey(product)] = Math.max(0, Number(stock || 0));
+  localStorage.setItem(PRODUCT_STOCK_KEY, JSON.stringify(stockMap));
+}
+
+function getVariant(product, color, size) {
+  const variants = Array.isArray(product?.variantOptions) ? product.variantOptions : [];
+  const normalizedColor = String(color || '').toLowerCase();
+  const normalizedSize = String(size || '').toUpperCase();
+  return variants.find((variant) => String(variant.color || '').toLowerCase() === normalizedColor && String(variant.size || '').toUpperCase() === normalizedSize)
+    || variants.find((variant) => String(variant.color || '').toLowerCase() === normalizedColor)
+    || variants.find((variant) => String(variant.size || '').toUpperCase() === normalizedSize)
+    || variants[0];
 }
 
 function getSavedOrders() {
@@ -180,6 +230,59 @@ function normalizeHeaderSelectors() {
       </div>
     `;
     select.replaceWith(wrapper);
+  });
+  document.querySelectorAll('.nav-links a').forEach((link) => {
+    const label = link.textContent.trim().toLowerCase();
+    if (label === 'women') link.dataset.mega = 'women';
+    if (label === 'men') link.dataset.mega = 'men';
+  });
+  if (pageHeader && !document.querySelector('#megaMenu')) {
+    pageHeader.insertAdjacentHTML('afterend', `
+      <div class="mega-menu" id="megaMenu" aria-hidden="true">
+        <div>
+          <p class="eyebrow">Women edit</p>
+          <h2>Premium women streetwear, clean fits, everyday luxury.</h2>
+          <div class="mega-grid"></div>
+        </div>
+      </div>
+    `);
+  }
+}
+
+const pageMegaMenuData = {
+  women: {
+    label: 'Women edit',
+    title: 'Oversized tees, hoodies, sweat sets, jackets, and accessories for premium everyday styling.',
+    href: 'women.html',
+    items: ['Oversized Tees', 'Baby Tees', 'Hoodies', 'Cropped Hoodies', 'Sweatpants', 'Jackets', 'Accessories']
+  },
+  men: {
+    label: 'Men edit',
+    title: 'Heavyweight layers, oversized fits, cargos, sweatpants, jackets, and accessories.',
+    href: 'men.html',
+    items: ['Oversized Tees', 'Heavyweight Tees', 'Hoodies', 'Zip Hoodies', 'Cargo Pants', 'Sweatpants', 'Jackets', 'Accessories']
+  }
+};
+
+function initPageMegaMenu() {
+  const menu = document.querySelector('#megaMenu');
+  if (!menu || menu.dataset.ready) return;
+  menu.dataset.ready = 'true';
+  function update(type) {
+    const data = pageMegaMenuData[type] || pageMegaMenuData.women;
+    menu.querySelector('.eyebrow').textContent = data.label;
+    menu.querySelector('h2').textContent = data.title;
+    menu.querySelector('.mega-grid').innerHTML = data.items.map((item) => `<a href="${data.href}?category=${encodeURIComponent(item.toLowerCase().replace(/\s+/g, '-'))}">${item}</a>`).join('');
+    menu.classList.add('open');
+    menu.setAttribute('aria-hidden', 'false');
+  }
+  document.querySelectorAll('[data-mega]').forEach((link) => {
+    link.addEventListener('mouseenter', () => update(link.dataset.mega));
+    link.addEventListener('focus', () => update(link.dataset.mega));
+  });
+  menu.addEventListener('mouseleave', () => {
+    menu.classList.remove('open');
+    menu.setAttribute('aria-hidden', 'true');
   });
 }
 
@@ -509,6 +612,7 @@ normalizeHeaderSelectors();
 hydrateHeaderIcons();
 hydrateCloseIcons();
 initPageMobileMenu();
+initPageMegaMenu();
 syncHeaderCounts();
 enforceAuthState();
 initDashboardTabs();
@@ -706,20 +810,37 @@ function catalogCard(item) {
   const image = item.image || item.img || 'assets/studio-wide-trouser.png';
   const size = item.size || item.sizes?.[0] || 'M';
   const colors = Array.isArray(item.colors) && item.colors.length ? item.colors.slice(0, 4) : [item.color || 'black'];
+  const stock = getProductStock(item);
   return `
-    <article class="catalog-card" data-catalog-card data-category="${item.category}" data-color="${colors.join(' ')}" data-size="${size}" data-price="${item.price}">
-      <a href="product.html" aria-label="Open ${item.name} detail page">
+    <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-category="${item.category}" data-color="${colors.join(' ')}" data-size="${size}" data-price="${item.price}">
+      <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" aria-label="Open ${item.name} detail page">
         <img src="${image}" alt="${item.name}" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'">
         <span class="badge">${item.badge}</span>
       </a>
       <div>
-        <h3><a href="product.html">${item.name}</a></h3>
+        <h3><a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}">${item.name}</a></h3>
         <p>${item.category} / ${colors.join(', ')} / ${size}</p>
         <div class="swatches" aria-label="Color variants">${colors.map((color) => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}</div>
         <strong class="sale-price">${item.compareAt ? `<s>${money(item.compareAt)}</s> ` : ''}${money(item.price)}</strong>
+        <span class="catalog-stock">${stock > 0 ? `${stock} in stock` : 'Out of stock'}</span>
       </div>
     </article>
   `;
+}
+
+function productsForCatalogPage(products, pageName) {
+  if (pageName === 'new-arrivals.html') {
+    return products.filter((product, index) => product.collection?.includes('new') || index < 18);
+  }
+  if (pageName === 'limited.html') {
+    return products
+      .filter((product, index) => product.collection?.includes('limited') || index % 9 === 0)
+      .map((product, index) => ({ ...product, stock: Math.min(getProductStock(product), 2 + (index % 4)), badge: 'Limited' }));
+  }
+  if (pageName === 'best-sellers.html') {
+    return products.filter((product, index) => product.collection?.includes('best') || product.popularity >= 84 || index < 24);
+  }
+  return products;
 }
 
 async function loadPrintfulCatalog() {
@@ -732,7 +853,9 @@ async function loadPrintfulCatalog() {
     const response = await fetch(`/api/printful-products?gender=${gender}&limit=60&page=1`);
     const data = await response.json();
     if (!response.ok || !data.ok || !Array.isArray(data.products) || !data.products.length) return;
-    grid.innerHTML = data.products.map(catalogCard).join('');
+    const products = productsForCatalogPage(data.products, pageName);
+    window.__zavoraCatalogProducts = products;
+    grid.innerHTML = products.map(catalogCard).join('');
     filterLargeCatalog();
   } catch (error) {
     grid.dataset.printfulLoaded = 'failed';
@@ -745,7 +868,7 @@ function injectLargeCatalog() {
   if (!main || document.querySelector('.catalog-shop') || !catalogOnlyPages.includes(pageName)) return;
   const isWomenPage = pageName === 'women.html';
   const categoryOptions = isWomenPage
-    ? '<option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">T-Shirts</option><option value="hoodies">Hoodies</option><option value="hoodies">Cropped Hoodies</option><option value="pants">Sweatpants</option><option value="pants">Joggers</option>'
+    ? '<option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Baby Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Cropped Hoodies</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="accessories">Accessories</option>'
     : '<option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Zip Hoodies</option><option value="pants">Cargo Pants</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="pants">Shorts</option><option value="accessories">Shoes</option><option value="accessories">Accessories</option>';
   const section = document.createElement('section');
   section.className = 'catalog-shop';
@@ -907,6 +1030,15 @@ document.addEventListener('change', (event) => {
 });
 
 document.addEventListener('click', async (event) => {
+  const openProduct = event.target.closest('[data-open-product]');
+  if (openProduct) {
+    const id = String(openProduct.dataset.openProduct);
+    const products = window.__zavoraCatalogProducts || [];
+    const product = products.find((item) => String(item.id) === id || String(item.printfulId) === id);
+    if (product) rememberSelectedProduct(product);
+    return;
+  }
+
   const newsletterButton = event.target.closest('.footer-newsletter button, .newsletter button');
   if (newsletterButton) {
     event.preventDefault();
@@ -1165,23 +1297,40 @@ document.addEventListener('click', async (event) => {
     event.preventDefault();
     optionButton.parentElement.querySelectorAll('button').forEach((button) => button.classList.remove('active'));
     optionButton.classList.add('active');
+    updateDynamicProductMedia();
     return;
   }
 
+  const buyNow = event.target.closest('[data-buy-now]');
   const addProduct = event.target.closest('[data-product-add], .product-actions .primary-cta');
-  if (addProduct && window.location.pathname.endsWith('product.html')) {
+  if ((addProduct || buyNow) && window.location.pathname.endsWith('product.html')) {
     event.preventDefault();
-    const title = document.querySelector('.product-buy h1')?.textContent.trim() || 'Noir Oversized Hoodie';
-    const price = Number((document.querySelector('.product-buy .price')?.textContent || '$148').replace(/[^0-9.]/g, '')) || 148;
-    const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
-    const color = optionRows[0]?.querySelector('button.active')?.textContent.trim() || 'Black';
-    const size = optionRows[1]?.querySelector('button.active')?.textContent.trim() || 'M';
-    const img = document.querySelector('.product-gallery img')?.src || 'assets/studio-wide-trouser.png';
+    const selected = getSelectedProduct();
+    const title = selected?.name || document.querySelector('.product-buy h1')?.textContent.trim() || 'Zavora Fashion Product';
+    const price = Number(selected?.price || (document.querySelector('.product-buy .price')?.textContent || '$148').replace(/[^0-9.]/g, '')) || 148;
+    const { color, size } = selectedProductOptions();
+    const variant = getVariant(selected, color, size);
+    const img = variant?.image || selected?.img || document.querySelector('.product-gallery img')?.src || 'assets/studio-wide-trouser.png';
+    if (selected && getProductStock(selected) <= 0) {
+      updateProductStockNote(selected);
+      return;
+    }
     const cart = getSavedCart();
-    cart.push({ id: Date.now(), name: title, price, color, sizes: [size], qty: 1, img });
+    const id = selected ? `${productKey(selected)}-${color}-${size}` : String(Date.now());
+    const found = cart.find((item) => String(item.id) === id);
+    if (found) found.qty += 1;
+    else cart.push({ id, printfulId: selected?.printfulId || selected?.id || null, name: title, price, color, sizes: [size], qty: 1, img });
     saveSavedCart(cart);
+    if (selected) {
+      setProductStock(selected, getProductStock(selected) - 1);
+      updateProductStockNote(selected);
+    }
     renderSavedCart(document);
     syncHeaderCounts();
+    if (buyNow) {
+      window.location.href = 'checkout.html';
+      return;
+    }
     ensurePageCart().classList.add('open');
     return;
   }
@@ -1256,9 +1405,12 @@ document.addEventListener('click', async (event) => {
   }
 
   const interactive = event.target.closest('a, button, input, select, textarea');
-  const card = event.target.closest('.page-card, .product-card');
+  const card = event.target.closest('.page-card, .product-card, .catalog-card');
   if (!interactive && card && card.querySelector('img') && !card.closest('.footer')) {
-    window.location.href = 'product.html';
+    const id = card.dataset.productId;
+    const product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(id));
+    if (product) rememberSelectedProduct(product);
+    window.location.href = id ? `product.html?id=${encodeURIComponent(id)}` : 'product.html';
   }
 });
 
@@ -1525,11 +1677,96 @@ function initFaqAccordions() {
   });
 }
 
+function selectedProductOptions() {
+  const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
+  return {
+    color: optionRows[0]?.querySelector('button.active')?.textContent.trim() || 'black',
+    size: optionRows[1]?.querySelector('button.active')?.textContent.trim() || 'M'
+  };
+}
+
+function updateDynamicProductMedia() {
+  if (!window.location.pathname.endsWith('product.html')) return;
+  const product = getSelectedProduct();
+  if (!product) return;
+  const { color, size } = selectedProductOptions();
+  const variant = getVariant(product, color, size);
+  const image = variant?.image || product.img || product.image || 'assets/studio-wide-trouser.png';
+  const first = document.querySelector('.product-gallery img');
+  if (first && image) first.src = image;
+}
+
+function updateProductStockNote(product) {
+  const stock = getProductStock(product);
+  const note = document.querySelector('[data-stock-note]');
+  const add = document.querySelector('[data-product-add], .product-actions .primary-cta');
+  const buy = document.querySelector('[data-buy-now]');
+  if (note) note.textContent = stock > 0 ? `Only ${stock} left in stock` : 'Out of stock';
+  [add, buy].forEach((button) => {
+    if (!button) return;
+    button.toggleAttribute('aria-disabled', stock <= 0);
+    button.classList.toggle('disabled', stock <= 0);
+  });
+}
+
+function initDynamicProductPage() {
+  if (!window.location.pathname.endsWith('product.html')) return;
+  const product = getSelectedProduct();
+  if (!product) return;
+  const title = document.querySelector('.product-buy h1');
+  const price = document.querySelector('.product-buy .price');
+  const description = document.querySelector('.product-buy > p:not(.eyebrow):not(.price)');
+  const eyebrow = document.querySelector('.product-buy .eyebrow');
+  const gallery = document.querySelector('.product-gallery');
+  const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
+  const colors = Array.isArray(product.colors) && product.colors.length ? product.colors.slice(0, 4) : [product.color || 'black'];
+  const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL'];
+  const variantImages = Array.from(new Set([product.img, product.image, ...(product.variantOptions || []).map((variant) => variant.image)].filter(Boolean))).slice(0, 4);
+  document.title = `${product.name} | Zavora Fashion`;
+  if (title) title.textContent = product.name;
+  if (price) price.innerHTML = `${product.compareAt ? `<s>${money(product.compareAt)}</s> ` : ''}${money(product.price)}`;
+  if (description) description.textContent = product.description || 'Premium Zavora Fashion streetwear piece with clean fit, everyday comfort, and USA-ready fulfillment.';
+  if (eyebrow) eyebrow.textContent = product.badge || 'Zavora';
+  if (gallery) {
+    gallery.innerHTML = variantImages.map((image, index) => `
+      <div class="zoom-frame"><img src="${image}" alt="${product.name} ${index + 1}" loading="${index ? 'lazy' : 'eager'}" onerror="this.src='assets/studio-wide-trouser.png'"></div>
+    `).join('');
+  }
+  if (optionRows[0]) {
+    optionRows[0].innerHTML = colors.map((color, index) => `<button type="button" class="${index === 0 ? 'active' : ''}">${color[0].toUpperCase()}${color.slice(1)}</button>`).join('');
+  }
+  if (optionRows[1]) {
+    optionRows[1].innerHTML = `${sizes.map((size, index) => `<button type="button" class="${index === 0 ? 'active' : ''}">${size}</button>`).join('')}<a href="style-guide.html">Size Guide</a>`;
+  }
+  const actions = document.querySelector('.product-actions');
+  if (actions && !document.querySelector('[data-stock-note]')) {
+    actions.insertAdjacentHTML('beforebegin', '<p class="stock-note" data-stock-note></p>');
+  }
+  const add = document.querySelector('.product-actions .primary-cta');
+  if (add) {
+    add.href = '#';
+    add.dataset.productAdd = 'true';
+    add.textContent = 'Add to Cart';
+  }
+  const buy = [...document.querySelectorAll('.product-buy > .primary-cta')].find((link) => !link.closest('.product-actions'));
+  if (buy) {
+    buy.href = '#';
+    buy.dataset.buyNow = 'true';
+    buy.textContent = 'Buy Now';
+  }
+  document.querySelectorAll('.split-band article:first-child p').forEach((node) => {
+    node.textContent = product.description || node.textContent;
+  });
+  updateProductStockNote(product);
+  updateDynamicProductMedia();
+}
+
 function initProductOptions() {
   document.querySelectorAll('.product-buy .option-row').forEach((row) => {
     const first = row.querySelector('button');
     if (first && !row.querySelector('button.active')) first.classList.add('active');
   });
+  initDynamicProductPage();
 }
 
 function initCheckoutGiftUi() {

@@ -261,6 +261,7 @@ const products = [
 const CART_KEY = 'zavoraCart';
 const HOME_AUTH_KEY = 'zavoraLoggedIn';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
+const SELECTED_PRODUCT_KEY = 'zavoraSelectedProduct';
 const state = { cart: [], visible: 23, printfulProducts: [], printfulLoaded: false };
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
@@ -300,6 +301,11 @@ function loadSavedCart() {
 
 function saveCart() {
   localStorage.setItem(CART_KEY, JSON.stringify(state.cart));
+}
+
+function rememberSelectedProduct(product) {
+  if (!product) return;
+  localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(product));
 }
 
 function getAdminProducts() {
@@ -379,10 +385,10 @@ function renderDailyFeature() {
         </div>
         <div class="daily-feature-actions">
           <button data-add="${product.id}">Add to Bag</button>
-          <a href="product.html">View Product</a>
+          <a href="product.html?id=${encodeURIComponent(product.id)}" data-home-open-product="${product.id}">View Product</a>
         </div>
       </div>
-      <a class="daily-feature-media" href="product.html" aria-label="Open ${product.name}">
+      <a class="daily-feature-media" href="product.html?id=${encodeURIComponent(product.id)}" data-home-open-product="${product.id}" aria-label="Open ${product.name}">
         <img src="${product.img}" alt="${product.name}" loading="lazy">
       </a>
     </section>
@@ -426,7 +432,7 @@ function renderProducts() {
 function productCard(product) {
   const colors = (product.colors || [product.color || 'black']).slice(0, 4);
   return `
-    <article class="product-card">
+    <article class="product-card" data-product-id="${product.id}">
       <div class="product-media">
         <img loading="lazy" src="${product.img}" alt="${product.name}">
         <img loading="lazy" class="alt" src="${product.alt}" alt="${product.name} alternate view">
@@ -528,6 +534,12 @@ $$('select, input[type="range"], input[type="checkbox"]').forEach(control => {
 });
 
 document.addEventListener('click', (event) => {
+  const homeOpenProduct = event.target.closest('[data-home-open-product]');
+  if (homeOpenProduct) {
+    const product = getHomeProducts().find(item => String(item.id) === String(homeOpenProduct.dataset.homeOpenProduct));
+    if (product) rememberSelectedProduct(product);
+    return;
+  }
   const add = event.target.closest('[data-add]');
   const view = event.target.closest('[data-view]');
   const remove = event.target.closest('[data-remove]');
@@ -546,7 +558,11 @@ document.addEventListener('click', (event) => {
   }
   if (add || view || remove || event.target.closest('a, button, input, select, textarea')) return;
   const card = event.target.closest('.product-card');
-  if (card) window.location.href = 'product.html';
+  if (card) {
+    const product = getHomeProducts().find(item => String(item.id) === String(card.dataset.productId));
+    if (product) rememberSelectedProduct(product);
+    window.location.href = product ? `product.html?id=${encodeURIComponent(product.id)}` : 'product.html';
+  }
 });
 
 $('#clearFilters').addEventListener('click', () => {

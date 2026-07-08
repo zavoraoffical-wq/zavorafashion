@@ -1727,6 +1727,29 @@ h2 {
 .catalog-card[hidden] {
   display: none;
 }
+.catalog-stock,
+.stock-note {
+  display: inline-flex;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.product-buy .price s,
+.sale-price s {
+  color: var(--muted);
+  font-weight: 400;
+  margin-right: 8px;
+}
+.product-actions .disabled,
+.product-buy .primary-cta.disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+.product-gallery .zoom-frame img {
+  background: #f4f4f4;
+}
 .size-chart {
   width: 100%;
   border-collapse: collapse;

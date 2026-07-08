@@ -76,8 +76,8 @@ function isMenCatalogProduct(product) {
 
 function isWomenCatalogProduct(product) {
   const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
-  const allowed = /(women|women's|ladies|female|hoodie|zip|quarter-zip|tee|t-shirt|shirt|sweatshirt|pullover|fleece|sweatpants|jogger)/i.test(text);
-  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|headband|neck gaiter|rash guard|jersey|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
+  const allowed = /(women|women's|ladies|female|crop|cropped|baby tee|hoodie|zip|quarter-zip|tee|t-shirt|shirt|sweatshirt|pullover|fleece|sweatpants|jogger)/i.test(text);
+  const blocked = /(men|men's|male|unisex|underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|headband|neck gaiter|rash guard|jersey|kids|youth|baby clothes|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
 }
 
@@ -173,6 +173,30 @@ function imageFromProduct(product) {
     || 'assets/studio-wide-trouser.png';
 }
 
+function variantImage(variant, fallback) {
+  return variant?.files?.[0]?.preview_url
+    || variant?.files?.find((file) => file?.preview_url)?.preview_url
+    || variant?.product?.image
+    || fallback;
+}
+
+function variantOptionsFromVariants(variants = [], fallbackImage = '') {
+  return variants.slice(0, 24).map((variant, index) => {
+    const text = `${variant?.name || ''} ${variant?.variant_name || ''}`;
+    const color = colorFromName(text, index);
+    const sizes = sizesFromVariants([variant]);
+    return {
+      id: variant?.id || variant?.variant_id || index,
+      name: variant?.name || variant?.variant_name || `Variant ${index + 1}`,
+      color,
+      size: sizes[0] || 'M',
+      image: variantImage(variant, fallbackImage),
+      stock: 5,
+      sku: variant?.sku || variant?.external_id || ''
+    };
+  });
+}
+
 function sizesFromVariants(variants = []) {
   const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
   const found = new Set();
@@ -191,6 +215,7 @@ function normalizeProduct(product, index) {
   const rule = pickRule(name);
   const variants = product?.sync_variants || product?.variants || [];
   const colors = colorsFromVariants(variants, `${name} ${product?.description || ''}`);
+  const image = imageFromProduct(product);
   return {
     id: Number(product?.id || product?.template_id || product?.sync_product?.id || Date.now() + index),
     printfulId: product?.id || product?.template_id || product?.sync_product?.id || null,
@@ -207,8 +232,10 @@ function normalizeProduct(product, index) {
     sale: true,
     popularity: 90 - (index % 10),
     badge: index < 4 ? 'New' : rule.collection === 'limited' ? 'Limited' : 'Zavora',
-    img: imageFromProduct(product),
-    alt: imageFromProduct(product),
+    img: image,
+    alt: image,
+    stock: 5,
+    variantOptions: variantOptionsFromVariants(variants, image),
     description: `Premium ${rule.label.toLowerCase()} styled for modern Zavora Fashion streetwear. Clean proportions, everyday comfort, and USA-ready fulfillment.`,
     seoTitle: `${name} | Zavora Fashion Premium Streetwear`,
     seoDescription: `Shop ${name} from Zavora Fashion. Premium men streetwear with clean fit, fast USA delivery, and luxury minimal styling.`
