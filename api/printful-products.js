@@ -3,12 +3,12 @@ const PRINTFUL_API_KEY = process.env.PRINTFUL_API_KEY;
 const PRINTFUL_STORE_ID = process.env.PRINTFUL_STORE_ID;
 
 const categoryRules = [
-  { match: /hoodie|sweatshirt|fleece/i, category: 'hoodies', collection: 'oversized', label: 'Hoodie' },
-  { match: /zip/i, category: 'hoodies', collection: 'limited', label: 'Zip Hoodie' },
-  { match: /tee|t-shirt|shirt/i, category: 'tees', collection: 'new', label: 'Heavyweight Tee' },
+  { match: /zip|quarter-zip/i, category: 'hoodies', collection: 'limited', label: 'Zip Hoodie' },
+  { match: /hoodie|sweatshirt|fleece|pullover/i, category: 'hoodies', collection: 'oversized', label: 'Hoodie' },
+  { match: /tee|t-shirt|shirt|polo/i, category: 'tees', collection: 'new', label: 'Heavyweight Tee' },
   { match: /pant|sweatpant|jogger|cargo/i, category: 'pants', collection: 'best', label: 'Pant' },
   { match: /jacket|windbreaker|coat/i, category: 'outerwear', collection: 'limited', label: 'Jacket' },
-  { match: /cap|hat|beanie|bag|tote|accessory/i, category: 'accessories', collection: 'best', label: 'Accessory' }
+  { match: /cap|hat|beanie/i, category: 'accessories', collection: 'best', label: 'Accessory' }
 ];
 
 function response(res, status, body) {
@@ -64,9 +64,9 @@ async function printfulCatalogFetch(path) {
 
 function isMenCatalogProduct(product) {
   const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
-  const apparel = /(men|men's|unisex|hoodie|tee|t-shirt|shirt|sweatshirt|pullover|jacket|pants|joggers|cap|hat|beanie)/i.test(text);
-  const excluded = /(women|women's|kids|youth|baby|toddler|dress|skirt|bikini|bra|legging|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|luggage)/i.test(text);
-  return apparel && !excluded && !product?.is_discontinued;
+  const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|cap|hat|beanie)/i.test(text);
+  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|shorts|swim|bikini|sock|shoe|sandal|slide|backpack|bag|tote|duffle|luggage|tag|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|card)/i.test(text);
+  return allowed && !blocked && !product?.is_discontinued;
 }
 
 function pickRule(name) {
@@ -80,12 +80,17 @@ function pickRule(name) {
 function seoName(rawName, index) {
   const clean = String(rawName || `Printful Product ${index + 1}`)
     .replace(/\s+/g, ' ')
-    .replace(/\b(unisex|men'?s|adult|printful|dtg)\b/gi, '')
+    .replace(/\s*\|\s*[^|]+$/g, '')
+    .replace(/\b(unisex|men'?s|adult|printful|dtg|dtfilm|adidas|a4|yupoong|gildan|bella canvas|bella \+ canvas|champion|hanes|jerzees|econscious|stanley\/stella)\b/gi, '')
+    .replace(/\b[A-Z]{1,4}\d{2,5}[A-Z]?\b/g, '')
     .trim();
   const rule = pickRule(clean);
   const prefix = /zavora/i.test(clean) ? '' : 'Zavora ';
-  const base = clean || rule.label;
-  if (/hoodie|tee|shirt|pant|jacket|cap|beanie|bag|tote/i.test(base)) return `${prefix}${base}`;
+  const base = clean
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[-–| ]+|[-–| ]+$/g, '')
+    || rule.label;
+  if (/hoodie|tee|shirt|polo|pant|jogger|jacket|cap|hat|beanie/i.test(base)) return `${prefix}${base}`;
   return `${prefix}${base} ${rule.label}`;
 }
 
