@@ -1,5 +1,6 @@
 const PRINTFUL_API_BASE_URL = process.env.PRINTFUL_API_BASE_URL || 'https://api.printful.com';
 const PRINTFUL_API_KEY = process.env.PRINTFUL_API_KEY;
+const PRINTFUL_STORE_ID = process.env.PRINTFUL_STORE_ID;
 
 const categoryRules = [
   { match: /hoodie|sweatshirt|fleece/i, category: 'hoodies', collection: 'oversized', label: 'Hoodie' },
@@ -18,11 +19,15 @@ function response(res, status, body) {
 }
 
 async function printfulFetch(path) {
+  const headers = {
+    Authorization: `Bearer ${PRINTFUL_API_KEY}`,
+    'Content-Type': 'application/json'
+  };
+  if (PRINTFUL_STORE_ID) {
+    headers['X-PF-Store-Id'] = PRINTFUL_STORE_ID;
+  }
   const result = await fetch(`${PRINTFUL_API_BASE_URL}${path}`, {
-    headers: {
-      Authorization: `Bearer ${PRINTFUL_API_KEY}`,
-      'Content-Type': 'application/json'
-    }
+    headers
   });
   const body = await result.json().catch(() => ({}));
   if (!result.ok) {
@@ -130,6 +135,9 @@ function normalizeProduct(product, index) {
 module.exports = async function handler(req, res) {
   if (!PRINTFUL_API_KEY) {
     return response(res, 500, { ok: false, error: 'PRINTFUL_API_KEY is missing in Vercel environment variables.' });
+  }
+  if (!PRINTFUL_STORE_ID) {
+    return response(res, 500, { ok: false, error: 'PRINTFUL_STORE_ID is missing in Vercel environment variables.' });
   }
 
   try {
