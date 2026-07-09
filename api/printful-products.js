@@ -121,18 +121,57 @@ function colorFromName(name) {
   return '';
 }
 
+function colorFromExplicitValue(value) {
+  const lower = String(value || '').toLowerCase().trim();
+  if (!lower) return '';
+  if (lower.includes('black')) return 'black';
+  if (lower.includes('white') || lower.includes('natural')) return 'white';
+  if (lower.includes('gray') || lower.includes('grey') || lower.includes('heather') || lower.includes('ash')) return 'gray';
+  if (lower.includes('blue') || lower.includes('navy') || lower.includes('royal') || lower.includes('denim')) return 'blue';
+  if (lower.includes('green') || lower.includes('olive') || lower.includes('forest')) return 'green';
+  if (lower.includes('red') || lower.includes('scarlet') || lower.includes('burgundy') || lower.includes('maroon')) return 'red';
+  if (lower.includes('pink') || lower.includes('rose')) return 'pink';
+  if (lower.includes('purple') || lower.includes('violet') || lower.includes('lavender')) return 'purple';
+  if (lower.includes('brown') || lower.includes('tan') || lower.includes('khaki') || lower.includes('sand') || lower.includes('beige') || lower.includes('cream')) return 'brown';
+  if (lower.includes('gold') || lower.includes('yellow') || lower.includes('mustard')) return 'gold';
+  const aliases = [
+    ['black', /^(black|jet black|true black|black heather)$/],
+    ['white', /^(white|optic white|true white|off white|natural)$/],
+    ['gray', /^(gray|grey|heather gray|heather grey|sport gray|sport grey|ash)$/],
+    ['blue', /^(blue|navy|royal|indigo|denim|light blue|dark blue)$/],
+    ['green', /^(green|olive|forest|army|military green)$/],
+    ['red', /^(red|scarlet|burgundy|maroon|cardinal)$/],
+    ['pink', /^(pink|rose|light pink|hot pink)$/],
+    ['purple', /^(purple|violet|lavender)$/],
+    ['brown', /^(brown|tan|khaki|sand|beige|cream)$/],
+    ['gold', /^(gold|yellow|mustard)$/]
+  ];
+  const match = aliases.find(([, pattern]) => pattern.test(lower));
+  return match ? match[0] : '';
+}
+
+function colorFromVariant(variant, forceColor = '') {
+  if (forceColor) return forceColor;
+  const explicit = colorFromExplicitValue(variant?.color || variant?.color_name || variant?.colorName);
+  if (explicit) return explicit;
+  const text = `${variant?.name || ''} ${variant?.variant_name || ''}`;
+  return colorFromName(text) || 'default';
+}
+
 function colorsFromVariants(variants = [], fallbackText = '') {
-  const colorOrder = ['black', 'white', 'gray', 'blue', 'green'];
+  const colorOrder = ['black', 'white', 'gray', 'blue', 'green', 'red', 'pink', 'purple', 'brown', 'gold', 'default'];
   if (/all[- ]?over|aop/i.test(fallbackText)) return ['white'];
   const found = new Set();
-  const texts = variants.map((variant) => `${variant?.name || ''} ${variant?.variant_name || ''}`);
-  if (!variants.length && fallbackText) texts.push(fallbackText);
-  texts.forEach((text) => {
-    const color = colorFromName(text);
+  variants.forEach((variant) => {
+    const color = colorFromVariant(variant);
     if (color) found.add(color);
   });
+  if (!variants.length && fallbackText) {
+    const color = colorFromName(fallbackText);
+    if (color) found.add(color);
+  }
   const colors = colorOrder.filter((color) => found.has(color));
-  return colors.length ? colors.slice(0, 4) : ['default'];
+  return colors.length && !(colors.length === 1 && colors[0] === 'default') ? colors.slice(0, 4) : ['default'];
 }
 
 function basePriceFromProduct(product, index) {
@@ -160,8 +199,10 @@ function compareAtFromProduct(product, index) {
 
 function variantPools(product) {
   return [
+    ...(product?.catalog_variants || []),
     ...(product?.sync_variants || []),
     ...(product?.variants || []),
+    ...(product?.printful_detail?.catalog_variants || []),
     ...(product?.printful_detail?.sync_variants || []),
     ...(product?.printful_detail?.variants || [])
   ];
@@ -170,8 +211,10 @@ function variantPools(product) {
 function productPools(product) {
   return [
     product,
+    product?.catalog_product,
     product?.sync_product,
     product?.printful_detail,
+    product?.printful_detail?.catalog_product,
     product?.printful_detail?.sync_product
   ].filter(Boolean);
 }
@@ -218,28 +261,42 @@ function imagesFromProduct(product) {
 function variantImage(variant, fallback) {
   return fileUrl(variant?.files?.[0])
     || fileUrl((variant?.files || []).find((file) => fileUrl(file)))
+    || variant?.image_url
     || variant?.image
     || variant?.thumbnail_url
-    || variant?.image_url
+    || variant?.preview_url
     || variant?.product?.image
     || fallback;
 }
 
 function variantOptionsFromVariants(variants = [], fallbackImage = '', forceColor = '') {
-  return variants.slice(0, 24).map((variant, index) => {
-    const text = `${variant?.name || ''} ${variant?.variant_name || ''}`;
-    const color = forceColor || colorFromName(text) || 'default';
+  const selectedColors = [];
+  variants.forEach((variant) => {
+    const color = colorFromVariant(variant, forceColor);
+    if (!selectedColors.includes(color) && selectedColors.length < 4) selectedColors.push(color);
+  });
+  const allowedColors = selectedColors.length ? selectedColors : ['default'];
+  const seen = new Set();
+  const options = [];
+  variants.forEach((variant, index) => {
+    const color = colorFromVariant(variant, forceColor);
+    if (!allowedColors.includes(color)) return;
     const sizes = sizesFromVariants([variant]);
-    return {
+    const size = sizes[0] || 'M';
+    const key = `${color}-${size}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    options.push({
       id: variant?.id || variant?.variant_id || index,
       name: variant?.name || variant?.variant_name || `Variant ${index + 1}`,
-    color,
-      size: sizes[0] || 'M',
+      color,
+      size,
       image: variantImage(variant, fallbackImage),
       stock: 5,
       sku: variant?.sku || variant?.external_id || ''
-    };
+    });
   });
+  return options.slice(0, 32);
 }
 
 function sizesFromVariants(variants = []) {
@@ -255,10 +312,39 @@ function sizesFromVariants(variants = []) {
   return sizes.length ? sizes.slice(0, 5) : ['S', 'M', 'L', 'XL'];
 }
 
+async function enrichWithCatalogProduct(product) {
+  const variantId = variantPools(product).find((variant) => variant?.variant_id || variant?.id)?.variant_id
+    || variantPools(product).find((variant) => variant?.variant_id || variant?.id)?.id;
+  if (!variantId) return product;
+
+  try {
+    const variantDetail = await printfulCatalogFetch(`/products/variant/${variantId}`);
+    const variantResult = variantDetail?.result || {};
+    const variant = variantResult?.variant || variantResult;
+    const productId = variant?.product_id || variantResult?.product?.id || variantResult?.product_id;
+    if (!productId) return product;
+
+    const productDetail = await printfulCatalogFetch(`/products/${productId}`);
+    const productResult = productDetail?.result || {};
+    const catalogProduct = productResult?.product || productResult;
+    const catalogVariants = Array.isArray(productResult?.variants) ? productResult.variants : [];
+    if (!catalogVariants.length) return product;
+
+    return {
+      ...product,
+      catalog_product: catalogProduct,
+      catalog_variants: catalogVariants,
+      catalog_variant: variant
+    };
+  } catch (error) {
+    return product;
+  }
+}
+
 function normalizeProduct(product, index) {
   const name = seoName(product?.name || product?.external_name || product?.sync_product?.name || product?.title, index);
   const rule = pickRule(name);
-  const variants = product?.sync_variants || product?.variants || [];
+  const variants = variantPools(product);
   const rawName = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''}`;
   const forceColor = /all[- ]?over|aop/i.test(rawName) ? 'white' : '';
   const colors = colorsFromVariants(variants, `${rawName} ${name} ${product?.description || ''}`);
@@ -322,7 +408,7 @@ module.exports = async function handler(req, res) {
     let detailed = await Promise.all(rows.map(async (product) => {
       try {
         const detail = await printfulFetch(`/store/products/${product.id}`);
-        return detail.result?.sync_product
+        const merged = detail.result?.sync_product
           ? {
               ...product,
               ...detail.result.sync_product,
@@ -332,6 +418,7 @@ module.exports = async function handler(req, res) {
               printful_detail: detail.result
             }
           : product;
+        return enrichWithCatalogProduct(merged);
       } catch (error) {
         return product;
       }
