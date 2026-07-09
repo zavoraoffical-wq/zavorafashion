@@ -68,8 +68,12 @@ async function tryPrintfulFetch(paths) {
 }
 
 async function printfulCatalogFetch(path) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (PRINTFUL_API_KEY) {
+    headers.Authorization = `Bearer ${PRINTFUL_API_KEY}`;
+  }
   const result = await fetch(`${PRINTFUL_API_BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' }
+    headers
   });
   const body = await result.json().catch(() => ({}));
   if (!result.ok) {
@@ -326,8 +330,10 @@ function variantPools(product) {
 function productPools(product) {
   return [
     product,
+    product?.product,
     product?.catalog_product,
     product?.sync_product,
+    product?.printful_detail?.product,
     product?.printful_detail,
     product?.printful_detail?.catalog_product,
     product?.printful_detail?.sync_product
@@ -338,14 +344,32 @@ function fileUrl(file) {
   return file?.preview_url || file?.thumbnail_url || file?.url || file?.preview || file?.image_url || '';
 }
 
+function assetUrl(asset) {
+  if (!asset) return '';
+  if (typeof asset === 'string') return asset;
+  return fileUrl(asset) || asset?.image || asset?.src || asset?.href || '';
+}
+
 function addUnique(list, url) {
+  url = assetUrl(url);
   if (url && !list.includes(url)) list.push(url);
 }
 
 function productImageUrls(product) {
   const urls = [];
   productPools(product)
-    .flatMap((item) => [item?.thumbnail_url, item?.image, item?.mockup_url, item?.image_url, ...(item?.files || []).map(fileUrl)])
+    .flatMap((item) => [
+      item?.thumbnail_url,
+      item?.image,
+      item?.image_url,
+      item?.mockup_url,
+      item?.main_category_image,
+      item?.variant_image,
+      ...(item?.images || []),
+      ...(item?.gallery || []),
+      ...(item?.mockups || []),
+      ...(item?.files || []).map(fileUrl)
+    ])
     .forEach((url) => addUnique(urls, url));
   return urls;
 }
@@ -357,7 +381,12 @@ function variantImages(variant) {
     variant?.image,
     variant?.thumbnail_url,
     variant?.preview_url,
+    variant?.variant_image,
+    variant?.mockup_url,
     variant?.product?.image,
+    ...(variant?.images || []),
+    ...(variant?.gallery || []),
+    ...(variant?.mockups || []),
     ...(variant?.files || []).map(fileUrl)
   ].forEach((url) => addUnique(urls, url));
   return urls;
@@ -434,6 +463,10 @@ function variantGroupsFromVariants(variants = [], productImages = [], forceColor
       image: images[0] || ''
     });
   });
+  const groupKeys = Object.keys(groups);
+  if (groupKeys.length === 1 && productImages.length) {
+    productImages.forEach((url) => addUnique(groups[groupKeys[0]].images, url));
+  }
   if (!Object.keys(groups).length && productImages.length) {
     groups.default = { color: 'default', key: 'default', label: 'Original', images: productImages, sizes: [], variants: [] };
   }
@@ -527,22 +560,64 @@ function normalizeProduct(product, index) {
 }
 
 function normalizeCatalogProduct(product, index) {
+  const detail = product?.printful_detail || {};
+  const detailProduct = detail?.product || product?.product || product?.catalog_product || product;
+  const variants = Array.isArray(detail?.variants)
+    ? detail.variants
+    : (Array.isArray(product?.variants) ? product.variants : []);
   return normalizeProduct({
-    id: product.id,
-    name: product.title || product.type_name,
-    title: product.title,
-    image: product.image,
-    price: product.retail_price,
-    description: product.description
+    ...product,
+    ...detailProduct,
+    id: detailProduct?.id || product?.id,
+    name: detailProduct?.title || detailProduct?.type_name || product?.title || product?.type_name,
+    title: detailProduct?.title || product?.title,
+    image: detailProduct?.image || product?.image,
+    price: detailProduct?.retail_price || product?.retail_price,
+    description: detailProduct?.description || product?.description,
+    catalog_product: detailProduct,
+    catalog_variants: variants,
+    variants,
+    printful_detail: detail
   }, index);
+}
+
+async function fetchCatalogProducts({ gender, limit, offset, query }) {
+  const catalog = await printfulCatalogFetch('/products');
+  const rows = Array.isArray(catalog.result) ? catalog.result : [];
+  const search = String(query || '').trim().toLowerCase();
+  const filtered = rows
+    .filter(catalogPredicate(gender))
+    .filter((product) => {
+      if (!search) return true;
+      const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
+      return text.includes(search);
+    });
+  const pageRows = filtered.slice(offset, offset + limit);
+  const detailed = await Promise.all(pageRows.map(async (product, index) => {
+    try {
+      const productId = product?.id || product?.product_id;
+      if (!productId) return normalizeCatalogProduct(product, index);
+      const detail = await printfulCatalogFetch(`/products/${productId}`);
+      return normalizeCatalogProduct({
+        ...product,
+        printful_detail: detail.result || {},
+        catalog_product: detail.result?.product || product,
+        catalog_variants: detail.result?.variants || []
+      }, index);
+    } catch (error) {
+      return normalizeCatalogProduct(product, index);
+    }
+  }));
+  return {
+    source: `printful-catalog:${gender}`,
+    total: filtered.length,
+    products: detailed
+  };
 }
 
 module.exports = async function handler(req, res) {
   if (!PRINTFUL_API_KEY) {
     return response(res, 500, { ok: false, error: 'PRINTFUL_API_KEY is missing in Vercel environment variables.' });
-  }
-  if (!PRINTFUL_STORE_ID) {
-    return response(res, 500, { ok: false, error: 'PRINTFUL_STORE_ID is missing in Vercel environment variables.' });
   }
 
   try {
@@ -550,54 +625,14 @@ module.exports = async function handler(req, res) {
     const limit = Math.min(Number(req.query.limit || 23), 60);
     const page = Math.max(Number(req.query.page || 1), 1);
     const offset = (page - 1) * limit;
-    const list = await printfulFetch(`/store/products?limit=${limit}&offset=${offset}`);
-    const rows = Array.isArray(list.result) ? list.result : [];
-
-    let detailed = await Promise.all(rows.map(async (product) => {
-      try {
-        const detail = await printfulFetch(`/store/products/${product.id}`);
-        const merged = detail.result?.sync_product
-          ? {
-              ...product,
-              ...detail.result.sync_product,
-              sync_product: detail.result.sync_product,
-              sync_variants: detail.result.sync_variants || [],
-              variants: detail.result.sync_variants || [],
-              printful_detail: detail.result
-            }
-          : product;
-        return enrichWithCatalogProduct(merged);
-      } catch (error) {
-        return product;
-      }
-    }));
-
-    let source = 'printful-store';
-
-    if (!detailed.length) {
-      try {
-        const templateResponse = await tryPrintfulFetch([
-          `/product-templates?limit=${limit}&offset=${offset}`,
-          `/v2/product-templates?limit=${limit}&offset=${offset}`,
-          `/products/templates?limit=${limit}&offset=${offset}`
-        ]);
-        const result = templateResponse.body.result || templateResponse.body.data || [];
-        detailed = Array.isArray(result) ? result : (result.items || result.templates || []);
-        source = `printful-templates:${templateResponse.path}`;
-      } catch (error) {
-        detailed = [];
-      }
-    }
-
-    if (!detailed.length) {
-      const catalog = await printfulCatalogFetch('/products');
-      const catalogRows = Array.isArray(catalog.result) ? catalog.result : [];
-      detailed = catalogRows.filter(catalogPredicate(gender)).slice(offset, offset + limit).map(normalizeCatalogProduct);
-      source = `printful-catalog:${gender}`;
-    }
-
-    const filtered = detailed.filter((product) => product?.seoTitle || catalogPredicate(gender)(product));
-    const products = filtered.slice(0, limit).map((product, index) => product?.seoTitle ? product : normalizeProduct(product, index));
+    const catalogImport = await fetchCatalogProducts({
+      gender,
+      limit,
+      offset,
+      query: req.query.q || req.query.search || ''
+    });
+    const products = catalogImport.products;
+    const source = catalogImport.source;
     let db = {
       saved: false,
       provider: 'supabase',
@@ -616,7 +651,7 @@ module.exports = async function handler(req, res) {
         };
       }
     }
-    response(res, 200, { ok: true, source, page, limit, count: products.length, db, products });
+    response(res, 200, { ok: true, source, page, limit, total: catalogImport.total, count: products.length, db, products });
   } catch (error) {
     response(res, 500, { ok: false, error: error.message || 'Unable to import Printful products.' });
   }
