@@ -19,7 +19,7 @@ const categoryRules = [
 function response(res, status, body) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=1800');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.end(JSON.stringify(body));
 }
 
@@ -68,16 +68,16 @@ async function printfulCatalogFetch(path) {
 }
 
 function isMenCatalogProduct(product) {
-  const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
+  const text = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
   const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|shorts|shoe|sneaker|flip-flop|flip flop|slide|cap|hat|beanie)/i.test(text);
-  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|jersey|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
+  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|jersey|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
 }
 
 function isWomenCatalogProduct(product) {
-  const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
+  const text = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
   const allowed = /(women|women's|ladies|female|crop|cropped|baby tee|hoodie|zip|quarter-zip|tee|t-shirt|shirt|sweatshirt|pullover|fleece|sweatpants|jogger)/i.test(text);
-  const blocked = /(men|men's|male|unisex|underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|headband|neck gaiter|rash guard|jersey|kids|youth|baby clothes|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
+  const blocked = /(men|men's|male|unisex|underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|headband|neck gaiter|rash guard|jersey|kids|youth|baby clothes|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
 }
 
@@ -112,21 +112,17 @@ function seoName(rawName, index) {
 
 function colorFromName(name) {
   const lower = String(name || '').toLowerCase();
-  if (lower.includes('black')) return 'black';
-  if (lower.includes('white')) return 'white';
-  if (lower.includes('gray') || lower.includes('grey')) return 'gray';
-  if (lower.includes('blue') || lower.includes('navy')) return 'blue';
-  if (lower.includes('green')) return 'green';
-  if (lower.includes('red')) return 'red';
-  if (lower.includes('pink')) return 'pink';
-  if (lower.includes('purple')) return 'purple';
-  if (lower.includes('brown') || lower.includes('tan') || lower.includes('khaki')) return 'brown';
-  if (lower.includes('gold') || lower.includes('yellow')) return 'gold';
+  const has = (pattern) => new RegExp(`(^|[^a-z])(${pattern})([^a-z]|$)`, 'i').test(lower);
+  if (has('black|jet black|true black')) return 'black';
+  if (has('white|optic white|true white')) return 'white';
+  if (has('gray|grey|heather gray|heather grey|sport gray|sport grey')) return 'gray';
+  if (has('blue|navy|royal')) return 'blue';
+  if (has('green|olive|forest')) return 'green';
   return '';
 }
 
 function colorsFromVariants(variants = [], fallbackText = '') {
-  const colorOrder = ['black', 'white', 'gray', 'blue', 'green', 'red', 'pink', 'purple', 'brown', 'gold'];
+  const colorOrder = ['black', 'white', 'gray', 'blue', 'green'];
   if (/all[- ]?over|aop/i.test(fallbackText)) return ['white'];
   const found = new Set();
   const texts = variants.map((variant) => `${variant?.name || ''} ${variant?.variant_name || ''}`);
@@ -162,12 +158,37 @@ function compareAtFromProduct(product, index) {
   return roundedPrice(priceWithIncludedShipping(product, index) * COMPARE_AT_MARKUP);
 }
 
+function variantPools(product) {
+  return [
+    ...(product?.sync_variants || []),
+    ...(product?.variants || []),
+    ...(product?.printful_detail?.sync_variants || []),
+    ...(product?.printful_detail?.variants || [])
+  ];
+}
+
+function productPools(product) {
+  return [
+    product,
+    product?.sync_product,
+    product?.printful_detail,
+    product?.printful_detail?.sync_product
+  ].filter(Boolean);
+}
+
+function fileUrl(file) {
+  return file?.preview_url || file?.thumbnail_url || file?.url || file?.preview || file?.image_url || '';
+}
+
 function imageFromProduct(product) {
-  return product?.sync_variants?.find((variant) => variant?.files?.[0]?.preview_url)?.files?.[0]?.preview_url
-    || product?.variants?.find((variant) => variant?.files?.[0]?.preview_url)?.files?.[0]?.preview_url
-    || product?.thumbnail_url
-    || product?.image
-    || product?.files?.[0]?.preview_url
+  const variantImageUrl = variantPools(product)
+    .map((variant) => variantImage(variant, ''))
+    .find(Boolean);
+  const directImageUrl = productPools(product)
+    .flatMap((item) => [item?.thumbnail_url, item?.image, item?.mockup_url, item?.image_url, ...(item?.files || []).map(fileUrl)])
+    .find(Boolean);
+  return variantImageUrl
+    || directImageUrl
     || 'assets/studio-wide-trouser.png';
 }
 
@@ -176,23 +197,30 @@ function imagesFromProduct(product) {
   const add = (url) => {
     if (url && !urls.includes(url)) urls.push(url);
   };
-  add(product?.thumbnail_url);
-  add(product?.image);
-  add(product?.mockup_url);
-  (product?.files || []).forEach((file) => add(file?.preview_url || file?.thumbnail_url || file?.url));
-  [...(product?.sync_variants || []), ...(product?.variants || [])].forEach((variant) => {
+  productPools(product).forEach((item) => {
+    add(item?.thumbnail_url);
+    add(item?.image);
+    add(item?.mockup_url);
+    add(item?.image_url);
+    (item?.files || []).forEach((file) => add(fileUrl(file)));
+  });
+  variantPools(product).forEach((variant) => {
     add(variant?.image);
     add(variant?.thumbnail_url);
+    add(variant?.image_url);
     add(variant?.product?.image);
-    (variant?.files || []).forEach((file) => add(file?.preview_url || file?.thumbnail_url || file?.url));
+    (variant?.files || []).forEach((file) => add(fileUrl(file)));
   });
   add(imageFromProduct(product));
   return urls.slice(0, 6);
 }
 
 function variantImage(variant, fallback) {
-  return variant?.files?.[0]?.preview_url
-    || variant?.files?.find((file) => file?.preview_url)?.preview_url
+  return fileUrl(variant?.files?.[0])
+    || fileUrl((variant?.files || []).find((file) => fileUrl(file)))
+    || variant?.image
+    || variant?.thumbnail_url
+    || variant?.image_url
     || variant?.product?.image
     || fallback;
 }
@@ -294,7 +322,16 @@ module.exports = async function handler(req, res) {
     let detailed = await Promise.all(rows.map(async (product) => {
       try {
         const detail = await printfulFetch(`/store/products/${product.id}`);
-        return detail.result?.sync_product ? { ...detail.result.sync_product, sync_variants: detail.result.sync_variants || [] } : product;
+        return detail.result?.sync_product
+          ? {
+              ...product,
+              ...detail.result.sync_product,
+              sync_product: detail.result.sync_product,
+              sync_variants: detail.result.sync_variants || [],
+              variants: detail.result.sync_variants || [],
+              printful_detail: detail.result
+            }
+          : product;
       } catch (error) {
         return product;
       }
@@ -324,7 +361,8 @@ module.exports = async function handler(req, res) {
       source = `printful-catalog:${gender}`;
     }
 
-    const products = detailed.slice(0, limit).map((product, index) => product?.seoTitle ? product : normalizeProduct(product, index));
+    const filtered = detailed.filter((product) => product?.seoTitle || catalogPredicate(gender)(product));
+    const products = filtered.slice(0, limit).map((product, index) => product?.seoTitle ? product : normalizeProduct(product, index));
     response(res, 200, { ok: true, source, page, limit, count: products.length, products });
   } catch (error) {
     response(res, 500, { ok: false, error: error.message || 'Unable to import Printful products.' });

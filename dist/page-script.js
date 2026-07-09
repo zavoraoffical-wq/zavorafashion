@@ -92,11 +92,17 @@ function addWishlistProduct(product) {
 
 function refreshWishlistButtons() {
   const ids = new Set(getWishlist().map((item) => productKey(item)));
-  document.querySelectorAll('[data-home-wishlist], [data-wishlist-product]').forEach((button) => {
-    const product = [...(window.__zavoraCatalogProducts || []), ...(window.__zavoraSearchProducts || [])]
-      .find((item) => String(item.id) === String(button.dataset.homeWishlist || button.dataset.wishlistProduct));
-    const key = product ? productKey(product) : String(button.dataset.homeWishlist || button.dataset.wishlistProduct || '');
-    button.classList.toggle('active', ids.has(key));
+  document.querySelectorAll('[data-home-wishlist], [data-wishlist-product], [data-add-selected-wishlist]').forEach((button) => {
+    const id = button.dataset.homeWishlist || button.dataset.wishlistProduct || '';
+    const product = id
+      ? [...(window.__zavoraCatalogProducts || []), ...(window.__zavoraSearchProducts || [])]
+        .find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id))
+      : getSelectedProduct();
+    const key = product ? productKey(product) : String(id);
+    const active = ids.has(key);
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-label', active ? 'Remove from wishlist' : 'Add to wishlist');
+    if (button.dataset.addSelectedWishlist) button.textContent = active ? 'Wishlisted' : 'Wishlist';
   });
 }
 
@@ -1187,9 +1193,17 @@ document.addEventListener('click', async (event) => {
     const product = id
       ? (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(id))
       : getSelectedProduct();
-    addWishlistProduct(product || getSelectedProduct());
-    wishlistProduct.classList.add('active');
-    wishlistProduct.setAttribute('aria-label', 'Added to wishlist');
+    const targetProduct = product || getSelectedProduct();
+    const key = productKey(targetProduct);
+    const wishlist = getWishlist();
+    if (wishlist.some((item) => productKey(item) === key)) {
+      saveWishlist(wishlist.filter((item) => productKey(item) !== key));
+      syncHeaderCounts();
+      renderWishlistDrawer();
+      refreshWishlistButtons();
+    } else {
+      addWishlistProduct(targetProduct);
+    }
     return;
   }
 
@@ -1871,10 +1885,10 @@ function refreshSelectedProductFromUrl() {
   const id = new URLSearchParams(window.location.search).get('id');
   if (!id || window.__zavoraProductRefreshId === id) return;
   window.__zavoraProductRefreshId = id;
-  fetch('/api/printful-products?gender=men&limit=60&page=1')
-    .then((response) => response.json())
-    .then((data) => {
-      const product = Array.isArray(data.products) ? data.products.find((item) => String(item.id) === String(id)) : null;
+  Promise.all(['men', 'women'].map((gender) => fetch(`/api/printful-products?gender=${gender}&limit=60&page=1`).then((response) => response.json()).catch(() => ({ products: [] }))))
+    .then((pages) => {
+      const products = pages.flatMap((data) => Array.isArray(data.products) ? data.products : []);
+      const product = products.find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
       if (product) {
         rememberSelectedProduct(product);
         initDynamicProductPage();
