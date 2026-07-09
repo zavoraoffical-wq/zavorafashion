@@ -333,6 +333,27 @@ function addWishlistProduct(product) {
   if (typeof renderWishlistDrawer === 'function') renderWishlistDrawer();
 }
 
+function homeProductKey(product) {
+  return String(product?.printfulId || product?.id || product?.name || '');
+}
+
+function homeWishlistHas(product) {
+  const key = homeProductKey(product);
+  return getWishlist().some((item) => homeProductKey(item) === key);
+}
+
+function normalizedSearch(value = '') {
+  return String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function homeProductMatchesSearch(product, term = '') {
+  const clean = normalizedSearch(term);
+  if (!clean) return true;
+  const raw = `${product.name || ''} ${product.category || ''} ${(product.colors || []).join(' ')}`;
+  const aliases = /t-?shirt|tee|tees/i.test(raw) ? ' tshirt tshirts tee tees' : '';
+  return normalizedSearch(`${raw}${aliases}`).includes(clean);
+}
+
 function getAdminProducts() {
   try {
     return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY)) || [];
@@ -462,7 +483,7 @@ function productCard(product) {
         <img loading="lazy" src="${product.img}" alt="${product.name}">
         <img loading="lazy" class="alt" src="${product.alt}" alt="${product.name} alternate view">
         <span class="badge">${product.badge}</span>
-        <button class="wish" data-home-wishlist="${product.id}" aria-label="Add ${product.name} to wishlist">♡</button>
+        <button class="wish ${homeWishlistHas(product) ? 'active' : ''}" data-home-wishlist="${product.id}" aria-label="Add ${product.name} to wishlist">♡</button>
       </div>
       <div class="product-info">
         <h3>${product.name}</h3>
@@ -548,10 +569,7 @@ function openQuickView(id) {
 function renderSuggestions(term = '') {
   const catalog = getHomeProducts();
   const matches = catalog
-    .filter(product => {
-      const haystack = `${product.name || ''} ${product.category || ''} ${(product.colors || []).join(' ')}`.toLowerCase();
-      return haystack.includes(term.toLowerCase());
-    })
+    .filter(product => homeProductMatchesSearch(product, term))
     .slice(0, 6);
   $('#suggestions').innerHTML = (matches.length ? matches : catalog.slice(0, 4)).map(product => `
     <button class="search-product" data-search-product="${product.id}">
@@ -700,6 +718,13 @@ $('[data-open-menu]').addEventListener('click', openMobileMenu);
 $('[data-close-mobile]').addEventListener('click', closeMobileMenu);
 $$('#mobilePanel a').forEach((link) => link.addEventListener('click', closeMobileMenu));
 $('#searchInput').addEventListener('input', (event) => renderSuggestions(event.target.value));
+$('#searchInput').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const term = event.target.value.trim();
+    if (term) window.location.href = `shop.html?search=${encodeURIComponent(term)}`;
+  }
+});
 
 $$('[data-mega]').forEach(button => {
   button.addEventListener('mouseenter', () => {

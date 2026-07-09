@@ -87,6 +87,17 @@ function addWishlistProduct(product) {
   }
   syncHeaderCounts();
   renderWishlistDrawer();
+  refreshWishlistButtons();
+}
+
+function refreshWishlistButtons() {
+  const ids = new Set(getWishlist().map((item) => productKey(item)));
+  document.querySelectorAll('[data-home-wishlist], [data-wishlist-product]').forEach((button) => {
+    const product = [...(window.__zavoraCatalogProducts || []), ...(window.__zavoraSearchProducts || [])]
+      .find((item) => String(item.id) === String(button.dataset.homeWishlist || button.dataset.wishlistProduct));
+    const key = product ? productKey(product) : String(button.dataset.homeWishlist || button.dataset.wishlistProduct || '');
+    button.classList.toggle('active', ids.has(key));
+  });
 }
 
 function productKey(product) {
@@ -400,6 +411,7 @@ function enforceAuthState() {
   document.querySelectorAll('[data-profile]').forEach((profile) => {
     profile.href = localStorage.getItem(AUTH_KEY) === 'true' ? 'dashboard.html' : 'login.html';
   });
+  document.querySelectorAll('.login-hint').forEach((hint) => hint.remove());
 }
 
 const accountViews = {
@@ -708,10 +720,7 @@ function renderPageSuggestions(term = '') {
   }
   if (products.length) {
     const matches = products
-      .filter((product) => {
-        const haystack = `${product.name || ''} ${product.category || ''} ${(product.colors || []).join(' ')}`.toLowerCase();
-        return !cleanTerm || haystack.includes(cleanTerm);
-      })
+      .filter((product) => productMatchesSearch(product, cleanTerm))
       .slice(0, 8);
     box.innerHTML = matches.length ? matches.map((product) => `
       <button type="button" class="search-product" data-page-search-product="${product.id}">
@@ -731,6 +740,19 @@ function renderPageSuggestions(term = '') {
       return `<button type="button" onclick="location.href='${href}'"><strong>${item}</strong><br>${copy}</button>`;
     }).join('')
     : `<button type="button" onclick="location.href='shop.html'"><strong>No exact match</strong><br>View all products</button>`;
+}
+
+function normalizedSearch(value = '') {
+  return String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function productMatchesSearch(product, term = '') {
+  const clean = normalizedSearch(term);
+  if (!clean) return true;
+  const raw = `${product.name || ''} ${product.category || ''} ${(product.colors || []).join(' ')}`;
+  const aliases = /t-?shirt|tee|tees/i.test(raw) ? ' tshirt tshirts tee tees' : '';
+  const haystack = normalizedSearch(`${raw}${aliases}`);
+  return haystack.includes(clean);
 }
 
 function ensurePageCart() {
@@ -953,6 +975,7 @@ async function loadPrintfulCatalog() {
     window.__zavoraCatalogProducts = products;
     grid.innerHTML = products.map(catalogCard).join('');
     filterLargeCatalog();
+    refreshWishlistButtons();
   } catch (error) {
     grid.dataset.printfulLoaded = 'failed';
   }
@@ -998,6 +1021,7 @@ function filterLargeCatalog() {
   const filters = document.querySelectorAll('[data-catalog-filter]');
   if (!filters.length) return;
   const values = Object.fromEntries([...filters].map((filter) => [filter.dataset.catalogFilter, filter.value]));
+  const searchTerm = new URLSearchParams(window.location.search).get('search') || '';
   const grid = document.querySelector('[data-catalog-grid]');
   if (grid) {
     const cards = [...grid.querySelectorAll('[data-catalog-card]')];
@@ -1009,16 +1033,20 @@ function filterLargeCatalog() {
   }
   let visible = 0;
   document.querySelectorAll('[data-catalog-card]').forEach((card) => {
+    const product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(card.dataset.productId));
     const match = (values.category === 'all' || card.dataset.category === values.category)
       && (values.color === 'all' || card.dataset.color.split(' ').includes(values.color))
       && (values.size === 'all' || card.dataset.size === values.size)
-      && Number(card.dataset.price) <= Number(values.price || 999);
+      && Number(card.dataset.price) <= Number(values.price || 999)
+      && (!searchTerm || productMatchesSearch(product || { name: card.textContent, category: card.dataset.category, colors: card.dataset.color.split(' ') }, searchTerm));
     card.hidden = !match;
     if (match) visible += 1;
   });
   document.querySelectorAll('[data-catalog-count]').forEach((count) => {
     count.textContent = visible;
   });
+  const title = document.querySelector('.catalog-toolbar h1');
+  if (title && searchTerm) title.textContent = `Search results for "${searchTerm}"`;
 }
 
 function injectProductFilters(beforeNode) {
@@ -1116,6 +1144,14 @@ document.addEventListener('input', (event) => {
     document.querySelectorAll('[data-gift-card]').forEach((card) => {
       card.hidden = term && !card.dataset.giftCard.includes(term);
     });
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && event.target?.id === 'pageSearchInput') {
+    event.preventDefault();
+    const term = event.target.value.trim();
+    if (term) window.location.href = `shop.html?search=${encodeURIComponent(term)}`;
   }
 });
 
@@ -1220,9 +1256,11 @@ document.addEventListener('click', async (event) => {
   if (removeWishlist) {
     event.preventDefault();
     if (removeWishlist.dataset.removeWishlist) {
-      saveWishlist(getWishlist().filter((item) => productKey(item) !== removeWishlist.dataset.removeWishlist));
+    saveWishlist(getWishlist().filter((item) => productKey(item) !== removeWishlist.dataset.removeWishlist));
       syncHeaderCounts();
+      if (typeof syncHomeWishlistCount === 'function') syncHomeWishlistCount();
       renderWishlistDrawer();
+      refreshWishlistButtons();
     }
     removeWishlist.closest('.wishlist-item, .cart-item')?.remove();
     return;
@@ -1312,7 +1350,7 @@ document.addEventListener('click', async (event) => {
       loginTrigger.closest('.form-panel')?.appendChild(error);
     }
     if (!valid) {
-      error.textContent = 'Use demo login: user@zavora.com / 123456';
+      error.textContent = 'Invalid email or password.';
       return;
     }
     error.textContent = '';
