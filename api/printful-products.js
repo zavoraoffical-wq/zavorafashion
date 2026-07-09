@@ -4,6 +4,11 @@ const PRINTFUL_STORE_ID = process.env.PRINTFUL_STORE_ID;
 const INCLUDED_SHIPPING_COST = 14.99;
 const SELLING_MARKUP = 1.3;
 const COMPARE_AT_MARKUP = 2.3;
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || process.env.DB_NAME || 'zavora_fashion';
+const PRODUCTS_COLLECTION = process.env.PRODUCTS_COLLECTION || 'products';
+
+let mongoClientPromise;
 
 const categoryRules = [
   { match: /women|women's|ladies|female/i, gender: 'Women' },
@@ -73,6 +78,50 @@ async function printfulCatalogFetch(path) {
     throw new Error(body?.error?.message || body?.message || `Printful catalog request failed: ${result.status}`);
   }
   return body;
+}
+
+async function getProductsCollection() {
+  if (!MONGODB_URI) return null;
+  const { MongoClient } = require('mongodb');
+  if (!mongoClientPromise) {
+    mongoClientPromise = new MongoClient(MONGODB_URI).connect();
+  }
+  const client = await mongoClientPromise;
+  return client.db(MONGODB_DB_NAME).collection(PRODUCTS_COLLECTION);
+}
+
+async function saveProductsToDb(products = []) {
+  const collection = await getProductsCollection();
+  if (!collection || !products.length) return { saved: false, count: 0 };
+  const now = new Date();
+  const operations = products.map((product) => ({
+    updateOne: {
+      filter: {
+        $or: [
+          { printfulId: product.printfulId },
+          { id: product.id }
+        ]
+      },
+      update: {
+        $set: {
+          ...product,
+          source: 'printful',
+          updatedAt: now
+        },
+        $setOnInsert: {
+          createdAt: now
+        }
+      },
+      upsert: true
+    }
+  }));
+  const result = await collection.bulkWrite(operations, { ordered: false });
+  return {
+    saved: true,
+    count: products.length,
+    upserted: result.upsertedCount || 0,
+    modified: result.modifiedCount || 0
+  };
 }
 
 function isMenCatalogProduct(product) {
@@ -534,7 +583,15 @@ module.exports = async function handler(req, res) {
 
     const filtered = detailed.filter((product) => product?.seoTitle || catalogPredicate(gender)(product));
     const products = filtered.slice(0, limit).map((product, index) => product?.seoTitle ? product : normalizeProduct(product, index));
-    response(res, 200, { ok: true, source, page, limit, count: products.length, products });
+    let db = { saved: false, count: 0, reason: MONGODB_URI ? 'not requested' : 'missing MONGODB_URI' };
+    if (String(req.query.save || 'true') !== 'false') {
+      try {
+        db = await saveProductsToDb(products);
+      } catch (error) {
+        db = { saved: false, count: 0, error: error.message || 'Unable to save Printful products to DB.' };
+      }
+    }
+    response(res, 200, { ok: true, source, page, limit, count: products.length, db, products });
   } catch (error) {
     response(res, 500, { ok: false, error: error.message || 'Unable to import Printful products.' });
   }
