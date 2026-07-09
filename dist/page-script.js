@@ -696,6 +696,31 @@ function renderPageSuggestions(term = '') {
   const box = document.querySelector('#pageSuggestions');
   if (!box) return;
   const cleanTerm = term.trim().toLowerCase();
+  const products = window.__zavoraSearchProducts || [];
+  if (!products.length) {
+    fetch('/api/printful-products?gender=men&limit=60&page=1')
+      .then((response) => response.json())
+      .then((data) => {
+        window.__zavoraSearchProducts = Array.isArray(data.products) ? data.products : [];
+        renderPageSuggestions(term);
+      })
+      .catch(() => {});
+  }
+  if (products.length) {
+    const matches = products
+      .filter((product) => {
+        const haystack = `${product.name || ''} ${product.category || ''} ${(product.colors || []).join(' ')}`.toLowerCase();
+        return !cleanTerm || haystack.includes(cleanTerm);
+      })
+      .slice(0, 8);
+    box.innerHTML = matches.length ? matches.map((product) => `
+      <button type="button" class="search-product" data-page-search-product="${product.id}">
+        <img src="${product.img || product.image || 'assets/studio-wide-trouser.png'}" alt="${product.name}" onerror="this.src='assets/studio-wide-trouser.png'">
+        <span><strong>${product.name}</strong><br>${money(product.price)} / ${product.category}</span>
+      </button>
+    `).join('') : '<p>No matching Zavora product found.</p>';
+    return;
+  }
   const matches = quickProducts.filter((item) => item.toLowerCase().includes(cleanTerm));
   const list = cleanTerm ? matches : quickProducts;
   box.innerHTML = list.length
@@ -833,7 +858,7 @@ function renderWishlistDrawer(drawer = document.querySelector('#pageWishlistDraw
   if (!box) return;
   const wishlist = getWishlist();
   box.innerHTML = wishlist.length ? wishlist.map((item) => `
-    <div class="cart-item" data-wishlist-card="${productKey(item)}">
+    <div class="cart-item wishlist-clickable" data-wishlist-card="${productKey(item)}" data-open-wishlist-product="${productKey(item)}">
       <img src="${item.img || item.image || 'assets/studio-wide-trouser.png'}" alt="${item.name || 'Zavora product'}" onerror="this.src='assets/studio-wide-trouser.png'">
       <div><h3>${item.name || 'Zavora product'}</h3><span>${money(item.price || 0)} / ${(item.colors || [item.color || 'original']).join(', ')}</span></div>
       <button type="button" data-remove-wishlist="${productKey(item)}" aria-label="Remove ${item.name || 'item'}">&times;</button>
@@ -1101,6 +1126,15 @@ document.addEventListener('change', (event) => {
 });
 
 document.addEventListener('click', async (event) => {
+  const pageSearchProduct = event.target.closest('[data-page-search-product]');
+  if (pageSearchProduct) {
+    event.preventDefault();
+    const product = (window.__zavoraSearchProducts || []).find((item) => String(item.id) === String(pageSearchProduct.dataset.pageSearchProduct));
+    if (product) rememberSelectedProduct(product);
+    window.location.href = `product.html?id=${encodeURIComponent(pageSearchProduct.dataset.pageSearchProduct)}`;
+    return;
+  }
+
   const openProduct = event.target.closest('[data-open-product]');
   if (openProduct && !event.target.closest('[data-wishlist-product]')) {
     const id = String(openProduct.dataset.openProduct);
@@ -1196,8 +1230,10 @@ document.addEventListener('click', async (event) => {
 
   const openWishlistProduct = event.target.closest('[data-open-wishlist-product]');
   if (openWishlistProduct) {
+    if (event.target.closest('[data-remove-wishlist]')) return;
     const product = getWishlist().find((item) => productKey(item) === openWishlistProduct.dataset.openWishlistProduct);
     if (product) rememberSelectedProduct(product);
+    if (product?.id) window.location.href = `product.html?id=${encodeURIComponent(product.id)}`;
     return;
   }
 

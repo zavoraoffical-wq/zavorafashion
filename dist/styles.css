@@ -1758,6 +1758,22 @@ h2 {
 .product-gallery.single-gallery .zoom-frame {
   width: min(100%, 640px);
 }
+.search-product {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+.search-product img {
+  width: 62px;
+  height: 62px;
+  object-fit: cover;
+  background: #f4f4f4;
+}
+.wishlist-clickable {
+  cursor: pointer;
+}
 .catalog-card .wish {
   position: absolute;
   right: 12px;

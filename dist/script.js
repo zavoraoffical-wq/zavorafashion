@@ -548,10 +548,16 @@ function openQuickView(id) {
 function renderSuggestions(term = '') {
   const catalog = getHomeProducts();
   const matches = catalog
-    .filter(product => product.name.toLowerCase().includes(term.toLowerCase()) || product.category.includes(term.toLowerCase()))
+    .filter(product => {
+      const haystack = `${product.name || ''} ${product.category || ''} ${(product.colors || []).join(' ')}`.toLowerCase();
+      return haystack.includes(term.toLowerCase());
+    })
     .slice(0, 6);
   $('#suggestions').innerHTML = (matches.length ? matches : catalog.slice(0, 4)).map(product => `
-    <button data-view="${product.id}"><strong>${product.name}</strong><br>${money(product.price)} • ${product.category}</button>
+    <button class="search-product" data-search-product="${product.id}">
+      <img src="${product.img || 'assets/studio-wide-trouser.png'}" alt="${product.name}">
+      <span><strong>${product.name}</strong><br>${money(product.price)} • ${product.category}</span>
+    </button>
   `).join('');
 }
 
@@ -564,6 +570,15 @@ $$('select, input[type="range"], input[type="checkbox"]').forEach(control => {
 });
 
 document.addEventListener('click', (event) => {
+  const searchProduct = event.target.closest('[data-search-product]');
+  if (searchProduct) {
+    event.preventDefault();
+    const product = getHomeProducts().find(item => String(item.id) === String(searchProduct.dataset.searchProduct));
+    if (product) rememberSelectedProduct(product);
+    window.location.href = product ? `product.html?id=${encodeURIComponent(product.id)}` : 'product.html';
+    return;
+  }
+
   const homeWishlist = event.target.closest('[data-home-wishlist]');
   if (homeWishlist) {
     event.preventDefault();
