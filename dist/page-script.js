@@ -923,7 +923,7 @@ function swatch(color) {
 }
 
 function catalogCard(item) {
-  const image = item.image || item.img || 'assets/studio-wide-trouser.png';
+  const image = item.images?.[0] || item.image || item.img || 'assets/studio-wide-trouser.png';
   const size = item.size || item.sizes?.[0] || 'M';
   const colors = Array.isArray(item.colors) && item.colors.length ? item.colors.slice(0, 4) : [item.color || 'default'];
   const stock = getProductStock(item);
@@ -1866,6 +1866,23 @@ function updateDynamicProductMedia() {
   if (first && image) first.src = image;
 }
 
+function refreshSelectedProductFromUrl() {
+  if (!window.location.pathname.endsWith('product.html')) return;
+  const id = new URLSearchParams(window.location.search).get('id');
+  if (!id || window.__zavoraProductRefreshId === id) return;
+  window.__zavoraProductRefreshId = id;
+  fetch('/api/printful-products?gender=men&limit=60&page=1')
+    .then((response) => response.json())
+    .then((data) => {
+      const product = Array.isArray(data.products) ? data.products.find((item) => String(item.id) === String(id)) : null;
+      if (product) {
+        rememberSelectedProduct(product);
+        initDynamicProductPage();
+      }
+    })
+    .catch(() => {});
+}
+
 function updateProductStockNote(product) {
   const stock = getProductStock(product);
   const note = document.querySelector('[data-stock-note]');
@@ -1895,7 +1912,7 @@ function initDynamicProductPage() {
   const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
   const colors = Array.isArray(product.colors) && product.colors.length ? product.colors.slice(0, 4) : [product.color || 'default'];
   const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL'];
-  const variantImages = Array.from(new Set([product.img, product.image, ...(product.variantOptions || []).map((variant) => variant.image)].filter(Boolean))).slice(0, 4);
+  const variantImages = Array.from(new Set([...(product.images || []), product.img, product.image, ...(product.variantOptions || []).map((variant) => variant.image)].filter(Boolean))).slice(0, 4);
   document.title = `${product.name} | Zavora Fashion`;
   if (title) title.textContent = product.name;
   if (price) price.innerHTML = `${product.compareAt ? `<s>${money(product.compareAt)}</s> ` : ''}${money(product.price)}`;
@@ -1942,6 +1959,7 @@ function initDynamicProductPage() {
   });
   updateProductStockNote(product);
   updateDynamicProductMedia();
+  refreshSelectedProductFromUrl();
 }
 
 async function initDynamicRelatedProducts() {

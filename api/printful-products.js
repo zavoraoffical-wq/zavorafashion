@@ -127,6 +127,7 @@ function colorFromName(name) {
 
 function colorsFromVariants(variants = [], fallbackText = '') {
   const colorOrder = ['black', 'white', 'gray', 'blue', 'green', 'red', 'pink', 'purple', 'brown', 'gold'];
+  if (/all[- ]?over|aop/i.test(fallbackText)) return ['white'];
   const found = new Set();
   const texts = variants.map((variant) => `${variant?.name || ''} ${variant?.variant_name || ''}`);
   if (!variants.length && fallbackText) texts.push(fallbackText);
@@ -170,6 +171,25 @@ function imageFromProduct(product) {
     || 'assets/studio-wide-trouser.png';
 }
 
+function imagesFromProduct(product) {
+  const urls = [];
+  const add = (url) => {
+    if (url && !urls.includes(url)) urls.push(url);
+  };
+  add(product?.thumbnail_url);
+  add(product?.image);
+  add(product?.mockup_url);
+  (product?.files || []).forEach((file) => add(file?.preview_url || file?.thumbnail_url || file?.url));
+  [...(product?.sync_variants || []), ...(product?.variants || [])].forEach((variant) => {
+    add(variant?.image);
+    add(variant?.thumbnail_url);
+    add(variant?.product?.image);
+    (variant?.files || []).forEach((file) => add(file?.preview_url || file?.thumbnail_url || file?.url));
+  });
+  add(imageFromProduct(product));
+  return urls.slice(0, 6);
+}
+
 function variantImage(variant, fallback) {
   return variant?.files?.[0]?.preview_url
     || variant?.files?.find((file) => file?.preview_url)?.preview_url
@@ -177,10 +197,10 @@ function variantImage(variant, fallback) {
     || fallback;
 }
 
-function variantOptionsFromVariants(variants = [], fallbackImage = '') {
+function variantOptionsFromVariants(variants = [], fallbackImage = '', forceColor = '') {
   return variants.slice(0, 24).map((variant, index) => {
     const text = `${variant?.name || ''} ${variant?.variant_name || ''}`;
-    const color = colorFromName(text) || 'default';
+    const color = forceColor || colorFromName(text) || 'default';
     const sizes = sizesFromVariants([variant]);
     return {
       id: variant?.id || variant?.variant_id || index,
@@ -195,7 +215,7 @@ function variantOptionsFromVariants(variants = [], fallbackImage = '') {
 }
 
 function sizesFromVariants(variants = []) {
-  const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
+  const sizeOrder = ['2XS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
   const found = new Set();
   variants.forEach((variant) => {
     const text = `${variant?.name || ''} ${variant?.variant_name || ''}`;
@@ -211,8 +231,11 @@ function normalizeProduct(product, index) {
   const name = seoName(product?.name || product?.external_name || product?.sync_product?.name || product?.title, index);
   const rule = pickRule(name);
   const variants = product?.sync_variants || product?.variants || [];
-  const colors = colorsFromVariants(variants, `${name} ${product?.description || ''}`);
+  const rawName = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''}`;
+  const forceColor = /all[- ]?over|aop/i.test(rawName) ? 'white' : '';
+  const colors = colorsFromVariants(variants, `${rawName} ${name} ${product?.description || ''}`);
   const image = imageFromProduct(product);
+  const images = imagesFromProduct(product);
   const sizes = rule.category === 'accessories' ? ['M'] : sizesFromVariants(variants);
   return {
     id: Number(product?.id || product?.template_id || product?.sync_product?.id || Date.now() + index),
@@ -232,8 +255,9 @@ function normalizeProduct(product, index) {
     badge: index < 4 ? 'New' : rule.collection === 'limited' ? 'Limited' : 'Zavora',
     img: image,
     alt: image,
+    images,
     stock: 5,
-    variantOptions: variantOptionsFromVariants(variants, image),
+    variantOptions: variantOptionsFromVariants(variants, image, forceColor),
     description: `Premium ${rule.label.toLowerCase()} styled for modern Zavora Fashion streetwear. Clean proportions, everyday comfort, and USA-ready fulfillment.`,
     seoTitle: `${name} | Zavora Fashion Premium Streetwear`,
     seoDescription: `Shop ${name} from Zavora Fashion. Premium men streetwear with clean fit, fast USA delivery, and luxury minimal styling.`
