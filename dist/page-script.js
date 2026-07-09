@@ -931,7 +931,7 @@ function swatch(color) {
 function catalogCard(item) {
   const image = item.images?.[0] || item.image || item.img || 'assets/studio-wide-trouser.png';
   const size = item.size || item.sizes?.[0] || 'M';
-  const colors = Array.isArray(item.colors) && item.colors.length ? item.colors.slice(0, 4) : [item.color || 'default'];
+  const colors = Array.isArray(item.colors) && item.colors.length ? item.colors : [item.color || 'default'];
   const collections = Array.isArray(item.collection) ? item.collection.join(' ') : String(item.collection || '');
   const stock = getProductStock(item);
   const isLimited = String(item.badge || '').toLowerCase().includes('limited') || (item.collection || []).includes('limited');
@@ -1498,7 +1498,8 @@ document.addEventListener('click', async (event) => {
     const price = Number(selected?.price || (document.querySelector('.product-buy .price')?.textContent || '$148').replace(/[^0-9.]/g, '')) || 148;
     const { color, size } = selectedProductOptions();
     const variant = getVariant(selected, color, size);
-    const img = variant?.image || selected?.img || document.querySelector('.product-gallery img')?.src || 'assets/studio-wide-trouser.png';
+    const group = productVariantGroup(selected, color);
+    const img = variant?.image || group?.images?.[0] || selected?.img || document.querySelector('.product-gallery img')?.src || 'assets/studio-wide-trouser.png';
     if (selected && getProductStock(selected) <= 0) {
       updateProductStockNote(selected);
       return;
@@ -1867,10 +1868,32 @@ function initFaqAccordions() {
 
 function selectedProductOptions() {
   const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
+  const colorButton = optionRows[0]?.querySelector('button.active');
   return {
-    color: optionRows[0]?.querySelector('button.active')?.textContent.trim() || 'black',
+    color: colorButton?.dataset.color || colorButton?.textContent.trim() || 'black',
     size: optionRows[1]?.querySelector('button.active')?.textContent.trim() || 'M'
   };
+}
+
+function normalizedProductColor(color = '') {
+  return String(color || 'default').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'default';
+}
+
+function productVariantGroup(product, color = '') {
+  const key = normalizedProductColor(color === 'Original' ? 'default' : color);
+  const groups = product?.variantGroups || {};
+  return groups[key] || groups[Object.keys(groups)[0]] || null;
+}
+
+function renderProductGallery(product, images = []) {
+  const gallery = document.querySelector('.product-gallery');
+  if (!gallery) return;
+  const cleanImages = Array.from(new Set(images.filter(Boolean)));
+  const galleryImages = cleanImages.length ? cleanImages : [product?.img || product?.image || 'assets/studio-wide-trouser.png'];
+  gallery.classList.toggle('single-gallery', galleryImages.length === 1);
+  gallery.innerHTML = galleryImages.map((src, index) => `
+    <div class="zoom-frame"><img src="${src}" alt="${product?.name || 'Zavora product'} ${index + 1}" loading="${index ? 'lazy' : 'eager'}" onerror="this.src='assets/studio-wide-trouser.png'"></div>
+  `).join('');
 }
 
 function updateDynamicProductMedia() {
@@ -1879,9 +1902,13 @@ function updateDynamicProductMedia() {
   if (!product) return;
   const { color, size } = selectedProductOptions();
   const variant = getVariant(product, color, size);
-  const image = variant?.image || product.img || product.image || 'assets/studio-wide-trouser.png';
-  const first = document.querySelector('.product-gallery img');
-  if (first && image) first.src = image;
+  const group = productVariantGroup(product, color);
+  renderProductGallery(product, group?.images?.length ? group.images : (variant?.images || product.images || [variant?.image || product.img || product.image]));
+  const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
+  if (group?.sizes?.length && optionRows[1]) {
+    const activeSize = size;
+    optionRows[1].innerHTML = `${group.sizes.map((itemSize, index) => `<button type="button" class="${itemSize === activeSize || (!group.sizes.includes(activeSize) && index === 0) ? 'active' : ''}">${itemSize}</button>`).join('')}<a href="style-guide.html">Size Guide</a>`;
+  }
 }
 
 function refreshSelectedProductFromUrl() {
@@ -1902,18 +1929,14 @@ function refreshSelectedProductFromUrl() {
 }
 
 function productGalleryImages(product) {
-  const unique = Array.from(new Set([
+  const groups = product?.variantGroups || {};
+  const firstGroup = groups[Object.keys(groups)[0]];
+  if (firstGroup?.images?.length) return firstGroup.images;
+  return Array.from(new Set([
     ...(product?.images || []),
     product?.img,
-    product?.image,
-    ...(product?.variantOptions || []).map((variant) => variant.image)
+    product?.image
   ].filter(Boolean)));
-  const base = unique[0] || 'assets/studio-wide-trouser.png';
-  const images = unique.slice(0, 4).map((src, index) => ({ src, crop: index }));
-  while (images.length < 4) {
-    images.push({ src: base, crop: images.length });
-  }
-  return images;
 }
 
 function updateProductStockNote(product) {
@@ -1943,7 +1966,8 @@ function initDynamicProductPage() {
   const eyebrow = document.querySelector('.product-buy .eyebrow');
   const gallery = document.querySelector('.product-gallery');
   const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
-  const colors = Array.isArray(product.colors) && product.colors.length ? product.colors.slice(0, 4) : [product.color || 'default'];
+  const colors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'default'];
+  const groups = product.variantGroups || {};
   const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL'];
   const variantImages = productGalleryImages(product);
   document.title = `${product.name} | Zavora Fashion`;
@@ -1952,15 +1976,13 @@ function initDynamicProductPage() {
   if (description) description.textContent = product.description || 'Premium Zavora Fashion streetwear piece with clean fit, everyday comfort, and USA-ready fulfillment.';
   if (eyebrow) eyebrow.textContent = product.badge || 'Zavora';
   if (gallery) {
-    gallery.classList.remove('single-gallery');
-    gallery.innerHTML = variantImages.map((image, index) => `
-      <div class="zoom-frame gallery-shot-${image.crop + 1}"><img src="${image.src}" alt="${product.name} ${index + 1}" loading="${index ? 'lazy' : 'eager'}" onerror="this.src='assets/studio-wide-trouser.png'"></div>
-    `).join('');
+    renderProductGallery(product, variantImages);
   }
   if (optionRows[0]) {
     optionRows[0].innerHTML = colors.map((color, index) => {
-      const label = color === 'default' ? 'Original' : `${color[0].toUpperCase()}${color.slice(1)}`;
-      return `<button type="button" class="${index === 0 ? 'active' : ''}">${label}</button>`;
+      const key = normalizedProductColor(color);
+      const label = groups[key]?.label || (color === 'default' ? 'Original' : `${color[0].toUpperCase()}${color.slice(1)}`);
+      return `<button type="button" class="${index === 0 ? 'active' : ''}" data-color="${key}">${label}</button>`;
     }).join('');
   }
   if (optionRows[1]) {

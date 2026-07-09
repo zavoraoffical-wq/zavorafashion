@@ -476,7 +476,7 @@ function renderProducts() {
 }
 
 function productCard(product) {
-  const colors = (product.colors || [product.color || 'default']).slice(0, 4);
+  const colors = product.colors || [product.color || 'default'];
   return `
     <article class="product-card" data-product-id="${product.id}">
       <div class="product-media">

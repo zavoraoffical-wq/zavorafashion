@@ -6,17 +6,22 @@ const SELLING_MARKUP = 1.3;
 const COMPARE_AT_MARKUP = 2.3;
 
 const categoryRules = [
-  { match: /set|matching|tracksuit/i, category: 'matching-sets', collection: 'matching-sets', label: 'Matching Set' },
-  { match: /sport|performance|athletic|training|gym|workout|active|jersey/i, category: 'sportswear', collection: 'sportswear', label: 'Sportswear' },
-  { match: /beach|swim|board short|boardshort|flip-flop|flip flop|slide/i, category: 'beachwear', collection: 'beachwear', label: 'Beachwear' },
-  { match: /zip|quarter-zip/i, category: 'hoodies', collection: 'streetwear', label: 'Zip Hoodie' },
-  { match: /hoodie|sweatshirt|fleece|pullover/i, category: 'hoodies', collection: 'streetwear', label: 'Hoodie' },
-  { match: /tee|t-shirt|shirt|polo/i, category: 'tees', collection: 'streetwear', label: 'Heavyweight Tee' },
-  { match: /short/i, category: 'pants', collection: 'beachwear', label: 'Short' },
-  { match: /pant|sweatpant|jogger|cargo/i, category: 'pants', collection: 'streetwear', label: 'Pant' },
-  { match: /jacket|windbreaker|coat/i, category: 'outerwear', collection: 'streetwear', label: 'Jacket' },
-  { match: /shoe|sneaker/i, category: 'accessories', collection: 'streetwear', label: 'Footwear' },
-  { match: /cap|hat|beanie/i, category: 'accessories', collection: 'streetwear', label: 'Accessory' }
+  { match: /women|women's|ladies|female/i, gender: 'Women' },
+  { match: /men|men's|male/i, gender: 'Men' },
+  { match: /unisex/i, gender: 'Unisex' },
+  { match: /zip hoodie|zip-up|full zip|zip/i, category: 'zip-hoodies', categoryPath: 'Men > Zip Hoodies', collection: 'streetwear', label: 'Zip Hoodie' },
+  { match: /hoodie|pullover hoodie/i, category: 'hoodies', categoryPath: 'Men > Hoodies', collection: 'streetwear', label: 'Hoodie' },
+  { match: /sweatshirt|crew neck|crewneck|fleece/i, category: 'sweatshirts', categoryPath: 'Women > Sweatshirts', collection: 'streetwear', label: 'Sweatshirt' },
+  { match: /t-shirt|tee|heavyweight tee|oversized tee|shirt|polo/i, category: 'tees', categoryPath: 'Men > Oversized T-Shirts', collection: 'streetwear', label: 'Oversized T-Shirt' },
+  { match: /jacket|bomber|varsity|windbreaker|coat/i, category: 'outerwear', categoryPath: 'Men > Jackets', collection: 'streetwear', label: 'Jacket' },
+  { match: /cargo/i, category: 'pants', categoryPath: 'Men > Cargo Pants', collection: 'streetwear', label: 'Cargo Pant' },
+  { match: /sweatpants|joggers|jogger/i, category: 'pants', categoryPath: 'Men > Sweatpants', collection: 'streetwear', label: 'Sweatpant' },
+  { match: /shorts|short/i, category: 'pants', categoryPath: 'Men > Shorts', collection: 'beachwear', label: 'Short' },
+  { match: /set|matching|tracksuit/i, category: 'matching-sets', categoryPath: 'Men > Matching Sets', collection: 'matching-sets', label: 'Matching Set' },
+  { match: /sport|performance|athletic|training|gym|workout|active|jersey/i, category: 'sportswear', categoryPath: 'Men > Sportswear', collection: 'sportswear', label: 'Sportswear' },
+  { match: /beach|swim|board short|boardshort|flip-flop|flip flop|slide/i, category: 'beachwear', categoryPath: 'Men > Beachwear', collection: 'beachwear', label: 'Beachwear' },
+  { match: /shoe|sneaker/i, category: 'accessories', categoryPath: 'Men > Accessories', collection: 'streetwear', label: 'Footwear' },
+  { match: /cap|hat|beanie/i, category: 'accessories', categoryPath: 'Men > Accessories', collection: 'streetwear', label: 'Accessory' }
 ];
 
 function response(res, status, body) {
@@ -89,11 +94,32 @@ function catalogPredicate(gender) {
 }
 
 function pickRule(name) {
-  return categoryRules.find((rule) => rule.match.test(name)) || {
-    category: 'tees',
-    collection: 'streetwear',
-    label: 'Streetwear Essential'
-  };
+  const rule = categoryRules.find((item) => item.category && item.match.test(name));
+  return rule || { category: 'uncategorized', categoryPath: 'Uncategorized', collection: 'streetwear', label: 'Streetwear Essential' };
+}
+
+function detectGender(product, name) {
+  const text = `${product?.gender || ''} ${product?.department || ''} ${product?.main_category || ''} ${product?.category || ''} ${product?.type_name || ''} ${name || ''}`;
+  const explicit = categoryRules.find((rule) => rule.gender && rule.match.test(text));
+  return explicit?.gender || 'Unisex';
+}
+
+function categoryMapping(product, name) {
+  const metadata = `${product?.main_category || ''} ${product?.sub_category || ''} ${product?.type_name || ''} ${product?.category || ''}`;
+  const rule = pickRule(`${metadata} ${name}`);
+  const gender = detectGender(product, name);
+  let categoryPath = rule.categoryPath || 'Uncategorized';
+  if (gender === 'Women') {
+    categoryPath = categoryPath
+      .replace(/^Men > Oversized T-Shirts$/, 'Women > Oversized T-Shirts')
+      .replace(/^Men > Hoodies$/, 'Women > Hoodies')
+      .replace(/^Men > Sweatpants$/, 'Women > Pants')
+      .replace(/^Men > Cargo Pants$/, 'Women > Pants')
+      .replace(/^Men > Shorts$/, 'Women > Pants')
+      .replace(/^Men > Jackets$/, 'Women > Jackets')
+      .replace(/^Men > Accessories$/, 'Women > Accessories');
+  }
+  return { ...rule, gender, categoryPath, productType: rule.label };
 }
 
 function collectionTags(product, rule, index) {
@@ -171,6 +197,16 @@ function colorFromVariant(variant, forceColor = '') {
   return colorFromName(text) || 'default';
 }
 
+function colorKey(color) {
+  return String(color || 'default').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'default';
+}
+
+function colorLabel(color) {
+  const key = colorKey(color);
+  if (key === 'default') return 'Original';
+  return key.split('-').map((part) => `${part[0].toUpperCase()}${part.slice(1)}`).join(' ');
+}
+
 function colorsFromVariants(variants = [], fallbackText = '') {
   const colorOrder = ['black', 'white', 'gray', 'blue', 'green', 'red', 'pink', 'purple', 'brown', 'gold', 'default'];
   if (/all[- ]?over|aop/i.test(fallbackText)) return ['white'];
@@ -183,8 +219,10 @@ function colorsFromVariants(variants = [], fallbackText = '') {
     const color = colorFromName(fallbackText);
     if (color) found.add(color);
   }
-  const colors = colorOrder.filter((color) => found.has(color));
-  return colors.length && !(colors.length === 1 && colors[0] === 'default') ? colors.slice(0, 4) : ['default'];
+  const ordered = colorOrder.filter((color) => found.has(color));
+  const custom = [...found].filter((color) => !colorOrder.includes(color));
+  const colors = [...ordered, ...custom];
+  return colors.length && !(colors.length === 1 && colors[0] === 'default') ? colors : ['default'];
 }
 
 function basePriceFromProduct(product, index) {
@@ -236,93 +274,121 @@ function fileUrl(file) {
   return file?.preview_url || file?.thumbnail_url || file?.url || file?.preview || file?.image_url || '';
 }
 
-function imageFromProduct(product) {
-  const variantImageUrl = variantPools(product)
-    .map((variant) => variantImage(variant, ''))
-    .find(Boolean);
-  const directImageUrl = productPools(product)
+function addUnique(list, url) {
+  if (url && !list.includes(url)) list.push(url);
+}
+
+function productImageUrls(product) {
+  const urls = [];
+  productPools(product)
     .flatMap((item) => [item?.thumbnail_url, item?.image, item?.mockup_url, item?.image_url, ...(item?.files || []).map(fileUrl)])
-    .find(Boolean);
-  return variantImageUrl
-    || directImageUrl
-    || 'assets/studio-wide-trouser.png';
+    .forEach((url) => addUnique(urls, url));
+  return urls;
+}
+
+function variantImages(variant) {
+  const urls = [];
+  [
+    variant?.image_url,
+    variant?.image,
+    variant?.thumbnail_url,
+    variant?.preview_url,
+    variant?.product?.image,
+    ...(variant?.files || []).map(fileUrl)
+  ].forEach((url) => addUnique(urls, url));
+  return urls;
 }
 
 function imagesFromProduct(product) {
-  const urls = [];
-  const add = (url) => {
-    if (url && !urls.includes(url)) urls.push(url);
-  };
-  productPools(product).forEach((item) => {
-    add(item?.thumbnail_url);
-    add(item?.image);
-    add(item?.mockup_url);
-    add(item?.image_url);
-    (item?.files || []).forEach((file) => add(fileUrl(file)));
-  });
-  variantPools(product).forEach((variant) => {
-    add(variant?.image);
-    add(variant?.thumbnail_url);
-    add(variant?.image_url);
-    add(variant?.product?.image);
-    (variant?.files || []).forEach((file) => add(fileUrl(file)));
-  });
-  add(imageFromProduct(product));
-  return urls.slice(0, 6);
+  const urls = productImageUrls(product);
+  variantPools(product).forEach((variant) => variantImages(variant).forEach((url) => addUnique(urls, url)));
+  return urls;
+}
+
+function imageFromProduct(product) {
+  return productImageUrls(product)[0]
+    || variantPools(product).flatMap(variantImages)[0]
+    || 'assets/studio-wide-trouser.png';
 }
 
 function variantImage(variant, fallback) {
-  return fileUrl(variant?.files?.[0])
-    || fileUrl((variant?.files || []).find((file) => fileUrl(file)))
-    || variant?.image_url
-    || variant?.image
-    || variant?.thumbnail_url
-    || variant?.preview_url
-    || variant?.product?.image
-    || fallback;
+  return variantImages(variant)[0] || fallback;
 }
 
 function variantOptionsFromVariants(variants = [], fallbackImage = '', forceColor = '') {
-  const selectedColors = [];
-  variants.forEach((variant) => {
-    const color = colorFromVariant(variant, forceColor);
-    if (!selectedColors.includes(color) && selectedColors.length < 4) selectedColors.push(color);
-  });
-  const allowedColors = selectedColors.length ? selectedColors : ['default'];
   const seen = new Set();
   const options = [];
   variants.forEach((variant, index) => {
     const color = colorFromVariant(variant, forceColor);
-    if (!allowedColors.includes(color)) return;
     const sizes = sizesFromVariants([variant]);
     const size = sizes[0] || 'M';
     const key = `${color}-${size}`;
     if (seen.has(key)) return;
     seen.add(key);
+    const images = variantImages(variant);
     options.push({
       id: variant?.id || variant?.variant_id || index,
       name: variant?.name || variant?.variant_name || `Variant ${index + 1}`,
       color,
+      colorKey: colorKey(color),
+      colorLabel: colorLabel(color),
       size,
-      image: variantImage(variant, fallbackImage),
+      images,
+      image: images[0] || fallbackImage,
       stock: 5,
       sku: variant?.sku || variant?.external_id || ''
     });
   });
-  return options.slice(0, 32);
+  return options;
+}
+
+function variantGroupsFromVariants(variants = [], productImages = [], forceColor = '') {
+  const groups = {};
+  variants.forEach((variant, index) => {
+    const color = colorFromVariant(variant, forceColor);
+    const key = colorKey(color);
+    if (!groups[key]) {
+      groups[key] = {
+        color,
+        key,
+        label: colorLabel(color),
+        images: [],
+        sizes: [],
+        variants: []
+      };
+    }
+    const sizes = sizesFromVariants([variant]);
+    const images = variantImages(variant);
+    images.forEach((url) => addUnique(groups[key].images, url));
+    sizes.forEach((size) => addUnique(groups[key].sizes, size));
+    groups[key].variants.push({
+      id: variant?.id || variant?.variant_id || index,
+      name: variant?.name || variant?.variant_name || `Variant ${index + 1}`,
+      size: sizes[0] || 'M',
+      sku: variant?.sku || variant?.external_id || '',
+      images,
+      image: images[0] || ''
+    });
+  });
+  if (!Object.keys(groups).length && productImages.length) {
+    groups.default = { color: 'default', key: 'default', label: 'Original', images: productImages, sizes: [], variants: [] };
+  }
+  return groups;
 }
 
 function sizesFromVariants(variants = []) {
   const sizeOrder = ['2XS', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
   const found = new Set();
   variants.forEach((variant) => {
+    const explicit = String(variant?.size || variant?.size_name || variant?.sizeName || '').toUpperCase();
+    if (explicit && sizeOrder.includes(explicit)) found.add(explicit);
     const text = `${variant?.name || ''} ${variant?.variant_name || ''}`;
     sizeOrder.forEach((size) => {
       if (new RegExp(`\\b${size}\\b`, 'i').test(text)) found.add(size);
     });
   });
   const sizes = sizeOrder.filter((size) => found.has(size));
-  return sizes.length ? sizes.slice(0, 5) : ['S', 'M', 'L', 'XL'];
+  return sizes.length ? sizes : ['S', 'M', 'L', 'XL'];
 }
 
 async function enrichWithCatalogProduct(product) {
@@ -356,19 +422,23 @@ async function enrichWithCatalogProduct(product) {
 
 function normalizeProduct(product, index) {
   const name = seoName(product?.name || product?.external_name || product?.sync_product?.name || product?.title, index);
-  const rule = pickRule(name);
+  const rule = categoryMapping(product, name);
   const variants = variantPools(product);
   const rawName = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''}`;
   const forceColor = /all[- ]?over|aop/i.test(rawName) ? 'white' : '';
   const colors = colorsFromVariants(variants, `${rawName} ${name} ${product?.description || ''}`);
   const image = imageFromProduct(product);
   const images = imagesFromProduct(product);
+  const variantGroups = variantGroupsFromVariants(variants, productImageUrls(product), forceColor);
   const sizes = rule.category === 'accessories' ? ['M'] : sizesFromVariants(variants);
   return {
     id: Number(product?.id || product?.template_id || product?.sync_product?.id || Date.now() + index),
     printfulId: product?.id || product?.template_id || product?.sync_product?.id || null,
     name,
     category: rule.category,
+    categoryPath: rule.categoryPath,
+    gender: rule.gender,
+    productType: rule.productType,
     collection: collectionTags(product, rule, index),
     color: colors[0] || 'default',
     colors,
@@ -383,6 +453,7 @@ function normalizeProduct(product, index) {
     img: image,
     alt: image,
     images,
+    variantGroups,
     stock: 5,
     variantOptions: variantOptionsFromVariants(variants, image, forceColor),
     description: `Premium ${rule.label.toLowerCase()} styled for modern Zavora Fashion streetwear. Clean proportions, everyday comfort, and USA-ready fulfillment.`,
