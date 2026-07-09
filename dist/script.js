@@ -330,6 +330,7 @@ function addWishlistProduct(product) {
     saveWishlist(wishlist);
   }
   syncHomeWishlistCount();
+  if (typeof renderWishlistDrawer === 'function') renderWishlistDrawer();
 }
 
 function getAdminProducts() {
@@ -569,6 +570,8 @@ document.addEventListener('click', (event) => {
     const product = getHomeProducts().find(item => String(item.id) === String(homeWishlist.dataset.homeWishlist));
     addWishlistProduct(product);
     homeWishlist.classList.add('active');
+    const drawer = typeof ensureWishlistDrawer === 'function' ? ensureWishlistDrawer() : null;
+    if (drawer) drawer.classList.add('open');
     return;
   }
   const homeOpenProduct = event.target.closest('[data-home-open-product]');

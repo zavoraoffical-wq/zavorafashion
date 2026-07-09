@@ -86,6 +86,7 @@ function addWishlistProduct(product) {
     saveWishlist(wishlist);
   }
   syncHeaderCounts();
+  renderWishlistDrawer();
 }
 
 function productKey(product) {
@@ -802,7 +803,10 @@ function hydrateCheckoutSummary() {
 
 function ensureWishlistDrawer() {
   let drawer = document.querySelector('#pageWishlistDrawer');
-  if (drawer) return drawer;
+  if (drawer) {
+    renderWishlistDrawer(drawer);
+    return drawer;
+  }
 
   drawer = document.createElement('aside');
   drawer.className = 'drawer';
@@ -813,15 +817,28 @@ function ensureWishlistDrawer() {
       <h2>Wishlist</h2>
       <button class="close" data-close-wishlist aria-label="Close wishlist">&times;</button>
     </div>
-    <div class="cart-items">
-      <p>Wishlist is ready. Save Printful products from the catalog to build your edit.</p>
-    </div>
+    <div class="cart-items" data-wishlist-items></div>
     <button class="checkout" type="button" onclick="location.href='wishlist.html'">Open Wishlist Page</button>
     <p class="payment">Saved pieces, size alerts, and back-in-stock notifications.</p>
   `;
   document.body.appendChild(drawer);
   hydrateCloseIcons(drawer);
+  renderWishlistDrawer(drawer);
   return drawer;
+}
+
+function renderWishlistDrawer(drawer = document.querySelector('#pageWishlistDrawer')) {
+  if (!drawer) return;
+  const box = drawer.querySelector('[data-wishlist-items], .cart-items');
+  if (!box) return;
+  const wishlist = getWishlist();
+  box.innerHTML = wishlist.length ? wishlist.map((item) => `
+    <div class="cart-item" data-wishlist-card="${productKey(item)}">
+      <img src="${item.img || item.image || 'assets/studio-wide-trouser.png'}" alt="${item.name || 'Zavora product'}" onerror="this.src='assets/studio-wide-trouser.png'">
+      <div><h3>${item.name || 'Zavora product'}</h3><span>${money(item.price || 0)} / ${(item.colors || [item.color || 'original']).join(', ')}</span></div>
+      <button type="button" data-remove-wishlist="${productKey(item)}" aria-label="Remove ${item.name || 'item'}">&times;</button>
+    </div>
+  `).join('') : '<p>No wishlist products yet. Tap the heart on a product to save it here.</p>';
 }
 
 function productCard(title, price, image, tag) {
@@ -1171,8 +1188,9 @@ document.addEventListener('click', async (event) => {
     if (removeWishlist.dataset.removeWishlist) {
       saveWishlist(getWishlist().filter((item) => productKey(item) !== removeWishlist.dataset.removeWishlist));
       syncHeaderCounts();
+      renderWishlistDrawer();
     }
-    removeWishlist.closest('.wishlist-item')?.remove();
+    removeWishlist.closest('.wishlist-item, .cart-item')?.remove();
     return;
   }
 
