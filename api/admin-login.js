@@ -16,6 +16,15 @@ function sign(value) {
   return crypto.createHmac('sha256', secret()).update(value).digest('hex');
 }
 
+function verifiedSender(value) {
+  const fallback = 'Zavora Admin <noreply@zavorafashion.com>';
+  const sender = String(value || '').trim();
+  if (!sender) return fallback;
+  const match = sender.match(/<([^>]+)>/) || sender.match(/([^\s<>]+@[^\s<>]+)/);
+  const email = String(match?.[1] || '').toLowerCase();
+  return email.endsWith('@zavorafashion.com') ? sender : fallback;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
 
@@ -43,7 +52,7 @@ module.exports = async function handler(req, res) {
     hash: sign(`${email}:${otp}:${expiresAt}`)
   })).toString('base64url');
 
-  const from = process.env.ADMIN_OTP_EMAIL || process.env.NOREPLY_FROM_EMAIL || 'Zavora No Reply <noreply@zavorafashion.com>';
+  const from = verifiedSender(process.env.ADMIN_OTP_EMAIL || process.env.NOREPLY_FROM_EMAIL);
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
     headers: {
