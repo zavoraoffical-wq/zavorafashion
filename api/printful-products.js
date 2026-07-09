@@ -4,11 +4,9 @@ const PRINTFUL_STORE_ID = process.env.PRINTFUL_STORE_ID;
 const INCLUDED_SHIPPING_COST = 14.99;
 const SELLING_MARKUP = 1.3;
 const COMPARE_AT_MARKUP = 2.3;
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
-const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || process.env.DB_NAME || 'zavora_fashion';
-const PRODUCTS_COLLECTION = process.env.PRODUCTS_COLLECTION || 'products';
-
-let mongoClientPromise;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_PRODUCTS_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || process.env.PRODUCTS_TABLE || 'products';
 
 const categoryRules = [
   { match: /women|women's|ladies|female/i, gender: 'Women' },
@@ -80,47 +78,64 @@ async function printfulCatalogFetch(path) {
   return body;
 }
 
-async function getProductsCollection() {
-  if (!MONGODB_URI) return null;
-  const { MongoClient } = require('mongodb');
-  if (!mongoClientPromise) {
-    mongoClientPromise = new MongoClient(MONGODB_URI).connect();
-  }
-  const client = await mongoClientPromise;
-  return client.db(MONGODB_DB_NAME).collection(PRODUCTS_COLLECTION);
+function supabaseProductRow(product) {
+  return {
+    printful_id: String(product.printfulId || product.id || product.name),
+    store_product_id: product.id ? String(product.id) : null,
+    name: product.name,
+    gender: product.gender || 'Unisex',
+    category: product.category || 'uncategorized',
+    category_path: product.categoryPath || 'Uncategorized',
+    product_type: product.productType || '',
+    collection: product.collection || [],
+    color: product.color || '',
+    colors: product.colors || [],
+    sizes: product.sizes || [],
+    price: product.price || 0,
+    compare_at: product.compareAt || null,
+    image: product.img || product.image || null,
+    images: product.images || [],
+    variant_groups: product.variantGroups || {},
+    variants: product.variantOptions || [],
+    payload: product,
+    source: 'printful',
+    updated_at: new Date().toISOString()
+  };
 }
 
-async function saveProductsToDb(products = []) {
-  const collection = await getProductsCollection();
-  if (!collection || !products.length) return { saved: false, count: 0 };
-  const now = new Date();
-  const operations = products.map((product) => ({
-    updateOne: {
-      filter: {
-        $or: [
-          { printfulId: product.printfulId },
-          { id: product.id }
-        ]
-      },
-      update: {
-        $set: {
-          ...product,
-          source: 'printful',
-          updatedAt: now
-        },
-        $setOnInsert: {
-          createdAt: now
-        }
-      },
-      upsert: true
-    }
-  }));
-  const result = await collection.bulkWrite(operations, { ordered: false });
+async function saveProductsToSupabase(products = []) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    return {
+      saved: false,
+      provider: 'supabase',
+      count: 0,
+      reason: 'missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
+    };
+  }
+  if (!products.length) {
+    return { saved: false, provider: 'supabase', count: 0 };
+  }
+  const baseUrl = SUPABASE_URL.replace(/\/$/, '');
+  const table = SUPABASE_PRODUCTS_TABLE.replace(/^\/+|\/+$/g, '');
+  const result = await fetch(`${baseUrl}/rest/v1/${table}?on_conflict=printful_id`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify(products.map(supabaseProductRow))
+  });
+  if (!result.ok) {
+    const body = await result.text().catch(() => '');
+    throw new Error(`Supabase save failed: ${result.status} ${body}`);
+  }
   return {
     saved: true,
-    count: products.length,
-    upserted: result.upsertedCount || 0,
-    modified: result.modifiedCount || 0
+    provider: 'supabase',
+    table,
+    count: products.length
   };
 }
 
@@ -583,12 +598,22 @@ module.exports = async function handler(req, res) {
 
     const filtered = detailed.filter((product) => product?.seoTitle || catalogPredicate(gender)(product));
     const products = filtered.slice(0, limit).map((product, index) => product?.seoTitle ? product : normalizeProduct(product, index));
-    let db = { saved: false, count: 0, reason: MONGODB_URI ? 'not requested' : 'missing MONGODB_URI' };
+    let db = {
+      saved: false,
+      provider: 'supabase',
+      count: 0,
+      reason: SUPABASE_URL && SUPABASE_KEY ? 'not requested' : 'missing Supabase env'
+    };
     if (String(req.query.save || 'true') !== 'false') {
       try {
-        db = await saveProductsToDb(products);
+        db = await saveProductsToSupabase(products);
       } catch (error) {
-        db = { saved: false, count: 0, error: error.message || 'Unable to save Printful products to DB.' };
+        db = {
+          saved: false,
+          provider: 'supabase',
+          count: 0,
+          error: error.message || 'Unable to save Printful products to Supabase.'
+        };
       }
     }
     response(res, 200, { ok: true, source, page, limit, count: products.length, db, products });
