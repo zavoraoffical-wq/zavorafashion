@@ -1315,7 +1315,12 @@ h2 {
   object-fit: cover;
   transition: transform .45s ease;
 }
+.gallery-shot-2 img { object-position: center top; }
+.gallery-shot-3 img { object-position: center bottom; transform: scale(1.06); }
+.gallery-shot-4 img { object-position: 62% center; transform: scale(1.12); }
 .zoom-frame:hover img { transform: scale(1.09); }
+.gallery-shot-3:hover img { transform: scale(1.14); }
+.gallery-shot-4:hover img { transform: scale(1.2); }
 .product-buy {
   position: sticky;
   top: 96px;

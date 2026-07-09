@@ -1897,6 +1897,21 @@ function refreshSelectedProductFromUrl() {
     .catch(() => {});
 }
 
+function productGalleryImages(product) {
+  const unique = Array.from(new Set([
+    ...(product?.images || []),
+    product?.img,
+    product?.image,
+    ...(product?.variantOptions || []).map((variant) => variant.image)
+  ].filter(Boolean)));
+  const base = unique[0] || 'assets/studio-wide-trouser.png';
+  const images = unique.slice(0, 4).map((src, index) => ({ src, crop: index }));
+  while (images.length < 4) {
+    images.push({ src: base, crop: images.length });
+  }
+  return images;
+}
+
 function updateProductStockNote(product) {
   const stock = getProductStock(product);
   const note = document.querySelector('[data-stock-note]');
@@ -1926,16 +1941,16 @@ function initDynamicProductPage() {
   const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
   const colors = Array.isArray(product.colors) && product.colors.length ? product.colors.slice(0, 4) : [product.color || 'default'];
   const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL'];
-  const variantImages = Array.from(new Set([...(product.images || []), product.img, product.image, ...(product.variantOptions || []).map((variant) => variant.image)].filter(Boolean))).slice(0, 4);
+  const variantImages = productGalleryImages(product);
   document.title = `${product.name} | Zavora Fashion`;
   if (title) title.textContent = product.name;
   if (price) price.innerHTML = `${product.compareAt ? `<s>${money(product.compareAt)}</s> ` : ''}${money(product.price)}`;
   if (description) description.textContent = product.description || 'Premium Zavora Fashion streetwear piece with clean fit, everyday comfort, and USA-ready fulfillment.';
   if (eyebrow) eyebrow.textContent = product.badge || 'Zavora';
   if (gallery) {
-    gallery.classList.toggle('single-gallery', variantImages.length === 1);
+    gallery.classList.remove('single-gallery');
     gallery.innerHTML = variantImages.map((image, index) => `
-      <div class="zoom-frame"><img src="${image}" alt="${product.name} ${index + 1}" loading="${index ? 'lazy' : 'eager'}" onerror="this.src='assets/studio-wide-trouser.png'"></div>
+      <div class="zoom-frame gallery-shot-${image.crop + 1}"><img src="${image.src}" alt="${product.name} ${index + 1}" loading="${index ? 'lazy' : 'eager'}" onerror="this.src='assets/studio-wide-trouser.png'"></div>
     `).join('');
   }
   if (optionRows[0]) {
