@@ -28,7 +28,7 @@ module.exports = async function handler(req, res) {
 
   const email = String(body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
-  const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const adminEmail = String(process.env.ADMIN_EMAIL || 'kitchenwala1@gmail.com').trim().toLowerCase();
   const adminPassword = String(process.env.ADMIN_PASSWORD || '');
 
   if (!adminEmail || !adminPassword) return json(res, 500, { error: 'Admin env is not configured' });

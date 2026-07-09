@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "import:printful": "node scripts/auto-import-printful.js",
     "vercel-build": "node scripts/prepare-public.js"
   }
 }

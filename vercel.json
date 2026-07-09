@@ -11,6 +11,12 @@
       "destination": "/api/admin-page"
     }
   ],
+  "crons": [
+    {
+      "path": "/api/auto-import-printful",
+      "schedule": "0 8 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
