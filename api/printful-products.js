@@ -6,14 +6,17 @@ const SELLING_MARKUP = 1.3;
 const COMPARE_AT_MARKUP = 2.3;
 
 const categoryRules = [
-  { match: /zip|quarter-zip/i, category: 'hoodies', collection: 'limited', label: 'Zip Hoodie' },
-  { match: /hoodie|sweatshirt|fleece|pullover/i, category: 'hoodies', collection: 'oversized', label: 'Hoodie' },
-  { match: /tee|t-shirt|shirt|polo/i, category: 'tees', collection: 'new', label: 'Heavyweight Tee' },
-  { match: /short/i, category: 'pants', collection: 'new', label: 'Short' },
-  { match: /pant|sweatpant|jogger|cargo/i, category: 'pants', collection: 'best', label: 'Pant' },
-  { match: /jacket|windbreaker|coat/i, category: 'outerwear', collection: 'limited', label: 'Jacket' },
-  { match: /shoe|sneaker|flip-flop|flip flop|slide/i, category: 'accessories', collection: 'best', label: 'Footwear' },
-  { match: /cap|hat|beanie/i, category: 'accessories', collection: 'best', label: 'Accessory' }
+  { match: /set|matching|tracksuit/i, category: 'matching-sets', collection: 'matching-sets', label: 'Matching Set' },
+  { match: /sport|performance|athletic|training|gym|workout|active|jersey/i, category: 'sportswear', collection: 'sportswear', label: 'Sportswear' },
+  { match: /beach|swim|board short|boardshort|flip-flop|flip flop|slide/i, category: 'beachwear', collection: 'beachwear', label: 'Beachwear' },
+  { match: /zip|quarter-zip/i, category: 'hoodies', collection: 'streetwear', label: 'Zip Hoodie' },
+  { match: /hoodie|sweatshirt|fleece|pullover/i, category: 'hoodies', collection: 'streetwear', label: 'Hoodie' },
+  { match: /tee|t-shirt|shirt|polo/i, category: 'tees', collection: 'streetwear', label: 'Heavyweight Tee' },
+  { match: /short/i, category: 'pants', collection: 'beachwear', label: 'Short' },
+  { match: /pant|sweatpant|jogger|cargo/i, category: 'pants', collection: 'streetwear', label: 'Pant' },
+  { match: /jacket|windbreaker|coat/i, category: 'outerwear', collection: 'streetwear', label: 'Jacket' },
+  { match: /shoe|sneaker/i, category: 'accessories', collection: 'streetwear', label: 'Footwear' },
+  { match: /cap|hat|beanie/i, category: 'accessories', collection: 'streetwear', label: 'Accessory' }
 ];
 
 function response(res, status, body) {
@@ -69,15 +72,15 @@ async function printfulCatalogFetch(path) {
 
 function isMenCatalogProduct(product) {
   const text = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
-  const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|shorts|shoe|sneaker|flip-flop|flip flop|slide|cap|hat|beanie)/i.test(text);
-  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|jersey|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
+  const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|shorts|board short|sport|performance|athletic|training|gym|active|set|matching|tracksuit|shoe|sneaker|flip-flop|flip flop|slide|cap|hat|beanie)/i.test(text);
+  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|bikini|sock|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
 }
 
 function isWomenCatalogProduct(product) {
   const text = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
-  const allowed = /(women|women's|ladies|female|crop|cropped|baby tee|hoodie|zip|quarter-zip|tee|t-shirt|shirt|sweatshirt|pullover|fleece|sweatpants|jogger)/i.test(text);
-  const blocked = /(men|men's|male|unisex|underwear|boxer|brief|trunk|thong|panties|bra|legging|swim|bikini|sock|backpack|bag|tote|duffle|luggage|tag|headband|neck gaiter|rash guard|jersey|kids|youth|baby clothes|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
+  const allowed = /(women|women's|ladies|female|crop|cropped|baby tee|hoodie|zip|quarter-zip|tee|t-shirt|shirt|sweatshirt|pullover|fleece|sweatpants|jogger|shorts|sport|performance|athletic|training|gym|active|set|matching|tracksuit|beach|slide)/i.test(text);
+  const blocked = /(men|men's|male|unisex|underwear|boxer|brief|trunk|thong|panties|bra|legging|bikini|sock|backpack|bag|tote|duffle|luggage|tag|headband|neck gaiter|rash guard|kids|youth|baby clothes|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
 }
 
@@ -88,9 +91,19 @@ function catalogPredicate(gender) {
 function pickRule(name) {
   return categoryRules.find((rule) => rule.match.test(name)) || {
     category: 'tees',
-    collection: 'new',
+    collection: 'streetwear',
     label: 'Streetwear Essential'
   };
+}
+
+function collectionTags(product, rule, index) {
+  const raw = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.description || ''}`.toLowerCase();
+  const tags = new Set([rule.collection, index < 6 ? 'new' : 'best']);
+  if (/sport|performance|athletic|training|gym|workout|active|jersey/.test(raw)) tags.add('sportswear');
+  if (/street|hoodie|sweatshirt|tee|t-shirt|cargo|jogger|cap|hat|sneaker/.test(raw)) tags.add('streetwear');
+  if (/set|matching|tracksuit/.test(raw)) tags.add('matching-sets');
+  if (/beach|swim|board short|boardshort|flip-flop|flip flop|slide|short/.test(raw)) tags.add('beachwear');
+  return [...tags].filter(Boolean);
 }
 
 function seoName(rawName, index) {
@@ -356,7 +369,7 @@ function normalizeProduct(product, index) {
     printfulId: product?.id || product?.template_id || product?.sync_product?.id || null,
     name,
     category: rule.category,
-    collection: [rule.collection, index < 6 ? 'new' : 'best'],
+    collection: collectionTags(product, rule, index),
     color: colors[0] || 'default',
     colors,
     sizes,

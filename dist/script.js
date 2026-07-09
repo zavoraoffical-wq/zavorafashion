@@ -349,7 +349,7 @@ function normalizedSearch(value = '') {
 function homeProductMatchesSearch(product, term = '') {
   const clean = normalizedSearch(term);
   if (!clean) return true;
-  const raw = `${product.name || ''} ${product.category || ''} ${(product.colors || []).join(' ')}`;
+  const raw = `${product.name || ''} ${product.category || ''} ${(product.collection || []).join(' ')} ${(product.colors || []).join(' ')}`;
   const aliases = /t-?shirt|tee|tees/i.test(raw) ? ' tshirt tshirts tee tees' : '';
   return normalizedSearch(`${raw}${aliases}`).includes(clean);
 }

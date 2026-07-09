@@ -755,7 +755,7 @@ function normalizedSearch(value = '') {
 function productMatchesSearch(product, term = '') {
   const clean = normalizedSearch(term);
   if (!clean) return true;
-  const raw = `${product.name || ''} ${product.category || ''} ${(product.colors || []).join(' ')}`;
+  const raw = `${product.name || ''} ${product.category || ''} ${(product.collection || []).join(' ')} ${(product.colors || []).join(' ')}`;
   const aliases = /t-?shirt|tee|tees/i.test(raw) ? ' tshirt tshirts tee tees' : '';
   const haystack = normalizedSearch(`${raw}${aliases}`);
   return haystack.includes(clean);
@@ -932,10 +932,11 @@ function catalogCard(item) {
   const image = item.images?.[0] || item.image || item.img || 'assets/studio-wide-trouser.png';
   const size = item.size || item.sizes?.[0] || 'M';
   const colors = Array.isArray(item.colors) && item.colors.length ? item.colors.slice(0, 4) : [item.color || 'default'];
+  const collections = Array.isArray(item.collection) ? item.collection.join(' ') : String(item.collection || '');
   const stock = getProductStock(item);
   const isLimited = String(item.badge || '').toLowerCase().includes('limited') || (item.collection || []).includes('limited');
   return `
-    <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-category="${item.category}" data-color="${colors.join(' ')}" data-size="${size}" data-price="${item.price}">
+    <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-category="${item.category}" data-collection="${collections}" data-color="${colors.join(' ')}" data-size="${size}" data-price="${item.price}">
       <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" aria-label="Open ${item.name} detail page">
         <img src="${image}" alt="${item.name}" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'">
         <span class="badge">${item.badge}</span>
@@ -995,6 +996,7 @@ function injectLargeCatalog() {
   const categoryOptions = isWomenPage
     ? '<option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Baby Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Cropped Hoodies</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="accessories">Accessories</option>'
     : '<option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Zip Hoodies</option><option value="pants">Cargo Pants</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="pants">Shorts</option><option value="accessories">Shoes</option><option value="accessories">Accessories</option>';
+  const collectionOptions = '<option value="all">All</option><option value="sportswear">Sportswear</option><option value="streetwear">Streetwear</option><option value="matching-sets">Matching Sets</option><option value="beachwear">Beachwear</option><option value="new">New</option><option value="best">Best Sellers</option><option value="limited">Limited</option>';
   const section = document.createElement('section');
   section.className = 'catalog-shop';
   section.innerHTML = `
@@ -1004,6 +1006,7 @@ function injectLargeCatalog() {
         <p><span data-catalog-count>${catalogData.length}</span> products available</p>
       </div>
       <label>Category<select data-catalog-filter="category">${categoryOptions}</select></label>
+      <label>Collection<select data-catalog-filter="collection">${collectionOptions}</select></label>
       <label>Color<select data-catalog-filter="color"><option value="all">All</option><option>black</option><option>white</option><option>gray</option><option>blue</option><option>green</option><option>red</option><option>gold</option></select></label>
       <label>Size<select data-catalog-filter="size"><option value="all">All</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></label>
       <label>Under amount<select data-catalog-filter="price"><option value="999">All</option><option value="100">Under $100</option><option value="160">Under $160</option><option value="240">Under $240</option></select></label>
@@ -1041,6 +1044,7 @@ function filterLargeCatalog() {
   document.querySelectorAll('[data-catalog-card]').forEach((card) => {
     const product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(card.dataset.productId));
     const match = (values.category === 'all' || card.dataset.category === values.category)
+      && (values.collection === 'all' || (card.dataset.collection || '').split(' ').includes(values.collection))
       && (values.color === 'all' || card.dataset.color.split(' ').includes(values.color))
       && (values.size === 'all' || card.dataset.size === values.size)
       && Number(card.dataset.price) <= Number(values.price || 999)
