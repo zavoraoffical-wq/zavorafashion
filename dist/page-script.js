@@ -103,6 +103,13 @@ function logoutUser() {
   localStorage.removeItem('zavoraUserName');
 }
 
+function accountHref(view = 'dashboard') {
+  const target = `dashboard.html#${view}`;
+  return localStorage.getItem(AUTH_KEY) === 'true'
+    ? target
+    : `login.html?next=${encodeURIComponent(target)}`;
+}
+
 function addWishlistProduct(product) {
   if (!product) return;
   const wishlist = getWishlist();
@@ -1422,6 +1429,13 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  const protectedAccountLink = event.target.closest('a[href^="dashboard.html#"], a[href="dashboard.html"]');
+  if (protectedAccountLink && localStorage.getItem(AUTH_KEY) !== 'true') {
+    event.preventDefault();
+    window.location.href = `login.html?next=${encodeURIComponent(protectedAccountLink.getAttribute('href') || 'dashboard.html')}`;
+    return;
+  }
+
   const removeWishlist = event.target.closest('[data-remove-wishlist]');
   if (removeWishlist) {
     event.preventDefault();
@@ -1915,11 +1929,11 @@ function enhanceFooter() {
       <h3>Account</h3>
       <a href="login.html">Login</a>
       <a href="register.html">Register</a>
-      <a href="dashboard.html#dashboard">My Account</a>
-      <a href="dashboard.html#wishlist">Wishlist</a>
-      <a href="dashboard.html#orders">Order History</a>
-      <a href="dashboard.html#addresses">Saved Addresses</a>
-      <a href="dashboard.html#change-password">Change Password</a>
+      <a href="${accountHref('dashboard')}">My Account</a>
+      <a href="${accountHref('wishlist')}">Wishlist</a>
+      <a href="${accountHref('orders')}">Order History</a>
+      <a href="${accountHref('addresses')}">Saved Addresses</a>
+      <a href="${accountHref('change-password')}">Change Password</a>
       <a href="newsletter.html">Newsletter</a>
     </div>
   `;
