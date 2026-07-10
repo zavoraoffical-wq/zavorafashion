@@ -1697,6 +1697,19 @@ document.addEventListener('click', async (event) => {
     event.preventDefault();
     const selected = document.querySelector('input[name="payment"]:checked')?.value || 'paypal';
     const method = selected === 'cod' ? 'COD' : 'PayPal';
+    if (method === 'PayPal' && document.querySelector('#paypal-button-container')) {
+      const paypalBox = document.querySelector('.paypal-checkout');
+      paypalBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      let note = paypalBox?.querySelector('[data-paypal-note]');
+      if (!note && paypalBox) {
+        note = document.createElement('p');
+        note.className = 'secure-note';
+        note.dataset.paypalNote = 'true';
+        paypalBox.appendChild(note);
+      }
+      if (note) note.textContent = 'Use the secure PayPal button to complete payment.';
+      return;
+    }
     const order = createTestOrder(method);
     if (!order) {
       hydrateCheckoutSummary();
@@ -2072,7 +2085,7 @@ function initPaymentMethodUi() {
       ? 'Cash on Delivery test mode is active. Place the order now and track it with order ID plus email.'
       : 'Card, Apple Pay, and Google Pay checkout are coming soon. Please use PayPal or COD test mode today.';
     if (pay && cod) pay.textContent = 'Place COD Order';
-    if (pay && !cod && pay.dataset.payTotal) pay.textContent = pay.dataset.payTotal;
+    if (pay && !cod) pay.textContent = 'Use PayPal Button';
   }
   methods.addEventListener('change', update);
   update();

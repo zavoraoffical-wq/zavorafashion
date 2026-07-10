@@ -37,9 +37,34 @@ function initZavoraPayPal() {
       });
     },
     onApprove(data, actions) {
-      return actions.order.capture().then(() => {
-        localStorage.setItem('zavoraLastOrder', data.orderID || 'PAYPAL-ORDER');
-        window.location.href = 'order-success.html';
+      return actions.order.capture().then(async () => {
+        const order = typeof createTestOrder === 'function'
+          ? createTestOrder('PayPal')
+          : {
+            id: `ZAV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+            email: localStorage.getItem('zavoraUserEmail') || 'customer@zavorafashion.com',
+            method: 'PayPal',
+            total: zavoraCheckoutTotal(),
+            items: JSON.parse(localStorage.getItem('zavoraCart') || '[]'),
+            status: 'Payment received',
+            tracking: `ZV${String(Date.now()).slice(-8)}`,
+            createdAt: new Date().toISOString()
+          };
+        order.paypalOrderId = data.orderID || '';
+        order.status = 'Payment received';
+        try {
+          const orders = typeof getSavedOrders === 'function' ? getSavedOrders() : [];
+          const nextOrders = orders.filter((item) => item.id !== order.id);
+          nextOrders.unshift(order);
+          if (typeof saveSavedOrders === 'function') saveSavedOrders(nextOrders);
+          localStorage.setItem('zavoraLastOrder', JSON.stringify(order));
+          if (typeof persistOrder === 'function') await persistOrder(order);
+          if (typeof requestOrderConfirmation === 'function') requestOrderConfirmation(order);
+        } catch (error) {
+          localStorage.setItem('zavoraLastOrder', JSON.stringify(order));
+        }
+        localStorage.removeItem('zavoraCart');
+        window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=paypal`;
       });
     },
     onError() {
