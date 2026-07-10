@@ -37,6 +37,7 @@ const LAUNCH_PREVIEW_CODE = 'zavora-live';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const SELECTED_PRODUCT_KEY = 'zavoraSelectedProduct';
 const PRODUCT_STOCK_KEY = 'zavoraProductStock';
+const USER_ACCOUNT_KEY = 'zavoraUserAccount';
 const accountRedirects = {
   'my-account.html': 'dashboard',
   'wishlist.html': 'wishlist',
@@ -75,6 +76,31 @@ function getWishlist() {
 
 function saveWishlist(items) {
   localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
+}
+
+function getUserAccount() {
+  try {
+    return JSON.parse(localStorage.getItem(USER_ACCOUNT_KEY)) || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveUserAccount(account) {
+  localStorage.setItem(USER_ACCOUNT_KEY, JSON.stringify(account));
+}
+
+function loginUser(account) {
+  if (!account) return;
+  localStorage.setItem(AUTH_KEY, 'true');
+  localStorage.setItem('zavoraUserEmail', account.email);
+  localStorage.setItem('zavoraUserName', account.name || 'Zavora Customer');
+}
+
+function logoutUser() {
+  localStorage.removeItem(AUTH_KEY);
+  localStorage.removeItem('zavoraUserEmail');
+  localStorage.removeItem('zavoraUserName');
 }
 
 function addWishlistProduct(product) {
@@ -432,11 +458,19 @@ function syncPageHeader() {
 
 function enforceAuthState() {
   const pageName = window.location.pathname.split('/').pop();
-  if (accountRedirects[pageName]) {
-    window.location.replace(`dashboard.html#${accountRedirects[pageName]}`);
+  if (pageName === 'dashboard.html' && localStorage.getItem(AUTH_KEY) !== 'true') {
+    window.location.replace('login.html?next=dashboard.html');
     return;
   }
-  if (pageName === 'login.html' && localStorage.getItem(AUTH_KEY) === 'true') {
+  if (accountRedirects[pageName]) {
+    if (localStorage.getItem(AUTH_KEY) === 'true') {
+      window.location.replace(`dashboard.html#${accountRedirects[pageName]}`);
+    } else {
+      window.location.replace(`login.html?next=${encodeURIComponent(`dashboard.html#${accountRedirects[pageName]}`)}`);
+    }
+    return;
+  }
+  if ((pageName === 'login.html' || pageName === 'sign-up.html' || pageName === 'register.html') && localStorage.getItem(AUTH_KEY) === 'true') {
     window.location.href = 'dashboard.html';
   }
   document.querySelectorAll('[data-profile]').forEach((profile) => {
@@ -468,8 +502,8 @@ const accountViews = {
     <article class="dashboard-card dashboard-wide"><span>Delivery</span><h3>Fast checkout ready</h3><p>Address autofill and saved delivery preferences are active.</p></article>
   `,
   profile: `
-    <article class="dashboard-card dashboard-wide"><span>Profile</span><h3>Alex Morgan</h3><p>Email: user@zavora.com / Country: USA / Currency: USD</p><button class="text-link" type="button">Save profile</button></article>
-    <article class="dashboard-card dashboard-wide"><span>Security</span><h3>Password protected</h3><p>Demo account login is active for this browser.</p></article>
+    <article class="dashboard-card dashboard-wide"><span>Profile</span><h3 data-profile-name>Zavora Customer</h3><p>Email: <strong data-profile-email></strong> / Country: USA / Currency: USD</p><div class="mini-form"><input data-profile-name-input placeholder="Full name"></div><button class="text-link" type="button" data-profile-save>Save profile</button></article>
+    <article class="dashboard-card dashboard-wide"><span>Security</span><h3>Password protected</h3><p>Your email stays locked. Only your profile name can be edited here.</p></article>
   `,
   'change-password': `
     <article class="dashboard-card dashboard-wide"><span>Security</span><h3>Change Password</h3><p>Update your Zavora account password for secure checkout and saved address access.</p><div class="mini-form"><input type="password" placeholder="Current password"><input type="password" placeholder="New password"><input type="password" placeholder="Confirm password"></div><button class="secondary-btn slim-btn" type="button" data-password-save>Update password</button></article>
@@ -673,6 +707,18 @@ function setDashboardView(view = 'dashboard') {
         </article>
       `).join('')}
     `;
+  }
+  if (view === 'profile') {
+    const account = getUserAccount() || {
+      name: localStorage.getItem('zavoraUserName') || 'Zavora Customer',
+      email: localStorage.getItem('zavoraUserEmail') || ''
+    };
+    const nameNode = grid.querySelector('[data-profile-name]');
+    const emailNode = grid.querySelector('[data-profile-email]');
+    const input = grid.querySelector('[data-profile-name-input]');
+    if (nameNode) nameNode.textContent = account.name || 'Zavora Customer';
+    if (emailNode) emailNode.textContent = account.email || 'No email saved';
+    if (input) input.value = account.name || '';
   }
   if (view === 'orders') {
     const orders = getSavedOrders();
@@ -1368,7 +1414,7 @@ document.addEventListener('click', async (event) => {
     event.preventDefault();
     const view = dashboardTrigger.dataset.dashboardView;
     if (view === 'logout') {
-      localStorage.removeItem(AUTH_KEY);
+      logoutUser();
       window.location.href = 'login.html';
       return;
     }
@@ -1423,7 +1469,68 @@ document.addEventListener('click', async (event) => {
   if (event.target.closest('[data-password-save]')) {
     event.preventDefault();
     const card = event.target.closest('.dashboard-card');
-    card?.insertAdjacentHTML('beforeend', '<p class="login-error success-note">Password preference saved for this demo account.</p>');
+    const inputs = card ? [...card.querySelectorAll('input')] : [];
+    const current = inputs[0]?.value || '';
+    const next = inputs[1]?.value || '';
+    const confirm = inputs[2]?.value || '';
+    let note = card?.querySelector('[data-password-note]');
+    if (!note && card) {
+      note = document.createElement('p');
+      note.className = 'login-error';
+      note.dataset.passwordNote = 'true';
+      card.appendChild(note);
+    }
+    const account = getUserAccount();
+    if (!account) {
+      if (note) note.textContent = 'Create an account first, then change your password.';
+      return;
+    }
+    if (current !== account.password) {
+      if (note) note.textContent = 'Current password is incorrect.';
+      return;
+    }
+    if (next.length < 6 || next !== confirm) {
+      if (note) note.textContent = 'New password must be 6+ characters and match confirmation.';
+      return;
+    }
+    saveUserAccount({ ...account, password: next, updatedAt: new Date().toISOString() });
+    inputs.forEach((input) => input.value = '');
+    if (note) {
+      note.textContent = 'Password updated. Next login will use your new password.';
+      note.classList.add('success-note');
+    }
+    return;
+  }
+
+  if (event.target.closest('[data-profile-save]')) {
+    event.preventDefault();
+    const card = event.target.closest('.dashboard-card');
+    const input = card?.querySelector('[data-profile-name-input]');
+    const name = input?.value.trim();
+    let note = card?.querySelector('[data-profile-note]');
+    if (!note && card) {
+      note = document.createElement('p');
+      note.className = 'login-error';
+      note.dataset.profileNote = 'true';
+      card.appendChild(note);
+    }
+    if (!name) {
+      if (note) note.textContent = 'Enter your name before saving.';
+      return;
+    }
+    const account = getUserAccount() || {
+      email: localStorage.getItem('zavoraUserEmail') || '',
+      password: ''
+    };
+    const nextAccount = { ...account, name, updatedAt: new Date().toISOString() };
+    saveUserAccount(nextAccount);
+    loginUser(nextAccount);
+    const nameNode = card?.querySelector('[data-profile-name]');
+    if (nameNode) nameNode.textContent = name;
+    if (note) {
+      note.textContent = 'Profile name saved.';
+      note.classList.add('success-note');
+    }
     return;
   }
 
@@ -1464,8 +1571,8 @@ document.addEventListener('click', async (event) => {
     event.preventDefault();
     const email = document.querySelector('.auth-card input[type="email"]')?.value.trim().toLowerCase();
     const password = document.querySelector('.auth-card input[type="password"]')?.value.trim();
-    const valid = (email === 'user@zavora.com' && password === '123456')
-      || (email === 'zavora@fashion.com' && password === 'zavora2026');
+    const account = getUserAccount();
+    const valid = account && email === String(account.email || '').toLowerCase() && password === String(account.password || '');
     let error = document.querySelector('[data-login-error]');
     if (!error) {
       error = document.createElement('p');
@@ -1474,13 +1581,13 @@ document.addEventListener('click', async (event) => {
       loginTrigger.closest('.form-panel')?.appendChild(error);
     }
     if (!valid) {
-      error.textContent = 'Invalid email or password.';
+      error.textContent = account ? 'Invalid email or password.' : 'No account found. Please sign up first.';
       return;
     }
     error.textContent = '';
-    localStorage.setItem(AUTH_KEY, 'true');
-    localStorage.setItem('zavoraUserEmail', email);
-    window.location.href = 'dashboard.html';
+    loginUser(account);
+    const next = new URLSearchParams(window.location.search).get('next') || 'dashboard.html';
+    window.location.href = next;
     return;
   }
 
@@ -1530,9 +1637,15 @@ document.addEventListener('click', async (event) => {
       error.textContent = 'Invalid OTP. Enter the 6-digit code sent to your email.';
       return;
     }
-    localStorage.setItem(AUTH_KEY, 'true');
-    localStorage.setItem('zavoraUserEmail', pending.email);
-    localStorage.setItem('zavoraUserName', pending.name);
+    const account = {
+      name: pending.name,
+      email: pending.email,
+      password: pending.password,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    saveUserAccount(account);
+    loginUser(account);
     clearPendingSignupOtp();
     requestWelcomeEmail(pending.email, pending.name).finally(() => {
       window.location.href = 'dashboard.html';
