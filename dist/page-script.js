@@ -90,6 +90,10 @@ function saveUserAccount(account) {
   localStorage.setItem(USER_ACCOUNT_KEY, JSON.stringify(account));
 }
 
+function isUserLoggedIn() {
+  return localStorage.getItem(AUTH_KEY) === 'true' && !!(getUserAccount() || localStorage.getItem('zavoraUserEmail'));
+}
+
 function loginUser(account) {
   if (!account) return;
   localStorage.setItem(AUTH_KEY, 'true');
@@ -105,7 +109,7 @@ function logoutUser() {
 
 function accountHref(view = 'dashboard') {
   const target = `dashboard.html#${view}`;
-  return localStorage.getItem(AUTH_KEY) === 'true'
+  return isUserLoggedIn()
     ? target
     : `login.html?next=${encodeURIComponent(target)}`;
 }
@@ -465,23 +469,28 @@ function syncPageHeader() {
 
 function enforceAuthState() {
   const pageName = window.location.pathname.split('/').pop();
-  if (pageName === 'dashboard.html' && localStorage.getItem(AUTH_KEY) !== 'true') {
+  if (pageName === 'logout.html') {
+    logoutUser();
+    window.location.replace('login.html');
+    return;
+  }
+  if (pageName === 'dashboard.html' && !isUserLoggedIn()) {
     window.location.replace('login.html?next=dashboard.html');
     return;
   }
   if (accountRedirects[pageName]) {
-    if (localStorage.getItem(AUTH_KEY) === 'true') {
+    if (isUserLoggedIn()) {
       window.location.replace(`dashboard.html#${accountRedirects[pageName]}`);
     } else {
       window.location.replace(`login.html?next=${encodeURIComponent(`dashboard.html#${accountRedirects[pageName]}`)}`);
     }
     return;
   }
-  if ((pageName === 'login.html' || pageName === 'sign-up.html' || pageName === 'register.html') && localStorage.getItem(AUTH_KEY) === 'true') {
+  if ((pageName === 'login.html' || pageName === 'sign-up.html' || pageName === 'register.html') && isUserLoggedIn()) {
     window.location.href = 'dashboard.html';
   }
   document.querySelectorAll('[data-profile]').forEach((profile) => {
-    profile.href = localStorage.getItem(AUTH_KEY) === 'true' ? 'dashboard.html' : 'login.html';
+    profile.href = isUserLoggedIn() ? 'dashboard.html' : 'login.html';
   });
   document.querySelectorAll('.login-hint').forEach((hint) => hint.remove());
 }
@@ -1331,6 +1340,24 @@ document.addEventListener('change', (event) => {
 });
 
 document.addEventListener('click', async (event) => {
+  const rawAccountLink = event.target.closest('a');
+  if (rawAccountLink && !rawAccountLink.closest('.auth-card')) {
+    const rawHref = rawAccountLink.getAttribute('href') || '';
+    const accountTarget = rawHref.includes('dashboard.html')
+      || rawHref === 'account.html'
+      || rawHref === 'my-account.html'
+      || rawHref === 'wishlist.html'
+      || rawHref === 'order-history.html'
+      || rawHref === 'saved-addresses.html'
+      || rawHref === 'change-password.html';
+    if (accountTarget) {
+      event.preventDefault();
+      const next = rawHref.includes('dashboard.html') ? rawHref : 'dashboard.html';
+      window.location.href = isUserLoggedIn() ? next : `login.html?next=${encodeURIComponent(next)}`;
+      return;
+    }
+  }
+
   const pageSearchProduct = event.target.closest('[data-page-search-product]');
   if (pageSearchProduct) {
     event.preventDefault();
@@ -1426,13 +1453,6 @@ document.addEventListener('click', async (event) => {
       return;
     }
     setDashboardView(view);
-    return;
-  }
-
-  const protectedAccountLink = event.target.closest('a[href^="dashboard.html#"], a[href="dashboard.html"]');
-  if (protectedAccountLink && localStorage.getItem(AUTH_KEY) !== 'true') {
-    event.preventDefault();
-    window.location.href = `login.html?next=${encodeURIComponent(protectedAccountLink.getAttribute('href') || 'dashboard.html')}`;
     return;
   }
 

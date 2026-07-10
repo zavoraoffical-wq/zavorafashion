@@ -272,6 +272,10 @@ const homeIcons = {
   heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 5.2c-1.8-1.7-4.7-1.6-6.4.2L12 6.6l-1.1-1.2c-1.7-1.8-4.6-1.9-6.4-.2-1.9 1.8-2 4.8-.2 6.7L12 19.7l7.7-7.8c1.8-1.9 1.7-4.9-.2-6.7Z"></path></svg>'
 };
 
+function isHomeUserLoggedIn() {
+  return localStorage.getItem(HOME_AUTH_KEY) === 'true' && !!(localStorage.getItem('zavoraUserAccount') || localStorage.getItem('zavoraUserEmail'));
+}
+
 function hydrateHomeHeaderIcons() {
   document.querySelectorAll('[data-search]').forEach((button) => { button.innerHTML = homeIcons.search; });
   document.querySelectorAll('[data-dark]').forEach((button) => { button.innerHTML = homeIcons.moon; });
@@ -596,6 +600,15 @@ $$('select, input[type="range"], input[type="checkbox"]').forEach(control => {
 });
 
 document.addEventListener('click', (event) => {
+  const accountLink = event.target.closest('a[href*="dashboard.html"], a[href="account.html"], a[href="my-account.html"], a[href="wishlist.html"], a[href="order-history.html"], a[href="saved-addresses.html"], a[href="change-password.html"], [data-profile]');
+  if (accountLink && !accountLink.closest('.auth-card')) {
+    event.preventDefault();
+    const rawHref = accountLink.getAttribute('href') || 'dashboard.html';
+    const next = rawHref.includes('dashboard.html') ? rawHref : 'dashboard.html';
+    window.location.href = isHomeUserLoggedIn() ? next : `login.html?next=${encodeURIComponent(next)}`;
+    return;
+  }
+
   const searchProduct = event.target.closest('[data-search-product]');
   if (searchProduct) {
     event.preventDefault();
