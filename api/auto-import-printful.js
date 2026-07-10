@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
     .map((item) => item.trim().toLowerCase())
     .filter(Boolean);
   const limit = Math.min(Number(req.query.limit || process.env.AUTO_IMPORT_LIMIT || 60), 60);
-  const pages = Math.max(1, Math.min(Number(req.query.pages || process.env.AUTO_IMPORT_PAGES || 3), 10));
+  const pages = Math.max(1, Math.min(Number(req.query.pages || process.env.AUTO_IMPORT_PAGES || 9), 10));
   const imported = [];
   const errors = [];
 

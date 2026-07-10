@@ -110,6 +110,79 @@ function renderAdminProducts() {
   list.insertAdjacentHTML('afterbegin', savedRows);
 }
 
+function money(value) {
+  return `$${Number(value || 0).toLocaleString('en-US')}`;
+}
+
+function setStatCards(stats) {
+  const cards = document.querySelectorAll('[data-panel="dashboard"] .stat-card');
+  if (cards[0]) {
+    cards[0].querySelector('strong').textContent = money(stats.revenuePreview || 0);
+    cards[0].querySelector('small').textContent = 'Live product revenue preview';
+  }
+  if (cards[1]) {
+    cards[1].querySelector('span').textContent = 'Live Products';
+    cards[1].querySelector('strong').textContent = String(stats.products || 0);
+    cards[1].querySelector('small').textContent = 'Imported from Printful Catalog';
+  }
+  if (cards[2]) {
+    cards[2].querySelector('span').textContent = 'Categories';
+    cards[2].querySelector('strong').textContent = String(Object.keys(stats.categories || {}).length);
+    cards[2].querySelector('small').textContent = 'Auto mapped to Zavora pages';
+  }
+  if (cards[3]) {
+    cards[3].querySelector('strong').textContent = String(stats.lowStock || 0);
+    cards[3].querySelector('small').textContent = 'Limited stock watch';
+  }
+}
+
+function renderLiveTopProducts(products = []) {
+  const rank = document.querySelector('.product-rank');
+  if (!rank || !products.length) return;
+  rank.innerHTML = products.slice(0, 6).map((product) => `
+    <p><span>${product.name}</span><strong>${product.sold} sold</strong></p>
+  `).join('');
+}
+
+function renderLiveProductRows(products = []) {
+  const list = document.querySelector('[data-admin-product-list]');
+  if (!list || !products.length) return;
+  list.innerHTML = products.slice(0, 24).map((product) => `
+    <tr data-saved-product="${product.id}">
+      <td>${product.name}<br><span>PF-${product.id}</span></td>
+      <td>${product.category}</td>
+      <td>Live</td>
+      <td><span class="pill green">Active</span></td>
+      <td><button data-toast="Product detail synced">Synced</button></td>
+    </tr>
+  `).join('');
+}
+
+function renderLiveOrders(stats) {
+  const body = document.querySelector('[data-panel="orders"] tbody');
+  if (!body) return;
+  const rows = Array.isArray(stats.orders) && stats.orders.length ? stats.orders : [
+    { id: '#ZAV-LIVE', customer: 'Waiting for first live checkout', payment: 'Pending', tracking: 'Not shipped' }
+  ];
+  body.innerHTML = rows.map((order) => `
+    <tr><td>${order.id}</td><td>${order.customer || 'Zavora customer'}<br><span>${order.email || 'orders@zavorafashion.com'}</span></td><td>${order.payment || 'Pending'}</td><td>${order.tracking || 'Preparing'}</td><td><button data-toast="Invoice module ready">Invoice PDF</button></td></tr>
+  `).join('');
+}
+
+async function refreshLiveAdminDashboard() {
+  try {
+    const response = await fetch('/api/admin-stats');
+    const stats = await response.json();
+    if (!response.ok || !stats.ok) return;
+    setStatCards(stats);
+    renderLiveTopProducts(stats.topProducts || []);
+    renderLiveProductRows(stats.topProducts || []);
+    renderLiveOrders(stats);
+    const bell = document.querySelector('.admin-icon-btn');
+    if (bell) bell.textContent = `Live ${stats.products || 0}`;
+  } catch (error) {}
+}
+
 function addAdminProduct(form) {
   const data = new FormData(form);
   const name = String(data.get('name') || '').trim();
@@ -143,24 +216,15 @@ function addAdminProduct(form) {
 
 async function importPrintfulProducts() {
   try {
-    toast('Importing Printful products...');
-    const response = await fetch('/api/printful-products?gender=men&limit=23&page=1');
+    toast('Importing 500+ Printful catalog products...');
+    const response = await fetch('/api/auto-import-printful?pages=9&limit=60');
     const data = await response.json();
-    if (!response.ok || !data.ok || !Array.isArray(data.products)) {
+    if (!response.ok && response.status !== 207) {
       toast(data.error || 'Printful import failed');
       return;
     }
-    const existing = getAdminProducts();
-    const imported = data.products.map((product) => ({
-      ...product,
-      image: product.img,
-      sku: product.printfulId ? `PF-${product.printfulId}` : `PF-${product.id}`,
-      importedFrom: 'printful'
-    }));
-    const merged = [...imported, ...existing.filter((item) => item.importedFrom !== 'printful')];
-    saveAdminProducts(merged);
-    renderAdminProducts();
-    toast(`${imported.length} Printful products imported`);
+    await refreshLiveAdminDashboard();
+    toast(`${data.importedCount || 0} Printful products imported to Supabase`);
   } catch (error) {
     toast('Printful import failed');
   }
@@ -237,3 +301,5 @@ document.addEventListener('input', (event) => {
 renderQuickPanels();
 renderAdminProducts();
 setSection(window.location.hash.replace('#', '') || 'dashboard');
+refreshLiveAdminDashboard();
+window.setInterval(refreshLiveAdminDashboard, 30000);

@@ -296,13 +296,13 @@ const pageMegaMenuData = {
     label: 'Women edit',
     title: 'Oversized tees, hoodies, sweat sets, jackets, and accessories for premium everyday styling.',
     href: 'women.html',
-    items: ['Oversized Tees', 'Baby Tees', 'Hoodies', 'Cropped Hoodies', 'Sweatpants', 'Jackets', 'Accessories']
+    items: [['Oversized Tees', 'tees'], ['Baby Tees', 'tees'], ['Hoodies', 'hoodies'], ['Cropped Hoodies', 'hoodies'], ['Sweatpants', 'pants'], ['Jackets', 'outerwear'], ['Accessories', 'accessories']]
   },
   men: {
     label: 'Men edit',
     title: 'Heavyweight layers, oversized fits, cargos, sweatpants, jackets, and accessories.',
     href: 'men.html',
-    items: ['Oversized Tees', 'Heavyweight Tees', 'Hoodies', 'Zip Hoodies', 'Cargo Pants', 'Sweatpants', 'Jackets', 'Accessories']
+    items: [['Oversized Tees', 'tees'], ['Heavyweight Tees', 'tees'], ['Hoodies', 'hoodies'], ['Zip Hoodies', 'zip-hoodies'], ['Cargo Pants', 'pants'], ['Sweatpants', 'pants'], ['Jackets', 'outerwear'], ['Accessories', 'accessories']]
   }
 };
 
@@ -314,7 +314,11 @@ function initPageMegaMenu() {
     const data = pageMegaMenuData[type] || pageMegaMenuData.women;
     menu.querySelector('.eyebrow').textContent = data.label;
     menu.querySelector('h2').textContent = data.title;
-    menu.querySelector('.mega-grid').innerHTML = data.items.map((item) => `<a href="${data.href}?category=${encodeURIComponent(item.toLowerCase().replace(/\s+/g, '-'))}">${item}</a>`).join('');
+    menu.querySelector('.mega-grid').innerHTML = data.items.map((item) => {
+      const label = Array.isArray(item) ? item[0] : item;
+      const category = Array.isArray(item) ? item[1] : String(item).toLowerCase().replace(/\s+/g, '-');
+      return `<a href="${data.href}?category=${encodeURIComponent(category)}&label=${encodeURIComponent(label)}">${label}</a>`;
+    }).join('');
     menu.classList.add('open');
     menu.setAttribute('aria-hidden', 'false');
   }
@@ -716,10 +720,9 @@ function renderPageSuggestions(term = '') {
   const cleanTerm = term.trim().toLowerCase();
   const products = window.__zavoraSearchProducts || [];
   if (!products.length) {
-    fetch('/api/printful-products?gender=men&limit=60&page=1')
-      .then((response) => response.json())
-      .then((data) => {
-        window.__zavoraSearchProducts = Array.isArray(data.products) ? data.products : [];
+    Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))
+      .then((pages) => {
+        window.__zavoraSearchProducts = pages.flat();
         renderPageSuggestions(term);
       })
       .catch(() => {});
@@ -954,6 +957,10 @@ function catalogCard(item) {
 }
 
 function productsForCatalogPage(products, pageName) {
+  const urlCategory = new URLSearchParams(window.location.search).get('category');
+  if (urlCategory) {
+    products = products.filter((product) => String(product.category || '').toLowerCase() === String(urlCategory).toLowerCase());
+  }
   if (pageName === 'new-arrivals.html') {
     return products.filter((product, index) => product.collection?.includes('new') || index < 18);
   }
@@ -968,6 +975,30 @@ function productsForCatalogPage(products, pageName) {
   return products;
 }
 
+async function fetchCatalogProducts(gender, limit = 1000) {
+  const params = new URLSearchParams({
+    gender,
+    limit: String(limit)
+  });
+  const urlCategory = new URLSearchParams(window.location.search).get('category');
+  const urlCollection = new URLSearchParams(window.location.search).get('collection');
+  if (urlCategory) params.set('category', urlCategory);
+  if (urlCollection) params.set('collection', urlCollection);
+  try {
+    const response = await fetch(`/api/products?${params.toString()}`);
+    const data = await response.json();
+    if (response.ok && data.ok && Array.isArray(data.products) && data.products.length) return data.products;
+  } catch (error) {}
+  const pages = [1, 2, 3, 4, 5, 6];
+  const results = await Promise.all(pages.map((page) => (
+    fetch(`/api/printful-products?gender=${gender}&limit=60&page=${page}`)
+      .then((response) => response.json())
+      .then((data) => Array.isArray(data.products) ? data.products : [])
+      .catch(() => [])
+  )));
+  return results.flat();
+}
+
 async function loadPrintfulCatalog() {
   const grid = document.querySelector('[data-catalog-grid]');
   if (!grid || grid.dataset.printfulLoaded) return;
@@ -975,10 +1006,9 @@ async function loadPrintfulCatalog() {
   try {
     const pageName = window.location.pathname.split('/').pop();
     const gender = pageName === 'women.html' ? 'women' : 'men';
-    const response = await fetch(`/api/printful-products?gender=${gender}&limit=60&page=1`);
-    const data = await response.json();
-    if (!response.ok || !data.ok || !Array.isArray(data.products) || !data.products.length) return;
-    const products = productsForCatalogPage(data.products, pageName);
+    const dataProducts = await fetchCatalogProducts(gender, 1000);
+    if (!dataProducts.length) return;
+    const products = productsForCatalogPage(dataProducts, pageName);
     window.__zavoraCatalogProducts = products;
     grid.innerHTML = products.map(catalogCard).join('');
     filterLargeCatalog();
@@ -1024,6 +1054,16 @@ function injectLargeCatalog() {
   main.classList.add('catalog-main');
   main.innerHTML = '';
   main.appendChild(section);
+  const urlCategory = new URLSearchParams(window.location.search).get('category');
+  const categorySelect = section.querySelector('[data-catalog-filter="category"]');
+  if (urlCategory && categorySelect && [...categorySelect.options].some((option) => option.value === urlCategory)) {
+    categorySelect.value = urlCategory;
+  }
+  const label = new URLSearchParams(window.location.search).get('label');
+  if (label) {
+    const title = section.querySelector('.catalog-toolbar h1');
+    if (title) title.textContent = label;
+  }
 }
 
 function filterLargeCatalog() {
@@ -1916,9 +1956,9 @@ function refreshSelectedProductFromUrl() {
   const id = new URLSearchParams(window.location.search).get('id');
   if (!id || window.__zavoraProductRefreshId === id) return;
   window.__zavoraProductRefreshId = id;
-  Promise.all(['men', 'women'].map((gender) => fetch(`/api/printful-products?gender=${gender}&limit=60&page=1`).then((response) => response.json()).catch(() => ({ products: [] }))))
+  Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))
     .then((pages) => {
-      const products = pages.flatMap((data) => Array.isArray(data.products) ? data.products : []);
+      const products = pages.flat();
       const product = products.find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
       if (product) {
         rememberSelectedProduct(product);
@@ -2025,11 +2065,10 @@ async function initDynamicRelatedProducts() {
   grid.dataset.realRelatedLoaded = 'true';
   grid.innerHTML = '<p class="catalog-loading">Loading recommended Printful products...</p>';
   try {
-    const response = await fetch('/api/printful-products?gender=men&limit=12&page=1');
-    const data = await response.json();
-    if (!response.ok || !data.ok || !Array.isArray(data.products)) return;
+    const allProducts = await fetchCatalogProducts('men', 1000);
+    if (!Array.isArray(allProducts) || !allProducts.length) return;
     const current = getSelectedProduct();
-    const products = data.products.filter((item) => String(item.id) !== String(current?.id)).slice(0, 3);
+    const products = allProducts.filter((item) => String(item.id) !== String(current?.id)).slice(0, 3);
     window.__zavoraCatalogProducts = [...(window.__zavoraCatalogProducts || []), ...products];
     grid.classList.add('related-real-grid');
     grid.innerHTML = products.map(catalogCard).join('');

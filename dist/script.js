@@ -387,14 +387,22 @@ function getHomeProducts() {
 
 async function loadPrintfulProducts() {
   try {
-    const response = await fetch('/api/printful-products?gender=men&limit=23&page=1');
-    const data = await response.json();
-    if (!response.ok || !data.ok || !Array.isArray(data.products)) {
-      state.printfulLoaded = true;
-      renderProducts();
-      return;
+    let products = [];
+    try {
+      const response = await fetch('/api/products?gender=men&limit=1000');
+      const data = await response.json();
+      if (response.ok && data.ok && Array.isArray(data.products)) products = data.products;
+    } catch (error) {}
+    if (!products.length) {
+      const pages = await Promise.all([1, 2, 3, 4, 5, 6].map((page) => (
+        fetch(`/api/printful-products?gender=men&limit=60&page=${page}`)
+          .then((response) => response.json())
+          .then((data) => Array.isArray(data.products) ? data.products : [])
+          .catch(() => [])
+      )));
+      products = pages.flat();
     }
-    state.printfulProducts = data.products;
+    state.printfulProducts = products;
     state.printfulLoaded = true;
     const daily = document.querySelector('.daily-feature');
     if (daily) daily.remove();
@@ -691,13 +699,30 @@ const megaMenuData = {
     label: 'Women edit',
     title: 'Premium women streetwear, clean fits, everyday luxury.',
     href: 'women.html',
-    items: ['Oversized Tees', 'Baby Tees', 'Hoodies', 'Cropped Hoodies', 'Cargo Pants', 'Sweatpants', 'Jackets', 'Accessories']
+    items: [
+      ['Oversized Tees', 'tees'],
+      ['Baby Tees', 'tees'],
+      ['Hoodies', 'hoodies'],
+      ['Cropped Hoodies', 'hoodies'],
+      ['Sweatpants', 'pants'],
+      ['Jackets', 'outerwear'],
+      ['Accessories', 'accessories']
+    ]
   },
   men: {
     label: 'Men edit',
     title: 'Structured essentials, heavyweight layers, and relaxed streetwear.',
     href: 'men.html',
-    items: ['Oversized Tees', 'Heavyweight Tees', 'Hoodies', 'Zip Hoodies', 'Cargo Pants', 'Sweatpants', 'Jackets', 'Accessories']
+    items: [
+      ['Oversized Tees', 'tees'],
+      ['Heavyweight Tees', 'tees'],
+      ['Hoodies', 'hoodies'],
+      ['Zip Hoodies', 'zip-hoodies'],
+      ['Cargo Pants', 'pants'],
+      ['Sweatpants', 'pants'],
+      ['Jackets', 'outerwear'],
+      ['Accessories', 'accessories']
+    ]
   }
 };
 
@@ -710,7 +735,11 @@ function updateMegaMenu(type) {
   if (eyebrow) eyebrow.textContent = data.label;
   if (title) title.textContent = data.title;
   if (grid) {
-    grid.innerHTML = data.items.map((item) => `<a href="${data.href}">${item}</a>`).join('');
+    grid.innerHTML = data.items.map((item) => {
+      const label = Array.isArray(item) ? item[0] : item;
+      const category = Array.isArray(item) ? item[1] : 'all';
+      return `<a href="${data.href}?category=${encodeURIComponent(category)}&label=${encodeURIComponent(label)}">${label}</a>`;
+    }).join('');
   }
 }
 

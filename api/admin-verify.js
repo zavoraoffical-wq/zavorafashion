@@ -45,13 +45,14 @@ module.exports = async function handler(req, res) {
   const expected = sign(`${email}:${otp}:${expiresAt}`);
   if (!safeEqual(expected, payload.hash)) return json(res, 401, { error: 'Invalid OTP' });
 
-  const sessionExpiresAt = Date.now() + 8 * 60 * 60 * 1000;
+  const sessionMaxAge = 30 * 24 * 60 * 60;
+  const sessionExpiresAt = Date.now() + sessionMaxAge * 1000;
   const session = Buffer.from(JSON.stringify({
     email,
     expiresAt: sessionExpiresAt,
     signature: sign(`${email}:${sessionExpiresAt}:admin`)
   })).toString('base64url');
 
-  res.setHeader('Set-Cookie', `admin_session=${session}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=28800`);
+  res.setHeader('Set-Cookie', `admin_session=${session}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${sessionMaxAge}`);
   return json(res, 200, { ok: true, session, email, expiresAt: sessionExpiresAt });
 };

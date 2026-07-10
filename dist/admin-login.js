@@ -1,6 +1,13 @@
 const ADMIN_SESSION_KEY = 'zavoraAdminSession';
 const ADMIN_EMAIL_KEY = 'zavoraAdminEmail';
 
+fetch('/api/admin-session')
+  .then((response) => response.json())
+  .then((data) => {
+    if (data?.ok) window.location.href = 'admin.html';
+  })
+  .catch(() => {});
+
 function note(message, good = false) {
   const box = document.querySelector('[data-admin-login-note]');
   if (!box) return;
