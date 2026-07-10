@@ -17,6 +17,14 @@
       "schedule": "0 8 * * *"
     }
   ],
+  "functions": {
+    "api/auto-import-printful.js": {
+      "maxDuration": 60
+    },
+    "api/printful-products.js": {
+      "maxDuration": 60
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",

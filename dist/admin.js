@@ -161,11 +161,24 @@ function renderLiveProductRows(products = []) {
 function renderLiveOrders(stats) {
   const body = document.querySelector('[data-panel="orders"] tbody');
   if (!body) return;
-  const rows = Array.isArray(stats.orders) && stats.orders.length ? stats.orders : [
-    { id: '#ZAV-LIVE', customer: 'Waiting for first live checkout', payment: 'Pending', tracking: 'Not shipped' }
-  ];
+  const rows = Array.isArray(stats.orders) && stats.orders.length ? stats.orders : [];
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="5">No live orders yet. New checkout orders will appear here automatically.</td></tr>';
+    return;
+  }
   body.innerHTML = rows.map((order) => `
-    <tr><td>${order.id}</td><td>${order.customer || 'Zavora customer'}<br><span>${order.email || 'orders@zavorafashion.com'}</span></td><td>${order.payment || 'Pending'}</td><td>${order.tracking || 'Preparing'}</td><td><button data-toast="Invoice module ready">Invoice PDF</button></td></tr>
+    <tr data-admin-order="${order.id}">
+      <td>${order.id}</td>
+      <td>${order.customer || 'Zavora customer'}<br><span>${order.email || 'orders@zavorafashion.com'}</span></td>
+      <td>${order.payment || order.method || 'Pending'}</td>
+      <td>
+        <select data-order-status>
+          ${['Order confirmed', 'Packing', 'Shipped', 'Delivered', 'Cancelled', 'Returned', 'Refunded'].map((status) => `<option ${String(order.status || '').includes(status) ? 'selected' : ''}>${status}</option>`).join('')}
+        </select>
+        <input data-order-tracking value="${order.tracking || ''}" placeholder="Tracking number">
+      </td>
+      <td><button data-save-order="${order.id}">Save Update</button></td>
+    </tr>
   `).join('');
 }
 
@@ -230,7 +243,7 @@ async function importPrintfulProducts() {
   }
 }
 
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   if (event.target.closest('.logout-btn')) {
     localStorage.removeItem(ADMIN_SESSION_KEY);
     localStorage.removeItem(ADMIN_EMAIL_KEY);
@@ -264,6 +277,31 @@ document.addEventListener('click', (event) => {
   const printfulImport = event.target.closest('[data-import-printful]');
   if (printfulImport) {
     importPrintfulProducts();
+    return;
+  }
+
+  const saveOrder = event.target.closest('[data-save-order]');
+  if (saveOrder) {
+    const row = saveOrder.closest('[data-admin-order]');
+    const id = saveOrder.dataset.saveOrder;
+    const email = row?.querySelector('td:nth-child(2) span')?.textContent.trim();
+    const status = row?.querySelector('[data-order-status]')?.value || 'Order confirmed';
+    const tracking = row?.querySelector('[data-order-tracking]')?.value.trim() || '';
+    saveOrder.textContent = 'Saving...';
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: id,
+        email,
+        status,
+        tracking,
+        payment: row?.children[2]?.textContent.trim() || 'Pending'
+      })
+    }).catch(() => null);
+    saveOrder.textContent = 'Save Update';
+    toast(response?.ok ? 'Order tracking updated' : 'Order update failed');
+    refreshLiveAdminDashboard();
     return;
   }
 

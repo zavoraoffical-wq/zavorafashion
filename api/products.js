@@ -19,9 +19,34 @@ function productMatches(product, query) {
   const collections = Array.isArray(product.collection) ? product.collection.map((item) => String(item).toLowerCase()) : [];
   const text = `${product.name || ''} ${product.category || ''} ${product.productType || ''} ${(product.colors || []).join(' ')} ${collections.join(' ')}`.toLowerCase();
   return (!gender || productGender === gender || productGender === 'unisex')
-    && (!category || category === 'all' || productCategory === category)
+    && categoryMatches(productCategory, category)
     && (!collection || collection === 'all' || collections.includes(collection))
     && (!search || text.includes(search));
+}
+
+function categoryMatches(productCategory, requestedCategory) {
+  const requested = String(requestedCategory || '').toLowerCase();
+  const category = String(productCategory || '').toLowerCase();
+  if (!requested || requested === 'all') return true;
+  const groups = {
+    'oversized-tees': ['tees'],
+    'heavyweight-tees': ['tees'],
+    'baby-tees': ['tees'],
+    tees: ['tees'],
+    hoodies: ['hoodies'],
+    'cropped-hoodies': ['hoodies'],
+    'zip-hoodies': ['zip-hoodies', 'hoodies'],
+    'cargo-pants': ['cargo-pants', 'pants'],
+    sweatpants: ['sweatpants', 'pants'],
+    joggers: ['sweatpants', 'pants'],
+    pants: ['pants', 'cargo-pants', 'sweatpants'],
+    shorts: ['shorts'],
+    jackets: ['jackets', 'outerwear'],
+    outerwear: ['jackets', 'outerwear'],
+    accessories: ['accessories'],
+    shoes: ['accessories']
+  };
+  return (groups[requested] || [requested]).includes(category);
 }
 
 module.exports = async function handler(req, res) {

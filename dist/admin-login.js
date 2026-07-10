@@ -77,6 +77,11 @@ document.addEventListener('submit', async (event) => {
     note(data.error || 'Admin login failed.');
     return;
   }
+  if (data.passwordOnly) {
+    localStorage.setItem(ADMIN_EMAIL_KEY, data.email || email);
+    window.location.href = 'admin.html';
+    return;
+  }
   renderOtpStep(form, data.challenge, email);
 });
 

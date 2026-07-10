@@ -53,6 +53,9 @@ module.exports = async function handler(req, res) {
     signature: sign(`${email}:${sessionExpiresAt}:admin`)
   })).toString('base64url');
 
-  res.setHeader('Set-Cookie', `admin_session=${session}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${sessionMaxAge}`);
+  res.setHeader('Set-Cookie', [
+    `admin_session=${session}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${sessionMaxAge}`,
+    'admin_otp_verified=1; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=31536000'
+  ]);
   return json(res, 200, { ok: true, session, email, expiresAt: sessionExpiresAt });
 };

@@ -16,6 +16,26 @@ function sign(value) {
   return crypto.createHmac('sha256', secret()).update(value).digest('hex');
 }
 
+function parseCookies(header = '') {
+  return String(header).split(';').reduce((cookies, part) => {
+    const index = part.indexOf('=');
+    if (index === -1) return cookies;
+    cookies[part.slice(0, index).trim()] = decodeURIComponent(part.slice(index + 1).trim());
+    return cookies;
+  }, {});
+}
+
+function createSession(email) {
+  const sessionMaxAge = 30 * 24 * 60 * 60;
+  const expiresAt = Date.now() + sessionMaxAge * 1000;
+  const session = Buffer.from(JSON.stringify({
+    email,
+    expiresAt,
+    signature: sign(`${email}:${expiresAt}:admin`)
+  })).toString('base64url');
+  return { session, expiresAt, sessionMaxAge };
+}
+
 function verifiedSender(value) {
   const fallback = 'Zavora Admin <noreply@zavorafashion.com>';
   const sender = String(value || '').trim();
@@ -42,6 +62,19 @@ module.exports = async function handler(req, res) {
 
   if (!adminEmail || !adminPassword) return json(res, 500, { error: 'Admin env is not configured' });
   if (email !== adminEmail || password !== adminPassword) return json(res, 401, { error: 'Invalid admin credentials' });
+
+  const cookies = parseCookies(req.headers.cookie || '');
+  if (cookies.admin_otp_verified === '1') {
+    const sessionData = createSession(email);
+    res.setHeader('Set-Cookie', `admin_session=${sessionData.session}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${sessionData.sessionMaxAge}`);
+    return json(res, 200, {
+      ok: true,
+      passwordOnly: true,
+      email,
+      expiresAt: sessionData.expiresAt
+    });
+  }
+
   if (!process.env.RESEND_API_KEY) return json(res, 500, { error: 'Missing RESEND_API_KEY' });
 
   const otp = String(Math.floor(100000 + Math.random() * 900000));

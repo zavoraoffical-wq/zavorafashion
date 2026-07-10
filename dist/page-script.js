@@ -211,6 +211,27 @@ async function requestOrderConfirmation(order) {
   }
 }
 
+async function persistOrder(order) {
+  try {
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: order.id,
+        email: order.email,
+        customer: localStorage.getItem('zavoraUserName') || 'Zavora customer',
+        payment: order.method,
+        method: order.method,
+        status: order.status,
+        tracking: order.tracking,
+        total: order.total,
+        items: order.items,
+        createdAt: order.createdAt
+      })
+    });
+  } catch (error) {}
+}
+
 function cartQuantity() {
   return getSavedCart().reduce((sum, item) => sum + Number(item.qty || 1), 0);
 }
@@ -632,6 +653,13 @@ function setDashboardView(view = 'dashboard') {
     const count = getWishlist().length;
     const copy = wishlistCard?.querySelector('p');
     if (copy) copy.textContent = count ? `${count} saved product${count === 1 ? '' : 's'} in your wishlist.` : 'No saved products yet.';
+    const latestOrder = getSavedOrders()[0];
+    const orderCard = [...grid.querySelectorAll('.dashboard-card')].find((card) => card.querySelector('h3')?.textContent.trim() === 'Recent Order');
+    if (orderCard) {
+      orderCard.querySelector('p').textContent = latestOrder ? `#${latestOrder.id.replace(/^#/, '')} is ${latestOrder.status || 'active'}.` : 'No orders yet. Your first checkout will appear here.';
+      const link = orderCard.querySelector('a');
+      if (link && latestOrder) link.href = `track-order.html?order=${encodeURIComponent(latestOrder.id)}&email=${encodeURIComponent(latestOrder.email)}`;
+    }
   }
   if (view === 'wishlist') {
     const wishlist = getWishlist();
@@ -647,7 +675,19 @@ function setDashboardView(view = 'dashboard') {
     `;
   }
   if (view === 'orders') {
+    const orders = getSavedOrders();
     const cards = getGiftCards();
+    grid.innerHTML = `
+      ${orders.length ? orders.map((order) => `
+        <article class="dashboard-card dashboard-wide">
+          <span>Order History</span>
+          <h3>#${order.id.replace(/^#/, '')}</h3>
+          <p>${order.items?.[0]?.name || 'Zavora order'} / ${order.method || 'PayPal'} / ${order.status || 'Active'} / Total ${money(order.total || 0)}</p>
+          <div class="mini-status"><i style="width:${order.status === 'Delivered' ? 100 : order.status === 'Shipped' ? 78 : 46}%"></i></div>
+          <a class="text-link" href="track-order.html?order=${encodeURIComponent(order.id)}&email=${encodeURIComponent(order.email)}">Track live order</a>
+        </article>
+      `).join('') : '<article class="dashboard-card dashboard-wide"><span>Orders</span><h3>No orders yet</h3><p>Your order history appears here after checkout.</p></article>'}
+    `;
     if (cards.length) {
       grid.insertAdjacentHTML('beforeend', cards.map((card) => `
         <article class="dashboard-card dashboard-wide gift-order-card">
@@ -956,10 +996,35 @@ function catalogCard(item) {
   `;
 }
 
+function categoryMatches(productCategory, requestedCategory) {
+  const requested = String(requestedCategory || '').toLowerCase();
+  const category = String(productCategory || '').toLowerCase();
+  if (!requested || requested === 'all') return true;
+  const groups = {
+    'oversized-tees': ['tees'],
+    'heavyweight-tees': ['tees'],
+    'baby-tees': ['tees'],
+    tees: ['tees'],
+    hoodies: ['hoodies'],
+    'cropped-hoodies': ['hoodies'],
+    'zip-hoodies': ['zip-hoodies', 'hoodies'],
+    'cargo-pants': ['cargo-pants', 'pants'],
+    sweatpants: ['sweatpants', 'pants'],
+    joggers: ['sweatpants', 'pants'],
+    pants: ['pants', 'cargo-pants', 'sweatpants'],
+    shorts: ['shorts'],
+    jackets: ['jackets', 'outerwear'],
+    outerwear: ['jackets', 'outerwear'],
+    accessories: ['accessories'],
+    shoes: ['accessories']
+  };
+  return (groups[requested] || [requested]).includes(category);
+}
+
 function productsForCatalogPage(products, pageName) {
   const urlCategory = new URLSearchParams(window.location.search).get('category');
   if (urlCategory) {
-    products = products.filter((product) => String(product.category || '').toLowerCase() === String(urlCategory).toLowerCase());
+    products = products.filter((product) => categoryMatches(product.category, urlCategory));
   }
   if (pageName === 'new-arrivals.html') {
     return products.filter((product, index) => product.collection?.includes('new') || index < 18);
@@ -1024,8 +1089,8 @@ function injectLargeCatalog() {
   if (!main || document.querySelector('.catalog-shop') || !catalogOnlyPages.includes(pageName)) return;
   const isWomenPage = pageName === 'women.html';
   const categoryOptions = isWomenPage
-    ? '<option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Baby Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Cropped Hoodies</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="accessories">Accessories</option>'
-    : '<option value="all">All</option><option value="tees">Oversized Tees</option><option value="tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="hoodies">Zip Hoodies</option><option value="pants">Cargo Pants</option><option value="pants">Sweatpants</option><option value="outerwear">Jackets</option><option value="pants">Shorts</option><option value="accessories">Shoes</option><option value="accessories">Accessories</option>';
+    ? '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="baby-tees">Baby Tees</option><option value="hoodies">Hoodies</option><option value="cropped-hoodies">Cropped Hoodies</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="accessories">Accessories</option>'
+    : '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="heavyweight-tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="zip-hoodies">Zip Hoodies</option><option value="cargo-pants">Cargo Pants</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="shorts">Shorts</option><option value="shoes">Shoes</option><option value="accessories">Accessories</option>';
   const collectionOptions = '<option value="all">All</option><option value="sportswear">Sportswear</option><option value="streetwear">Streetwear</option><option value="matching-sets">Matching Sets</option><option value="beachwear">Beachwear</option><option value="new">New</option><option value="best">Best Sellers</option><option value="limited">Limited</option>';
   const section = document.createElement('section');
   section.className = 'catalog-shop';
@@ -1071,6 +1136,7 @@ function filterLargeCatalog() {
   if (!filters.length) return;
   const values = Object.fromEntries([...filters].map((filter) => [filter.dataset.catalogFilter, filter.value]));
   const searchTerm = new URLSearchParams(window.location.search).get('search') || '';
+  const forcedCategory = new URLSearchParams(window.location.search).get('category') || values.category;
   const grid = document.querySelector('[data-catalog-grid]');
   if (grid) {
     const cards = [...grid.querySelectorAll('[data-catalog-card]')];
@@ -1083,7 +1149,7 @@ function filterLargeCatalog() {
   let visible = 0;
   document.querySelectorAll('[data-catalog-card]').forEach((card) => {
     const product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(card.dataset.productId));
-    const match = (values.category === 'all' || card.dataset.category === values.category)
+    const match = categoryMatches(card.dataset.category, forcedCategory)
       && (values.collection === 'all' || (card.dataset.collection || '').split(' ').includes(values.collection))
       && (values.color === 'all' || card.dataset.color.split(' ').includes(values.color))
       && (values.size === 'all' || card.dataset.size === values.size)
@@ -1510,6 +1576,7 @@ document.addEventListener('click', async (event) => {
       alert('Your bag is empty. Add a Printful product before checkout.');
       return;
     }
+    await persistOrder(order);
     requestOrderConfirmation(order);
     if (method === 'COD') {
       localStorage.removeItem(PAGE_CART_KEY);
@@ -1804,7 +1871,7 @@ function initTrackOrderLookup() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('order')) inputs[0].value = `#${params.get('order').replace(/^#/, '')}`;
   if (params.get('email')) inputs[1].value = params.get('email');
-  function lookupOrder() {
+  async function lookupOrder() {
     const orderId = inputs[0]?.value.trim().replace(/^#/, '').toUpperCase();
     const email = inputs[1]?.value.trim().toLowerCase();
     if (!orderId || !email) {
@@ -1812,16 +1879,14 @@ function initTrackOrderLookup() {
       card.hidden = true;
       return;
     }
-    const demoOrder = {
-      id: 'ZAV-2026-1048',
-      email,
-      method: 'PayPal',
-      total: 168,
-      tracking: 'ZV20261048',
-      createdAt: new Date().toISOString(),
-      items: [{ name: 'Studio Wide Trouser' }]
-    };
-    const orders = [demoOrder, ...getSavedOrders()];
+    note.textContent = 'Checking live order updates...';
+    let liveOrders = [];
+    try {
+      const response = await fetch(`/api/orders?orderId=${encodeURIComponent(orderId)}&email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+      if (response.ok && data.ok) liveOrders = data.orders || [];
+    } catch (error) {}
+    const orders = [...liveOrders, ...getSavedOrders()];
     const match = orders.find((order) => order.id.replace(/^#/, '').toUpperCase() === orderId && String(order.email || '').toLowerCase() === email);
     if (!match) {
       note.textContent = 'No matching order found. Check order ID and email address.';
