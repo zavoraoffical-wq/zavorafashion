@@ -7,15 +7,20 @@ const COMPARE_AT_MARKUP = 2.3;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_PRODUCTS_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || process.env.PRODUCTS_TABLE || 'products';
+const { db: mongoDb } = require('./auth-lib');
 
 const categoryRules = [
   { match: /women|women's|ladies|female/i, gender: 'Women' },
   { match: /men|men's|male/i, gender: 'Men' },
   { match: /unisex/i, gender: 'Unisex' },
   { match: /zip hoodie|zip-up|full zip|zip/i, category: 'zip-hoodies', categoryPath: 'Men > Zip Hoodies', collection: 'streetwear', label: 'Zip Hoodie' },
+  { match: /cropped hoodie|crop hoodie/i, category: 'cropped-hoodies', categoryPath: 'Women > Cropped Hoodies', collection: 'streetwear', label: 'Cropped Hoodie' },
   { match: /hoodie|pullover hoodie/i, category: 'hoodies', categoryPath: 'Men > Hoodies', collection: 'streetwear', label: 'Hoodie' },
-  { match: /sweatshirt|crew neck|crewneck|fleece/i, category: 'sweatshirts', categoryPath: 'Women > Sweatshirts', collection: 'streetwear', label: 'Sweatshirt' },
-  { match: /t-shirt|tee|heavyweight tee|oversized tee|shirt|polo/i, category: 'tees', categoryPath: 'Men > Oversized T-Shirts', collection: 'streetwear', label: 'Oversized T-Shirt' },
+  { match: /sweatshirt|crew neck|crewneck|fleece/i, category: 'sweatshirts', categoryPath: 'Men > Sweatshirts', collection: 'streetwear', label: 'Sweatshirt' },
+  { match: /baby tee/i, category: 'baby-tees', categoryPath: 'Women > Baby Tees', collection: 'streetwear', label: 'Baby Tee' },
+  { match: /heavyweight tee|heavyweight t-shirt|heavyweight shirt/i, category: 'heavyweight-tees', categoryPath: 'Men > Heavyweight T-Shirts', collection: 'streetwear', label: 'Heavyweight T-Shirt' },
+  { match: /oversized tee|oversized t-shirt|oversize tee|oversize t-shirt/i, category: 'oversized-tees', categoryPath: 'Men > Oversized T-Shirts', collection: 'streetwear', label: 'Oversized T-Shirt' },
+  { match: /t-shirt|tee|shirt|polo/i, category: 'oversized-tees', categoryPath: 'Men > Oversized T-Shirts', collection: 'streetwear', label: 'T-Shirt' },
   { match: /jacket|bomber|varsity|windbreaker|coat/i, category: 'jackets', categoryPath: 'Men > Jackets', collection: 'streetwear', label: 'Jacket' },
   { match: /cargo/i, category: 'cargo-pants', categoryPath: 'Men > Cargo Pants', collection: 'streetwear', label: 'Cargo Pant' },
   { match: /sweatpants|joggers|jogger/i, category: 'sweatpants', categoryPath: 'Men > Sweatpants', collection: 'streetwear', label: 'Sweatpant' },
@@ -26,6 +31,25 @@ const categoryRules = [
   { match: /shoe|sneaker/i, category: 'accessories', categoryPath: 'Men > Accessories', collection: 'streetwear', label: 'Footwear' },
   { match: /cap|hat|beanie/i, category: 'accessories', categoryPath: 'Men > Accessories', collection: 'streetwear', label: 'Accessory' }
 ];
+
+const allowedCatalogCategories = new Set([
+  'oversized-tees',
+  'heavyweight-tees',
+  'baby-tees',
+  'hoodies',
+  'cropped-hoodies',
+  'zip-hoodies',
+  'sweatshirts',
+  'jackets',
+  'cargo-pants',
+  'sweatpants',
+  'shorts',
+  'accessories',
+  'shoes',
+  'sportswear',
+  'matching-sets',
+  'beachwear'
+]);
 
 function response(res, status, body) {
   res.statusCode = status;
@@ -143,6 +167,80 @@ async function saveProductsToSupabase(products = []) {
   };
 }
 
+function mongoProductRow(product) {
+  const now = new Date();
+  return {
+    printfulId: String(product.printfulId || product.id || product.name),
+    storeProductId: product.id ? String(product.id) : null,
+    name: product.name,
+    gender: product.gender || 'Unisex',
+    category: product.category || 'uncategorized',
+    categoryPath: product.categoryPath || 'Uncategorized',
+    productType: product.productType || '',
+    collection: product.collection || [],
+    colors: product.colors || [],
+    sizes: product.sizes || [],
+    price: product.price || 0,
+    compareAt: product.compareAt || null,
+    image: product.img || product.image || null,
+    images: product.images || [],
+    variantGroups: product.variantGroups || {},
+    variants: product.variantOptions || [],
+    payload: product,
+    source: 'printful-catalog',
+    updatedAt: now,
+    createdAt: now
+  };
+}
+
+async function saveProductsToMongo(products = []) {
+  if (!products.length) return { saved: false, provider: 'mongodb', count: 0 };
+  const database = await mongoDb();
+  const collection = database.collection('products');
+  await collection.createIndex({ printfulId: 1 }, { unique: true });
+  await collection.createIndex({ gender: 1, category: 1, updatedAt: -1 });
+  await collection.createIndex({ collection: 1 });
+  const operations = products.map((product) => {
+    const row = mongoProductRow(product);
+    const { createdAt, ...set } = row;
+    return {
+      updateOne: {
+        filter: { printfulId: row.printfulId },
+        update: { $set: set, $setOnInsert: { createdAt } },
+        upsert: true
+      }
+    };
+  });
+  const result = await collection.bulkWrite(operations, { ordered: false });
+  return {
+    saved: true,
+    provider: 'mongodb',
+    count: products.length,
+    upserted: result.upsertedCount || 0,
+    modified: result.modifiedCount || 0
+  };
+}
+
+async function saveProducts(products = []) {
+  const stores = [];
+  try {
+    stores.push(await saveProductsToMongo(products));
+  } catch (error) {
+    stores.push({ saved: false, provider: 'mongodb', count: 0, error: error.message || 'MongoDB save failed' });
+  }
+  try {
+    stores.push(await saveProductsToSupabase(products));
+  } catch (error) {
+    stores.push({ saved: false, provider: 'supabase', count: 0, error: error.message || 'Supabase save failed' });
+  }
+  return {
+    saved: stores.some((store) => store.saved),
+    provider: stores.map((store) => store.provider).join('+'),
+    count: Math.max(...stores.map((store) => store.count || 0), 0),
+    stores
+  };
+}
+
 function isMenCatalogProduct(product) {
   const text = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
   const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|shorts|board short|sport|performance|athletic|training|gym|active|set|matching|tracksuit|shoe|sneaker|flip-flop|flip flop|slide|cap|hat|beanie)/i.test(text);
@@ -172,15 +270,18 @@ function detectGender(product, name) {
   return explicit?.gender || 'Unisex';
 }
 
-function categoryMapping(product, name) {
+function categoryMapping(product, name, requestedGender = '') {
   const metadata = `${product?.main_category || ''} ${product?.sub_category || ''} ${product?.type_name || ''} ${product?.category || ''}`;
   const rule = pickRule(`${metadata} ${name}`);
-  const gender = detectGender(product, name);
+  const requested = String(requestedGender || '').toLowerCase();
+  const gender = requested === 'women' ? 'Women' : requested === 'men' ? 'Men' : detectGender(product, name);
   let categoryPath = rule.categoryPath || 'Uncategorized';
   if (gender === 'Women') {
     categoryPath = categoryPath
       .replace(/^Men > Oversized T-Shirts$/, 'Women > Oversized T-Shirts')
+      .replace(/^Men > Heavyweight T-Shirts$/, 'Women > Oversized T-Shirts')
       .replace(/^Men > Hoodies$/, 'Women > Hoodies')
+      .replace(/^Men > Sweatshirts$/, 'Women > Sweatshirts')
       .replace(/^Men > Sweatpants$/, 'Women > Pants')
       .replace(/^Men > Cargo Pants$/, 'Women > Pants')
       .replace(/^Men > Shorts$/, 'Women > Pants')
@@ -197,7 +298,43 @@ function collectionTags(product, rule, index) {
   if (/street|hoodie|sweatshirt|tee|t-shirt|cargo|jogger|cap|hat|sneaker/.test(raw)) tags.add('streetwear');
   if (/set|matching|tracksuit/.test(raw)) tags.add('matching-sets');
   if (/beach|swim|board short|boardshort|flip-flop|flip flop|slide|short/.test(raw)) tags.add('beachwear');
+  if (index % 23 === 0) tags.add('limited');
   return [...tags].filter(Boolean);
+}
+
+function productCopy(rule, name) {
+  const label = String(rule.label || 'Streetwear Essential').toLowerCase();
+  const category = String(rule.category || '');
+  const materialMap = {
+    'hoodies': 'Soft cotton-blend fleece with a brushed interior and structured everyday drape.',
+    'cropped-hoodies': 'Premium cotton-blend fleece with a cropped streetwear proportion.',
+    'zip-hoodies': 'Midweight fleece with a smooth zip front, ribbed trims, and a soft hand feel.',
+    'sweatshirts': 'Cotton-rich fleece built for relaxed layering and clean daily wear.',
+    'oversized-tees': 'Breathable cotton jersey with a soft touch and relaxed premium silhouette.',
+    'heavyweight-tees': 'Heavyweight cotton jersey with a substantial hand feel and clean structure.',
+    'baby-tees': 'Soft stretch jersey designed for a close, modern fit.',
+    'jackets': 'Durable outerwear shell with clean finishing and street-ready layering.',
+    'cargo-pants': 'Structured woven fabric with utility storage and easy everyday movement.',
+    'sweatpants': 'Soft fleece knit with an adjustable waist and relaxed premium fit.',
+    'shorts': 'Lightweight warm-weather fabric designed for movement and clean proportions.',
+    'accessories': 'Premium accessory construction with a clean Zavora styling language.'
+  };
+  return {
+    description: `${name} is a premium ${label} designed for Zavora Fashion's minimal streetwear wardrobe. It balances clean proportions, everyday comfort, and USA-ready fulfillment.`,
+    material: materialMap[category] || 'Premium fabric selected for comfort, durability, and everyday luxury.',
+    features: [
+      'Premium streetwear fit',
+      'Clean minimal Zavora styling',
+      'Made on demand for lower waste',
+      'Curated for USA customers'
+    ],
+    careInstructions: 'Machine wash cold, inside out. Use mild detergent. Tumble dry low or hang dry. Do not bleach. Cool iron only when needed.',
+    sizeGuide: category === 'accessories' ? 'One-size accessory fit unless a size is shown.' : 'Choose your regular size for a relaxed fit. Size down for a cleaner fit or size up for oversized volume.',
+    shipping: 'Free shipping is available at checkout. Standard and Express delivery options are shown before payment.',
+    returnPolicy: 'Eligible unworn items may be returned according to the Zavora Fashion return policy.',
+    printArea: 'Print and decoration areas follow official Printful catalog specifications for this product.',
+    brandInfo: 'Zavora Fashion creates premium streetwear essentials for modern everyday luxury.'
+  };
 }
 
 function seoName(rawName, index) {
@@ -517,9 +654,9 @@ async function enrichWithCatalogProduct(product) {
   }
 }
 
-function normalizeProduct(product, index) {
+function normalizeProduct(product, index, requestedGender = '') {
   const name = seoName(product?.name || product?.external_name || product?.sync_product?.name || product?.title, index);
-  const rule = categoryMapping(product, name);
+  const rule = categoryMapping(product, name, requestedGender);
   const variants = variantPools(product);
   const rawName = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''}`;
   const forceColor = /all[- ]?over|aop/i.test(rawName) ? 'white' : '';
@@ -528,6 +665,7 @@ function normalizeProduct(product, index) {
   const images = imagesFromProduct(product);
   const variantGroups = variantGroupsFromVariants(variants, productImageUrls(product), forceColor);
   const sizes = rule.category === 'accessories' ? ['M'] : sizesFromVariants(variants);
+  const copy = productCopy(rule, name);
   return {
     id: Number(product?.id || product?.template_id || product?.sync_product?.id || Date.now() + index),
     printfulId: product?.id || product?.template_id || product?.sync_product?.id || null,
@@ -553,13 +691,21 @@ function normalizeProduct(product, index) {
     variantGroups,
     stock: 5,
     variantOptions: variantOptionsFromVariants(variants, image, forceColor),
-    description: `Premium ${rule.label.toLowerCase()} styled for modern Zavora Fashion streetwear. Clean proportions, everyday comfort, and USA-ready fulfillment.`,
+    description: copy.description,
+    material: copy.material,
+    features: copy.features,
+    careInstructions: copy.careInstructions,
+    sizeGuide: copy.sizeGuide,
+    shipping: copy.shipping,
+    returnPolicy: copy.returnPolicy,
+    printArea: copy.printArea,
+    brandInfo: copy.brandInfo,
     seoTitle: `${name} | Zavora Fashion Premium Streetwear`,
-    seoDescription: `Shop ${name} from Zavora Fashion. Premium men streetwear with clean fit, fast USA delivery, and luxury minimal styling.`
+    seoDescription: `Shop ${name} from Zavora Fashion. Premium ${rule.gender.toLowerCase()} streetwear with clean fit, fast USA delivery, and luxury minimal styling.`
   };
 }
 
-function normalizeCatalogProduct(product, index) {
+function normalizeCatalogProduct(product, index, requestedGender = '') {
   const detail = product?.printful_detail || {};
   const detailProduct = detail?.product || product?.product || product?.catalog_product || product;
   const variants = Array.isArray(detail?.variants)
@@ -578,7 +724,7 @@ function normalizeCatalogProduct(product, index) {
     catalog_variants: variants,
     variants,
     printful_detail: detail
-  }, index);
+  }, index, requestedGender);
 }
 
 async function fetchCatalogProducts({ gender, limit, offset, query }) {
@@ -596,22 +742,22 @@ async function fetchCatalogProducts({ gender, limit, offset, query }) {
   const detailed = await Promise.all(pageRows.map(async (product, index) => {
     try {
       const productId = product?.id || product?.product_id;
-      if (!productId) return normalizeCatalogProduct(product, index);
+      if (!productId) return normalizeCatalogProduct(product, index, gender);
       const detail = await printfulCatalogFetch(`/products/${productId}`);
       return normalizeCatalogProduct({
         ...product,
         printful_detail: detail.result || {},
         catalog_product: detail.result?.product || product,
         catalog_variants: detail.result?.variants || []
-      }, index);
+      }, index, gender);
     } catch (error) {
-      return normalizeCatalogProduct(product, index);
+      return normalizeCatalogProduct(product, index, gender);
     }
   }));
   return {
     source: `printful-catalog:${gender}`,
     total: filtered.length,
-    products: detailed
+    products: detailed.filter((product) => allowedCatalogCategories.has(product.category))
   };
 }
 
@@ -635,19 +781,19 @@ module.exports = async function handler(req, res) {
     const source = catalogImport.source;
     let db = {
       saved: false,
-      provider: 'supabase',
+      provider: 'mongodb+supabase',
       count: 0,
-      reason: SUPABASE_URL && SUPABASE_KEY ? 'not requested' : 'missing Supabase env'
+      reason: 'not requested'
     };
     if (String(req.query.save || 'true') !== 'false') {
       try {
-        db = await saveProductsToSupabase(products);
+        db = await saveProducts(products);
       } catch (error) {
         db = {
           saved: false,
-          provider: 'supabase',
+          provider: 'mongodb+supabase',
           count: 0,
-          error: error.message || 'Unable to save Printful products to Supabase.'
+          error: error.message || 'Unable to save Printful products.'
         };
       }
     }

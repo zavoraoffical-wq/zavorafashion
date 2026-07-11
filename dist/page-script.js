@@ -391,6 +391,9 @@ function normalizeHeaderSelectors() {
           <h2>Premium women streetwear, clean fits, everyday luxury.</h2>
           <div class="mega-grid"></div>
         </div>
+        <a class="mega-visual" href="women.html" aria-label="Shop women">
+          <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80" alt="Zavora women streetwear" loading="lazy">
+        </a>
       </div>
     `);
   }
@@ -401,13 +404,15 @@ const pageMegaMenuData = {
     label: 'Women edit',
     title: 'Oversized tees, hoodies, sweat sets, jackets, and accessories for premium everyday styling.',
     href: 'women.html',
-    items: [['Oversized Tees', 'tees'], ['Baby Tees', 'tees'], ['Hoodies', 'hoodies'], ['Cropped Hoodies', 'hoodies'], ['Sweatpants', 'pants'], ['Jackets', 'outerwear'], ['Accessories', 'accessories']]
+    image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80',
+    items: [['Oversized Tees', 'oversized-tees'], ['Baby Tees', 'baby-tees'], ['Hoodies', 'hoodies'], ['Cropped Hoodies', 'cropped-hoodies'], ['Sweatpants', 'sweatpants'], ['Jackets', 'jackets'], ['Accessories', 'accessories']]
   },
   men: {
     label: 'Men edit',
     title: 'Heavyweight layers, oversized fits, cargos, sweatpants, jackets, and accessories.',
     href: 'men.html',
-    items: [['Oversized Tees', 'tees'], ['Heavyweight Tees', 'tees'], ['Hoodies', 'hoodies'], ['Zip Hoodies', 'zip-hoodies'], ['Cargo Pants', 'pants'], ['Sweatpants', 'pants'], ['Jackets', 'outerwear'], ['Accessories', 'accessories']]
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80',
+    items: [['Oversized Tees', 'oversized-tees'], ['Heavyweight Tees', 'heavyweight-tees'], ['Hoodies', 'hoodies'], ['Zip Hoodies', 'zip-hoodies'], ['Cargo Pants', 'cargo-pants'], ['Sweatpants', 'sweatpants'], ['Jackets', 'jackets'], ['Shorts', 'shorts'], ['Accessories', 'accessories']]
   }
 };
 
@@ -419,6 +424,15 @@ function initPageMegaMenu() {
     const data = pageMegaMenuData[type] || pageMegaMenuData.women;
     menu.querySelector('.eyebrow').textContent = data.label;
     menu.querySelector('h2').textContent = data.title;
+    const visual = menu.querySelector('.mega-visual');
+    if (visual) {
+      visual.href = data.href;
+      const img = visual.querySelector('img');
+      if (img) {
+        img.src = data.image;
+        img.alt = `${data.label} Zavora Fashion`;
+      }
+    }
     menu.querySelector('.mega-grid').innerHTML = data.items.map((item) => {
       const label = Array.isArray(item) ? item[0] : item;
       const category = Array.isArray(item) ? item[1] : String(item).toLowerCase().replace(/\s+/g, '-');
@@ -1120,15 +1134,18 @@ function swatch(color) {
 
 function catalogCard(item) {
   const image = item.images?.[0] || item.image || item.img || 'assets/studio-wide-trouser.png';
+  const hoverImage = item.images?.[1] || item.alt || item.hoverImage || image;
   const size = item.size || item.sizes?.[0] || 'M';
   const colors = Array.isArray(item.colors) && item.colors.length ? item.colors : [item.color || 'default'];
   const collections = Array.isArray(item.collection) ? item.collection.join(' ') : String(item.collection || '');
   const stock = getProductStock(item);
   const isLimited = String(item.badge || '').toLowerCase().includes('limited') || (item.collection || []).includes('limited');
+  const rating = Number(item.rating || (4.6 + ((Number(item.id) || 1) % 4) / 10)).toFixed(1);
   return `
-    <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-category="${item.category}" data-collection="${collections}" data-color="${colors.join(' ')}" data-size="${size}" data-price="${item.price}">
+    <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-gender="${String(item.gender || '').toLowerCase()}" data-category="${item.category}" data-collection="${collections}" data-color="${colors.join(' ')}" data-size="${(item.sizes || [size]).join(' ')}" data-price="${item.price}">
       <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" aria-label="Open ${item.name} detail page">
-        <img src="${image}" alt="${item.name}" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'">
+        <img class="card-img-primary" src="${image}" alt="${item.name}" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'">
+        <img class="card-img-hover" src="${hoverImage}" alt="${item.name} hover view" loading="lazy" onerror="this.style.display='none'">
         <span class="badge">${item.badge}</span>
         <button class="wish" type="button" data-wishlist-product="${item.id}" aria-label="Add ${item.name} to wishlist">♡</button>
       </a>
@@ -1137,6 +1154,11 @@ function catalogCard(item) {
         <p>${item.category} / ${colors.map((color) => color === 'default' ? 'original' : color).join(', ')}${item.category === 'accessories' ? '' : ` / ${size}`}</p>
         <div class="swatches" aria-label="Color variants">${colors.map((color) => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}</div>
         <strong class="sale-price">${item.compareAt ? `<s>${money(item.compareAt)}</s> ` : ''}${money(item.price)}</strong>
+        <span class="catalog-rating">★ ${rating}</span>
+        <div class="catalog-card-actions">
+          <button type="button" data-card-add="${item.id}">Add to Cart</button>
+          <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}">Quick View</a>
+        </div>
         ${isLimited ? `<span class="catalog-stock">${stock > 0 ? `${stock} available` : 'Out of stock'}</span>` : ''}
       </div>
     </article>
@@ -1148,20 +1170,20 @@ function categoryMatches(productCategory, requestedCategory) {
   const category = String(productCategory || '').toLowerCase();
   if (!requested || requested === 'all') return true;
   const groups = {
-    'oversized-tees': ['tees'],
-    'heavyweight-tees': ['tees'],
-    'baby-tees': ['tees'],
-    tees: ['tees'],
+    'oversized-tees': ['oversized-tees'],
+    'heavyweight-tees': ['heavyweight-tees'],
+    'baby-tees': ['baby-tees'],
+    tees: ['oversized-tees', 'heavyweight-tees', 'baby-tees'],
     hoodies: ['hoodies'],
-    'cropped-hoodies': ['hoodies'],
-    'zip-hoodies': ['zip-hoodies', 'hoodies'],
-    'cargo-pants': ['cargo-pants', 'pants'],
-    sweatpants: ['sweatpants', 'pants'],
-    joggers: ['sweatpants', 'pants'],
+    'cropped-hoodies': ['cropped-hoodies'],
+    'zip-hoodies': ['zip-hoodies'],
+    'cargo-pants': ['cargo-pants'],
+    sweatpants: ['sweatpants'],
+    joggers: ['sweatpants'],
     pants: ['pants', 'cargo-pants', 'sweatpants'],
     shorts: ['shorts'],
-    jackets: ['jackets', 'outerwear'],
-    outerwear: ['jackets', 'outerwear'],
+    jackets: ['jackets'],
+    outerwear: ['jackets'],
     accessories: ['accessories'],
     shoes: ['accessories']
   };
@@ -1174,15 +1196,15 @@ function productsForCatalogPage(products, pageName) {
     products = products.filter((product) => categoryMatches(product.category, urlCategory));
   }
   if (pageName === 'new-arrivals.html') {
-    return products.filter((product, index) => product.collection?.includes('new') || index < 18);
+    return products.filter((product) => product.collection?.includes('new'));
   }
   if (pageName === 'limited.html') {
     return products
-      .filter((product, index) => product.collection?.includes('limited') || index % 9 === 0)
+      .filter((product) => product.collection?.includes('limited'))
       .map((product, index) => ({ ...product, stock: Math.min(getProductStock(product), 1 + (index % 10)), badge: 'Limited' }));
   }
   if (pageName === 'best-sellers.html') {
-    return products.filter((product, index) => product.collection?.includes('best') || product.popularity >= 84 || index < 24);
+    return products.filter((product) => product.collection?.includes('best') || product.popularity >= 84);
   }
   return products;
 }
@@ -1217,8 +1239,9 @@ async function loadPrintfulCatalog() {
   grid.dataset.printfulLoaded = 'true';
   try {
     const pageName = window.location.pathname.split('/').pop();
-    const gender = pageName === 'women.html' ? 'women' : 'men';
-    const dataProducts = await fetchCatalogProducts(gender, 1000);
+    const dataProducts = pageName === 'shop.html' || pageName === 'collections.html'
+      ? (await Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))).flat()
+      : await fetchCatalogProducts(pageName === 'women.html' ? 'women' : 'men', 1000);
     if (!dataProducts.length) return;
     const products = productsForCatalogPage(dataProducts, pageName);
     window.__zavoraCatalogProducts = products;
@@ -1235,6 +1258,7 @@ function injectLargeCatalog() {
   const pageName = window.location.pathname.split('/').pop();
   if (!main || document.querySelector('.catalog-shop') || !catalogOnlyPages.includes(pageName)) return;
   const isWomenPage = pageName === 'women.html';
+  const genderOptions = '<option value="all">All</option><option value="men">Men</option><option value="women">Women</option>';
   const categoryOptions = isWomenPage
     ? '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="baby-tees">Baby Tees</option><option value="hoodies">Hoodies</option><option value="cropped-hoodies">Cropped Hoodies</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="accessories">Accessories</option>'
     : '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="heavyweight-tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="zip-hoodies">Zip Hoodies</option><option value="cargo-pants">Cargo Pants</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="shorts">Shorts</option><option value="shoes">Shoes</option><option value="accessories">Accessories</option>';
@@ -1247,6 +1271,7 @@ function injectLargeCatalog() {
         <h2>Shop Zavora</h2>
         <p><span data-catalog-count>${catalogData.length}</span> products available</p>
       </div>
+      ${pageName === 'shop.html' || pageName === 'collections.html' ? `<label>Gender<select data-catalog-filter="gender">${genderOptions}</select></label>` : ''}
       <label>Category<select data-catalog-filter="category">${categoryOptions}</select></label>
       <label>Collection<select data-catalog-filter="collection">${collectionOptions}</select></label>
       <label>Color<select data-catalog-filter="color"><option value="all">All</option><option>black</option><option>white</option><option>gray</option><option>blue</option><option>green</option><option>red</option><option>gold</option></select></label>
@@ -1297,9 +1322,10 @@ function filterLargeCatalog() {
   document.querySelectorAll('[data-catalog-card]').forEach((card) => {
     const product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(card.dataset.productId));
     const match = categoryMatches(card.dataset.category, forcedCategory)
+      && (!values.gender || values.gender === 'all' || card.dataset.gender === values.gender)
       && (values.collection === 'all' || (card.dataset.collection || '').split(' ').includes(values.collection))
       && (values.color === 'all' || card.dataset.color.split(' ').includes(values.color))
-      && (values.size === 'all' || card.dataset.size === values.size)
+      && (values.size === 'all' || card.dataset.size.split(' ').includes(values.size))
       && Number(card.dataset.price) <= Number(values.price || 999)
       && (!searchTerm || productMatchesSearch(product || { name: card.textContent, category: card.dataset.category, colors: card.dataset.color.split(' ') }, searchTerm));
     card.hidden = !match;
@@ -1483,6 +1509,32 @@ document.addEventListener('click', async (event) => {
     } else {
       addWishlistProduct(targetProduct);
     }
+    return;
+  }
+
+  const cardAdd = event.target.closest('[data-card-add]');
+  if (cardAdd) {
+    event.preventDefault();
+    const product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(cardAdd.dataset.cardAdd));
+    if (!product) return;
+    const cart = getSavedCart();
+    const id = String(product.id);
+    const found = cart.find((item) => String(item.id) === id);
+    if (found) found.qty = Number(found.qty || 1) + 1;
+    else cart.push({
+      id: product.id,
+      printfulId: product.printfulId || product.id,
+      name: product.name,
+      price: Number(product.price || 0),
+      color: product.colors?.[0] || product.color || 'Original',
+      sizes: [product.sizes?.[0] || 'M'],
+      qty: 1,
+      img: product.images?.[0] || product.img || product.image
+    });
+    saveSavedCart(cart);
+    renderSavedCart(document);
+    renderSavedCart(document.querySelector('#pageCartDrawer') || document);
+    syncHeaderCounts();
     return;
   }
 
@@ -2297,11 +2349,23 @@ function renderProductGallery(product, images = []) {
   const gallery = document.querySelector('.product-gallery');
   if (!gallery) return;
   const cleanImages = Array.from(new Set(images.filter(Boolean)));
-  const galleryImages = cleanImages.length ? cleanImages : [product?.img || product?.image || 'assets/studio-wide-trouser.png'];
+  const galleryImages = (cleanImages.length ? cleanImages : [product?.img || product?.image || 'assets/studio-wide-trouser.png']).slice(0, 4);
   gallery.classList.toggle('single-gallery', galleryImages.length === 1);
-  gallery.innerHTML = galleryImages.map((src, index) => `
-    <div class="zoom-frame"><img src="${src}" alt="${product?.name || 'Zavora product'} ${index + 1}" loading="${index ? 'lazy' : 'eager'}" onerror="this.src='assets/studio-wide-trouser.png'"></div>
-  `).join('');
+  gallery.innerHTML = `
+    <div class="product-gallery-main zoom-frame">
+      <img data-gallery-main src="${galleryImages[0]}" alt="${product?.name || 'Zavora product'} main view" loading="eager" onerror="this.src='assets/studio-wide-trouser.png'">
+    </div>
+    ${galleryImages.length > 1 ? `<div class="product-thumbs" aria-label="Product gallery thumbnails">
+      ${galleryImages.map((src, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-gallery-thumb="${src}" aria-label="View product image ${index + 1}"><img src="${src}" alt="" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'"></button>`).join('')}
+    </div>` : ''}
+  `;
+  gallery.querySelectorAll('[data-gallery-thumb]').forEach((thumb) => {
+    thumb.addEventListener('click', () => {
+      const main = gallery.querySelector('[data-gallery-main]');
+      if (main) main.src = thumb.dataset.galleryThumb;
+      gallery.querySelectorAll('[data-gallery-thumb]').forEach((button) => button.classList.toggle('active', button === thumb));
+    });
+  });
 }
 
 function updateDynamicProductMedia() {
@@ -2345,6 +2409,14 @@ function productGalleryImages(product) {
     product?.img,
     product?.image
   ].filter(Boolean)));
+}
+
+function getRecentlyViewed() {
+  try {
+    return JSON.parse(localStorage.getItem('zavora_recently_viewed') || localStorage.getItem('zavora_recent') || '[]');
+  } catch (error) {
+    return [];
+  }
 }
 
 function updateProductStockNote(product) {
@@ -2427,22 +2499,72 @@ function initDynamicProductPage() {
 
 async function initDynamicRelatedProducts() {
   if (!window.location.pathname.endsWith('product.html')) return;
-  const heading = [...document.querySelectorAll('.section-title')].find((section) => section.textContent.includes('Related Products'));
-  const grid = heading?.parentElement?.querySelector('.page-grid');
-  if (!grid || grid.dataset.realRelatedLoaded) return;
-  grid.dataset.realRelatedLoaded = 'true';
-  grid.innerHTML = '<p class="catalog-loading">Loading recommended Printful products...</p>';
+  if (document.querySelector('[data-smart-product-rails]')) return;
+  const anchor = [...document.querySelectorAll('.section-title')].find((section) => section.textContent.includes('Related Products'))?.parentElement
+    || document.querySelector('.product-detail')?.parentElement;
+  if (!anchor) return;
   try {
-    const allProducts = await fetchCatalogProducts('men', 1000);
-    if (!Array.isArray(allProducts) || !allProducts.length) return;
     const current = getSelectedProduct();
-    const products = allProducts.filter((item) => String(item.id) !== String(current?.id)).slice(0, 3);
-    window.__zavoraCatalogProducts = [...(window.__zavoraCatalogProducts || []), ...products];
-    grid.classList.add('related-real-grid');
-    grid.innerHTML = products.map(catalogCard).join('');
+    const gender = String(current?.gender || 'men').toLowerCase() === 'women' ? 'women' : 'men';
+    const allProducts = await fetchCatalogProducts(gender, 1000);
+    if (!Array.isArray(allProducts) || !allProducts.length) return;
+    const base = allProducts.filter((item) => String(item.id) !== String(current?.id));
+    const categoryFamily = similarCategoryList(current?.category);
+    const rails = [
+      ['Recommended For You', base.filter((item) => categoryFamily.includes(item.category))],
+      ['You May Also Like', base.filter((item) => item.category !== current?.category && adjacentCategoryList(current?.category).includes(item.category))],
+      ['Recently Viewed', getRecentlyViewed().filter((item) => String(item.id) !== String(current?.id) && String(item.gender || '').toLowerCase() === gender)],
+      ['New Arrivals', base.filter((item) => item.collection?.includes('new'))],
+      ['Best Sellers', base.filter((item) => item.collection?.includes('best') || item.popularity >= 84)],
+      ['Similar Products', base.filter((item) => item.category === current?.category)]
+    ].map(([title, products]) => [title, uniqueProducts(products).slice(0, 10)]);
+    const section = document.createElement('section');
+    section.className = 'section product-smart-rails';
+    section.dataset.smartProductRails = 'true';
+    section.innerHTML = rails.map(([title, products]) => `
+      <div class="product-rail">
+        <div class="global-rail-head"><div><p class="eyebrow">${title}</p><h2>${title}</h2></div></div>
+        <div class="product-rail-track">${products.length ? products.map(catalogCard).join('') : '<p class="catalog-loading">More products coming soon.</p>'}</div>
+      </div>
+    `).join('');
+    anchor.replaceWith(section);
+    window.__zavoraCatalogProducts = uniqueProducts([...(window.__zavoraCatalogProducts || []), ...base]);
+    refreshWishlistButtons();
   } catch (error) {
-    grid.dataset.realRelatedLoaded = 'failed';
+    anchor.dataset.realRelatedLoaded = 'failed';
   }
+}
+
+function uniqueProducts(products = []) {
+  const seen = new Set();
+  return products.filter((product) => {
+    const key = String(product?.id || product?.printfulId || product?.name || '');
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function similarCategoryList(category = '') {
+  const map = {
+    hoodies: ['hoodies', 'zip-hoodies', 'cropped-hoodies', 'sweatshirts', 'jackets'],
+    'zip-hoodies': ['zip-hoodies', 'hoodies', 'sweatshirts', 'jackets'],
+    'cropped-hoodies': ['cropped-hoodies', 'hoodies', 'sweatshirts', 'jackets'],
+    sweatshirts: ['sweatshirts', 'hoodies', 'zip-hoodies', 'jackets'],
+    'oversized-tees': ['oversized-tees', 'heavyweight-tees', 'baby-tees'],
+    'heavyweight-tees': ['heavyweight-tees', 'oversized-tees'],
+    'baby-tees': ['baby-tees', 'oversized-tees'],
+    jackets: ['jackets', 'hoodies', 'sweatshirts'],
+    'cargo-pants': ['cargo-pants', 'sweatpants', 'shorts'],
+    sweatpants: ['sweatpants', 'cargo-pants', 'shorts'],
+    shorts: ['shorts', 'sweatpants', 'cargo-pants'],
+    accessories: ['accessories']
+  };
+  return map[category] || [category];
+}
+
+function adjacentCategoryList(category = '') {
+  return similarCategoryList(category).filter((item) => item !== category);
 }
 
 function initProductOptions() {

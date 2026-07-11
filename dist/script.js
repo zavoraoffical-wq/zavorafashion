@@ -395,24 +395,30 @@ function normalizeAdminProduct(product, index) {
 }
 
 function getHomeProducts() {
-  return [...getAdminProducts().map(normalizeAdminProduct), ...state.printfulProducts];
+  return [...getAdminProducts().map(normalizeAdminProduct), ...state.printfulProducts].map((product) => ({
+    ...product,
+    img: product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png',
+    alt: product.alt || product.images?.[1] || product.image || product.img || product.images?.[0] || 'assets/studio-wide-trouser.png',
+    collection: Array.isArray(product.collection) ? product.collection : [product.collection || 'new'],
+    colors: Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'default'],
+    sizes: Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL']
+  }));
 }
 
 async function loadPrintfulProducts() {
   try {
     let products = [];
     try {
-      const response = await fetch('/api/products?gender=men&limit=1000');
-      const data = await response.json();
-      if (response.ok && data.ok && Array.isArray(data.products)) products = data.products;
+      const responses = await Promise.all(['men', 'women'].map((gender) => fetch(`/api/products?gender=${gender}&limit=1000`).then((response) => response.json()).catch(() => ({ products: [] }))));
+      products = responses.flatMap((data) => Array.isArray(data.products) ? data.products : []);
     } catch (error) {}
     if (!products.length) {
-      const pages = await Promise.all([1, 2, 3, 4, 5, 6].map((page) => (
-        fetch(`/api/printful-products?gender=men&limit=60&page=${page}`)
+      const pages = await Promise.all(['men', 'women'].flatMap((gender) => [1, 2, 3, 4, 5, 6].map((page) => (
+        fetch(`/api/printful-products?gender=${gender}&limit=60&page=${page}`)
           .then((response) => response.json())
           .then((data) => Array.isArray(data.products) ? data.products : [])
           .catch(() => [])
-      )));
+      ))));
       products = pages.flat();
     }
     state.printfulProducts = products;
@@ -723,13 +729,14 @@ const megaMenuData = {
     label: 'Women edit',
     title: 'Premium women streetwear, clean fits, everyday luxury.',
     href: 'women.html',
+    image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80',
     items: [
-      ['Oversized Tees', 'tees'],
-      ['Baby Tees', 'tees'],
+      ['Oversized Tees', 'oversized-tees'],
+      ['Baby Tees', 'baby-tees'],
       ['Hoodies', 'hoodies'],
-      ['Cropped Hoodies', 'hoodies'],
-      ['Sweatpants', 'pants'],
-      ['Jackets', 'outerwear'],
+      ['Cropped Hoodies', 'cropped-hoodies'],
+      ['Sweatpants', 'sweatpants'],
+      ['Jackets', 'jackets'],
       ['Accessories', 'accessories']
     ]
   },
@@ -737,14 +744,16 @@ const megaMenuData = {
     label: 'Men edit',
     title: 'Structured essentials, heavyweight layers, and relaxed streetwear.',
     href: 'men.html',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80',
     items: [
-      ['Oversized Tees', 'tees'],
-      ['Heavyweight Tees', 'tees'],
+      ['Oversized Tees', 'oversized-tees'],
+      ['Heavyweight Tees', 'heavyweight-tees'],
       ['Hoodies', 'hoodies'],
       ['Zip Hoodies', 'zip-hoodies'],
-      ['Cargo Pants', 'pants'],
-      ['Sweatpants', 'pants'],
-      ['Jackets', 'outerwear'],
+      ['Cargo Pants', 'cargo-pants'],
+      ['Sweatpants', 'sweatpants'],
+      ['Jackets', 'jackets'],
+      ['Shorts', 'shorts'],
       ['Accessories', 'accessories']
     ]
   }
@@ -756,8 +765,24 @@ function updateMegaMenu(type) {
   const eyebrow = menu.querySelector('.eyebrow');
   const title = menu.querySelector('h2');
   const grid = menu.querySelector('.mega-grid');
+  let visual = menu.querySelector('.mega-visual');
+  if (!visual) {
+    visual = document.createElement('a');
+    visual.className = 'mega-visual';
+    visual.setAttribute('aria-label', 'Shop Zavora edit');
+    visual.innerHTML = '<img src="" alt="" loading="lazy">';
+    menu.appendChild(visual);
+  }
   if (eyebrow) eyebrow.textContent = data.label;
   if (title) title.textContent = data.title;
+  if (visual) {
+    visual.href = data.href;
+    const img = visual.querySelector('img');
+    if (img) {
+      img.src = data.image;
+      img.alt = `${data.label} Zavora Fashion`;
+    }
+  }
   if (grid) {
     grid.innerHTML = data.items.map((item) => {
       const label = Array.isArray(item) ? item[0] : item;

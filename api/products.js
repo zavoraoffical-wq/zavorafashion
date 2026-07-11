@@ -8,6 +8,33 @@ function json(res, status, body) {
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_PRODUCTS_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || process.env.PRODUCTS_TABLE || 'products';
+const { db: mongoDb } = require('./auth-lib');
+
+const allowedCategories = new Set([
+  'oversized-tees',
+  'heavyweight-tees',
+  'baby-tees',
+  'tees',
+  'hoodies',
+  'cropped-hoodies',
+  'zip-hoodies',
+  'sweatshirts',
+  'jackets',
+  'cargo-pants',
+  'sweatpants',
+  'shorts',
+  'accessories',
+  'shoes',
+  'sportswear',
+  'matching-sets',
+  'beachwear'
+]);
+
+function isAllowedProduct(product = {}) {
+  const text = `${product.name || ''} ${product.productType || ''} ${product.category || ''}`.toLowerCase();
+  const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|bikini|sock|backpack|bag|tote|duffle|luggage|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|drinkware|water bottle|card|postcard)/i;
+  return allowedCategories.has(String(product.category || '').toLowerCase()) && !blocked.test(text);
+}
 
 function productMatches(product, query) {
   const gender = String(query.gender || '').toLowerCase();
@@ -18,7 +45,8 @@ function productMatches(product, query) {
   const productCategory = String(product.category || '').toLowerCase();
   const collections = Array.isArray(product.collection) ? product.collection.map((item) => String(item).toLowerCase()) : [];
   const text = `${product.name || ''} ${product.category || ''} ${product.productType || ''} ${(product.colors || []).join(' ')} ${collections.join(' ')}`.toLowerCase();
-  return (!gender || productGender === gender || productGender === 'unisex')
+  return isAllowedProduct(product)
+    && (!gender || gender === 'all' || productGender === gender)
     && categoryMatches(productCategory, category)
     && (!collection || collection === 'all' || collections.includes(collection))
     && (!search || text.includes(search));
@@ -29,20 +57,21 @@ function categoryMatches(productCategory, requestedCategory) {
   const category = String(productCategory || '').toLowerCase();
   if (!requested || requested === 'all') return true;
   const groups = {
-    'oversized-tees': ['tees'],
-    'heavyweight-tees': ['tees'],
-    'baby-tees': ['tees'],
-    tees: ['tees'],
+    'oversized-tees': ['oversized-tees'],
+    'heavyweight-tees': ['heavyweight-tees'],
+    'baby-tees': ['baby-tees'],
+    tees: ['tees', 'oversized-tees', 'heavyweight-tees', 'baby-tees'],
     hoodies: ['hoodies'],
-    'cropped-hoodies': ['hoodies'],
-    'zip-hoodies': ['zip-hoodies', 'hoodies'],
-    'cargo-pants': ['cargo-pants', 'pants'],
-    sweatpants: ['sweatpants', 'pants'],
-    joggers: ['sweatpants', 'pants'],
-    pants: ['pants', 'cargo-pants', 'sweatpants'],
+    'cropped-hoodies': ['cropped-hoodies'],
+    'zip-hoodies': ['zip-hoodies'],
+    sweatshirts: ['sweatshirts'],
+    'cargo-pants': ['cargo-pants'],
+    sweatpants: ['sweatpants'],
+    joggers: ['sweatpants'],
+    pants: ['cargo-pants', 'sweatpants'],
     shorts: ['shorts'],
-    jackets: ['jackets', 'outerwear'],
-    outerwear: ['jackets', 'outerwear'],
+    jackets: ['jackets'],
+    outerwear: ['jackets'],
     accessories: ['accessories'],
     shoes: ['accessories']
   };
@@ -50,12 +79,37 @@ function categoryMatches(productCategory, requestedCategory) {
 }
 
 module.exports = async function handler(req, res) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return json(res, 500, { ok: false, error: 'Supabase env is missing' });
-  }
-
   try {
     const limit = Math.min(Number(req.query.limit || 1000), 1000);
+    try {
+      const database = await mongoDb();
+      const products = await database.collection('products')
+        .find({})
+        .sort({ updatedAt: -1 })
+        .limit(limit)
+        .toArray();
+      const filtered = products
+        .map((product) => product.payload || product)
+        .filter(Boolean)
+        .filter((product) => productMatches(product, req.query));
+      if (filtered.length || !SUPABASE_URL || !SUPABASE_KEY) {
+        return json(res, 200, {
+          ok: true,
+          provider: 'mongodb',
+          count: filtered.length,
+          products: filtered
+        });
+      }
+    } catch (error) {
+      if (!SUPABASE_URL || !SUPABASE_KEY) {
+        return json(res, 500, { ok: false, error: error.message || 'MongoDB env is missing' });
+      }
+    }
+
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      return json(res, 500, { ok: false, error: 'Product database env is missing' });
+    }
+
     const base = SUPABASE_URL.replace(/\/$/, '');
     const table = SUPABASE_PRODUCTS_TABLE.replace(/^\/+|\/+$/g, '');
     const url = `${base}/rest/v1/${table}?select=payload,updated_at&order=updated_at.desc&limit=${limit}`;
