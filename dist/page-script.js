@@ -22,11 +22,10 @@ const icons = {
 const plainCommercePages = ['login.html', 'dashboard.html', 'sign-up.html', 'forgot-password.html', 'checkout.html', 'order-success.html', 'track-order.html', 'contact.html', 'about.html', 'journal.html', 'return-refund-policy.html', 'returns.html', 'privacy-policy.html', 'terms-conditions.html', 'faq.html'];
 const catalogOnlyPages = ['women.html', 'men.html', 'new-arrivals.html', 'collections.html', 'best-sellers.html', 'limited.html', 'shop.html', 'product-filters.html', 'recommended-products.html', 'recently-viewed.html', 'trending.html', 'oversized.html'];
 const PAGE_CART_KEY = 'zavoraCart';
-const AUTH_KEY = 'zavoraLoggedIn';
 const GIFT_CARD_KEY = 'zavoraGiftCards';
 const WISHLIST_KEY = 'zavoraWishlist';
 const APPLIED_GIFT_KEY = 'zavoraAppliedGiftCard';
-const SIGNUP_OTP_KEY = 'zavoraSignupOtp';
+const AUTH_OTP_PENDING_KEY = 'zavoraAuthOtpPending';
 const ORDER_HISTORY_KEY = 'zavoraOrders';
 const SUPPORT_EMAIL = 'support@zavorafashion.com';
 const NOREPLY_EMAIL = 'noreply@zavorafashion.com';
@@ -37,7 +36,6 @@ const LAUNCH_PREVIEW_CODE = 'zavora-live';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const SELECTED_PRODUCT_KEY = 'zavoraSelectedProduct';
 const PRODUCT_STOCK_KEY = 'zavoraProductStock';
-const USER_ACCOUNT_KEY = 'zavoraUserAccount';
 const accountRedirects = {
   'my-account.html': 'dashboard',
   'wishlist.html': 'wishlist',
@@ -78,33 +76,56 @@ function saveWishlist(items) {
   localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
 }
 
-function getUserAccount() {
+let authUser = null;
+let authSessionLoaded = false;
+let authDashboardData = null;
+
+async function fetchAuthSession(force = false) {
+  if (authSessionLoaded && !force) return authUser;
   try {
-    return JSON.parse(localStorage.getItem(USER_ACCOUNT_KEY)) || null;
+    const response = await fetch('/api/auth-session', { credentials: 'include' });
+    if (!response.ok) {
+      authUser = null;
+    } else {
+      const data = await response.json();
+      authUser = data.user || null;
+    }
   } catch (error) {
-    return null;
+    authUser = null;
   }
+  authSessionLoaded = true;
+  updateAccountLinks();
+  return authUser;
+}
+
+function getUserAccount() {
+  return authUser;
 }
 
 function saveUserAccount(account) {
-  localStorage.setItem(USER_ACCOUNT_KEY, JSON.stringify(account));
+  authUser = account || authUser;
+  authSessionLoaded = true;
+  updateAccountLinks();
 }
 
 function isUserLoggedIn() {
-  return localStorage.getItem(AUTH_KEY) === 'true' && !!(getUserAccount() || localStorage.getItem('zavoraUserEmail'));
+  return !!authUser;
 }
 
 function loginUser(account) {
   if (!account) return;
-  localStorage.setItem(AUTH_KEY, 'true');
-  localStorage.setItem('zavoraUserEmail', account.email);
-  localStorage.setItem('zavoraUserName', account.name || 'Zavora Customer');
+  saveUserAccount(account);
 }
 
-function logoutUser() {
-  localStorage.removeItem(AUTH_KEY);
-  localStorage.removeItem('zavoraUserEmail');
-  localStorage.removeItem('zavoraUserName');
+async function logoutUser() {
+  try {
+    await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' });
+  } catch (error) {
+    // Session cookie will still be cleared on the next server-side logout attempt.
+  }
+  authUser = null;
+  authSessionLoaded = true;
+  updateAccountLinks();
 }
 
 function accountHref(view = 'dashboard') {
@@ -112,6 +133,32 @@ function accountHref(view = 'dashboard') {
   return isUserLoggedIn()
     ? target
     : `login.html?next=${encodeURIComponent(target)}`;
+}
+
+function updateAccountLinks() {
+  const loggedIn = isUserLoggedIn();
+  document.querySelectorAll('[data-profile]').forEach((profile) => {
+    profile.href = loggedIn ? 'dashboard.html' : `login.html?next=${encodeURIComponent('dashboard.html')}`;
+  });
+  document.querySelectorAll('a[data-account-route]').forEach((link) => {
+    const view = link.dataset.accountRoute || 'dashboard';
+    const target = `dashboard.html#${view}`;
+    link.href = loggedIn ? target : `login.html?next=${encodeURIComponent(target)}`;
+  });
+}
+
+async function loadDashboardData() {
+  if (!window.location.pathname.endsWith('dashboard.html')) return null;
+  try {
+    const response = await fetch('/api/auth-dashboard', { credentials: 'include' });
+    if (!response.ok) return null;
+    const data = await response.json();
+    authDashboardData = data;
+    if (data.user) saveUserAccount(data.user);
+    return data;
+  } catch (error) {
+    return null;
+  }
 }
 
 function addWishlistProduct(product) {
@@ -209,7 +256,7 @@ function createTestOrder(method = 'PayPal') {
   const shippingCost = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
   const total = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0) + shippingCost;
   const email = document.querySelector('.checkout-form input[type="email"]')?.value.trim().toLowerCase()
-    || localStorage.getItem('zavoraUserEmail')
+    || authUser?.email
     || 'customer@zavorafashion.com';
   const order = {
     id: `ZAV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
@@ -256,7 +303,7 @@ async function persistOrder(order) {
       body: JSON.stringify({
         orderId: order.id,
         email: order.email,
-        customer: localStorage.getItem('zavoraUserName') || 'Zavora customer',
+        customer: authUser?.name || 'Zavora customer',
         payment: order.method,
         method: order.method,
         status: order.status,
@@ -404,7 +451,7 @@ function hydrateHeaderIcons() {
     if (actions.querySelector('[data-profile]')) return;
     const profile = document.createElement('a');
     profile.className = 'icon-button';
-    profile.href = localStorage.getItem(AUTH_KEY) === 'true' ? 'dashboard.html' : 'login.html';
+    profile.href = accountHref('dashboard');
     profile.dataset.profile = 'true';
     profile.setAttribute('aria-label', 'User profile');
     profile.innerHTML = icons.user;
@@ -467,10 +514,11 @@ function syncPageHeader() {
   }
 }
 
-function enforceAuthState() {
+async function enforceAuthState() {
+  await fetchAuthSession(true);
   const pageName = window.location.pathname.split('/').pop();
   if (pageName === 'logout.html') {
-    logoutUser();
+    await logoutUser();
     window.location.replace('login.html');
     return;
   }
@@ -489,33 +537,26 @@ function enforceAuthState() {
   if ((pageName === 'login.html' || pageName === 'sign-up.html' || pageName === 'register.html') && isUserLoggedIn()) {
     window.location.href = 'dashboard.html';
   }
-  document.querySelectorAll('[data-profile]').forEach((profile) => {
-    profile.href = isUserLoggedIn() ? 'dashboard.html' : 'login.html';
-  });
+  updateAccountLinks();
   document.querySelectorAll('.login-hint').forEach((hint) => hint.remove());
 }
 
 const accountViews = {
   dashboard: `
-    <article class="dashboard-card"><span>01</span><h3>Recent Order</h3><p>#ZAV-2026-1048 is preparing for shipment.</p><a class="text-link" href="track-order.html">Track order</a></article>
-    <article class="dashboard-card"><span>02</span><h3>Wishlist</h3><p>3 saved pieces with back-in-stock alerts.</p><button class="text-link" type="button" data-dashboard-view="wishlist">Open wishlist</button></article>
-    <article class="dashboard-card"><span>03</span><h3>Saved Addresses</h3><p>USA shipping profile ready for fast checkout.</p><button class="text-link" type="button" data-dashboard-view="addresses">Manage addresses</button></article>
-    <article class="dashboard-card"><span>04</span><h3>Profile</h3><p>Currency USD and country USA preferences active.</p><button class="text-link" type="button" data-dashboard-view="profile">Edit profile</button></article>
+    <article class="dashboard-card"><span>01</span><h3>Recent Order</h3><p>No orders yet. Your first checkout will appear here.</p><a class="text-link" href="track-order.html">Track order</a></article>
+    <article class="dashboard-card"><span>02</span><h3>Wishlist</h3><p>No saved products yet.</p><button class="text-link" type="button" data-dashboard-view="wishlist">Open wishlist</button></article>
+    <article class="dashboard-card"><span>03</span><h3>Saved Addresses</h3><p>No saved address yet.</p><button class="text-link" type="button" data-dashboard-view="addresses">Manage addresses</button></article>
+    <article class="dashboard-card"><span>04</span><h3>Profile</h3><p>Your secure Zavora profile is ready.</p><button class="text-link" type="button" data-dashboard-view="profile">Edit profile</button></article>
   `,
   orders: `
-    <article class="dashboard-card dashboard-wide"><span>Orders</span><h3>#ZAV-2026-1048</h3><p>Studio Wide Trouser / Paid $168 / Packing now.</p><div class="mini-status"><i style="width:68%"></i></div><a class="text-link" href="track-order.html">Track live order</a></article>
-    <article class="dashboard-card dashboard-wide"><span>Order History</span><h3>#ZAV-2026-0991</h3><p>Noir Oversized Hoodie / Delivered / Return window closed.</p><a class="text-link" href="product.html">Buy again</a></article>
+    <article class="dashboard-card dashboard-wide"><span>Orders</span><h3>No orders yet</h3><p>Your order history appears here after checkout.</p></article>
   `,
   wishlist: `
     <article class="dashboard-card dashboard-wide"><span>Wishlist</span><h3>Saved Zavora pieces</h3><p>Wishlist items show here and stay inside dashboard.</p><button class="secondary-btn slim-btn" type="button" data-add-wishlist>Add product</button></article>
-    <article class="wishlist-item"><button class="remove-x" type="button" data-remove-wishlist aria-label="Remove Studio Wide Trouser">&times;</button><img src="assets/studio-wide-trouser.png" alt="Studio Wide Trouser"><div><h3>Studio Wide Trouser</h3><p>$168 / Black / M</p><a class="text-link" href="product.html">View details</a></div></article>
-    <article class="wishlist-item"><button class="remove-x" type="button" data-remove-wishlist aria-label="Remove Noir Oversized Hoodie">&times;</button><img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=500&q=80" alt="Noir Oversized Hoodie"><div><h3>Noir Oversized Hoodie</h3><p>$148 / Back in stock alert on</p><a class="text-link" href="product.html">View details</a></div></article>
-    <article class="wishlist-item"><button class="remove-x" type="button" data-remove-wishlist aria-label="Remove Ivory Heavyweight Tee">&times;</button><img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=500&q=80" alt="Ivory Heavyweight Tee"><div><h3>Ivory Heavyweight Tee</h3><p>$78 / Recommended with cargos</p><a class="text-link" href="product.html">View details</a></div></article>
   `,
   addresses: `
-    <article class="dashboard-card dashboard-wide"><span>Primary Address</span><h3>USA Shipping Profile</h3><p>Alex Morgan, 221 Market Street, New York, NY 10001</p><button class="text-link" type="button">Edit address</button></article>
+    <article class="dashboard-card dashboard-wide"><span>Primary Address</span><h3>No saved address</h3><p>Add a delivery address for faster checkout.</p></article>
     <article class="dashboard-card dashboard-wide address-form"><span>Add Address</span><h3>Add new delivery address</h3><div class="mini-form"><input placeholder="Full name"><input placeholder="Street address"><input placeholder="City"><input placeholder="ZIP code"></div><button class="secondary-btn slim-btn" type="button" data-add-address>Add address</button></article>
-    <article class="dashboard-card dashboard-wide"><span>Delivery</span><h3>Fast checkout ready</h3><p>Address autofill and saved delivery preferences are active.</p></article>
   `,
   profile: `
     <article class="dashboard-card dashboard-wide"><span>Profile</span><h3 data-profile-name>Zavora Customer</h3><p>Email: <strong data-profile-email></strong> / Country: USA / Currency: USD</p><div class="mini-form"><input data-profile-name-input placeholder="Full name"></div><button class="text-link" type="button" data-profile-save>Save profile</button></article>
@@ -523,7 +564,7 @@ const accountViews = {
   `,
   'change-password': `
     <article class="dashboard-card dashboard-wide"><span>Security</span><h3>Change Password</h3><p>Update your Zavora account password for secure checkout and saved address access.</p><div class="mini-form"><input type="password" placeholder="Current password"><input type="password" placeholder="New password"><input type="password" placeholder="Confirm password"></div><button class="secondary-btn slim-btn" type="button" data-password-save>Update password</button></article>
-    <article class="dashboard-card dashboard-wide"><span>Protected Account</span><h3>Login stays active</h3><p>Once logged in, Zavora keeps your dashboard, wishlist, orders, and addresses ready in this browser.</p></article>
+    <article class="dashboard-card dashboard-wide"><span>Protected Account</span><h3>Secure session</h3><p>Your login is protected by an encrypted server session cookie.</p></article>
   `
 };
 
@@ -539,24 +580,20 @@ function saveGiftCards(cards) {
   localStorage.setItem(GIFT_CARD_KEY, JSON.stringify(cards));
 }
 
-function generateOtp() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
 function getPendingSignupOtp() {
   try {
-    return JSON.parse(sessionStorage.getItem(SIGNUP_OTP_KEY)) || null;
+    return JSON.parse(sessionStorage.getItem(AUTH_OTP_PENDING_KEY)) || null;
   } catch (error) {
     return null;
   }
 }
 
 function savePendingSignupOtp(payload) {
-  sessionStorage.setItem(SIGNUP_OTP_KEY, JSON.stringify(payload));
+  sessionStorage.setItem(AUTH_OTP_PENDING_KEY, JSON.stringify(payload));
 }
 
 function clearPendingSignupOtp() {
-  sessionStorage.removeItem(SIGNUP_OTP_KEY);
+  sessionStorage.removeItem(AUTH_OTP_PENDING_KEY);
 }
 
 function otpErrorNode(form) {
@@ -568,24 +605,6 @@ function otpErrorNode(form) {
     form.appendChild(node);
   }
   return node;
-}
-
-async function requestSignupOtp(email, otp) {
-  try {
-    const response = await fetch('/api/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: email,
-        from: OFFICIAL_EMAIL,
-        subject: 'Your Zavora Fashion Verification Code',
-        otp
-      })
-    });
-    return response.ok;
-  } catch (error) {
-    return false;
-  }
 }
 
 async function requestWelcomeEmail(email, name) {
@@ -614,20 +633,71 @@ async function requestNewsletterEmail(email) {
   }
 }
 
-async function requestPasswordReset(email) {
+async function requestAuthStart(payload) {
   try {
-    const response = await fetch('/api/send-password-reset', {
+    const response = await fetch('/api/auth-start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: email })
+      credentials: 'include',
+      body: JSON.stringify(payload)
     });
-    return response.ok;
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Unable to send OTP');
+    return data;
   } catch (error) {
-    return false;
+    return { ok: false, error: error.message };
   }
 }
 
-function renderSignupOtpStep(form, payload, sentByApi = false) {
+async function requestPasswordLogin(email, password) {
+  try {
+    const response = await fetch('/api/auth-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Login failed');
+    return data;
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+async function verifyAuthOtp(payload) {
+  try {
+    const response = await fetch('/api/auth-verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'OTP verification failed');
+    return data;
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+async function requestPasswordReset(email) {
+  try {
+    const response = await fetch('/api/auth-forgot-start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Unable to send reset OTP');
+    return data;
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+function renderSignupOtpStep(form, payload) {
   form.classList.add('otp-mode');
   form.innerHTML = `
     <div class="otp-panel">
@@ -637,10 +707,28 @@ function renderSignupOtpStep(form, payload, sentByApi = false) {
       <input inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="6-digit code" data-signup-otp-input>
       <button class="primary-cta" type="button" data-verify-signup-otp>Verify & Create Account</button>
       <button class="text-link otp-link" type="button" data-resend-signup-otp>Resend OTP</button>
-      <p class="otp-note">${sentByApi ? `OTP sent from ${NOREPLY_EMAIL}.` : `Demo mode OTP: ${payload.otp}. Connect Resend backend at /api/send-otp for real email.`}</p>
+      <p class="otp-note">OTP sent from ${NOREPLY_EMAIL}. Check inbox and spam folder.</p>
     </div>
   `;
   form.querySelector('[data-signup-otp-input]')?.focus();
+}
+
+function renderResetOtpStep(form, email) {
+  form.classList.add('otp-mode');
+  form.innerHTML = `
+    <div class="otp-panel">
+      <p class="eyebrow">Password Reset</p>
+      <h2>Enter reset OTP</h2>
+      <p>We sent a password reset code to <strong>${email}</strong>.</p>
+      <input inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="6-digit code" data-reset-otp-input>
+      <input type="password" placeholder="New password" autocomplete="new-password" data-reset-password>
+      <input type="password" placeholder="Confirm password" autocomplete="new-password" data-reset-confirm>
+      <button class="primary-cta" type="button" data-verify-reset-otp>Reset Password</button>
+      <button class="text-link otp-link" type="button" data-resend-reset-otp>Resend OTP</button>
+      <p class="otp-note">After verification you will be logged in automatically.</p>
+    </div>
+  `;
+  form.querySelector('[data-reset-otp-input]')?.focus();
 }
 
 function renderRegisterPage() {
@@ -675,11 +763,7 @@ function resumePendingSignupOtp() {
   const pending = getPendingSignupOtp();
   const form = document.querySelector('.auth-card .form-panel');
   if (!pending || !form) return;
-  if (Date.now() > Number(pending.expiresAt)) {
-    clearPendingSignupOtp();
-    return;
-  }
-  renderSignupOtpStep(form, pending, false);
+  renderSignupOtpStep(form, pending);
 }
 
 function uniqueGiftCode() {
@@ -725,10 +809,7 @@ function setDashboardView(view = 'dashboard') {
     `;
   }
   if (view === 'profile') {
-    const account = getUserAccount() || {
-      name: localStorage.getItem('zavoraUserName') || 'Zavora Customer',
-      email: localStorage.getItem('zavoraUserEmail') || ''
-    };
+    const account = authDashboardData?.user || getUserAccount() || { name: 'Zavora Customer', email: '' };
     const nameNode = grid.querySelector('[data-profile-name]');
     const emailNode = grid.querySelector('[data-profile-email]');
     const input = grid.querySelector('[data-profile-name-input]');
@@ -737,7 +818,7 @@ function setDashboardView(view = 'dashboard') {
     if (input) input.value = account.name || '';
   }
   if (view === 'orders') {
-    const orders = getSavedOrders();
+    const orders = authDashboardData?.orders?.length ? authDashboardData.orders : [];
     const cards = getGiftCards();
     grid.innerHTML = `
       ${orders.length ? orders.map((order) => `
@@ -776,6 +857,10 @@ function initDashboardTabs() {
   });
   const hashView = window.location.hash.replace('#', '');
   setDashboardView(accountViews[hashView] ? hashView : 'dashboard');
+  loadDashboardData().then(() => {
+    const activeView = window.location.hash.replace('#', '') || 'dashboard';
+    setDashboardView(accountViews[activeView] ? activeView : 'dashboard');
+  });
 }
 
 if (!initLaunchGate()) {
@@ -1347,13 +1432,17 @@ document.addEventListener('click', async (event) => {
       || rawHref === 'account.html'
       || rawHref === 'my-account.html'
       || rawHref === 'wishlist.html'
+      || rawHref === 'orders.html'
       || rawHref === 'order-history.html'
+      || rawHref === 'addresses.html'
       || rawHref === 'saved-addresses.html'
+      || rawHref === 'profile.html'
       || rawHref === 'change-password.html';
     if (accountTarget) {
       event.preventDefault();
       const next = rawHref.includes('dashboard.html') ? rawHref : 'dashboard.html';
-      window.location.href = isUserLoggedIn() ? next : `login.html?next=${encodeURIComponent(next)}`;
+      const user = await fetchAuthSession(true);
+      window.location.href = user ? next : `login.html?next=${encodeURIComponent(next)}`;
       return;
     }
   }
@@ -1448,7 +1537,7 @@ document.addEventListener('click', async (event) => {
     event.preventDefault();
     const view = dashboardTrigger.dataset.dashboardView;
     if (view === 'logout') {
-      logoutUser();
+      await logoutUser();
       window.location.href = 'login.html';
       return;
     }
@@ -1514,20 +1603,21 @@ document.addEventListener('click', async (event) => {
       note.dataset.passwordNote = 'true';
       card.appendChild(note);
     }
-    const account = getUserAccount();
-    if (!account) {
-      if (note) note.textContent = 'Create an account first, then change your password.';
-      return;
-    }
-    if (current !== account.password) {
-      if (note) note.textContent = 'Current password is incorrect.';
-      return;
-    }
     if (next.length < 6 || next !== confirm) {
       if (note) note.textContent = 'New password must be 6+ characters and match confirmation.';
       return;
     }
-    saveUserAccount({ ...account, password: next, updatedAt: new Date().toISOString() });
+    const response = await fetch('/api/auth-change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ currentPassword: current, newPassword: next })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (note) note.textContent = data.error || 'Password update failed.';
+      return;
+    }
     inputs.forEach((input) => input.value = '');
     if (note) {
       note.textContent = 'Password updated. Next login will use your new password.';
@@ -1552,13 +1642,18 @@ document.addEventListener('click', async (event) => {
       if (note) note.textContent = 'Enter your name before saving.';
       return;
     }
-    const account = getUserAccount() || {
-      email: localStorage.getItem('zavoraUserEmail') || '',
-      password: ''
-    };
-    const nextAccount = { ...account, name, updatedAt: new Date().toISOString() };
-    saveUserAccount(nextAccount);
-    loginUser(nextAccount);
+    const response = await fetch('/api/auth-update-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ name })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (note) note.textContent = data.error || 'Profile update failed.';
+      return;
+    }
+    saveUserAccount(data.user);
     const nameNode = card?.querySelector('[data-profile-name]');
     if (nameNode) nameNode.textContent = name;
     if (note) {
@@ -1594,10 +1689,22 @@ document.addEventListener('click', async (event) => {
       return;
     }
     error.textContent = '';
-    const otp = generateOtp();
-    const payload = { name, email, password, otp, expiresAt: Date.now() + 10 * 60 * 1000 };
+    loginTrigger.textContent = 'Sending OTP...';
+    loginTrigger.setAttribute('aria-busy', 'true');
+    const result = await requestAuthStart({ name, email, password });
+    loginTrigger.textContent = 'Send OTP';
+    loginTrigger.removeAttribute('aria-busy');
+    if (!result.ok) {
+      error.textContent = result.error || 'Could not send OTP.';
+      return;
+    }
+    if (result.mode === 'password') {
+      error.textContent = 'Account already exists. Please login with your password.';
+      return;
+    }
+    const payload = { name, email, purpose: 'signup' };
     savePendingSignupOtp(payload);
-    requestSignupOtp(email, otp).then((sentByApi) => renderSignupOtpStep(form, payload, sentByApi));
+    renderSignupOtpStep(form, payload);
     return;
   }
 
@@ -1605,8 +1712,6 @@ document.addEventListener('click', async (event) => {
     event.preventDefault();
     const email = document.querySelector('.auth-card input[type="email"]')?.value.trim().toLowerCase();
     const password = document.querySelector('.auth-card input[type="password"]')?.value.trim();
-    const account = getUserAccount();
-    const valid = account && email === String(account.email || '').toLowerCase() && password === String(account.password || '');
     let error = document.querySelector('[data-login-error]');
     if (!error) {
       error = document.createElement('p');
@@ -1614,35 +1719,58 @@ document.addEventListener('click', async (event) => {
       error.className = 'login-error';
       loginTrigger.closest('.form-panel')?.appendChild(error);
     }
-    if (!valid) {
-      error.textContent = account ? 'Invalid email or password.' : 'No account found. Please sign up first.';
+    if (!email || !password) {
+      error.textContent = 'Email and password are required.';
+      return;
+    }
+    loginTrigger.textContent = 'Logging in...';
+    loginTrigger.setAttribute('aria-busy', 'true');
+    const result = await requestPasswordLogin(email, password);
+    loginTrigger.textContent = 'Login';
+    loginTrigger.removeAttribute('aria-busy');
+    if (!result.ok) {
+      if (result.error === 'ACCOUNT_NOT_FOUND') {
+        const start = await requestAuthStart({ name: email.split('@')[0], email, password });
+        if (start.ok && start.mode === 'otp') {
+          const payload = { name: email.split('@')[0], email, purpose: 'signup' };
+          savePendingSignupOtp(payload);
+          renderSignupOtpStep(loginTrigger.closest('.form-panel'), payload);
+          return;
+        }
+        error.textContent = start.error || 'No account found. Create account first with OTP verification.';
+      } else {
+        error.textContent = result.error || 'Invalid email or password.';
+      }
       return;
     }
     error.textContent = '';
-    loginUser(account);
+    loginUser(result.user);
     const next = new URLSearchParams(window.location.search).get('next') || 'dashboard.html';
     window.location.href = next;
     return;
   }
 
   const resetTrigger = event.target.closest('.auth-card .primary-cta');
-  if (resetTrigger && window.location.pathname.endsWith('forgot-password.html')) {
+  if (resetTrigger && !resetTrigger.matches('[data-verify-reset-otp]') && window.location.pathname.endsWith('forgot-password.html')) {
     event.preventDefault();
     const form = resetTrigger.closest('.form-panel');
     const email = form?.querySelector('input[type="email"]')?.value.trim().toLowerCase();
     const note = otpErrorNode(form);
     if (!email || !email.includes('@')) {
-      note.textContent = 'Enter your account email to receive a reset link.';
+      note.textContent = 'Enter your account email to receive a reset OTP.';
       return;
     }
     resetTrigger.textContent = 'Sending...';
     resetTrigger.setAttribute('aria-busy', 'true');
     const sent = await requestPasswordReset(email);
-    resetTrigger.textContent = 'Send Reset Link';
+    resetTrigger.textContent = 'Send Reset OTP';
     resetTrigger.removeAttribute('aria-busy');
-    note.textContent = sent
-      ? `Password reset email sent from ${SUPPORT_EMAIL}. Check inbox and spam folder.`
-      : `Email service is not ready. Please contact ${SUPPORT_EMAIL}.`;
+    if (!sent.ok) {
+      note.textContent = sent.error || `Email service is not ready. Please contact ${SUPPORT_EMAIL}.`;
+      return;
+    }
+    savePendingSignupOtp({ email, purpose: 'reset' });
+    renderResetOtpStep(form, email);
     return;
   }
 
@@ -1658,28 +1786,16 @@ document.addEventListener('click', async (event) => {
       error.dataset.signupError = 'true';
       form.appendChild(error);
     }
-    if (!pending) {
+    if (!pending || pending.purpose !== 'signup') {
       error.textContent = 'OTP session expired. Please request a new code.';
       return;
     }
-    if (Date.now() > Number(pending.expiresAt)) {
-      clearPendingSignupOtp();
-      error.textContent = 'OTP expired. Please resend the code.';
+    const result = await verifyAuthOtp({ email: pending.email, otp: inputOtp, purpose: 'signup' });
+    if (!result.ok) {
+      error.textContent = result.error || 'Invalid OTP. Enter the 6-digit code sent to your email.';
       return;
     }
-    if (inputOtp !== pending.otp) {
-      error.textContent = 'Invalid OTP. Enter the 6-digit code sent to your email.';
-      return;
-    }
-    const account = {
-      name: pending.name,
-      email: pending.email,
-      password: pending.password,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    saveUserAccount(account);
-    loginUser(account);
+    loginUser(result.user);
     clearPendingSignupOtp();
     requestWelcomeEmail(pending.email, pending.name).finally(() => {
       window.location.href = 'dashboard.html';
@@ -1692,23 +1808,63 @@ document.addEventListener('click', async (event) => {
     const form = event.target.closest('.form-panel');
     const pending = getPendingSignupOtp();
     if (!pending) return;
-    const nextPayload = { ...pending, otp: generateOtp(), expiresAt: Date.now() + 10 * 60 * 1000 };
-    savePendingSignupOtp(nextPayload);
-    requestSignupOtp(nextPayload.email, nextPayload.otp).then((sentByApi) => renderSignupOtpStep(form, nextPayload, sentByApi));
+    if (pending.purpose === 'signup') {
+      const note = otpErrorNode(form);
+      note.textContent = 'For security, please restart signup to receive a new OTP.';
+    }
+    return;
+  }
+
+  if (event.target.closest('[data-verify-reset-otp]')) {
+    event.preventDefault();
+    const form = event.target.closest('.form-panel');
+    const pending = getPendingSignupOtp();
+    const otp = form?.querySelector('[data-reset-otp-input]')?.value.trim();
+    const newPassword = form?.querySelector('[data-reset-password]')?.value || '';
+    const confirm = form?.querySelector('[data-reset-confirm]')?.value || '';
+    const note = otpErrorNode(form);
+    if (!pending || pending.purpose !== 'reset') {
+      note.textContent = 'Reset OTP session expired. Please request a new code.';
+      return;
+    }
+    if (newPassword.length < 6 || newPassword !== confirm) {
+      note.textContent = 'New password must be 6+ characters and match confirmation.';
+      return;
+    }
+    const result = await verifyAuthOtp({ email: pending.email, otp, purpose: 'reset', newPassword });
+    if (!result.ok) {
+      note.textContent = result.error || 'Invalid or expired OTP.';
+      return;
+    }
+    loginUser(result.user);
+    clearPendingSignupOtp();
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  if (event.target.closest('[data-resend-reset-otp]')) {
+    event.preventDefault();
+    const form = event.target.closest('.form-panel');
+    const pending = getPendingSignupOtp();
+    const note = otpErrorNode(form);
+    if (!pending || pending.purpose !== 'reset') return;
+    const result = await requestPasswordReset(pending.email);
+    note.textContent = result.ok ? 'New reset OTP sent. Check inbox and spam folder.' : (result.error || 'Unable to resend OTP.');
     return;
   }
 
   const checkoutTrigger = event.target.closest('[data-buy-now]');
   if (checkoutTrigger) {
     event.preventDefault();
-    window.location.href = localStorage.getItem(AUTH_KEY) === 'true' ? 'checkout.html' : 'login.html';
+    const user = await fetchAuthSession(true);
+    window.location.href = user ? 'checkout.html' : `login.html?next=${encodeURIComponent('checkout.html')}`;
     return;
   }
 
   const checkoutLink = event.target.closest('a[href="checkout.html"]:not([data-page-cart])');
-  if (checkoutLink && localStorage.getItem(AUTH_KEY) !== 'true') {
+  if (checkoutLink && !(await fetchAuthSession(true))) {
     event.preventDefault();
-    window.location.href = 'login.html';
+    window.location.href = `login.html?next=${encodeURIComponent('checkout.html')}`;
     return;
   }
 
@@ -1949,11 +2105,11 @@ function enhanceFooter() {
       <h3>Account</h3>
       <a href="login.html">Login</a>
       <a href="register.html">Register</a>
-      <a href="${accountHref('dashboard')}">My Account</a>
-      <a href="${accountHref('wishlist')}">Wishlist</a>
-      <a href="${accountHref('orders')}">Order History</a>
-      <a href="${accountHref('addresses')}">Saved Addresses</a>
-      <a href="${accountHref('change-password')}">Change Password</a>
+      <a href="${accountHref('dashboard')}" data-account-route="dashboard">My Account</a>
+      <a href="${accountHref('wishlist')}" data-account-route="wishlist">Wishlist</a>
+      <a href="${accountHref('orders')}" data-account-route="orders">Order History</a>
+      <a href="${accountHref('addresses')}" data-account-route="addresses">Saved Addresses</a>
+      <a href="${accountHref('change-password')}" data-account-route="change-password">Change Password</a>
       <a href="newsletter.html">Newsletter</a>
     </div>
   `;

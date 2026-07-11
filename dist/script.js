@@ -259,11 +259,12 @@ const products = [
 ];
 
 const CART_KEY = 'zavoraCart';
-const HOME_AUTH_KEY = 'zavoraLoggedIn';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const SELECTED_PRODUCT_KEY = 'zavoraSelectedProduct';
 const WISHLIST_KEY = 'zavoraWishlist';
 const state = { cart: [], visible: 23, printfulProducts: [], printfulLoaded: false };
+let homeAuthUser = null;
+let homeAuthChecked = false;
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
 const homeIcons = {
@@ -272,8 +273,16 @@ const homeIcons = {
   heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 5.2c-1.8-1.7-4.7-1.6-6.4.2L12 6.6l-1.1-1.2c-1.7-1.8-4.6-1.9-6.4-.2-1.9 1.8-2 4.8-.2 6.7L12 19.7l7.7-7.8c1.8-1.9 1.7-4.9-.2-6.7Z"></path></svg>'
 };
 
-function isHomeUserLoggedIn() {
-  return localStorage.getItem(HOME_AUTH_KEY) === 'true' && !!(localStorage.getItem('zavoraUserAccount') || localStorage.getItem('zavoraUserEmail'));
+async function homeAuthSession(force = false) {
+  if (homeAuthChecked && !force) return homeAuthUser;
+  try {
+    const response = await fetch('/api/auth-session', { credentials: 'include' });
+    homeAuthUser = response.ok ? (await response.json()).user : null;
+  } catch (error) {
+    homeAuthUser = null;
+  }
+  homeAuthChecked = true;
+  return homeAuthUser;
 }
 
 function hydrateHomeHeaderIcons() {
@@ -599,13 +608,14 @@ $$('select, input[type="range"], input[type="checkbox"]').forEach(control => {
   });
 });
 
-document.addEventListener('click', (event) => {
-  const accountLink = event.target.closest('a[href*="dashboard.html"], a[href="account.html"], a[href="my-account.html"], a[href="wishlist.html"], a[href="order-history.html"], a[href="saved-addresses.html"], a[href="change-password.html"], [data-profile]');
+document.addEventListener('click', async (event) => {
+  const accountLink = event.target.closest('a[href*="dashboard.html"], a[href="account.html"], a[href="my-account.html"], a[href="wishlist.html"], a[href="orders.html"], a[href="order-history.html"], a[href="addresses.html"], a[href="saved-addresses.html"], a[href="profile.html"], a[href="change-password.html"], [data-profile]');
   if (accountLink && !accountLink.closest('.auth-card')) {
     event.preventDefault();
     const rawHref = accountLink.getAttribute('href') || 'dashboard.html';
     const next = rawHref.includes('dashboard.html') ? rawHref : 'dashboard.html';
-    window.location.href = isHomeUserLoggedIn() ? next : `login.html?next=${encodeURIComponent(next)}`;
+    const user = await homeAuthSession(true);
+    window.location.href = user ? next : `login.html?next=${encodeURIComponent(next)}`;
     return;
   }
 
@@ -640,7 +650,8 @@ document.addEventListener('click', (event) => {
   const checkout = event.target.closest('.checkout, a[href="checkout.html"], [data-buy-now]');
   if (checkout) {
     event.preventDefault();
-    window.location.href = checkout.matches('[data-buy-now]') && localStorage.getItem(HOME_AUTH_KEY) !== 'true' ? 'login.html' : 'checkout.html';
+    const user = await homeAuthSession(true);
+    window.location.href = user ? 'checkout.html' : `login.html?next=${encodeURIComponent('checkout.html')}`;
     return;
   }
   if (add) addToCart(add.dataset.add);
