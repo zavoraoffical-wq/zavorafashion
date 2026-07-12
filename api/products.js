@@ -87,20 +87,51 @@ function requestOrigin(req) {
 async function loadPrintfulFallback(req, limit) {
   const requestedGender = String(req.query.gender || '').toLowerCase();
   const genders = requestedGender && requestedGender !== 'all' ? [requestedGender] : ['men', 'women'];
-  const origin = requestOrigin(req);
   const perGenderLimit = Math.max(12, Math.ceil(limit / genders.length));
   const batches = await Promise.all(genders.map(async (gender) => {
-    const url = `${origin}/api/printful-products?gender=${encodeURIComponent(gender)}&limit=${perGenderLimit}&page=1`;
-    const response = await fetch(url);
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !Array.isArray(data.products)) return [];
-    return data.products;
+    const data = await callPrintfulHandler(req, {
+      ...req.query,
+      gender,
+      limit: perGenderLimit,
+      page: 1
+    });
+    return Array.isArray(data.products) ? data.products : [];
   }));
   return batches
     .flat()
     .filter((product, index, products) => products.findIndex((item) => String(item.id) === String(product.id)) === index)
     .filter((product) => productMatches(product, req.query))
     .slice(0, limit);
+}
+
+async function callPrintfulHandler(req, query) {
+  const printfulHandler = require('./printful-products');
+  let statusCode = 200;
+  let body = '';
+  const fakeReq = {
+    ...req,
+    method: 'GET',
+    query
+  };
+  const fakeRes = {
+    setHeader() {},
+    get statusCode() {
+      return statusCode;
+    },
+    set statusCode(value) {
+      statusCode = value;
+    },
+    end(value) {
+      body = value || '';
+    }
+  };
+  await printfulHandler(fakeReq, fakeRes);
+  if (statusCode >= 400) return {};
+  try {
+    return JSON.parse(body || '{}');
+  } catch (error) {
+    return {};
+  }
 }
 
 module.exports = async function handler(req, res) {
