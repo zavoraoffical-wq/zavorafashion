@@ -78,6 +78,31 @@ function categoryMatches(productCategory, requestedCategory) {
   return (groups[requested] || [requested]).includes(category);
 }
 
+function requestOrigin(req) {
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'www.zavorafashion.com';
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  return `${proto}://${host}`;
+}
+
+async function loadPrintfulFallback(req, limit) {
+  const requestedGender = String(req.query.gender || '').toLowerCase();
+  const genders = requestedGender && requestedGender !== 'all' ? [requestedGender] : ['men', 'women'];
+  const origin = requestOrigin(req);
+  const perGenderLimit = Math.max(12, Math.ceil(limit / genders.length));
+  const batches = await Promise.all(genders.map(async (gender) => {
+    const url = `${origin}/api/printful-products?gender=${encodeURIComponent(gender)}&limit=${perGenderLimit}&page=1`;
+    const response = await fetch(url);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !Array.isArray(data.products)) return [];
+    return data.products;
+  }));
+  return batches
+    .flat()
+    .filter((product, index, products) => products.findIndex((item) => String(item.id) === String(product.id)) === index)
+    .filter((product) => productMatches(product, req.query))
+    .slice(0, limit);
+}
+
 module.exports = async function handler(req, res) {
   try {
     const limit = Math.min(Number(req.query.limit || 1000), 1000);
@@ -122,12 +147,33 @@ module.exports = async function handler(req, res) {
     });
     const rows = await response.json().catch(() => []);
     if (!response.ok) {
+      const fallbackProducts = await loadPrintfulFallback(req, limit);
+      if (fallbackProducts.length) {
+        return json(res, 200, {
+          ok: true,
+          provider: 'printful-fallback',
+          count: fallbackProducts.length,
+          products: fallbackProducts,
+          warning: rows?.message || 'Supabase products table unavailable'
+        });
+      }
       return json(res, response.status, { ok: false, error: rows?.message || 'Could not read Supabase products' });
     }
     const products = rows
       .map((row) => row.payload)
       .filter(Boolean)
       .filter((product) => productMatches(product, req.query));
+    if (!products.length) {
+      const fallbackProducts = await loadPrintfulFallback(req, limit);
+      if (fallbackProducts.length) {
+        return json(res, 200, {
+          ok: true,
+          provider: 'printful-fallback',
+          count: fallbackProducts.length,
+          products: fallbackProducts
+        });
+      }
+    }
     return json(res, 200, {
       ok: true,
       provider: 'supabase',
