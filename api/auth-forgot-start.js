@@ -1,4 +1,4 @@
-const { createOtp, db, json, normalizeEmail, parseBody } = require('./auth-lib');
+const { createOtp, db, json, normalizeEmail, parseBody } = require('../lib/auth-lib');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });

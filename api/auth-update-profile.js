@@ -1,4 +1,4 @@
-const { db, getSessionUser, json, parseBody, publicUser } = require('./auth-lib');
+const { db, getSessionUser, json, parseBody, publicUser } = require('../lib/auth-lib');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });

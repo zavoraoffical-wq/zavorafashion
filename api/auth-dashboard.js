@@ -1,4 +1,4 @@
-const { db, getSessionUser, json, publicUser } = require('./auth-lib');
+const { db, getSessionUser, json, publicUser } = require('../lib/auth-lib');
 
 module.exports = async function handler(req, res) {
   try {
