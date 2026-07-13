@@ -4,6 +4,7 @@ const session = require('../api-disabled/admin-session');
 const logout = require('../api-disabled/admin-logout');
 const stats = require('../api-disabled/admin-stats');
 const orders = require('../api-disabled/orders');
+const rewards = require('../api-disabled/rewards');
 const autoImportPrintful = require('../api-disabled/auto-import-printful');
 
 function json(res, status, body) {
@@ -22,6 +23,7 @@ module.exports = async function handler(req, res) {
   if (action === 'logout') return logout(req, res);
   if (action === 'stats') return stats(req, res);
   if (action === 'orders') return orders(req, res);
+  if (action === 'rewards') return rewards(req, res);
   if (action === 'auto-import-printful') return autoImportPrintful(req, res);
 
   return json(res, 404, {

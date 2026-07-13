@@ -35,6 +35,10 @@
       "destination": "/api/admin?action=orders"
     },
     {
+      "source": "/api/rewards",
+      "destination": "/api/admin?action=rewards"
+    },
+    {
       "source": "/api/auto-import-printful",
       "destination": "/api/admin?action=auto-import-printful"
     }

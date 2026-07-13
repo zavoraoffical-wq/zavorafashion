@@ -36,6 +36,7 @@ const LAUNCH_PREVIEW_CODE = 'zavora-live';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const SELECTED_PRODUCT_KEY = 'zavoraSelectedProduct';
 const PRODUCT_STOCK_KEY = 'zavoraProductStock';
+const PENDING_COMMERCE_ACTION_KEY = 'zavoraPendingCommerceAction';
 const accountRedirects = {
   'my-account.html': 'dashboard',
   'wishlist.html': 'wishlist',
@@ -62,6 +63,11 @@ function getSavedCart() {
 
 function saveSavedCart(cart) {
   localStorage.setItem(PAGE_CART_KEY, JSON.stringify(cart));
+}
+
+function getLoginUrl(next = window.location.href) {
+  const target = String(next || window.location.href);
+  return `login.html?next=${encodeURIComponent(target)}`;
 }
 
 function getWishlist() {
@@ -115,6 +121,144 @@ function isUserLoggedIn() {
 function loginUser(account) {
   if (!account) return;
   saveUserAccount(account);
+}
+
+function savePendingCommerceAction(type, product, destination = 'cart.html') {
+  const payload = {
+    type,
+    product,
+    destination,
+    from: window.location.href,
+    createdAt: Date.now()
+  };
+  sessionStorage.setItem(PENDING_COMMERCE_ACTION_KEY, JSON.stringify(payload));
+}
+
+function getPendingCommerceAction() {
+  try {
+    return JSON.parse(sessionStorage.getItem(PENDING_COMMERCE_ACTION_KEY)) || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function clearPendingCommerceAction() {
+  sessionStorage.removeItem(PENDING_COMMERCE_ACTION_KEY);
+}
+
+function showLoginRequiredModal(destination = window.location.href) {
+  let modal = document.querySelector('[data-login-required-modal]');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'login-required-modal';
+    modal.dataset.loginRequiredModal = 'true';
+    modal.innerHTML = `
+      <div class="login-required-panel">
+        <button type="button" class="close" data-close-login-required aria-label="Close">${icons.close}</button>
+        <p class="eyebrow">Account required</p>
+        <h2>Login to continue.</h2>
+        <p>Cart, wishlist, checkout, and rewards are protected for your Zavora account.</p>
+        <div class="login-required-actions">
+          <a class="primary-cta" data-login-required-link href="#">Login</a>
+          <a class="secondary-btn" data-register-required-link href="#">Register</a>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  const loginUrl = getLoginUrl(destination);
+  modal.querySelector('[data-login-required-link]').href = loginUrl;
+  modal.querySelector('[data-register-required-link]').href = `sign-up.html?next=${encodeURIComponent(destination)}`;
+  modal.classList.add('open');
+}
+
+function showOfferClaimedPopup(balance) {
+  let modal = document.querySelector('[data-offer-claimed-modal]');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'login-required-modal offer-claimed-modal';
+    modal.dataset.offerClaimedModal = 'true';
+    modal.innerHTML = `
+      <div class="login-required-panel">
+        <button type="button" class="close" data-close-offer-claimed aria-label="Close">${icons.close}</button>
+        <p class="eyebrow">Zavora rewards</p>
+        <h2>Wow offer claimed.</h2>
+        <p>$10 Store Credit has been added to your wallet. Confirmation email sent to your account.</p>
+        <p><strong data-offer-wallet-balance></strong> wallet balance</p>
+        <div class="login-required-actions">
+          <a class="primary-cta" href="shop.html">Shop Now</a>
+          <button class="secondary-btn" type="button" data-close-offer-claimed>Done</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  modal.querySelector('[data-offer-wallet-balance]').textContent = money(balance || 0);
+  modal.classList.add('open');
+}
+
+async function requireCommerceAuth(type, product, destination = window.location.href) {
+  const user = await fetchAuthSession(true);
+  if (user) return true;
+  savePendingCommerceAction(type, product || getSelectedProduct(), destination);
+  showLoginRequiredModal(destination);
+  return false;
+}
+
+function cartLineFromProduct(product, overrides = {}) {
+  if (!product) return null;
+  const color = overrides.color || product.colors?.[0] || product.color || 'Original';
+  const size = overrides.size || product.sizes?.[0] || 'M';
+  const variant = getVariant(product, color, size);
+  const group = productVariantGroup(product, color);
+  return {
+    id: overrides.id || `${productKey(product)}-${color}-${size}`,
+    printfulId: product.printfulId || product.id || null,
+    name: product.name,
+    price: Number(product.price || 0),
+    color,
+    sizes: [size],
+    qty: 1,
+    img: variant?.image || group?.images?.[0] || product.images?.[0] || product.img || product.image
+  };
+}
+
+function addProductToCart(product, overrides = {}) {
+  const line = cartLineFromProduct(product, overrides);
+  if (!line) return false;
+  const cart = getSavedCart();
+  const found = cart.find((item) => String(item.id) === String(line.id));
+  if (found) found.qty = Number(found.qty || 1) + 1;
+  else cart.push(line);
+  saveSavedCart(cart);
+  renderSavedCart(document);
+  renderSavedCart(document.querySelector('#pageCartDrawer') || document);
+  hydrateCheckoutSummary();
+  syncHeaderCounts();
+  return true;
+}
+
+function completePendingCommerceAction() {
+  const pending = getPendingCommerceAction();
+  if (!pending?.type) return '';
+  const product = pending.product || getSelectedProduct();
+  clearPendingCommerceAction();
+  if (pending.type === 'wishlist') {
+    addWishlistProduct(product);
+    return 'wishlist.html';
+  }
+  if (pending.type === 'buy-now') {
+    addProductToCart(product);
+    return 'checkout.html';
+  }
+  if (pending.type === 'cart') {
+    addProductToCart(product);
+    return 'cart.html';
+  }
+  if (pending.type === 'cart-open' || pending.type === 'checkout') {
+    return pending.destination || (pending.type === 'checkout' ? 'checkout.html' : 'cart.html');
+  }
+  return pending.destination || 'dashboard.html';
 }
 
 async function logoutUser() {
@@ -531,9 +675,14 @@ function syncPageHeader() {
 async function enforceAuthState() {
   await fetchAuthSession(true);
   const pageName = window.location.pathname.split('/').pop();
+  const protectedCommercePages = ['cart.html', 'checkout.html', 'wishlist.html', 'rewards.html'];
   if (pageName === 'logout.html') {
     await logoutUser();
     window.location.replace('login.html');
+    return;
+  }
+  if (protectedCommercePages.includes(pageName) && !isUserLoggedIn()) {
+    window.location.replace(`login.html?next=${encodeURIComponent(pageName)}`);
     return;
   }
   if (pageName === 'dashboard.html' && !isUserLoggedIn()) {
@@ -1499,6 +1648,7 @@ document.addEventListener('click', async (event) => {
       ? (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(id))
       : getSelectedProduct();
     const targetProduct = product || getSelectedProduct();
+    if (!(await requireCommerceAuth('wishlist', targetProduct, 'wishlist.html'))) return;
     const key = productKey(targetProduct);
     const wishlist = getWishlist();
     if (wishlist.some((item) => productKey(item) === key)) {
@@ -1517,24 +1667,9 @@ document.addEventListener('click', async (event) => {
     event.preventDefault();
     const product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(cardAdd.dataset.cardAdd));
     if (!product) return;
-    const cart = getSavedCart();
-    const id = String(product.id);
-    const found = cart.find((item) => String(item.id) === id);
-    if (found) found.qty = Number(found.qty || 1) + 1;
-    else cart.push({
-      id: product.id,
-      printfulId: product.printfulId || product.id,
-      name: product.name,
-      price: Number(product.price || 0),
-      color: product.colors?.[0] || product.color || 'Original',
-      sizes: [product.sizes?.[0] || 'M'],
-      qty: 1,
-      img: product.images?.[0] || product.img || product.image
-    });
-    saveSavedCart(cart);
-    renderSavedCart(document);
-    renderSavedCart(document.querySelector('#pageCartDrawer') || document);
-    syncHeaderCounts();
+    if (!(await requireCommerceAuth('cart', product, 'cart.html'))) return;
+    addProductToCart(product, { id: String(product.id) });
+    window.location.href = 'cart.html';
     return;
   }
 
@@ -1797,7 +1932,8 @@ document.addEventListener('click', async (event) => {
     }
     error.textContent = '';
     loginUser(result.user);
-    const next = new URLSearchParams(window.location.search).get('next') || 'dashboard.html';
+    const resumed = completePendingCommerceAction();
+    const next = resumed || new URLSearchParams(window.location.search).get('next') || 'dashboard.html';
     window.location.href = next;
     return;
   }
@@ -1849,8 +1985,9 @@ document.addEventListener('click', async (event) => {
     }
     loginUser(result.user);
     clearPendingSignupOtp();
+    const resumed = completePendingCommerceAction();
     requestWelcomeEmail(pending.email, pending.name).finally(() => {
-      window.location.href = 'dashboard.html';
+      window.location.href = resumed || new URLSearchParams(window.location.search).get('next') || 'dashboard.html';
     });
     return;
   }
@@ -1905,18 +2042,11 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
-  const checkoutTrigger = event.target.closest('[data-buy-now]');
-  if (checkoutTrigger) {
-    event.preventDefault();
-    const user = await fetchAuthSession(true);
-    window.location.href = user ? 'checkout.html' : `login.html?next=${encodeURIComponent('checkout.html')}`;
-    return;
-  }
-
   const checkoutLink = event.target.closest('a[href="checkout.html"]:not([data-page-cart])');
   if (checkoutLink && !(await fetchAuthSession(true))) {
     event.preventDefault();
-    window.location.href = `login.html?next=${encodeURIComponent('checkout.html')}`;
+    savePendingCommerceAction('checkout', null, 'checkout.html');
+    showLoginRequiredModal('checkout.html');
     return;
   }
 
@@ -1966,23 +2096,19 @@ document.addEventListener('click', async (event) => {
       updateProductStockNote(selected);
       return;
     }
-    const cart = getSavedCart();
+    const commerceProduct = selected || { id: Date.now(), name: title, price, color, sizes: [size], images: [img], img };
+    if (!(await requireCommerceAuth(buyNow ? 'buy-now' : 'cart', commerceProduct, buyNow ? 'checkout.html' : 'cart.html'))) return;
     const id = selected ? `${productKey(selected)}-${color}-${size}` : String(Date.now());
-    const found = cart.find((item) => String(item.id) === id);
-    if (found) found.qty += 1;
-    else cart.push({ id, printfulId: selected?.printfulId || selected?.id || null, name: title, price, color, sizes: [size], qty: 1, img });
-    saveSavedCart(cart);
+    addProductToCart(commerceProduct, { id, color, size });
     if (selected) {
       setProductStock(selected, getProductStock(selected) - 1);
       updateProductStockNote(selected);
     }
-    renderSavedCart(document);
-    syncHeaderCounts();
     if (buyNow) {
       window.location.href = 'checkout.html';
       return;
     }
-    ensurePageCart().classList.add('open');
+    window.location.href = 'cart.html';
     return;
   }
 
@@ -2029,6 +2155,37 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (event.target.closest('[data-redeem-reward]')) {
+    event.preventDefault();
+    const rewardId = document.querySelector('[data-reward-id]')?.value.trim();
+    const status = document.querySelector('[data-reward-status]');
+    const button = event.target.closest('[data-redeem-reward]');
+    if (!rewardId) {
+      if (status) status.textContent = 'Enter your Reward ID.';
+      return;
+    }
+    button.textContent = 'Redeeming...';
+    const response = await fetch('/api/rewards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ rewardId })
+    }).catch(() => null);
+    const data = await response?.json().catch(() => ({}));
+    button.textContent = 'Redeem $10 Credit';
+    if (!response?.ok || !data.ok) {
+      if (status) status.textContent = data.error || 'Reward could not be redeemed.';
+      return;
+    }
+    if (status) {
+      status.textContent = `Reward redeemed. $10 added to wallet. Balance: ${money(data.balance)}.`;
+      status.classList.add('success-note');
+    }
+    document.querySelector('[data-wallet-balance]')?.replaceChildren(document.createTextNode(money(data.balance)));
+    showOfferClaimedPopup(data.balance);
+    return;
+  }
+
   if (event.target.closest('[data-close-page-search]')) {
     document.querySelector('#pageSearchOverlay')?.classList.remove('open');
   }
@@ -2037,6 +2194,12 @@ document.addEventListener('click', async (event) => {
   }
   if (event.target.closest('[data-close-wishlist]')) {
     document.querySelector('#pageWishlistDrawer')?.classList.remove('open');
+  }
+  if (event.target.closest('[data-close-login-required]')) {
+    document.querySelector('[data-login-required-modal]')?.classList.remove('open');
+  }
+  if (event.target.closest('[data-close-offer-claimed]')) {
+    document.querySelector('[data-offer-claimed-modal]')?.classList.remove('open');
   }
   const pageRemove = event.target.closest('[data-page-remove]');
   if (pageRemove) {
@@ -2066,16 +2229,18 @@ document.addEventListener('click', async (event) => {
 });
 
 document.querySelectorAll('[data-page-cart]').forEach((button) => {
-  button.addEventListener('click', (event) => {
+  button.addEventListener('click', async (event) => {
     event.preventDefault();
+    if (!(await requireCommerceAuth('cart-open', null, 'cart.html'))) return;
     ensurePageCart().classList.add('open');
   });
 });
 
 document.querySelectorAll('.header-actions a[aria-label="Account"], .header-actions a[aria-label="Wishlist"], .header-actions a[href="account.html"]').forEach((button) => {
-  button.addEventListener('click', (event) => {
+  button.addEventListener('click', async (event) => {
     if (button.dataset.profile) return;
     event.preventDefault();
+    if (!(await requireCommerceAuth('wishlist', null, 'wishlist.html'))) return;
     ensureWishlistDrawer().classList.add('open');
   });
 });
@@ -2535,6 +2700,59 @@ async function initDynamicRelatedProducts() {
   }
 }
 
+async function initHomepageRecommendationRails() {
+  const pageName = window.location.pathname.split('/').pop() || 'index.html';
+  if (pageName !== 'index.html' && pageName !== '') return;
+  if (document.querySelector('[data-home-recommendation-rails]')) return;
+  const anchor = document.querySelector('.product-section') || document.querySelector('.banner.section') || document.querySelector('.footer');
+  if (!anchor) return;
+  const allProducts = uniqueProducts((await Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))).flat());
+  if (!allProducts.length) return;
+  const used = new Set();
+  const take = (list, count = 10) => {
+    const selected = [];
+    uniqueProducts(list).forEach((product) => {
+      const key = productKey(product);
+      if (selected.length < count && !used.has(key)) {
+        selected.push(product);
+        used.add(key);
+      }
+    });
+    if (selected.length < count) {
+      allProducts.forEach((product) => {
+        const key = productKey(product);
+        if (selected.length < count && !used.has(key)) {
+          selected.push(product);
+          used.add(key);
+        }
+      });
+    }
+    return selected;
+  };
+  const rails = [
+    ['New Arrivals', take(allProducts.filter((item) => item.collection?.includes('new') || item.badge === 'NEW'))],
+    ['Best Sellers', take(allProducts.filter((item) => item.collection?.includes('best') || Number(item.popularity || 0) >= 84))],
+    ['Trending Now', take([...allProducts].sort((a, b) => Number(b.popularity || 0) - Number(a.popularity || 0)))],
+    ['Recommended For You', take(allProducts.filter((item) => ['hoodies', 'sweatshirts', 'oversized-tees', 'heavyweight-tees'].includes(item.category)))],
+    ['Recently Added', take([...allProducts].reverse())],
+    ["Editor's Picks", take(allProducts.filter((item) => ['jackets', 'accessories', 'cargo-pants'].includes(item.category)))],
+    ['Luxury Essentials', take(allProducts.filter((item) => ['oversized-tees', 'heavyweight-tees', 'sweatpants'].includes(item.category)))],
+    ['Limited Drop', take(allProducts.filter((item) => item.collection?.includes('limited') || item.badge === 'LIMITED'))]
+  ].filter(([, products]) => products.length);
+  const section = document.createElement('section');
+  section.className = 'section product-smart-rails home-recommendation-rails';
+  section.dataset.homeRecommendationRails = 'true';
+  section.innerHTML = rails.map(([title, products]) => `
+    <div class="product-rail">
+      <div class="global-rail-head"><div><p class="eyebrow">${title}</p><h2>${title}</h2></div></div>
+      <div class="product-rail-track">${products.map(catalogCard).join('')}</div>
+    </div>
+  `).join('');
+  anchor.insertAdjacentElement('afterend', section);
+  window.__zavoraCatalogProducts = uniqueProducts([...(window.__zavoraCatalogProducts || []), ...allProducts]);
+  refreshWishlistButtons();
+}
+
 function uniqueProducts(products = []) {
   const seen = new Set();
   return products.filter((product) => {
@@ -2574,6 +2792,15 @@ function initProductOptions() {
   });
   initDynamicProductPage();
   initDynamicRelatedProducts();
+}
+
+async function initRewardsPage() {
+  if (!window.location.pathname.endsWith('rewards.html')) return;
+  const response = await fetch('/api/rewards', { credentials: 'include' }).catch(() => null);
+  const data = await response?.json().catch(() => ({}));
+  if (response?.ok && data.ok) {
+    document.querySelector('[data-wallet-balance]')?.replaceChildren(document.createTextNode(money(data.balance || 0)));
+  }
 }
 
 function initCheckoutGiftUi() {
@@ -2719,9 +2946,11 @@ enhanceFooter();
 injectLargeCatalog();
 filterLargeCatalog();
 loadPrintfulCatalog();
+initHomepageRecommendationRails();
 injectProductRails();
 cleanAuthPageFooter();
 initCheckoutGiftUi();
+initRewardsPage();
 hydrateCheckoutSummary();
 initRealtimeTracking();
 initTrackOrderLookup();

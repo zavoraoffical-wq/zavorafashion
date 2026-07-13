@@ -9,6 +9,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_PRODUCTS_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || process.env.PRODUCTS_TABLE || 'products';
 const SUPABASE_ORDERS_TABLE = process.env.SUPABASE_ORDERS_TABLE || process.env.ORDERS_TABLE || 'orders';
+const { db: mongoDb } = require('../lib/auth-lib');
 
 function countBy(products, getter) {
   return products.reduce((acc, product) => {
@@ -39,6 +40,7 @@ module.exports = async function handler(req, res) {
     }
     const products = rows.map((row) => row.payload).filter(Boolean);
     const orders = await loadOrders(base);
+    const mongoStats = await loadMongoStats();
     const totalValue = products.reduce((sum, item) => sum + Number(item.price || 0), 0);
     const lowStock = products.filter((item) => Number(item.stock || 5) <= 5).length;
     return json(res, 200, {
@@ -47,6 +49,8 @@ module.exports = async function handler(req, res) {
       products: products.length,
       categories: countBy(products, (item) => item.category),
       genders: countBy(products, (item) => item.gender),
+      customers: mongoStats.customers,
+      rewardClaims: mongoStats.rewardClaims,
       lowStock,
       revenuePreview: Math.round(totalValue * 2.7),
       topProducts: products.slice(0, 8).map((item, index) => ({
@@ -89,5 +93,33 @@ async function loadOrders(base) {
     });
   } catch (error) {
     return [];
+  }
+}
+
+async function loadMongoStats() {
+  try {
+    const database = await mongoDb();
+    const customers = await database.collection('users').countDocuments();
+    const rewardRows = await database.collection('rewards')
+      .find({})
+      .sort({ updatedAt: -1, redeemedAt: -1, createdAt: -1 })
+      .limit(20)
+      .toArray();
+    return {
+      customers,
+      rewardClaims: rewardRows.map((reward) => ({
+        rewardId: reward.rewardId,
+        orderId: reward.orderId,
+        email: reward.email,
+        name: reward.claimedBy?.name || '',
+        status: reward.status,
+        amount: reward.amount || 10,
+        redeemedAt: reward.redeemedAt,
+        availableAt: reward.availableAt,
+        updatedAt: reward.updatedAt
+      }))
+    };
+  } catch (error) {
+    return { customers: 0, rewardClaims: [] };
   }
 }

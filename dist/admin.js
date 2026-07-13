@@ -26,7 +26,21 @@ const ADMIN_EMAIL_KEY = 'zavoraAdminEmail';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80';
 
-document.body.classList.remove('admin-locked');
+async function requireAdminSession() {
+  try {
+    const response = await fetch('/api/admin?action=session', { credentials: 'include' });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok || !data.session) {
+      window.location.replace('admin-login.html');
+      return false;
+    }
+    document.body.classList.remove('admin-locked');
+    return true;
+  } catch (error) {
+    window.location.replace('admin-login.html');
+    return false;
+  }
+}
 
 const quickPanels = {
   categories: ['Men', 'Women', 'Hoodies', 'T-Shirts', 'Pants', 'Accessories', 'Limited Edition', 'New Arrivals', 'Best Sellers'],
@@ -121,19 +135,37 @@ function setStatCards(stats) {
     cards[0].querySelector('small').textContent = 'Live product revenue preview';
   }
   if (cards[1]) {
-    cards[1].querySelector('span').textContent = 'Live Products';
-    cards[1].querySelector('strong').textContent = String(stats.products || 0);
-    cards[1].querySelector('small').textContent = 'Imported from Printful Catalog';
+    cards[1].querySelector('span').textContent = "Today's Orders";
+    cards[1].querySelector('strong').textContent = String((stats.orders || []).filter((order) => {
+      const created = new Date(order.createdAt || order.updatedAt || 0);
+      return created.toDateString() === new Date().toDateString();
+    }).length);
+    cards[1].querySelector('small').textContent = `${(stats.orders || []).length} total live orders`;
   }
   if (cards[2]) {
-    cards[2].querySelector('span').textContent = 'Categories';
-    cards[2].querySelector('strong').textContent = String(Object.keys(stats.categories || {}).length);
-    cards[2].querySelector('small').textContent = 'Auto mapped to Zavora pages';
+    cards[2].querySelector('span').textContent = 'Total Customers';
+    cards[2].querySelector('strong').textContent = String(stats.customers || 0);
+    cards[2].querySelector('small').textContent = 'MongoDB account users';
   }
   if (cards[3]) {
     cards[3].querySelector('strong').textContent = String(stats.lowStock || 0);
     cards[3].querySelector('small').textContent = 'Limited stock watch';
   }
+}
+
+function renderRewardClaims(claims = []) {
+  const target = document.querySelector('[data-reward-claims]');
+  if (!target) return;
+  if (!claims.length) {
+    target.innerHTML = '<p>No reward claims yet.</p>';
+    return;
+  }
+  target.innerHTML = claims.slice(0, 8).map((claim) => `
+    <p>
+      <span>${claim.name || 'Zavora customer'}<br><small>${claim.email || ''}</small></span>
+      <strong>${claim.rewardId || ''}<br><small>${claim.status || 'pending'} / ${money(claim.amount || 10)}</small></strong>
+    </p>
+  `).join('');
 }
 
 function renderLiveTopProducts(products = []) {
@@ -191,6 +223,7 @@ async function refreshLiveAdminDashboard() {
     renderLiveTopProducts(stats.topProducts || []);
     renderLiveProductRows(stats.topProducts || []);
     renderLiveOrders(stats);
+    renderRewardClaims(stats.rewardClaims || []);
     const bell = document.querySelector('.admin-icon-btn');
     if (bell) bell.textContent = `Live ${stats.products || 0}`;
   } catch (error) {}
@@ -336,8 +369,14 @@ document.addEventListener('input', (event) => {
   });
 });
 
-renderQuickPanels();
-renderAdminProducts();
-setSection(window.location.hash.replace('#', '') || 'dashboard');
-refreshLiveAdminDashboard();
-window.setInterval(refreshLiveAdminDashboard, 30000);
+async function bootAdmin() {
+  const ready = await requireAdminSession();
+  if (!ready) return;
+  renderQuickPanels();
+  renderAdminProducts();
+  setSection(window.location.hash.replace('#', '') || 'dashboard');
+  refreshLiveAdminDashboard();
+  window.setInterval(refreshLiveAdminDashboard, 30000);
+}
+
+bootAdmin();

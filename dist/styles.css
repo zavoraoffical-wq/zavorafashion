@@ -578,6 +578,57 @@ h2 {
   align-items: center;
   margin-bottom: 18px;
 }
+
+.product-toolbar p,
+.catalog-sidebar .filter-head p,
+.catalog-toolbar > span {
+  display: none !important;
+}
+
+.login-required-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(10px);
+}
+
+.login-required-modal.open {
+  display: flex;
+}
+
+.login-required-panel {
+  position: relative;
+  width: min(520px, 100%);
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 44px;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.22);
+}
+
+.login-required-panel .close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+.login-required-panel h2 {
+  margin: 8px 0 14px;
+  font-family: var(--display);
+  font-size: clamp(2.3rem, 5vw, 4rem);
+  line-height: 0.95;
+}
+
+.login-required-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 28px;
+}
 .secondary-btn {
   background: var(--white);
   color: var(--text);
