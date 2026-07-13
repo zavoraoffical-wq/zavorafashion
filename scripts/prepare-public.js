@@ -18,10 +18,38 @@ function copyDir(from, to) {
   }
 }
 
+function walkHtmlFiles(dir, files = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkHtmlFiles(fullPath, files);
+    } else if (entry.name.endsWith('.html')) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
+
+function addBrandHeadTags() {
+  const faviconTags = [
+    '<link rel="icon" type="image/png" href="/assets/zavora-logo.png">',
+    '<link rel="apple-touch-icon" href="/assets/zavora-logo.png">'
+  ].join('\n    ');
+
+  for (const file of walkHtmlFiles(target)) {
+    let html = fs.readFileSync(file, 'utf8');
+    if (!html.includes('rel="icon"') && html.includes('</head>')) {
+      html = html.replace('</head>', `    ${faviconTags}\n  </head>`);
+    }
+    fs.writeFileSync(file, html);
+  }
+}
+
 if (!fs.existsSync(source)) {
   throw new Error('dist folder is missing');
 }
 
 fs.rmSync(target, { recursive: true, force: true });
 copyDir(source, target);
+addBrandHeadTags();
 console.log('Copied dist to public for Vercel static output.');

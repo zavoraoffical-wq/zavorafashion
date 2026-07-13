@@ -3,6 +3,7 @@
 .vercel
 node_modules
 .tools/
+public/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

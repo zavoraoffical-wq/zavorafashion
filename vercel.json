@@ -3,25 +3,53 @@
   "outputDirectory": "public",
   "rewrites": [
     {
-      "source": "/admin.html",
-      "destination": "/api/admin-page"
+      "source": "/admin",
+      "destination": "/admin-login.html"
     },
     {
-      "source": "/admin",
-      "destination": "/api/admin-page"
+      "source": "/admin/",
+      "destination": "/admin-login.html"
+    },
+    {
+      "source": "/api/admin-login",
+      "destination": "/api/admin?action=login"
+    },
+    {
+      "source": "/api/admin-verify",
+      "destination": "/api/admin?action=verify"
+    },
+    {
+      "source": "/api/admin-session",
+      "destination": "/api/admin?action=session"
+    },
+    {
+      "source": "/api/admin-logout",
+      "destination": "/api/admin?action=logout"
+    },
+    {
+      "source": "/api/admin-stats",
+      "destination": "/api/admin?action=stats"
+    },
+    {
+      "source": "/api/orders",
+      "destination": "/api/admin?action=orders"
+    },
+    {
+      "source": "/api/auto-import-printful",
+      "destination": "/api/admin?action=auto-import-printful"
     }
   ],
   "crons": [
     {
-      "path": "/api/auto-import-printful",
+      "path": "/api/admin?action=auto-import-printful",
       "schedule": "0 8 * * *"
     }
   ],
   "functions": {
-    "api/auto-import-printful.js": {
+    "api/printful-products.js": {
       "maxDuration": 60
     },
-    "api/printful-products.js": {
+    "api/admin.js": {
       "maxDuration": 60
     }
   },

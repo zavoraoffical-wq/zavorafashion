@@ -1,7 +1,7 @@
 const ADMIN_SESSION_KEY = 'zavoraAdminSession';
 const ADMIN_EMAIL_KEY = 'zavoraAdminEmail';
 
-fetch('/api/admin-session')
+fetch('/api/admin?action=session')
   .then((response) => response.json())
   .then((data) => {
     if (data?.ok) window.location.href = 'admin.html';
@@ -40,7 +40,7 @@ document.addEventListener('submit', async (event) => {
     }
     const button = form.querySelector('.primary-admin');
     button.textContent = 'Verifying...';
-    const response = await fetch('/api/admin-verify', {
+    const response = await fetch('/api/admin?action=verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ otp, challenge: form.dataset.challenge })
@@ -66,7 +66,7 @@ document.addEventListener('submit', async (event) => {
   }
   const button = form.querySelector('.primary-admin');
   button.textContent = 'Sending OTP...';
-  const response = await fetch('/api/admin-login', {
+  const response = await fetch('/api/admin?action=login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })

@@ -184,7 +184,7 @@ function renderLiveOrders(stats) {
 
 async function refreshLiveAdminDashboard() {
   try {
-    const response = await fetch('/api/admin-stats');
+    const response = await fetch('/api/admin?action=stats');
     const stats = await response.json();
     if (!response.ok || !stats.ok) return;
     setStatCards(stats);
@@ -230,7 +230,7 @@ function addAdminProduct(form) {
 async function importPrintfulProducts() {
   try {
     toast('Importing 500+ Printful catalog products...');
-    const response = await fetch('/api/auto-import-printful?pages=9&limit=60');
+    const response = await fetch('/api/admin?action=auto-import-printful&pages=9&limit=60');
     const data = await response.json();
     if (!response.ok && response.status !== 207) {
       toast(data.error || 'Printful import failed');
@@ -247,7 +247,7 @@ document.addEventListener('click', async (event) => {
   if (event.target.closest('.logout-btn')) {
     localStorage.removeItem(ADMIN_SESSION_KEY);
     localStorage.removeItem(ADMIN_EMAIL_KEY);
-    window.location.href = '/api/admin-logout';
+    window.location.href = '/api/admin?action=logout';
     return;
   }
 
@@ -288,7 +288,7 @@ document.addEventListener('click', async (event) => {
     const status = row?.querySelector('[data-order-status]')?.value || 'Order confirmed';
     const tracking = row?.querySelector('[data-order-tracking]')?.value.trim() || '';
     saveOrder.textContent = 'Saving...';
-    const response = await fetch('/api/orders', {
+    const response = await fetch('/api/admin?action=orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
