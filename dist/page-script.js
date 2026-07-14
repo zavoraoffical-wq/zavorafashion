@@ -770,12 +770,9 @@ const accountViews = {
       <p>Spend $100+ and receive a unique Reward ID after your delivered order clears the 24-hour window. Enter the ID here to request the $10 reward payout to your verified bank account.</p>
       <div class="mini-form reward-mini-form">
         <input data-reward-id placeholder="Reward ID">
-        <input data-reward-bank-holder placeholder="Bank account holder">
-        <input data-reward-bank-name placeholder="Bank name">
-        <input data-reward-bank-last4 placeholder="Account last 4 digits" maxlength="4" inputmode="numeric">
         <button class="primary-cta slim-btn" type="button" data-redeem-reward>Claim Reward</button>
       </div>
-      <p data-reward-status>Each Reward ID can be claimed one time only. Full bank verification is handled securely by support.</p>
+      <p data-reward-status>Each Reward ID can be claimed one time only. Bank payout verification is handled securely by support after claim.</p>
       <div class="reward-terms-actions">
         <a class="secondary-btn slim-btn" href="terms-conditions.html#reward-terms">Reward Terms & Conditions</a>
       </div>
@@ -2267,9 +2264,6 @@ document.addEventListener('click', async (event) => {
   if (event.target.closest('[data-redeem-reward]')) {
     event.preventDefault();
     const rewardId = document.querySelector('[data-reward-id]')?.value.trim();
-    const bankHolder = document.querySelector('[data-reward-bank-holder]')?.value.trim();
-    const bankName = document.querySelector('[data-reward-bank-name]')?.value.trim();
-    const bankLast4 = document.querySelector('[data-reward-bank-last4]')?.value.trim();
     const status = document.querySelector('[data-reward-status]');
     const button = event.target.closest('[data-redeem-reward]');
     const originalLabel = button.dataset.redeemLabel || button.textContent;
@@ -2283,7 +2277,7 @@ document.addEventListener('click', async (event) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ rewardId, bankHolder, bankName, bankLast4 })
+      body: JSON.stringify({ rewardId })
     }).catch(() => null);
     const data = await response?.json().catch(() => ({}));
     button.textContent = originalLabel || 'Claim Reward';

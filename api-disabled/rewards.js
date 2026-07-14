@@ -57,9 +57,6 @@ module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
     const body = parseBody(req);
     const rewardId = String(body.rewardId || '').trim().toUpperCase();
-    const bankHolder = String(body.bankHolder || '').trim().slice(0, 120);
-    const bankName = String(body.bankName || '').trim().slice(0, 120);
-    const bankLast4 = String(body.bankLast4 || '').replace(/\D/g, '').slice(-4);
     if (!rewardId) return json(res, 400, { ok: false, error: 'Reward ID is required' });
     const reward = await rewards.findOne({ rewardId, userId: String(user._id) });
     if (!reward) return json(res, 404, { ok: false, error: 'Reward not found for this account' });
@@ -79,11 +76,6 @@ module.exports = async function handler(req, res) {
       orderId: reward.orderId,
       amount: 10,
       status: 'payout_requested',
-      bank: {
-        holder: bankHolder,
-        name: bankName,
-        last4: bankLast4
-      },
       createdAt: redeemedAt,
       updatedAt: redeemedAt
     };
@@ -92,7 +84,6 @@ module.exports = async function handler(req, res) {
         status: 'payout_requested',
         redeemedAt,
         claimedBy: { userId: String(user._id), email: user.email, name: user.name || 'Zavora Customer' },
-        bank: payoutRequest.bank,
         updatedAt: redeemedAt
       }
     });

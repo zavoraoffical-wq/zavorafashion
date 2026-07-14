@@ -162,7 +162,7 @@ function renderRewardClaims(claims = []) {
   }
   target.innerHTML = claims.slice(0, 8).map((claim) => `
     <p>
-      <span>${claim.name || 'Zavora customer'}<br><small>${claim.email || ''}${claim.bank?.name ? ` / ${claim.bank.name} ${claim.bank.last4 ? `*${claim.bank.last4}` : ''}` : ''}</small></span>
+      <span>${claim.name || 'Zavora customer'}<br><small>${claim.email || ''}</small></span>
       <strong>${claim.rewardId || ''}<br><small>${claim.status || 'pending'} / payout ${money(claim.amount || 10)}</small></strong>
     </p>
   `).join('');
