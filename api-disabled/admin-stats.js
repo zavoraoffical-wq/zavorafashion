@@ -35,10 +35,8 @@ module.exports = async function handler(req, res) {
       }
     });
     const rows = await response.json().catch(() => []);
-    if (!response.ok) {
-      return json(res, response.status, { ok: false, error: rows?.message || 'Could not read admin stats' });
-    }
-    const products = rows.map((row) => row.payload).filter(Boolean);
+    const productRows = response.ok && Array.isArray(rows) ? rows : [];
+    const products = productRows.map((row) => row.payload).filter(Boolean);
     const orders = await loadOrders(base);
     const mongoStats = await loadMongoStats();
     const totalValue = products.reduce((sum, item) => sum + Number(item.price || 0), 0);
