@@ -33,6 +33,29 @@ async function importPage({ origin, gender, page, limit }) {
   };
 }
 
+async function importCollectionPage({ origin, collection, gender, page, limit }) {
+  const url = `${origin}/api/printful-products?gender=${encodeURIComponent(gender)}&collection=${encodeURIComponent(collection)}&limit=${limit}&page=${page}&save=true`;
+  const result = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+      'x-zavora-auto-import': 'true'
+    }
+  });
+  const body = await result.json().catch(() => ({}));
+  if (!result.ok || body.ok === false) {
+    throw new Error(body.error || `Import failed for ${collection}/${gender} page ${page}: ${result.status}`);
+  }
+  return {
+    collection,
+    gender,
+    page,
+    source: body.source,
+    count: body.count || 0,
+    total: body.total || 0,
+    db: body.db || null
+  };
+}
+
 module.exports = async function handler(req, res) {
   if (!['GET', 'POST'].includes(req.method)) {
     return json(res, 405, { ok: false, error: 'Method not allowed' });
@@ -51,6 +74,12 @@ module.exports = async function handler(req, res) {
     .filter(Boolean);
   const limit = Math.min(Number(req.query.limit || process.env.AUTO_IMPORT_LIMIT || 60), 60);
   const pages = Math.max(1, Math.min(Number(req.query.pages || process.env.AUTO_IMPORT_PAGES || 10), 10));
+  const collectionsEnabled = String(req.query.collections || process.env.AUTO_IMPORT_COLLECTIONS || 'true') !== 'false';
+  const collectionPages = Math.max(1, Math.min(Number(req.query.collectionPages || process.env.AUTO_IMPORT_COLLECTION_PAGES || 2), 4));
+  const collections = String(req.query.collectionList || process.env.AUTO_IMPORT_COLLECTION_LIST || 'sportswear,streetwear,beachwear,gifts,style-trends,grow-a-fashion-brand,made-in-eu,halloween,back-to-school,holiday-season,summer-hats-bags,matching-sets,summer-soccer-2026,fourth-of-july')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
   const imported = [];
   const errors = [];
 
@@ -67,6 +96,23 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (collectionsEnabled) {
+    for (const collection of collections) {
+      for (const gender of genders) {
+        for (let page = 1; page <= collectionPages; page += 1) {
+          try {
+            const result = await importCollectionPage({ origin, collection, gender, page, limit });
+            imported.push(result);
+            if (!result.count) break;
+          } catch (error) {
+            errors.push({ collection, gender, page, error: error.message });
+            break;
+          }
+        }
+      }
+    }
+  }
+
   return json(res, errors.length ? 207 : 200, {
     ok: errors.length === 0,
     provider: 'printful-catalog',
@@ -74,6 +120,8 @@ module.exports = async function handler(req, res) {
     origin,
     limit,
     pages,
+    collectionsEnabled,
+    collectionPages,
     imported,
     errors,
     importedCount: imported.reduce((sum, item) => sum + item.count, 0)

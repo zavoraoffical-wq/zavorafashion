@@ -262,15 +262,15 @@ function addAdminProduct(form) {
 
 async function importPrintfulProducts() {
   try {
-    toast('Importing 500+ Printful catalog products...');
-    const response = await fetch('/api/admin?action=auto-import-printful&pages=9&limit=60');
+    toast('Importing Printful catalog and collection products...');
+    const response = await fetch('/api/admin?action=auto-import-printful&pages=9&limit=60&collections=true&collectionPages=2');
     const data = await response.json();
     if (!response.ok && response.status !== 207) {
       toast(data.error || 'Printful import failed');
       return;
     }
     await refreshLiveAdminDashboard();
-    toast(`${data.importedCount || 0} Printful products imported to Supabase`);
+    toast(`${data.importedCount || 0} Printful catalog and collection products imported`);
   } catch (error) {
     toast('Printful import failed');
   }

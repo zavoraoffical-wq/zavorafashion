@@ -1519,7 +1519,7 @@ function injectLargeCatalog() {
   const categoryOptions = isWomenPage
     ? '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="baby-tees">Baby Tees</option><option value="hoodies">Hoodies</option><option value="cropped-hoodies">Cropped Hoodies</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="accessories">Accessories</option>'
     : '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="heavyweight-tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="zip-hoodies">Zip Hoodies</option><option value="cargo-pants">Cargo Pants</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="shorts">Shorts</option><option value="shoes">Shoes</option><option value="accessories">Accessories</option>';
-  const collectionOptions = '<option value="all">All</option><option value="sportswear">Sportswear</option><option value="streetwear">Streetwear</option><option value="matching-sets">Matching Sets</option><option value="beachwear">Beachwear</option><option value="new">New</option><option value="best">Best Sellers</option><option value="limited">Limited</option>';
+  const collectionOptions = '<option value="all">All</option><option value="sportswear">Sportswear</option><option value="streetwear">Streetwear</option><option value="beachwear">Beachwear</option><option value="gifts">Gifts</option><option value="style-trends">Style Trends</option><option value="grow-a-fashion-brand">Grow a Fashion Brand</option><option value="made-in-eu">Made in EU</option><option value="halloween">Halloween</option><option value="back-to-school">Back to School</option><option value="holiday-season">Holiday Season</option><option value="summer-hats-bags">Summer Hats & Bags</option><option value="matching-sets">Matching Sets</option><option value="summer-soccer-2026">Summer of Soccer 2026</option><option value="fourth-of-july">4th of July</option><option value="new">New</option><option value="best">Best Sellers</option><option value="limited">Limited</option>';
   const section = document.createElement('section');
   section.className = 'catalog-shop';
   section.innerHTML = `
@@ -1557,6 +1557,11 @@ function injectLargeCatalog() {
   if (label) {
     const title = section.querySelector('.catalog-toolbar h1');
     if (title) title.textContent = label;
+  }
+  const urlCollection = new URLSearchParams(window.location.search).get('collection');
+  const collectionSelect = section.querySelector('[data-catalog-filter="collection"]');
+  if (urlCollection && collectionSelect && [...collectionSelect.options].some((option) => option.value === urlCollection)) {
+    collectionSelect.value = urlCollection;
   }
 }
 

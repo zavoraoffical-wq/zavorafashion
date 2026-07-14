@@ -32,6 +32,23 @@ const categoryRules = [
   { match: /cap|hat|beanie/i, category: 'accessories', categoryPath: 'Men > Accessories', collection: 'streetwear', label: 'Accessory' }
 ];
 
+const collectionRules = [
+  { slug: 'sportswear', label: 'Sportswear', match: /sport|performance|athletic|training|gym|workout|active|jersey|soccer|basketball|tennis|golf|yoga|legging|running/i },
+  { slug: 'streetwear', label: 'Streetwear', match: /street|hoodie|sweatshirt|tee|t-shirt|cargo|jogger|cap|hat|sneaker|oversized|heavyweight|beanie|fleece/i },
+  { slug: 'beachwear', label: 'Beachwear', match: /beach|swim|board short|boardshort|flip-flop|flip flop|slide|short|summer|towel|sandal/i },
+  { slug: 'gifts', label: 'Gifts', match: /gift|mug|tumbler|journal|notebook|poster|card|blanket|pillow|bag|tote|phone|case|sticker|hat|cap|beanie/i },
+  { slug: 'style-trends', label: 'Style Trends', match: /trend|fashion|style|oversized|minimal|premium|crop|vintage|washed|acid|tie-dye|tie dye/i },
+  { slug: 'grow-a-fashion-brand', label: 'Grow a Fashion Brand', match: /brand|label|sample|starter|basic|classic|premium|organic|eco|essential/i },
+  { slug: 'made-in-eu', label: 'Made in EU', match: /eu|europe|made in eu|organic|eco|stanley|stella/i },
+  { slug: 'halloween', label: 'Halloween', match: /halloween|skull|black|orange|costume|spooky|goth|dark/i },
+  { slug: 'back-to-school', label: 'Back to School', match: /school|backpack|notebook|journal|tote|hoodie|tee|cap|sweatshirt/i },
+  { slug: 'holiday-season', label: 'Holiday Season', match: /holiday|christmas|gift|winter|beanie|sweater|fleece|blanket|red|green/i },
+  { slug: 'summer-hats-bags', label: 'Summer Hats & Bags', match: /hat|cap|bag|tote|bucket|summer|visor|beach/i },
+  { slug: 'matching-sets', label: 'Matching Sets', match: /set|matching|tracksuit|sweatpants.*hoodie|hoodie.*sweatpants/i },
+  { slug: 'summer-soccer-2026', label: 'Summer of Soccer 2026', match: /soccer|football|jersey|sport|performance|short|training/i },
+  { slug: 'fourth-of-july', label: '4th of July', match: /4th|july|usa|america|american|red|blue|white|stars|stripe/i }
+];
+
 const allowedCatalogCategories = new Set([
   'oversized-tees',
   'heavyweight-tees',
@@ -294,12 +311,20 @@ function categoryMapping(product, name, requestedGender = '') {
 function collectionTags(product, rule, index) {
   const raw = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.description || ''}`.toLowerCase();
   const tags = new Set([rule.collection, index < 6 ? 'new' : 'best']);
-  if (/sport|performance|athletic|training|gym|workout|active|jersey/.test(raw)) tags.add('sportswear');
-  if (/street|hoodie|sweatshirt|tee|t-shirt|cargo|jogger|cap|hat|sneaker/.test(raw)) tags.add('streetwear');
-  if (/set|matching|tracksuit/.test(raw)) tags.add('matching-sets');
-  if (/beach|swim|board short|boardshort|flip-flop|flip flop|slide|short/.test(raw)) tags.add('beachwear');
+  collectionRules.forEach((collection) => {
+    if (collection.match.test(raw)) tags.add(collection.slug);
+  });
   if (index % 23 === 0) tags.add('limited');
   return [...tags].filter(Boolean);
+}
+
+function productMatchesCollection(product, collection) {
+  const slug = String(collection || '').trim().toLowerCase();
+  if (!slug || slug === 'all') return true;
+  const rule = collectionRules.find((item) => item.slug === slug);
+  if (!rule) return true;
+  const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''} ${product?.category || ''} ${product?.main_category || ''} ${product?.sub_category || ''}`.toLowerCase();
+  return rule.match.test(text);
 }
 
 function productCopy(rule, name) {
@@ -727,12 +752,13 @@ function normalizeCatalogProduct(product, index, requestedGender = '') {
   }, index, requestedGender);
 }
 
-async function fetchCatalogProducts({ gender, limit, offset, query }) {
+async function fetchCatalogProducts({ gender, limit, offset, query, collection }) {
   const catalog = await printfulCatalogFetch('/products');
   const rows = Array.isArray(catalog.result) ? catalog.result : [];
   const search = String(query || '').trim().toLowerCase();
   const filtered = rows
     .filter(catalogPredicate(gender))
+    .filter((product) => productMatchesCollection(product, collection))
     .filter((product) => {
       if (!search) return true;
       const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
@@ -755,7 +781,7 @@ async function fetchCatalogProducts({ gender, limit, offset, query }) {
     }
   }));
   return {
-    source: `printful-catalog:${gender}`,
+    source: `printful-catalog:${gender}${collection ? `:${collection}` : ''}`,
     total: filtered.length,
     products: detailed.filter((product) => allowedCatalogCategories.has(product.category))
   };
@@ -770,12 +796,14 @@ module.exports = async function handler(req, res) {
     const gender = String(req.query.gender || 'men').toLowerCase();
     const limit = Math.min(Number(req.query.limit || 23), 60);
     const page = Math.max(Number(req.query.page || 1), 1);
+    const collection = String(req.query.collection || '').toLowerCase();
     const offset = (page - 1) * limit;
     const catalogImport = await fetchCatalogProducts({
       gender,
       limit,
       offset,
-      query: req.query.q || req.query.search || ''
+      query: req.query.q || req.query.search || '',
+      collection
     });
     const products = catalogImport.products;
     const source = catalogImport.source;

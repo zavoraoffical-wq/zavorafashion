@@ -30,6 +30,27 @@ const allowedCategories = new Set([
   'beachwear'
 ]);
 
+const knownCollections = new Set([
+  'sportswear',
+  'streetwear',
+  'beachwear',
+  'gifts',
+  'style-trends',
+  'grow-a-fashion-brand',
+  'made-in-eu',
+  'halloween',
+  'back-to-school',
+  'holiday-season',
+  'summer-hats-bags',
+  'matching-sets',
+  'summer-soccer-2026',
+  'fourth-of-july',
+  'new',
+  'best',
+  'limited',
+  'essentials'
+]);
+
 function isAllowedProduct(product = {}) {
   const text = `${product.name || ''} ${product.productType || ''} ${product.category || ''}`.toLowerCase();
   const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|bikini|sock|backpack|bag|tote|duffle|luggage|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|drinkware|water bottle|card|postcard)/i;
@@ -48,7 +69,7 @@ function productMatches(product, query) {
   return isAllowedProduct(product)
     && (!gender || gender === 'all' || productGender === gender)
     && categoryMatches(productCategory, category)
-    && (!collection || collection === 'all' || collections.includes(collection))
+    && (!collection || collection === 'all' || (knownCollections.has(collection) && collections.includes(collection)))
     && (!search || text.includes(search));
 }
 
