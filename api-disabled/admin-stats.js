@@ -112,6 +112,7 @@ async function loadMongoStats() {
         name: reward.claimedBy?.name || '',
         status: reward.status,
         amount: reward.amount || 10,
+        bank: reward.bank || null,
         redeemedAt: reward.redeemedAt,
         availableAt: reward.availableAt,
         updatedAt: reward.updatedAt

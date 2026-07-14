@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rewards | Zavora Fashion</title>
-  <meta name="description" content="Redeem Zavora Fashion launch store credit rewards.">
+  <meta name="description" content="Claim Zavora Fashion launch bank payout rewards.">
   <link rel="icon" href="assets/zavora-logo.png">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -32,23 +32,28 @@
   <main class="policy-page">
     <section class="policy-hero">
       <p class="eyebrow">Launch rewards</p>
-      <h1>Zavora Store Credit</h1>
-      <p>Spend $100+ and receive a $10 reward after your order is delivered and the 24-hour confirmation window is complete.</p>
+      <h1>Zavora Bank Payout Reward</h1>
+      <p>Spend $100+ and request a $10 bank payout after your order is delivered and the 24-hour confirmation window is complete.</p>
     </section>
     <section class="policy-layout">
       <article class="policy-content">
-        <h2>Redeem Reward ID</h2>
-        <p>Enter the unique Reward ID from your delivered order email. Each reward can be redeemed once.</p>
+        <h2>Claim Reward ID</h2>
+        <p>Enter the unique Reward ID from your delivered order email. Each reward can be claimed once and reviewed for bank payout.</p>
         <div class="mini-form">
           <input data-reward-id placeholder="ZVR-XXXXXX">
-          <button class="primary-cta" type="button" data-redeem-reward>Redeem $10 Credit</button>
+          <input data-reward-bank-holder placeholder="Bank account holder">
+          <input data-reward-bank-name placeholder="Bank name">
+          <input data-reward-bank-last4 placeholder="Account last 4 digits" maxlength="4" inputmode="numeric">
+          <button class="primary-cta" type="button" data-redeem-reward>Claim $10 Payout</button>
         </div>
         <p class="login-error" data-reward-status></p>
+        <a class="secondary-btn slim-btn" href="terms-conditions.html#reward-terms">Reward Terms & Conditions</a>
       </article>
       <aside class="policy-sidebar">
         <h3>Reward Rules</h3>
         <p>Orders must be delivered, not returned, not cancelled, and not refunded.</p>
-        <p><strong data-wallet-balance>$0</strong> wallet balance</p>
+        <p>Approved claims are processed as bank payout requests, not Zavora account balance.</p>
+        <a class="text-link" href="dashboard.html#rewards">Open dashboard rewards</a>
       </aside>
     </section>
   </main>

@@ -194,8 +194,8 @@ function showOfferClaimedPopup(balance) {
         <button type="button" class="close" data-close-offer-claimed aria-label="Close">${icons.close}</button>
         <p class="eyebrow">Zavora rewards</p>
         <h2>Wow offer claimed.</h2>
-        <p>$10 Zavora account credit has been added. Confirmation email sent to your account.</p>
-        <p><strong data-offer-wallet-balance></strong> account credit balance</p>
+        <p>Your $10 bank payout request has been received. Confirmation email sent to your account.</p>
+        <p><strong data-offer-wallet-balance></strong> payout request</p>
         <div class="login-required-actions">
           <a class="primary-cta" href="shop.html">Shop Now</a>
           <button class="secondary-btn" type="button" data-close-offer-claimed>Done</button>
@@ -204,7 +204,7 @@ function showOfferClaimedPopup(balance) {
     `;
     document.body.appendChild(modal);
   }
-  modal.querySelector('[data-offer-wallet-balance]').textContent = money(balance || 0);
+  modal.querySelector('[data-offer-wallet-balance]').textContent = money(10);
   modal.classList.add('open');
 }
 
@@ -743,7 +743,7 @@ const accountViews = {
     <article class="dashboard-card"><span>02</span><h3>Wishlist</h3><p>No saved products yet.</p><button class="text-link" type="button" data-dashboard-view="wishlist">Open wishlist</button></article>
     <article class="dashboard-card"><span>03</span><h3>Saved Addresses</h3><p>No saved address yet.</p><button class="text-link" type="button" data-dashboard-view="addresses">Manage addresses</button></article>
     <article class="dashboard-card"><span>04</span><h3>Profile</h3><p>Your secure Zavora profile is ready.</p><button class="text-link" type="button" data-dashboard-view="profile">Edit profile</button></article>
-    <article class="dashboard-card"><span>05</span><h3>Rewards</h3><p>Claim launch store credit after eligible delivered orders.</p><button class="text-link" type="button" data-dashboard-view="rewards">Open rewards</button></article>
+    <article class="dashboard-card"><span>05</span><h3>Rewards</h3><p>Claim a bank payout reward after eligible delivered orders.</p><button class="text-link" type="button" data-dashboard-view="rewards">Open rewards</button></article>
   `,
   orders: `
     <article class="dashboard-card dashboard-wide"><span>Orders</span><h3>No orders yet</h3><p>Your order history appears here after checkout.</p></article>
@@ -765,21 +765,26 @@ const accountViews = {
   `,
   rewards: `
     <article class="dashboard-card dashboard-wide reward-dashboard-card">
-      <span>Rewards Account</span>
-      <h3>$10 Launch Store Credit</h3>
-      <p>Spend $100+ and receive a unique Reward ID after your delivered order clears the 24-hour window. Enter the ID here to add credit to your Zavora account.</p>
+      <span>Rewards Payout</span>
+      <h3>$10 Launch Bank Payout</h3>
+      <p>Spend $100+ and receive a unique Reward ID after your delivered order clears the 24-hour window. Enter the ID here to request the $10 reward payout to your verified bank account.</p>
       <div class="mini-form reward-mini-form">
         <input data-reward-id placeholder="Reward ID">
+        <input data-reward-bank-holder placeholder="Bank account holder">
+        <input data-reward-bank-name placeholder="Bank name">
+        <input data-reward-bank-last4 placeholder="Account last 4 digits" maxlength="4" inputmode="numeric">
         <button class="primary-cta slim-btn" type="button" data-redeem-reward>Claim Reward</button>
       </div>
-      <p data-reward-status>Each Reward ID can be redeemed one time only.</p>
-      <p class="reward-balance">Account credit: <strong data-wallet-balance>$0</strong></p>
+      <p data-reward-status>Each Reward ID can be claimed one time only. Full bank verification is handled securely by support.</p>
+      <div class="reward-terms-actions">
+        <a class="secondary-btn slim-btn" href="terms-conditions.html#reward-terms">Reward Terms & Conditions</a>
+      </div>
     </article>
     <article class="dashboard-card dashboard-wide">
       <span>How it works</span>
       <h3>Premium rewards, no confusion.</h3>
-      <p>Returned, cancelled, or refunded orders automatically invalidate their reward. Active credits stay connected to this account for checkout use.</p>
-      <button class="text-link" type="button" data-dashboard-view="rewards">Open rewards</button>
+      <p>Returned, cancelled, or refunded orders automatically invalidate their reward. Approved reward claims are reviewed and processed as bank payout requests, not Zavora account balance.</p>
+      <a class="text-link" href="terms-conditions.html#reward-terms">Read reward terms</a>
     </article>
   `
 };
@@ -960,12 +965,12 @@ function injectHomepageRewardOffer() {
   section.innerHTML = `
     <div>
       <p class="eyebrow">Launch reward</p>
-      <h2>Spend $100+. Claim $10 store credit.</h2>
-      <p>After your eligible order is delivered and clears the 24-hour window, Zavora issues a unique Reward ID. Redeem it once inside your dashboard account.</p>
+      <h2>Spend $100+. Claim a $10 bank payout.</h2>
+      <p>After your eligible order is delivered and clears the 24-hour window, Zavora issues a unique Reward ID. Redeem it once from your dashboard to request bank payout review.</p>
     </div>
     <div class="reward-offer-panel">
       <strong>$10</strong>
-      <span>Account Credit</span>
+      <span>Bank Payout</span>
       <a class="primary-cta" href="dashboard.html#rewards">Claim reward</a>
       <small>Returned, cancelled, or refunded orders do not qualify.</small>
     </div>
@@ -2262,8 +2267,13 @@ document.addEventListener('click', async (event) => {
   if (event.target.closest('[data-redeem-reward]')) {
     event.preventDefault();
     const rewardId = document.querySelector('[data-reward-id]')?.value.trim();
+    const bankHolder = document.querySelector('[data-reward-bank-holder]')?.value.trim();
+    const bankName = document.querySelector('[data-reward-bank-name]')?.value.trim();
+    const bankLast4 = document.querySelector('[data-reward-bank-last4]')?.value.trim();
     const status = document.querySelector('[data-reward-status]');
     const button = event.target.closest('[data-redeem-reward]');
+    const originalLabel = button.dataset.redeemLabel || button.textContent;
+    button.dataset.redeemLabel = originalLabel;
     if (!rewardId) {
       if (status) status.textContent = 'Enter your Reward ID.';
       return;
@@ -2273,20 +2283,19 @@ document.addEventListener('click', async (event) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ rewardId })
+      body: JSON.stringify({ rewardId, bankHolder, bankName, bankLast4 })
     }).catch(() => null);
     const data = await response?.json().catch(() => ({}));
-    button.textContent = button.dataset.redeemLabel || 'Claim Reward';
+    button.textContent = originalLabel || 'Claim Reward';
     if (!response?.ok || !data.ok) {
       if (status) status.textContent = data.error || 'Reward could not be redeemed.';
       return;
     }
     if (status) {
-      status.textContent = `Reward redeemed. $10 added to your Zavora account. Balance: ${money(data.balance)}.`;
+      status.textContent = `Reward claimed. Your $10 bank payout request has been sent for review.`;
       status.classList.add('success-note');
     }
-    document.querySelector('[data-wallet-balance]')?.replaceChildren(document.createTextNode(money(data.balance)));
-    showOfferClaimedPopup(data.balance);
+    showOfferClaimedPopup(10);
     return;
   }
 

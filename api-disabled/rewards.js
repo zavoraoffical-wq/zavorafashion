@@ -17,9 +17,9 @@ async function sendRewardClaimEmail(user, reward) {
       <div style="max-width:640px;margin:0 auto;background:#fff;border:1px solid #ddd;padding:30px">
         <p style="letter-spacing:4px;font-weight:700">ZAVORA FASHION</p>
         <h1 style="font-family:Georgia,serif;font-size:38px;line-height:1.05;margin:18px 0">Wow, offer claimed.</h1>
-        <p>Your $10 Zavora Store Credit has been added to your account wallet.</p>
-        <p><strong>Reward ID:</strong> ${reward.rewardId}<br><strong>Credit:</strong> $10</p>
-        <p>Use your wallet credit on your next Zavora Fashion order.</p>
+        <p>Your $10 Zavora reward payout request has been received.</p>
+        <p><strong>Reward ID:</strong> ${reward.rewardId}<br><strong>Payout:</strong> $10</p>
+        <p>Our support team will review the eligible delivered order and process the reward to the verified bank account details connected with your request.</p>
       </div>
     </div>
   `;
@@ -32,9 +32,9 @@ async function sendRewardClaimEmail(user, reward) {
     body: JSON.stringify({
       from: rewardSender(),
       to: user.email,
-      subject: 'Wow, your Zavora offer was claimed',
+      subject: 'Wow, your Zavora reward request was received',
       html,
-      text: `Wow, offer claimed. $10 Zavora Store Credit has been added to your account. Reward ID: ${reward.rewardId}`
+      text: `Wow, offer claimed. Your $10 Zavora reward payout request was received. Reward ID: ${reward.rewardId}`
     })
   });
   return response.ok;
@@ -46,18 +46,20 @@ module.exports = async function handler(req, res) {
 
   const database = await db();
   const rewards = database.collection('rewards');
-  const wallet = database.collection('wallet_ledger');
+  const payoutRequests = database.collection('reward_payout_requests');
 
   if (req.method === 'GET') {
     const rows = await rewards.find({ userId: String(user._id) }).sort({ createdAt: -1 }).limit(50).toArray();
-    const balanceRows = await wallet.find({ userId: String(user._id) }).toArray();
-    const balance = balanceRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-    return json(res, 200, { ok: true, balance, rewards: rows });
+    const requests = await payoutRequests.find({ userId: String(user._id) }).sort({ createdAt: -1 }).limit(50).toArray();
+    return json(res, 200, { ok: true, balance: 0, rewards: rows, payoutRequests: requests });
   }
 
   if (req.method === 'POST') {
     const body = parseBody(req);
     const rewardId = String(body.rewardId || '').trim().toUpperCase();
+    const bankHolder = String(body.bankHolder || '').trim().slice(0, 120);
+    const bankName = String(body.bankName || '').trim().slice(0, 120);
+    const bankLast4 = String(body.bankLast4 || '').replace(/\D/g, '').slice(-4);
     if (!rewardId) return json(res, 400, { ok: false, error: 'Reward ID is required' });
     const reward = await rewards.findOne({ rewardId, userId: String(user._id) });
     if (!reward) return json(res, 404, { ok: false, error: 'Reward not found for this account' });
@@ -69,26 +71,34 @@ module.exports = async function handler(req, res) {
       return json(res, 409, { ok: false, error: 'Reward unlocks 24 hours after delivery' });
     }
     const redeemedAt = new Date();
+    const payoutRequest = {
+      userId: String(user._id),
+      email: user.email,
+      name: user.name || 'Zavora Customer',
+      rewardId,
+      orderId: reward.orderId,
+      amount: 10,
+      status: 'payout_requested',
+      bank: {
+        holder: bankHolder,
+        name: bankName,
+        last4: bankLast4
+      },
+      createdAt: redeemedAt,
+      updatedAt: redeemedAt
+    };
     await rewards.updateOne({ _id: reward._id }, {
       $set: {
-        status: 'redeemed',
+        status: 'payout_requested',
         redeemedAt,
         claimedBy: { userId: String(user._id), email: user.email, name: user.name || 'Zavora Customer' },
+        bank: payoutRequest.bank,
         updatedAt: redeemedAt
       }
     });
-    await wallet.insertOne({
-      userId: String(user._id),
-      email: user.email,
-      rewardId,
-      amount: 10,
-      type: 'launch_store_credit',
-      createdAt: new Date()
-    });
+    await payoutRequests.updateOne({ rewardId, userId: String(user._id) }, { $set: payoutRequest }, { upsert: true });
     const emailSent = await sendRewardClaimEmail(user, { ...reward, redeemedAt });
-    const balanceRows = await wallet.find({ userId: String(user._id) }).toArray();
-    const balance = balanceRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-    return json(res, 200, { ok: true, balance, credit: 10, emailSent });
+    return json(res, 200, { ok: true, balance: 0, payout: 10, emailSent, payoutStatus: 'payout_requested' });
   }
 
   return json(res, 405, { ok: false, error: 'Method not allowed' });
