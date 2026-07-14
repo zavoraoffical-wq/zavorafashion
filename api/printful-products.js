@@ -1,5 +1,9 @@
 const PRINTFUL_API_BASE_URL = process.env.PRINTFUL_API_BASE_URL || 'https://api.printful.com';
-const PRINTFUL_API_KEY = process.env.PRINTFUL_API_KEY;
+const PRINTFUL_API_KEY = process.env.PRINTFUL_API_KEY
+  || process.env.PRINTFUL_API_TOKEN
+  || process.env.PRINTFUL_ACCESS_TOKEN
+  || process.env.PRINTFUL_PRIVATE_TOKEN
+  || process.env.PRINTFUL_TOKEN;
 const PRINTFUL_STORE_ID = process.env.PRINTFUL_STORE_ID;
 const INCLUDED_SHIPPING_COST = 14.99;
 const SELLING_MARKUP = 1.3;
