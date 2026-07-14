@@ -710,6 +710,7 @@ const accountViews = {
     <article class="dashboard-card"><span>02</span><h3>Wishlist</h3><p>No saved products yet.</p><button class="text-link" type="button" data-dashboard-view="wishlist">Open wishlist</button></article>
     <article class="dashboard-card"><span>03</span><h3>Saved Addresses</h3><p>No saved address yet.</p><button class="text-link" type="button" data-dashboard-view="addresses">Manage addresses</button></article>
     <article class="dashboard-card"><span>04</span><h3>Profile</h3><p>Your secure Zavora profile is ready.</p><button class="text-link" type="button" data-dashboard-view="profile">Edit profile</button></article>
+    <article class="dashboard-card"><span>05</span><h3>Rewards</h3><p>Claim launch store credit after eligible delivered orders.</p><button class="text-link" type="button" data-dashboard-view="rewards">Open rewards</button></article>
   `,
   orders: `
     <article class="dashboard-card dashboard-wide"><span>Orders</span><h3>No orders yet</h3><p>Your order history appears here after checkout.</p></article>
@@ -728,6 +729,25 @@ const accountViews = {
   'change-password': `
     <article class="dashboard-card dashboard-wide"><span>Security</span><h3>Change Password</h3><p>Update your Zavora account password for secure checkout and saved address access.</p><div class="mini-form"><input type="password" placeholder="Current password"><input type="password" placeholder="New password"><input type="password" placeholder="Confirm password"></div><button class="secondary-btn slim-btn" type="button" data-password-save>Update password</button></article>
     <article class="dashboard-card dashboard-wide"><span>Protected Account</span><h3>Secure session</h3><p>Your login is protected by an encrypted server session cookie.</p></article>
+  `,
+  rewards: `
+    <article class="dashboard-card dashboard-wide reward-dashboard-card">
+      <span>Rewards Wallet</span>
+      <h3>$10 Launch Store Credit</h3>
+      <p>Spend $100+ and receive a unique Reward ID after your delivered order clears the 24-hour window. Enter the ID here to add credit to your wallet.</p>
+      <div class="mini-form reward-mini-form">
+        <input data-reward-id placeholder="Reward ID">
+        <button class="primary-cta slim-btn" type="button" data-redeem-reward>Claim Reward</button>
+      </div>
+      <p data-reward-status>Each Reward ID can be redeemed one time only.</p>
+      <p class="reward-balance">Wallet balance: <strong data-wallet-balance>$0</strong></p>
+    </article>
+    <article class="dashboard-card dashboard-wide">
+      <span>How it works</span>
+      <h3>Premium rewards, no confusion.</h3>
+      <p>Returned, cancelled, or refunded orders automatically invalidate their reward. Active credits stay connected to this account for checkout use.</p>
+      <a class="text-link" href="rewards.html">Open full rewards page</a>
+    </article>
   `
 };
 
@@ -894,6 +914,43 @@ function renderResetOtpStep(form, email) {
   form.querySelector('[data-reset-otp-input]')?.focus();
 }
 
+function injectHomepageRewardOffer() {
+  const pageName = window.location.pathname.split('/').pop();
+  const isHome = pageName === 'index.html' || pageName === '';
+  if (!isHome || document.querySelector('[data-launch-reward-offer]')) return;
+  const hero = document.querySelector('.hero');
+  const anchor = hero || document.querySelector('main > section');
+  if (!anchor) return;
+  const section = document.createElement('section');
+  section.className = 'section launch-reward-offer';
+  section.dataset.launchRewardOffer = 'true';
+  section.innerHTML = `
+    <div>
+      <p class="eyebrow">Launch reward</p>
+      <h2>Spend $100+. Claim $10 store credit.</h2>
+      <p>After your eligible order is delivered and clears the 24-hour window, Zavora issues a unique Reward ID. Redeem it once inside your dashboard wallet.</p>
+    </div>
+    <div class="reward-offer-panel">
+      <strong>$10</strong>
+      <span>Store Credit</span>
+      <a class="primary-cta" href="rewards.html">Claim reward</a>
+      <small>Returned, cancelled, or refunded orders do not qualify.</small>
+    </div>
+  `;
+  anchor.insertAdjacentElement('afterend', section);
+}
+
+async function refreshWalletBalance() {
+  if (!document.querySelector('[data-wallet-balance]')) return;
+  const response = await fetch('/api/rewards', { credentials: 'include' }).catch(() => null);
+  const data = await response?.json().catch(() => ({}));
+  if (response?.ok && data.ok) {
+    document.querySelectorAll('[data-wallet-balance]').forEach((node) => {
+      node.replaceChildren(document.createTextNode(money(data.balance || 0)));
+    });
+  }
+}
+
 function renderRegisterPage() {
   if (!window.location.pathname.endsWith('register.html')) return;
   const main = document.querySelector('main');
@@ -1005,6 +1062,9 @@ function setDashboardView(view = 'dashboard') {
       `).join(''));
     }
   }
+  if (view === 'rewards') {
+    refreshWalletBalance();
+  }
   document.querySelectorAll('.side-menu a, [data-dashboard-view]').forEach((item) => {
     item.classList.toggle('active', item.dataset.dashboardView === view);
   });
@@ -1013,6 +1073,18 @@ function setDashboardView(view = 'dashboard') {
 function initDashboardTabs() {
   const sideMenu = document.querySelector('.side-menu');
   if (!sideMenu) return;
+  if (!sideMenu.querySelector('[data-rewards-nav]')) {
+    const logoutLink = [...sideMenu.querySelectorAll('a')].find((link) => link.textContent.trim().toLowerCase() === 'logout');
+    const rewardsLink = document.createElement('a');
+    rewardsLink.href = '#rewards';
+    rewardsLink.textContent = 'Rewards';
+    rewardsLink.dataset.rewardsNav = 'true';
+    if (logoutLink) {
+      sideMenu.insertBefore(rewardsLink, logoutLink);
+    } else {
+      sideMenu.appendChild(rewardsLink);
+    }
+  }
   sideMenu.querySelectorAll('a').forEach((link) => {
     const view = link.textContent.trim().toLowerCase();
     link.dataset.dashboardView = view;
@@ -2176,7 +2248,7 @@ document.addEventListener('click', async (event) => {
       body: JSON.stringify({ rewardId })
     }).catch(() => null);
     const data = await response?.json().catch(() => ({}));
-    button.textContent = 'Redeem $10 Credit';
+    button.textContent = button.dataset.redeemLabel || 'Claim Reward';
     if (!response?.ok || !data.ok) {
       if (status) status.textContent = data.error || 'Reward could not be redeemed.';
       return;
@@ -2330,6 +2402,7 @@ function enhanceFooter() {
       <a href="${accountHref('wishlist')}" data-account-route="wishlist">Wishlist</a>
       <a href="${accountHref('orders')}" data-account-route="orders">Order History</a>
       <a href="${accountHref('addresses')}" data-account-route="addresses">Saved Addresses</a>
+      <a href="${accountHref('rewards')}" data-account-route="rewards">Rewards</a>
       <a href="${accountHref('change-password')}" data-account-route="change-password">Change Password</a>
       <a href="newsletter.html">Newsletter</a>
     </div>
@@ -2799,12 +2872,8 @@ function initProductOptions() {
 }
 
 async function initRewardsPage() {
-  if (!window.location.pathname.endsWith('rewards.html')) return;
-  const response = await fetch('/api/rewards', { credentials: 'include' }).catch(() => null);
-  const data = await response?.json().catch(() => ({}));
-  if (response?.ok && data.ok) {
-    document.querySelector('[data-wallet-balance]')?.replaceChildren(document.createTextNode(money(data.balance || 0)));
-  }
+  if (!window.location.pathname.endsWith('rewards.html') && !document.querySelector('[data-wallet-balance]')) return;
+  refreshWalletBalance();
 }
 
 function initCheckoutGiftUi() {
@@ -2947,6 +3016,7 @@ renderGiftCardsPage();
 renderSupportPages();
 injectEmailContactCards();
 enhanceFooter();
+injectHomepageRewardOffer();
 injectLargeCatalog();
 filterLargeCatalog();
 loadPrintfulCatalog();
