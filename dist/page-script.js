@@ -44,13 +44,24 @@ const accountRedirects = {
   'saved-addresses.html': 'addresses',
   'change-password.html': 'change-password'
 };
+const CURRENCY_KEY = 'zavoraCurrency';
+const COUNTRY_KEY = 'zavoraCountry';
+const currencyRates = {
+  USD: { symbol: '$', rate: 1, locale: 'en-US' },
+  EUR: { symbol: '€', rate: 0.92, locale: 'de-DE' },
+  INR: { symbol: '₹', rate: 83.5, locale: 'en-IN' }
+};
 
 function initLaunchGate() {
   return false;
 }
 
 function money(value) {
-  return `$${Number(value || 0).toLocaleString('en-US')}`;
+  const code = localStorage.getItem(CURRENCY_KEY) || 'USD';
+  const currency = currencyRates[code] || currencyRates.USD;
+  const converted = Number(value || 0) * currency.rate;
+  const digits = code === 'INR' ? 0 : 2;
+  return `${currency.symbol}${converted.toLocaleString(currency.locale, { maximumFractionDigits: digits, minimumFractionDigits: digits })}`;
 }
 
 function getSavedCart() {
@@ -183,8 +194,8 @@ function showOfferClaimedPopup(balance) {
         <button type="button" class="close" data-close-offer-claimed aria-label="Close">${icons.close}</button>
         <p class="eyebrow">Zavora rewards</p>
         <h2>Wow offer claimed.</h2>
-        <p>$10 Store Credit has been added to your wallet. Confirmation email sent to your account.</p>
-        <p><strong data-offer-wallet-balance></strong> wallet balance</p>
+        <p>$10 Zavora account credit has been added. Confirmation email sent to your account.</p>
+        <p><strong data-offer-wallet-balance></strong> account credit balance</p>
         <div class="login-required-actions">
           <a class="primary-cta" href="shop.html">Shop Now</a>
           <button class="secondary-btn" type="button" data-close-offer-claimed>Done</button>
@@ -288,6 +299,28 @@ function updateAccountLinks() {
     const view = link.dataset.accountRoute || 'dashboard';
     const target = `dashboard.html#${view}`;
     link.href = loggedIn ? target : `login.html?next=${encodeURIComponent(target)}`;
+  });
+}
+
+function initLocalizationSelectors() {
+  const savedCurrency = localStorage.getItem(CURRENCY_KEY) || 'USD';
+  const savedCountry = localStorage.getItem(COUNTRY_KEY) || 'USA';
+  document.querySelectorAll('select[aria-label="Currency selector"]').forEach((select) => {
+    if ([...select.options].some((option) => option.value === savedCurrency || option.textContent === savedCurrency)) {
+      select.value = savedCurrency;
+    }
+    select.addEventListener('change', () => {
+      localStorage.setItem(CURRENCY_KEY, select.value || 'USD');
+      window.location.reload();
+    });
+  });
+  document.querySelectorAll('select[aria-label="Country selector"]').forEach((select) => {
+    if ([...select.options].some((option) => option.value === savedCountry || option.textContent === savedCountry)) {
+      select.value = savedCountry;
+    }
+    select.addEventListener('change', () => {
+      localStorage.setItem(COUNTRY_KEY, select.value || 'USA');
+    });
   });
 }
 
@@ -409,7 +442,7 @@ function createTestOrder(method = 'PayPal') {
     total,
     shipping: shippingCost,
     items: cart,
-    status: method === 'COD' ? 'Order confirmed - Cash on Delivery' : 'Payment received',
+    status: 'Payment received',
     tracking: `ZV${String(Date.now()).slice(-8)}`,
     createdAt: new Date().toISOString()
   };
@@ -732,21 +765,21 @@ const accountViews = {
   `,
   rewards: `
     <article class="dashboard-card dashboard-wide reward-dashboard-card">
-      <span>Rewards Wallet</span>
+      <span>Rewards Account</span>
       <h3>$10 Launch Store Credit</h3>
-      <p>Spend $100+ and receive a unique Reward ID after your delivered order clears the 24-hour window. Enter the ID here to add credit to your wallet.</p>
+      <p>Spend $100+ and receive a unique Reward ID after your delivered order clears the 24-hour window. Enter the ID here to add credit to your Zavora account.</p>
       <div class="mini-form reward-mini-form">
         <input data-reward-id placeholder="Reward ID">
         <button class="primary-cta slim-btn" type="button" data-redeem-reward>Claim Reward</button>
       </div>
       <p data-reward-status>Each Reward ID can be redeemed one time only.</p>
-      <p class="reward-balance">Wallet balance: <strong data-wallet-balance>$0</strong></p>
+      <p class="reward-balance">Account credit: <strong data-wallet-balance>$0</strong></p>
     </article>
     <article class="dashboard-card dashboard-wide">
       <span>How it works</span>
       <h3>Premium rewards, no confusion.</h3>
       <p>Returned, cancelled, or refunded orders automatically invalidate their reward. Active credits stay connected to this account for checkout use.</p>
-      <a class="text-link" href="rewards.html">Open full rewards page</a>
+      <button class="text-link" type="button" data-dashboard-view="rewards">Open rewards</button>
     </article>
   `
 };
@@ -928,12 +961,12 @@ function injectHomepageRewardOffer() {
     <div>
       <p class="eyebrow">Launch reward</p>
       <h2>Spend $100+. Claim $10 store credit.</h2>
-      <p>After your eligible order is delivered and clears the 24-hour window, Zavora issues a unique Reward ID. Redeem it once inside your dashboard wallet.</p>
+      <p>After your eligible order is delivered and clears the 24-hour window, Zavora issues a unique Reward ID. Redeem it once inside your dashboard account.</p>
     </div>
     <div class="reward-offer-panel">
       <strong>$10</strong>
-      <span>Store Credit</span>
-      <a class="primary-cta" href="rewards.html">Claim reward</a>
+      <span>Account Credit</span>
+      <a class="primary-cta" href="dashboard.html#rewards">Claim reward</a>
       <small>Returned, cancelled, or refunded orders do not qualify.</small>
     </div>
   `;
@@ -1104,6 +1137,7 @@ syncPageHeader();
 normalizeHeaderSelectors();
 hydrateHeaderIcons();
 hydrateCloseIcons();
+initLocalizationSelectors();
 initPageMobileMenu();
 initPageMegaMenu();
 syncHeaderCounts();
@@ -2129,8 +2163,7 @@ document.addEventListener('click', async (event) => {
   const payNow = event.target.closest('.pay-now');
   if (payNow && window.location.pathname.endsWith('checkout.html')) {
     event.preventDefault();
-    const selected = document.querySelector('input[name="payment"]:checked')?.value || 'paypal';
-    const method = selected === 'cod' ? 'COD' : 'PayPal';
+    const method = 'PayPal';
     const order = createTestOrder(method);
     if (!order) {
       hydrateCheckoutSummary();
@@ -2139,11 +2172,6 @@ document.addEventListener('click', async (event) => {
     }
     await persistOrder(order);
     requestOrderConfirmation(order);
-    if (method === 'COD') {
-      localStorage.removeItem(PAGE_CART_KEY);
-      window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=cod`;
-      return;
-    }
     window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=paypal`;
     return;
   }
@@ -2254,7 +2282,7 @@ document.addEventListener('click', async (event) => {
       return;
     }
     if (status) {
-      status.textContent = `Reward redeemed. $10 added to wallet. Balance: ${money(data.balance)}.`;
+      status.textContent = `Reward redeemed. $10 added to your Zavora account. Balance: ${money(data.balance)}.`;
       status.classList.add('success-note');
     }
     document.querySelector('[data-wallet-balance]')?.replaceChildren(document.createTextNode(money(data.balance)));
@@ -2437,7 +2465,7 @@ function initRealtimeTracking() {
 
 function trackingTemplate(order) {
   const created = order.createdAt ? new Date(order.createdAt) : new Date();
-  const stageText = order.method === 'COD' ? 'COD order confirmed' : 'Payment received';
+  const stageText = 'Payment received';
   return `
     <h2>#${order.id.replace(/^#/, '')}</h2>
     <p>${order.items?.[0]?.name || 'Zavora order'} is active. Payment method: ${order.method || 'PayPal'}.</p>
@@ -2518,12 +2546,12 @@ function initOrderSuccessDetails() {
     const eyebrow = success.querySelector('.eyebrow');
     const copy = success.querySelector('p:not(.eyebrow)');
     const track = success.querySelector('a[href="track-order.html"]');
-    if (eyebrow) eyebrow.textContent = order.method === 'COD' ? 'Order Confirmed' : 'Payment Complete';
-    if (copy) copy.innerHTML = `Your Zavora order <strong>#${order.id}</strong> has been confirmed. ${order.method === 'COD' ? 'Cash on Delivery is selected.' : 'A receipt and shipping update will be sent to your email.'}`;
+    if (eyebrow) eyebrow.textContent = 'Payment Complete';
+    if (copy) copy.innerHTML = `Your Zavora order <strong>#${order.id}</strong> has been confirmed. A receipt and shipping update will be sent to your email.`;
     if (track) track.href = `track-order.html?order=${encodeURIComponent(order.id)}&email=${encodeURIComponent(order.email || '')}`;
   }
   const cards = document.querySelectorAll('.success-page + .section .page-card p');
-  if (cards[0]) cards[0].textContent = order.method === 'COD' ? 'Confirmed and waiting for COD delivery processing.' : 'Confirmed and moving to packing.';
+  if (cards[0]) cards[0].textContent = 'Confirmed and moving to packing.';
   if (cards[2]) cards[2].textContent = `${order.method || 'PayPal'} selected. Total: ${money(order.total || 0)}.`;
 }
 
@@ -2535,14 +2563,9 @@ function initPaymentMethodUi() {
   const pay = document.querySelector('.pay-now');
   if (!methods) return;
   function update() {
-    const selected = methods.querySelector('input[name="payment"]:checked')?.value || 'paypal';
-    const cod = selected === 'cod';
-    if (paypal) paypal.hidden = cod;
-    if (panel) panel.textContent = cod
-      ? 'Cash on Delivery test mode is active. Place the order now and track it with order ID plus email.'
-      : 'Card, Apple Pay, and Google Pay checkout are coming soon. Please use PayPal or COD test mode today.';
-    if (pay && cod) pay.textContent = 'Place COD Order';
-    if (pay && !cod && pay.dataset.payTotal) pay.textContent = pay.dataset.payTotal;
+    if (paypal) paypal.hidden = false;
+    if (panel) panel.textContent = 'Card, Apple Pay, and Google Pay checkout are coming soon. Please use PayPal today.';
+    if (pay && pay.dataset.payTotal) pay.textContent = pay.dataset.payTotal;
   }
   methods.addEventListener('change', update);
   update();
@@ -2893,12 +2916,7 @@ function initCheckoutGiftUi() {
     subtotal.removeAttribute('data-checkout-total');
     subtotal.setAttribute('data-checkout-subtotal', '');
   }
-  const methods = document.querySelector('.payment-methods');
-  if (methods && !methods.querySelector('[data-cod-method]')) {
-    methods.insertAdjacentHTML('beforeend', `
-      <label class="payment-active cod-method" data-cod-method><input type="radio" name="payment" value="cod"><span class="pay-icon cod">COD</span><small>Cash on Delivery test order</small></label>
-    `);
-  }
+  document.querySelectorAll('[data-cod-method], input[name="payment"][value="cod"]').forEach((node) => node.closest('label')?.remove());
   document.querySelectorAll('input[name="shipping"]').forEach((input) => {
     input.addEventListener('change', hydrateCheckoutSummary);
   });
