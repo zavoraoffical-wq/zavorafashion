@@ -11,6 +11,13 @@ module.exports = async function handler(req, res) {
     const database = await db();
     const existing = await database.collection('users').findOne({ email });
     if (existing) return json(res, 200, { ok: true, mode: 'password', message: 'Account exists. Login with password.' });
+    if (!password) {
+      const pending = await database.collection('auth_otps').findOne({ email, purpose: 'signup' }, { sort: { createdAt: -1 } });
+      if (pending?.extra?.passwordHash) {
+        await createOtp(email, 'signup', pending.extra);
+        return json(res, 200, { ok: true, mode: 'otp', purpose: 'signup', resent: true });
+      }
+    }
     if (!password || password.length < 6) return json(res, 400, { error: 'Password must be at least 6 characters' });
     const passwordHash = await bcrypt.hash(password, 12);
     await createOtp(email, 'signup', { name: name || email.split('@')[0], passwordHash });

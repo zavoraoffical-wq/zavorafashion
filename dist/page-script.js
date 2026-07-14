@@ -870,7 +870,7 @@ function renderSignupOtpStep(form, payload) {
       <input inputmode="numeric" maxlength="6" pattern="[0-9]*" placeholder="6-digit code" data-signup-otp-input>
       <button class="primary-cta" type="button" data-verify-signup-otp>Verify & Create Account</button>
       <button class="text-link otp-link" type="button" data-resend-signup-otp>Resend OTP</button>
-      <p class="otp-note">OTP sent from ${NOREPLY_EMAIL}. Check inbox and spam folder.</p>
+      <p class="otp-note">Verification code sent. Check inbox and spam folder.</p>
     </div>
   `;
   form.querySelector('[data-signup-otp-input]')?.focus();
@@ -1999,7 +1999,11 @@ document.addEventListener('click', async (event) => {
     if (!pending) return;
     if (pending.purpose === 'signup') {
       const note = otpErrorNode(form);
-      note.textContent = 'For security, please restart signup to receive a new OTP.';
+      const button = event.target.closest('[data-resend-signup-otp]');
+      button.textContent = 'Sending...';
+      const result = await requestAuthStart({ name: pending.name, email: pending.email });
+      button.textContent = 'Resend OTP';
+      note.textContent = result.ok ? 'New OTP sent. Check inbox and spam folder.' : (result.error || 'Unable to resend OTP. Please restart signup.');
     }
     return;
   }
