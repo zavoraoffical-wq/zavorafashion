@@ -134,7 +134,7 @@ function loginUser(account) {
   saveUserAccount(account);
 }
 
-function savePendingCommerceAction(type, product, destination = 'cart.html') {
+function savePendingCommerceAction(type, product, destination = 'checkout.html') {
   const payload = {
     type,
     product,
@@ -264,10 +264,10 @@ function completePendingCommerceAction() {
   }
   if (pending.type === 'cart') {
     addProductToCart(product);
-    return 'cart.html';
+    return 'checkout.html';
   }
   if (pending.type === 'cart-open' || pending.type === 'checkout') {
-    return pending.destination || (pending.type === 'checkout' ? 'checkout.html' : 'cart.html');
+    return pending.destination || 'checkout.html';
   }
   return pending.destination || 'dashboard.html';
 }
@@ -708,7 +708,7 @@ function syncPageHeader() {
 async function enforceAuthState() {
   await fetchAuthSession(true);
   const pageName = window.location.pathname.split('/').pop();
-  const protectedCommercePages = ['cart.html', 'checkout.html', 'wishlist.html', 'rewards.html'];
+  const protectedCommercePages = ['checkout.html', 'wishlist.html', 'rewards.html'];
   if (pageName === 'logout.html') {
     await logoutUser();
     window.location.replace('login.html');
@@ -1817,9 +1817,9 @@ document.addEventListener('click', async (event) => {
     event.preventDefault();
     const product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(cardAdd.dataset.cardAdd));
     if (!product) return;
-    if (!(await requireCommerceAuth('cart', product, 'cart.html'))) return;
+    if (!(await requireCommerceAuth('cart', product, 'checkout.html'))) return;
     addProductToCart(product, { id: String(product.id) });
-    window.location.href = 'cart.html';
+    window.location.href = 'checkout.html';
     return;
   }
 
@@ -2245,7 +2245,7 @@ document.addEventListener('click', async (event) => {
       return;
     }
     const commerceProduct = selected || { id: Date.now(), name: title, price, color, sizes: [size], images: [img], img };
-    if (!(await requireCommerceAuth(buyNow ? 'buy-now' : 'cart', commerceProduct, buyNow ? 'checkout.html' : 'cart.html'))) return;
+    if (!(await requireCommerceAuth(buyNow ? 'buy-now' : 'cart', commerceProduct, 'checkout.html'))) return;
     const id = selected ? `${productKey(selected)}-${color}-${size}` : String(Date.now());
     addProductToCart(commerceProduct, { id, color, size });
     if (selected) {
@@ -2256,7 +2256,7 @@ document.addEventListener('click', async (event) => {
       window.location.href = 'checkout.html';
       return;
     }
-    window.location.href = 'cart.html';
+    window.location.href = 'checkout.html';
     return;
   }
 
@@ -2380,7 +2380,7 @@ document.addEventListener('click', async (event) => {
 document.querySelectorAll('[data-page-cart]').forEach((button) => {
   button.addEventListener('click', async (event) => {
     event.preventDefault();
-    if (!(await requireCommerceAuth('cart-open', null, 'cart.html'))) return;
+    if (!(await requireCommerceAuth('cart-open', null, 'checkout.html'))) return;
     ensurePageCart().classList.add('open');
   });
 });
