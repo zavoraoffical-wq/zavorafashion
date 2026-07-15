@@ -1,6 +1,7 @@
 const sectionTitles = {
   dashboard: 'Zavora Dashboard',
   products: 'Products',
+  importer: 'Product Importer',
   categories: 'Categories',
   orders: 'Orders',
   customers: 'Customers',
@@ -276,6 +277,58 @@ async function importPrintfulProducts() {
   }
 }
 
+function setImportStatus(rows = []) {
+  const target = document.querySelector('[data-import-status]');
+  if (!target) return;
+  target.innerHTML = rows.map((row) => `<p><span>${row[0]}</span><strong>${row[1]}</strong></p>`).join('');
+}
+
+async function importPrintfulUrl(form) {
+  const data = new FormData(form);
+  const url = String(data.get('url') || '').trim();
+  const gender = String(data.get('gender') || 'all');
+  const mode = String(data.get('mode') || 'auto');
+  const pages = Math.max(1, Math.min(Number(data.get('pages') || 6), 10));
+  const limit = Math.max(12, Math.min(Number(data.get('limit') || 60), 60));
+  if (!url) {
+    toast('Paste a Printful URL first');
+    return;
+  }
+  const button = form.querySelector('[type="submit"]');
+  if (button) button.textContent = 'Importing...';
+  setImportStatus([
+    ['Status', 'Import running'],
+    ['URL Type', mode],
+    ['Pages', String(pages)]
+  ]);
+  try {
+    const params = new URLSearchParams({ url, gender, mode, pages: String(pages), limit: String(limit) });
+    const response = await fetch(`/api/admin?action=auto-import-printful&${params.toString()}`);
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok && response.status !== 207) {
+      throw new Error(result.error || 'Import failed');
+    }
+    const importedCount = result.importedCount || 0;
+    const errorCount = Array.isArray(result.errors) ? result.errors.length : 0;
+    setImportStatus([
+      ['Status', errorCount ? 'Completed with warnings' : 'Completed'],
+      ['Imported', `${importedCount} products`],
+      ['Duplicates', 'Skipped automatically'],
+      ['Storage', result.storage || 'MongoDB + Supabase']
+    ]);
+    await refreshLiveAdminDashboard();
+    toast(`${importedCount} products imported`);
+  } catch (error) {
+    setImportStatus([
+      ['Status', 'Import failed'],
+      ['Reason', error.message || 'Unknown error']
+    ]);
+    toast(error.message || 'Import failed');
+  } finally {
+    if (button) button.textContent = 'Import Products';
+  }
+}
+
 document.addEventListener('click', async (event) => {
   if (event.target.closest('.logout-btn')) {
     localStorage.removeItem(ADMIN_SESSION_KEY);
@@ -356,9 +409,16 @@ document.addEventListener('click', async (event) => {
 
 document.addEventListener('submit', (event) => {
   const form = event.target.closest('[data-admin-product-form]');
-  if (!form) return;
-  event.preventDefault();
-  addAdminProduct(form);
+  const importer = event.target.closest('[data-printful-url-import]');
+  if (form) {
+    event.preventDefault();
+    addAdminProduct(form);
+    return;
+  }
+  if (importer) {
+    event.preventDefault();
+    importPrintfulUrl(importer);
+  }
 });
 
 document.addEventListener('input', (event) => {

@@ -394,8 +394,18 @@ function normalizeAdminProduct(product, index) {
   };
 }
 
+function uniqueHomeProducts(productsList = []) {
+  const seen = new Set();
+  return productsList.filter((product) => {
+    const key = String(product.printfulId || product.id || product.name || '').trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function getHomeProducts() {
-  return [...getAdminProducts().map(normalizeAdminProduct), ...state.printfulProducts].map((product) => ({
+  return uniqueHomeProducts([...getAdminProducts().map(normalizeAdminProduct), ...state.printfulProducts]).map((product) => ({
     ...product,
     img: product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png',
     alt: product.alt || product.images?.[1] || product.image || product.img || product.images?.[0] || 'assets/studio-wide-trouser.png',
@@ -426,11 +436,13 @@ async function loadPrintfulProducts() {
     const daily = document.querySelector('.daily-feature');
     if (daily) daily.remove();
     renderDailyFeature();
+    renderHomeProductSections();
     renderProducts();
     renderSuggestions($('#searchInput')?.value || '');
   } catch (error) {
     state.printfulProducts = [];
     state.printfulLoaded = true;
+    renderHomeProductSections();
     renderProducts();
   }
 }
@@ -442,7 +454,7 @@ function dailyProduct(productsForDay) {
 }
 
 function renderDailyFeature() {
-  const anchor = document.querySelector('.campaign-grid');
+  const anchor = document.querySelector('.home-product-sections');
   if (!anchor || document.querySelector('.daily-feature')) return;
   const product = dailyProduct(getHomeProducts());
   if (!product) return;
@@ -466,6 +478,58 @@ function renderDailyFeature() {
       </a>
     </section>
   `);
+}
+
+const homeShelfDefinitions = [
+  { title: 'New Arrivals', href: 'new-arrivals.html', match: (product) => product.collection.includes('new') || /new/i.test(product.badge || '') },
+  { title: 'Trending Now', href: 'trending.html', match: (product) => product.collection.includes('trending') || Number(product.popularity || 0) >= 84 },
+  { title: 'Best Sellers', href: 'best-sellers.html', match: (product) => product.collection.includes('best') || Number(product.popularity || 0) >= 88 },
+  { title: 'Premium Hoodies', href: 'shop.html?category=hoodies', match: (product) => ['hoodies', 'cropped-hoodies', 'zip-hoodies'].includes(product.category) },
+  { title: 'Premium Sweatshirts', href: 'shop.html?category=sweatshirts', match: (product) => product.category === 'sweatshirts' },
+  { title: 'Luxury T-Shirts', href: 'shop.html?category=tees', match: (product) => ['tees', 'oversized-tees', 'heavyweight-tees', 'baby-tees'].includes(product.category) },
+  { title: 'Staff Picks', href: 'shop.html?sort=popular', match: (product, index) => index % 3 === 0 },
+  { title: 'Recommended For You', href: 'recommended-products.html', match: (product) => Number(product.popularity || 0) >= 78 },
+  { title: 'Recently Added', href: 'new-arrivals.html', match: (product, index) => index < 24 },
+  { title: 'Limited Drop', href: 'limited.html', match: (product) => product.collection.includes('limited') || /limited/i.test(product.badge || '') },
+  { title: 'Under $100', href: 'shop.html?under=100', match: (product) => Number(product.price || 0) <= 100 },
+  { title: 'Premium Essentials', href: 'collections.html?collection=essentials', match: (product) => product.collection.includes('essentials') || product.collection.includes('streetwear') }
+];
+
+function renderHomeProductSections() {
+  const container = document.querySelector('#homeProductSections');
+  if (!container) return;
+  const catalog = getHomeProducts();
+  if (!catalog.length) {
+    container.innerHTML = '<p class="catalog-loading">Loading Zavora product edits...</p>';
+    return;
+  }
+  const used = new Set();
+  container.innerHTML = homeShelfDefinitions.map((section, sectionIndex) => {
+    let items = catalog
+      .filter((product, index) => section.match(product, index))
+      .filter((product) => !used.has(String(product.printfulId || product.id || product.name)))
+      .slice(0, 10);
+    items.forEach((product) => used.add(String(product.printfulId || product.id || product.name)));
+    if (items.length < 4) {
+      const fallback = uniqueHomeProducts([...items, ...catalog.slice(sectionIndex * 4, sectionIndex * 4 + 10)]).slice(0, 10);
+      fallback.forEach((product) => {
+        const key = String(product.printfulId || product.id || product.name);
+        used.add(key);
+      });
+      items = fallback;
+    }
+    return `
+      <section class="home-product-shelf" aria-label="${section.title}">
+        <div class="section-title">
+          <div><p class="eyebrow">${section.title}</p><h2>${section.title}</h2></div>
+          <a class="text-link" href="${section.href}">View all</a>
+        </div>
+        <div class="home-product-slider">
+          ${items.map(productCard).join('')}
+        </div>
+      </section>
+    `;
+  }).join('');
 }
 
 function renderProducts() {

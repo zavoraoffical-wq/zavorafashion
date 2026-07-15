@@ -33,8 +33,18 @@ async function importPage({ origin, gender, page, limit }) {
   };
 }
 
-async function importCollectionPage({ origin, collection, gender, page, limit }) {
-  const url = `${origin}/api/printful-products?gender=${encodeURIComponent(gender)}&collection=${encodeURIComponent(collection)}&limit=${limit}&page=${page}&save=true`;
+async function importCatalogPage({ origin, collection, category, productId, search, gender, page, limit }) {
+  const params = new URLSearchParams({
+    gender,
+    limit: String(limit),
+    page: String(page),
+    save: 'true'
+  });
+  if (collection) params.set('collection', collection);
+  if (category) params.set('category', category);
+  if (productId) params.set('productId', productId);
+  if (search) params.set('q', search);
+  const url = `${origin}/api/printful-products?${params.toString()}`;
   const result = await fetch(url, {
     headers: {
       Accept: 'application/json',
@@ -47,6 +57,9 @@ async function importCollectionPage({ origin, collection, gender, page, limit })
   }
   return {
     collection,
+    category,
+    productId,
+    search,
     gender,
     page,
     source: body.source,
@@ -54,6 +67,45 @@ async function importCollectionPage({ origin, collection, gender, page, limit })
     total: body.total || 0,
     db: body.db || null
   };
+}
+
+function slugFromUrl(url = '') {
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/').map((part) => part.trim().toLowerCase()).filter(Boolean);
+    const last = parts[parts.length - 1] || '';
+    const collectionIndex = parts.indexOf('collections');
+    const customIndex = parts.indexOf('custom');
+    const productId = (url.match(/(?:product|products|catalog|custom-products)[^\d]*(\d{3,})/i) || url.match(/\/(\d{3,})(?:[/?#]|$)/))?.[1] || '';
+    return {
+      parts,
+      last,
+      productId,
+      collection: collectionIndex >= 0 ? parts[collectionIndex + 1] : '',
+      category: customIndex >= 0 ? parts.slice(customIndex + 2).find(Boolean) || last : last
+    };
+  } catch (error) {
+    return { parts: [], last: '', productId: '', collection: '', category: '' };
+  }
+}
+
+function normalizeCategory(slug = '') {
+  const map = {
+    hoodies: 'hoodies',
+    'sweatpants-joggers': 'sweatpants',
+    sweatpants: 'sweatpants',
+    joggers: 'sweatpants',
+    jackets: 'jackets',
+    pants: 'cargo-pants',
+    shorts: 'shorts',
+    't-shirts': 'tees',
+    tees: 'tees',
+    shoes: 'shoes',
+    footwear: 'shoes',
+    accessories: 'accessories',
+    'flip-flops': 'beachwear'
+  };
+  return map[String(slug || '').toLowerCase()] || '';
 }
 
 module.exports = async function handler(req, res) {
@@ -74,6 +126,13 @@ module.exports = async function handler(req, res) {
     .filter(Boolean);
   const limit = Math.min(Number(req.query.limit || process.env.AUTO_IMPORT_LIMIT || 60), 60);
   const pages = Math.max(1, Math.min(Number(req.query.pages || process.env.AUTO_IMPORT_PAGES || 10), 10));
+  const importUrl = String(req.query.url || req.body?.url || '').trim();
+  const importMode = String(req.query.mode || req.body?.mode || 'auto').toLowerCase();
+  const detected = slugFromUrl(importUrl);
+  const requestedCollection = String(req.query.collection || req.body?.collection || detected.collection || '').toLowerCase();
+  const requestedCategory = normalizeCategory(String(req.query.category || req.body?.category || detected.category || '').toLowerCase());
+  const requestedProductId = String(req.query.productId || req.body?.productId || detected.productId || '').trim();
+  const requestedSearch = String(req.query.search || req.query.q || req.body?.search || '').trim();
   const collectionsEnabled = String(req.query.collections || process.env.AUTO_IMPORT_COLLECTIONS || 'true') !== 'false';
   const collectionPages = Math.max(1, Math.min(Number(req.query.collectionPages || process.env.AUTO_IMPORT_COLLECTION_PAGES || 2), 4));
   const collections = String(req.query.collectionList || process.env.AUTO_IMPORT_COLLECTION_LIST || 'sportswear,streetwear,beachwear,gifts,style-trends,grow-a-fashion-brand,made-in-eu,halloween,back-to-school,holiday-season,summer-hats-bags,matching-sets,summer-soccer-2026,fourth-of-july')
@@ -83,25 +142,49 @@ module.exports = async function handler(req, res) {
   const imported = [];
   const errors = [];
 
-  for (const gender of genders) {
-    for (let page = 1; page <= pages; page += 1) {
-      try {
-        const result = await importPage({ origin, gender, page, limit });
-        imported.push(result);
-        if (!result.count) break;
-      } catch (error) {
-        errors.push({ gender, page, error: error.message });
-        break;
+  if (importUrl || requestedCollection || requestedCategory || requestedProductId || requestedSearch) {
+    for (const gender of genders) {
+      for (let page = 1; page <= pages; page += 1) {
+        try {
+          const result = await importCatalogPage({
+            origin,
+            collection: importMode === 'category' ? '' : requestedCollection,
+            category: importMode === 'collection' ? '' : requestedCategory,
+            productId: requestedProductId,
+            search: requestedSearch,
+            gender,
+            page,
+            limit
+          });
+          imported.push(result);
+          if (requestedProductId || !result.count) break;
+        } catch (error) {
+          errors.push({ url: importUrl, gender, page, error: error.message });
+          break;
+        }
+      }
+    }
+  } else {
+    for (const gender of genders) {
+      for (let page = 1; page <= pages; page += 1) {
+        try {
+          const result = await importPage({ origin, gender, page, limit });
+          imported.push(result);
+          if (!result.count) break;
+        } catch (error) {
+          errors.push({ gender, page, error: error.message });
+          break;
+        }
       }
     }
   }
 
-  if (collectionsEnabled) {
+  if (!importUrl && collectionsEnabled) {
     for (const collection of collections) {
       for (const gender of genders) {
         for (let page = 1; page <= collectionPages; page += 1) {
           try {
-            const result = await importCollectionPage({ origin, collection, gender, page, limit });
+            const result = await importCatalogPage({ origin, collection, gender, page, limit });
             imported.push(result);
             if (!result.count) break;
           } catch (error) {

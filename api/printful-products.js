@@ -773,10 +773,25 @@ function normalizeCatalogProduct(product, index, requestedGender = '') {
   }, index, requestedGender);
 }
 
-async function fetchCatalogProducts({ gender, limit, offset, query, collection }) {
+async function fetchCatalogProducts({ gender, limit, offset, query, collection, category, productId }) {
+  if (productId) {
+    const detail = await printfulCatalogFetch(`/products/${encodeURIComponent(productId)}`);
+    const product = normalizeCatalogProduct({
+      id: productId,
+      printful_detail: detail.result || {},
+      catalog_product: detail.result?.product || {},
+      catalog_variants: detail.result?.variants || []
+    }, 0, gender);
+    return {
+      source: `printful-catalog:product:${productId}`,
+      total: 1,
+      products: allowedCatalogCategories.has(product.category) ? [product] : []
+    };
+  }
   const catalog = await printfulCatalogFetch('/products');
   const rows = Array.isArray(catalog.result) ? catalog.result : [];
   const search = String(query || '').trim().toLowerCase();
+  const requestedCategory = String(category || '').trim().toLowerCase();
   const filtered = rows
     .filter(catalogPredicate(gender))
     .filter((product) => productMatchesCollection(product, collection))
@@ -804,7 +819,9 @@ async function fetchCatalogProducts({ gender, limit, offset, query, collection }
   return {
     source: `printful-catalog:${gender}${collection ? `:${collection}` : ''}`,
     total: filtered.length,
-    products: detailed.filter((product) => allowedCatalogCategories.has(product.category))
+    products: detailed
+      .filter((product) => allowedCatalogCategories.has(product.category))
+      .filter((product) => !requestedCategory || product.category === requestedCategory || (requestedCategory === 'tees' && ['oversized-tees', 'heavyweight-tees', 'baby-tees'].includes(product.category)))
   };
 }
 
@@ -818,13 +835,17 @@ module.exports = async function handler(req, res) {
     const limit = Math.min(Number(req.query.limit || 23), 60);
     const page = Math.max(Number(req.query.page || 1), 1);
     const collection = String(req.query.collection || '').toLowerCase();
+    const category = String(req.query.category || '').toLowerCase();
+    const productId = String(req.query.productId || req.query.product_id || '').trim();
     const offset = (page - 1) * limit;
     const catalogImport = await fetchCatalogProducts({
       gender,
       limit,
       offset,
       query: req.query.q || req.query.search || '',
-      collection
+      collection,
+      category,
+      productId
     });
     const products = catalogImport.products;
     const source = catalogImport.source;

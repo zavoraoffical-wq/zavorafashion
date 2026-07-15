@@ -537,6 +537,44 @@ h2 {
   transform: scale(1.04);
 }
 
+.home-product-sections {
+  display: grid;
+  gap: 18px;
+  background: #f6f6f6;
+}
+
+.home-product-shelf {
+  padding: 34px 0 18px;
+  border-top: 1px solid var(--line);
+}
+
+.home-product-shelf .section-title {
+  padding: 0 0 22px;
+}
+
+.home-product-slider {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 22vw);
+  gap: 16px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline mandatory;
+  padding-bottom: 12px;
+}
+
+.home-product-slider .product-card {
+  scroll-snap-align: start;
+}
+
+.home-product-slider::-webkit-scrollbar {
+  height: 6px;
+}
+
+.home-product-slider::-webkit-scrollbar-thumb {
+  background: var(--black);
+}
+
 .campaign-grid {
   display: grid;
   grid-template-columns: 1.2fr .8fr;
