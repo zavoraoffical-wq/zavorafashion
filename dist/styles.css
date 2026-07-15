@@ -1787,6 +1787,49 @@ h2 {
 .catalog-area {
   min-width: 0;
 }
+.collection-showcase {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 28px;
+  border: 1px solid var(--line);
+  background: linear-gradient(135deg, var(--white), #f7f5ef);
+  padding: 24px;
+}
+.collection-showcase h2 {
+  margin: 0;
+  font: clamp(32px, 4vw, 54px)/.95 Georgia, 'Times New Roman', serif;
+}
+.collection-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.collection-tile {
+  display: grid;
+  min-height: 116px;
+  align-content: space-between;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.86);
+  color: var(--text);
+  padding: 16px;
+  text-decoration: none;
+  transition: border-color .2s ease, transform .2s ease, background .2s ease;
+}
+.collection-tile:hover,
+.collection-tile.is-active {
+  border-color: var(--gold);
+  background: var(--black);
+  color: var(--white);
+  transform: translateY(-2px);
+}
+.collection-tile span {
+  font-weight: 800;
+}
+.collection-tile small {
+  color: inherit;
+  line-height: 1.35;
+  opacity: .72;
+}
 .catalog-toolbar {
   display: flex;
   align-items: end;
@@ -2698,6 +2741,7 @@ h2 {
   .catalog-shop { grid-template-columns: 1fr; padding-top: 130px; }
   .catalog-sidebar { position: static; }
   .catalog-toolbar { align-items: start; flex-direction: column; }
+  .collection-tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .product-rail-track { grid-auto-columns: minmax(260px, 48%); }
   .editorial-split, .policy-layout, .journal-feature { grid-template-columns: 1fr; }

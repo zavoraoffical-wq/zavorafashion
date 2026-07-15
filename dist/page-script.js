@@ -1422,6 +1422,41 @@ function catalogCard(item) {
   `;
 }
 
+const collectionLinks = [
+  ['sportswear', 'Sportswear', 'Performance layers, active fits, and movement-ready essentials.'],
+  ['streetwear', 'Streetwear', 'Premium hoodies, tees, caps, and everyday city silhouettes.'],
+  ['beachwear', 'Beachwear', 'Shorts, slides, summer pieces, and clean warm-weather styling.'],
+  ['gifts', 'Gifts', 'Giftable accessories, caps, and easy premium add-ons.'],
+  ['style-trends', 'Style Trends', 'Modern silhouettes, seasonal colors, and trending edits.'],
+  ['matching-sets', 'Matching Sets', 'Coordinated sweats, tracksuits, and complete outfit energy.'],
+  ['summer-hats-bags', 'Summer Hats & Bags', 'Caps, hats, bags, and sunny-day essentials.'],
+  ['holiday-season', 'Holiday Season', 'Gift-season layers, cozy fleece, and limited picks.']
+];
+
+function collectionShowcase(activeCollection = '') {
+  return `
+    <div class="collection-showcase">
+      <div>
+        <p class="eyebrow">Printful Collections</p>
+        <h2>Shop by collection</h2>
+      </div>
+      <div class="collection-tile-grid">
+        ${collectionLinks.map(([slug, title, copy]) => `
+          <a class="collection-tile ${activeCollection === slug ? 'is-active' : ''}" href="collections.html?collection=${slug}&label=${encodeURIComponent(title)}">
+            <span>${title}</span>
+            <small>${copy}</small>
+          </a>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function collectionLabel(slug = '') {
+  const item = collectionLinks.find(([value]) => value === slug);
+  return item ? item[1] : 'Zavora Collections';
+}
+
 function categoryMatches(productCategory, requestedCategory) {
   const requested = String(requestedCategory || '').toLowerCase();
   const category = String(productCategory || '').toLowerCase();
@@ -1520,6 +1555,7 @@ function injectLargeCatalog() {
     ? '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="baby-tees">Baby Tees</option><option value="hoodies">Hoodies</option><option value="cropped-hoodies">Cropped Hoodies</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="accessories">Accessories</option>'
     : '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="heavyweight-tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="zip-hoodies">Zip Hoodies</option><option value="cargo-pants">Cargo Pants</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="shorts">Shorts</option><option value="shoes">Shoes</option><option value="accessories">Accessories</option>';
   const collectionOptions = '<option value="all">All</option><option value="sportswear">Sportswear</option><option value="streetwear">Streetwear</option><option value="beachwear">Beachwear</option><option value="gifts">Gifts</option><option value="style-trends">Style Trends</option><option value="grow-a-fashion-brand">Grow a Fashion Brand</option><option value="made-in-eu">Made in EU</option><option value="halloween">Halloween</option><option value="back-to-school">Back to School</option><option value="holiday-season">Holiday Season</option><option value="summer-hats-bags">Summer Hats & Bags</option><option value="matching-sets">Matching Sets</option><option value="summer-soccer-2026">Summer of Soccer 2026</option><option value="fourth-of-july">4th of July</option><option value="new">New</option><option value="best">Best Sellers</option><option value="limited">Limited</option>';
+  const activeCollection = new URLSearchParams(window.location.search).get('collection') || '';
   const section = document.createElement('section');
   section.className = 'catalog-shop';
   section.innerHTML = `
@@ -1529,8 +1565,8 @@ function injectLargeCatalog() {
         <p><span data-catalog-count>${catalogData.length}</span> products available</p>
       </div>
       ${pageName === 'shop.html' || pageName === 'collections.html' ? `<label>Gender<select data-catalog-filter="gender">${genderOptions}</select></label>` : ''}
-      <label>Category<select data-catalog-filter="category">${categoryOptions}</select></label>
       <label>Collection<select data-catalog-filter="collection">${collectionOptions}</select></label>
+      <label>Category<select data-catalog-filter="category">${categoryOptions}</select></label>
       <label>Color<select data-catalog-filter="color"><option value="all">All</option><option>black</option><option>white</option><option>gray</option><option>blue</option><option>green</option><option>red</option><option>gold</option></select></label>
       <label>Size<select data-catalog-filter="size"><option value="all">All</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></label>
       <label>Under amount<select data-catalog-filter="price"><option value="999">All</option><option value="100">Under $100</option><option value="160">Under $160</option><option value="240">Under $240</option></select></label>
@@ -1538,8 +1574,9 @@ function injectLargeCatalog() {
       <button type="button" data-catalog-reset>Reset</button>
     </aside>
     <div class="catalog-area">
+      ${pageName === 'collections.html' ? collectionShowcase(activeCollection) : ''}
       <div class="catalog-toolbar">
-        <div><h1>Premium streetwear catalog</h1></div>
+        <div><h1>${pageName === 'collections.html' ? collectionLabel(activeCollection) : 'Premium streetwear catalog'}</h1></div>
         <span><strong data-catalog-count>${catalogData.length}</strong> results</span>
       </div>
       <div class="catalog-grid" data-catalog-grid>${catalogData.length ? catalogData.map(catalogCard).join('') : '<p class="catalog-loading">Loading Printful products...</p>'}</div>
