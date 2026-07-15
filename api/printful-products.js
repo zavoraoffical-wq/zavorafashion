@@ -232,6 +232,23 @@ async function saveProductsToMongo(products = []) {
       }
     };
   });
+  if (typeof collection.bulkWrite !== 'function') {
+    let upserted = 0;
+    let modified = 0;
+    for (const operation of operations) {
+      const update = operation.updateOne;
+      const result = await collection.updateOne(update.filter, update.update, { upsert: update.upsert });
+      if (result.upsertedId) upserted += 1;
+      if (result.modifiedCount) modified += result.modifiedCount;
+    }
+    return {
+      saved: true,
+      provider: 'mongodb-adapter',
+      count: products.length,
+      upserted,
+      modified
+    };
+  }
   const result = await collection.bulkWrite(operations, { ordered: false });
   return {
     saved: true,
