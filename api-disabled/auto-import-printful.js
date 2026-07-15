@@ -67,7 +67,7 @@ module.exports = async function handler(req, res) {
     return json(res, 401, { ok: false, error: 'Invalid cron secret' });
   }
 
-  const origin = process.env.SITE_URL || process.env.PUBLIC_SITE_URL || originFromRequest(req);
+  const origin = String(req.query.origin || originFromRequest(req) || process.env.SITE_URL || process.env.PUBLIC_SITE_URL).replace(/\/$/, '');
   const genders = String(req.query.genders || process.env.AUTO_IMPORT_GENDERS || 'men,women')
     .split(',')
     .map((item) => item.trim().toLowerCase())
