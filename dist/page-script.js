@@ -3121,6 +3121,7 @@ function initHomeBanners() {
   const hero = document.querySelector('.hero');
   const image = hero?.querySelector('img');
   const source = hero?.querySelector('source');
+  const dots = Array.from(hero?.querySelectorAll('.hero-dots button') || []);
   if (!hero || !image) return;
 
   const banners = [
@@ -3131,6 +3132,7 @@ function initHomeBanners() {
   let active = 0;
   const setBanner = (index) => {
     const next = banners[index];
+    dots.forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === index));
     image.style.opacity = '0.28';
     setTimeout(() => {
       image.src = next;
@@ -3141,6 +3143,12 @@ function initHomeBanners() {
 
   image.src = banners[0];
   if (source) source.srcset = banners[0];
+  dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+      active = index;
+      setBanner(active);
+    });
+  });
   if (banners.length > 1) {
     setInterval(() => {
       active = (active + 1) % banners.length;
