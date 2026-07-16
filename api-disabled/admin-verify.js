@@ -1,33 +1,23 @@
-const crypto = require('crypto');
+const { createAdminSession, safeEqual, sign } = require('../lib/admin-auth');
+const { logSecurityEvent, rateLimit, setSecurityHeaders } = require('../lib/security');
 
-function json(res, status, data) {
+function json(req, res, status, data) {
   res.statusCode = status;
-  res.setHeader('Content-Type', 'application/json');
+  setSecurityHeaders(req, res);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.end(JSON.stringify(data));
 }
 
-function secret() {
-  return process.env.ADMIN_AUTH_SECRET || process.env.RESEND_API_KEY || 'zavora-admin-demo-secret';
-}
-
-function sign(value) {
-  return crypto.createHmac('sha256', secret()).update(value).digest('hex');
-}
-
-function safeEqual(a, b) {
-  const left = Buffer.from(String(a));
-  const right = Buffer.from(String(b));
-  return left.length === right.length && crypto.timingSafeEqual(left, right);
-}
-
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
+  if (req.method !== 'POST') return json(req, res, 405, { error: 'Method not allowed' });
+  if (!rateLimit(req, res, 'admin-verify', { windowMs: 60_000, max: 8 })) return;
 
   let body = {};
   try {
     body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
   } catch (error) {
-    return json(res, 400, { error: 'Invalid JSON body' });
+    return json(req, res, 400, { error: 'Invalid JSON body' });
   }
 
   const otp = String(body.otp || '').trim();
@@ -35,27 +25,24 @@ module.exports = async function handler(req, res) {
   try {
     payload = JSON.parse(Buffer.from(String(body.challenge || ''), 'base64url').toString('utf8'));
   } catch (error) {
-    return json(res, 400, { error: 'Invalid login challenge' });
+    return json(req, res, 400, { error: 'Invalid login challenge' });
   }
 
   const email = String(payload.email || '').trim().toLowerCase();
   const expiresAt = Number(payload.expiresAt || 0);
-  if (!email || !expiresAt || Date.now() > expiresAt) return json(res, 401, { error: 'OTP expired' });
+  if (!email || !expiresAt || Date.now() > expiresAt) return json(req, res, 401, { error: 'OTP expired' });
 
   const expected = sign(`${email}:${otp}:${expiresAt}`);
-  if (!safeEqual(expected, payload.hash)) return json(res, 401, { error: 'Invalid OTP' });
+  if (!safeEqual(expected, payload.hash)) {
+    logSecurityEvent(req, 'admin_otp_failed', { email });
+    return json(req, res, 401, { error: 'Invalid OTP' });
+  }
 
-  const sessionMaxAge = 30 * 24 * 60 * 60;
-  const sessionExpiresAt = Date.now() + sessionMaxAge * 1000;
-  const session = Buffer.from(JSON.stringify({
-    email,
-    expiresAt: sessionExpiresAt,
-    signature: sign(`${email}:${sessionExpiresAt}:admin`)
-  })).toString('base64url');
+  const sessionData = createAdminSession(email);
 
   res.setHeader('Set-Cookie', [
-    `admin_session=${session}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${sessionMaxAge}`,
-    'admin_otp_verified=1; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=31536000'
+    `admin_session=${sessionData.session}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${sessionData.sessionMaxAge}; Priority=High`,
+    'admin_otp_verified=1; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=31536000; Priority=High'
   ]);
-  return json(res, 200, { ok: true, session, email, expiresAt: sessionExpiresAt });
+  return json(req, res, 200, { ok: true, session: sessionData.session, email, expiresAt: sessionData.expiresAt });
 };

@@ -1,7 +1,9 @@
 const { bcrypt, db, json, normalizeEmail, parseBody, publicUser, setSessionCookie, verifyOtp } = require('../lib/auth-lib');
+const { logSecurityEvent, rateLimit } = require('../lib/security');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
+  if (!rateLimit(req, res, 'auth-otp', { windowMs: 60_000, max: 10 })) return;
   try {
     const body = parseBody(req);
     const email = normalizeEmail(body.email);
@@ -37,6 +39,7 @@ module.exports = async function handler(req, res) {
     setSessionCookie(req, res, user);
     return json(res, 200, { ok: true, user: publicUser(user) });
   } catch (error) {
-    return json(res, 500, { error: error.message || 'OTP verification failed' });
+    logSecurityEvent(req, 'otp_verify_error', { message: error.message });
+    return json(res, 500, { error: 'OTP verification failed' });
   }
 };

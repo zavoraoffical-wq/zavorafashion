@@ -12,6 +12,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_PRODUCTS_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || process.env.PRODUCTS_TABLE || 'products';
 const { db: mongoDb } = require('../lib/auth-lib');
+const { logSecurityEvent, rateLimit, setSecurityHeaders } = require('../lib/security');
 
 const categoryRules = [
   { match: /women|women's|ladies|female/i, gender: 'Women' },
@@ -74,6 +75,7 @@ const allowedCatalogCategories = new Set([
 
 function response(res, status, body) {
   res.statusCode = status;
+  setSecurityHeaders({ headers: {} }, res);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.end(JSON.stringify(body));
@@ -826,8 +828,11 @@ async function fetchCatalogProducts({ gender, limit, offset, query, collection, 
 }
 
 module.exports = async function handler(req, res) {
+  if (req.method !== 'GET') return response(res, 405, { ok: false, error: 'Method not allowed' });
+  if (!rateLimit(req, res, 'printful-api', { windowMs: 60_000, max: 50 })) return;
   if (!PRINTFUL_API_KEY) {
-    return response(res, 500, { ok: false, error: 'PRINTFUL_API_KEY is missing in Vercel environment variables.' });
+    logSecurityEvent(req, 'printful_missing_api_key');
+    return response(res, 500, { ok: false, error: 'Printful integration is not configured.' });
   }
 
   try {
@@ -859,16 +864,18 @@ module.exports = async function handler(req, res) {
       try {
         db = await saveProducts(products);
       } catch (error) {
+        logSecurityEvent(req, 'printful_save_error', { message: error.message });
         db = {
           saved: false,
           provider: 'mongodb+supabase',
           count: 0,
-          error: error.message || 'Unable to save Printful products.'
+          error: 'Unable to save Printful products.'
         };
       }
     }
     response(res, 200, { ok: true, source, page, limit, total: catalogImport.total, count: products.length, db, products });
   } catch (error) {
-    response(res, 500, { ok: false, error: error.message || 'Unable to import Printful products.' });
+    logSecurityEvent(req, 'printful_import_error', { message: error.message });
+    response(res, 500, { ok: false, error: 'Unable to import Printful products.' });
   }
 };

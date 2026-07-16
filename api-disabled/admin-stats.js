@@ -1,5 +1,6 @@
 function json(res, status, body) {
   res.statusCode = status;
+  require('../lib/security').setSecurityHeaders({ headers: {} }, res);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.end(JSON.stringify(body));
@@ -10,6 +11,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABA
 const SUPABASE_PRODUCTS_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || process.env.PRODUCTS_TABLE || 'products';
 const SUPABASE_ORDERS_TABLE = process.env.SUPABASE_ORDERS_TABLE || process.env.ORDERS_TABLE || 'orders';
 const { db: mongoDb } = require('../lib/auth-lib');
+const { logSecurityEvent } = require('../lib/security');
 
 function countBy(products, getter) {
   return products.reduce((acc, product) => {
@@ -61,7 +63,8 @@ module.exports = async function handler(req, res) {
       orders
     });
   } catch (error) {
-    return json(res, 500, { ok: false, error: error.message || 'Could not load admin stats' });
+    logSecurityEvent(req, 'admin_stats_error', { message: error.message });
+    return json(res, 500, { ok: false, error: 'Could not load admin stats' });
   }
 };
 

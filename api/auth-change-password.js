@@ -1,7 +1,9 @@
 const { bcrypt, db, getSessionUser, json, parseBody } = require('../lib/auth-lib');
+const { logSecurityEvent, rateLimit } = require('../lib/security');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
+  if (!rateLimit(req, res, 'auth-change-password', { windowMs: 60_000, max: 6 })) return;
   try {
     const user = await getSessionUser(req);
     if (!user) return json(res, 401, { error: 'Login required' });
@@ -16,6 +18,7 @@ module.exports = async function handler(req, res) {
     await database.collection('users').updateOne({ _id: user._id }, { $set: { passwordHash, updatedAt: new Date() } });
     return json(res, 200, { ok: true });
   } catch (error) {
-    return json(res, 500, { error: error.message || 'Password update failed' });
+    logSecurityEvent(req, 'password_change_error', { message: error.message });
+    return json(res, 500, { error: 'Password update failed' });
   }
 };

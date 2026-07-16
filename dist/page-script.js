@@ -92,8 +92,26 @@ function normalizeCartItems(cart = []) {
 }
 
 function getLoginUrl(next = window.location.href) {
-  const target = String(next || window.location.href);
+  const target = safeInternalUrl(next || window.location.href, 'dashboard.html');
   return `login.html?next=${encodeURIComponent(target)}`;
+}
+
+function safeInternalUrl(value, fallback = 'dashboard.html') {
+  const raw = String(value || '').trim();
+  if (!raw) return fallback;
+  if (/^(javascript|data|vbscript):/i.test(raw)) return fallback;
+  try {
+    const url = new URL(raw, window.location.origin);
+    if (url.origin !== window.location.origin) return fallback;
+    const path = `${url.pathname.replace(/^\//, '')}${url.search}${url.hash}`;
+    return path || fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function safeNextParam(fallback = 'dashboard.html') {
+  return safeInternalUrl(new URLSearchParams(window.location.search).get('next'), fallback);
 }
 
 function getWishlist() {
@@ -1855,7 +1873,7 @@ document.addEventListener('click', async (event) => {
       || rawHref === 'change-password.html';
     if (accountTarget) {
       event.preventDefault();
-      const next = rawHref.includes('dashboard.html') ? rawHref : 'dashboard.html';
+      const next = safeInternalUrl(rawHref.includes('dashboard.html') ? rawHref : 'dashboard.html', 'dashboard.html');
       const user = await fetchAuthSession(true);
       window.location.href = user ? next : `login.html?next=${encodeURIComponent(next)}`;
       return;
@@ -2212,7 +2230,7 @@ document.addEventListener('click', async (event) => {
     error.textContent = '';
     loginUser(result.user);
     const resumed = completePendingCommerceAction();
-    const next = resumed || new URLSearchParams(window.location.search).get('next') || 'dashboard.html';
+    const next = safeInternalUrl(resumed || safeNextParam('dashboard.html'), 'dashboard.html');
     window.location.href = next;
     return;
   }
@@ -2266,7 +2284,7 @@ document.addEventListener('click', async (event) => {
     clearPendingSignupOtp();
     const resumed = completePendingCommerceAction();
     requestWelcomeEmail(pending.email, pending.name).finally(() => {
-      window.location.href = resumed || new URLSearchParams(window.location.search).get('next') || 'dashboard.html';
+      window.location.href = safeInternalUrl(resumed || safeNextParam('dashboard.html'), 'dashboard.html');
     });
     return;
   }

@@ -8,6 +8,8 @@ const target = path.join(root, 'public');
 function copyDir(from, to) {
   fs.mkdirSync(to, { recursive: true });
   for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
+    if (['api', 'lib', 'node_modules', '.git'].includes(entry.name)) continue;
+    if (/\.(bat|cmd|ps1|env|map)$/i.test(entry.name)) continue;
     const sourcePath = path.join(from, entry.name);
     const targetPath = path.join(to, entry.name);
     if (entry.isDirectory()) {

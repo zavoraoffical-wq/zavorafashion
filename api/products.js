@@ -1,5 +1,6 @@
 function json(res, status, body) {
   res.statusCode = status;
+  require('../lib/security').setSecurityHeaders({ headers: {} }, res);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.end(JSON.stringify(body));
@@ -9,6 +10,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_PRODUCTS_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || process.env.PRODUCTS_TABLE || 'products';
 const { db: mongoDb } = require('../lib/auth-lib');
+const { logSecurityEvent, rateLimit } = require('../lib/security');
 
 const allowedCategories = new Set([
   'oversized-tees',
@@ -156,6 +158,8 @@ async function callPrintfulHandler(req, query) {
 }
 
 module.exports = async function handler(req, res) {
+  if (req.method !== 'GET') return json(res, 405, { ok: false, error: 'Method not allowed' });
+  if (!rateLimit(req, res, 'products-api', { windowMs: 60_000, max: 120 })) return;
   try {
     const limit = Math.min(Number(req.query.limit || 1000), 1000);
     try {
@@ -179,7 +183,8 @@ module.exports = async function handler(req, res) {
       }
     } catch (error) {
       if (!SUPABASE_URL || !SUPABASE_KEY) {
-        return json(res, 500, { ok: false, error: error.message || 'MongoDB env is missing' });
+        logSecurityEvent(req, 'products_database_error', { message: error.message });
+        return json(res, 500, { ok: false, error: 'Product database is unavailable' });
       }
     }
 
@@ -233,6 +238,7 @@ module.exports = async function handler(req, res) {
       products
     });
   } catch (error) {
-    return json(res, 500, { ok: false, error: error.message || 'Could not load products' });
+    logSecurityEvent(req, 'products_api_error', { message: error.message });
+    return json(res, 500, { ok: false, error: 'Could not load products' });
   }
 };

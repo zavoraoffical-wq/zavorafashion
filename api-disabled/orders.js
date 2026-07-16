@@ -1,5 +1,6 @@
 function json(res, status, body) {
   res.statusCode = status;
+  require('../lib/security').setSecurityHeaders({ headers: {} }, res);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.end(JSON.stringify(body));
@@ -9,6 +10,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_ORDERS_TABLE = process.env.SUPABASE_ORDERS_TABLE || process.env.ORDERS_TABLE || 'orders';
 const { db: mongoDb, getSessionUser } = require('../lib/auth-lib');
+const { validAdminSession } = require('../lib/admin-auth');
+const { logSecurityEvent, rateLimit } = require('../lib/security');
 const { createOrUpdateRewardForOrder } = require('./rewards');
 
 function normalizeOrder(input = {}) {
@@ -45,12 +48,18 @@ async function supabase(path, options = {}) {
 }
 
 module.exports = async function handler(req, res) {
+  if (!rateLimit(req, res, 'orders-api', { windowMs: 60_000, max: 40 })) return;
   if (!SUPABASE_URL || !SUPABASE_KEY) return json(res, 500, { ok: false, error: 'Supabase env is missing' });
 
   try {
     if (req.method === 'GET') {
       const orderId = String(req.query.orderId || req.query.id || '').replace(/^#/, '').toUpperCase();
       const email = String(req.query.email || '').trim().toLowerCase();
+      const isAdmin = Boolean(validAdminSession(req));
+      if ((!orderId || !email) && !isAdmin) {
+        logSecurityEvent(req, 'orders_list_denied');
+        return json(res, 400, { ok: false, error: 'Order ID and email are required' });
+      }
       const filters = [];
       if (orderId) filters.push(`order_id=eq.${encodeURIComponent(orderId)}`);
       if (email) filters.push(`email=eq.${encodeURIComponent(email)}`);
@@ -80,6 +89,10 @@ module.exports = async function handler(req, res) {
       const { orderId, email, payload } = normalizeOrder(body);
       if (!orderId || !email) return json(res, 400, { ok: false, error: 'Order ID and email are required' });
       if (email !== sessionUser.email) return json(res, 403, { ok: false, error: 'Order email must match logged-in account' });
+      if (!Array.isArray(payload.items) || payload.items.length < 1 || payload.items.length > 50) {
+        return json(res, 400, { ok: false, error: 'Order items are required' });
+      }
+      payload.total = Number.isFinite(payload.total) && payload.total > 0 ? Number(payload.total.toFixed(2)) : 0;
       let existing = {};
       try {
         const existingResponse = await supabase(`?select=payload&order_id=eq.${encodeURIComponent(orderId)}&email=eq.${encodeURIComponent(email)}&limit=1`);
@@ -129,6 +142,7 @@ module.exports = async function handler(req, res) {
 
     return json(res, 405, { ok: false, error: 'Method not allowed' });
   } catch (error) {
-    return json(res, 500, { ok: false, error: error.message || 'Orders API failed' });
+    logSecurityEvent(req, 'orders_api_error', { message: error.message });
+    return json(res, 500, { ok: false, error: 'Orders API failed' });
   }
 };

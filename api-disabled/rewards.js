@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { db, getSessionUser, json, parseBody } = require('../lib/auth-lib');
+const { logSecurityEvent, rateLimit } = require('../lib/security');
 
 function rewardCode() {
   return `ZVR-${crypto.randomBytes(3).toString('hex').toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
@@ -41,58 +42,64 @@ async function sendRewardClaimEmail(user, reward) {
 }
 
 module.exports = async function handler(req, res) {
-  const user = await getSessionUser(req);
-  if (!user) return json(res, 401, { ok: false, error: 'LOGIN_REQUIRED' });
+  if (!rateLimit(req, res, 'rewards-api', { windowMs: 60_000, max: 20 })) return;
+  try {
+    const user = await getSessionUser(req);
+    if (!user) return json(res, 401, { ok: false, error: 'LOGIN_REQUIRED' });
 
-  const database = await db();
-  const rewards = database.collection('rewards');
-  const payoutRequests = database.collection('reward_payout_requests');
+    const database = await db();
+    const rewards = database.collection('rewards');
+    const payoutRequests = database.collection('reward_payout_requests');
 
-  if (req.method === 'GET') {
-    const rows = await rewards.find({ userId: String(user._id) }).sort({ createdAt: -1 }).limit(50).toArray();
-    const requests = await payoutRequests.find({ userId: String(user._id) }).sort({ createdAt: -1 }).limit(50).toArray();
-    return json(res, 200, { ok: true, balance: 0, rewards: rows, payoutRequests: requests });
-  }
-
-  if (req.method === 'POST') {
-    const body = parseBody(req);
-    const rewardId = String(body.rewardId || '').trim().toUpperCase();
-    if (!rewardId) return json(res, 400, { ok: false, error: 'Reward ID is required' });
-    const reward = await rewards.findOne({ rewardId, userId: String(user._id) });
-    if (!reward) return json(res, 404, { ok: false, error: 'Reward not found for this account' });
-    if (['invalid', 'cancelled', 'returned', 'refunded'].includes(reward.status)) {
-      return json(res, 409, { ok: false, error: 'This reward is no longer valid' });
+    if (req.method === 'GET') {
+      const rows = await rewards.find({ userId: String(user._id) }).sort({ createdAt: -1 }).limit(50).toArray();
+      const requests = await payoutRequests.find({ userId: String(user._id) }).sort({ createdAt: -1 }).limit(50).toArray();
+      return json(res, 200, { ok: true, balance: 0, rewards: rows, payoutRequests: requests });
     }
-    if (reward.redeemedAt) return json(res, 409, { ok: false, error: 'Reward already redeemed' });
-    if (reward.availableAt && new Date(reward.availableAt) > new Date()) {
-      return json(res, 409, { ok: false, error: 'Reward unlocks 24 hours after delivery' });
-    }
-    const redeemedAt = new Date();
-    const payoutRequest = {
-      userId: String(user._id),
-      email: user.email,
-      name: user.name || 'Zavora Customer',
-      rewardId,
-      orderId: reward.orderId,
-      amount: 10,
-      status: 'payout_requested',
-      createdAt: redeemedAt,
-      updatedAt: redeemedAt
-    };
-    await rewards.updateOne({ _id: reward._id }, {
-      $set: {
-        status: 'payout_requested',
-        redeemedAt,
-        claimedBy: { userId: String(user._id), email: user.email, name: user.name || 'Zavora Customer' },
-        updatedAt: redeemedAt
+
+    if (req.method === 'POST') {
+      const body = parseBody(req);
+      const rewardId = String(body.rewardId || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 40);
+      if (!rewardId) return json(res, 400, { ok: false, error: 'Reward ID is required' });
+      const reward = await rewards.findOne({ rewardId, userId: String(user._id) });
+      if (!reward) return json(res, 404, { ok: false, error: 'Reward not found for this account' });
+      if (['invalid', 'cancelled', 'returned', 'refunded'].includes(reward.status)) {
+        return json(res, 409, { ok: false, error: 'This reward is no longer valid' });
       }
-    });
-    await payoutRequests.updateOne({ rewardId, userId: String(user._id) }, { $set: payoutRequest }, { upsert: true });
-    const emailSent = await sendRewardClaimEmail(user, { ...reward, redeemedAt });
-    return json(res, 200, { ok: true, balance: 0, payout: 10, emailSent, payoutStatus: 'payout_requested' });
-  }
+      if (reward.redeemedAt) return json(res, 409, { ok: false, error: 'Reward already redeemed' });
+      if (reward.availableAt && new Date(reward.availableAt) > new Date()) {
+        return json(res, 409, { ok: false, error: 'Reward unlocks 24 hours after delivery' });
+      }
+      const redeemedAt = new Date();
+      const payoutRequest = {
+        userId: String(user._id),
+        email: user.email,
+        name: user.name || 'Zavora Customer',
+        rewardId,
+        orderId: reward.orderId,
+        amount: 10,
+        status: 'payout_requested',
+        createdAt: redeemedAt,
+        updatedAt: redeemedAt
+      };
+      await rewards.updateOne({ _id: reward._id }, {
+        $set: {
+          status: 'payout_requested',
+          redeemedAt,
+          claimedBy: { userId: String(user._id), email: user.email, name: user.name || 'Zavora Customer' },
+          updatedAt: redeemedAt
+        }
+      });
+      await payoutRequests.updateOne({ rewardId, userId: String(user._id) }, { $set: payoutRequest }, { upsert: true });
+      const emailSent = await sendRewardClaimEmail(user, { ...reward, redeemedAt });
+      return json(res, 200, { ok: true, balance: 0, payout: 10, emailSent, payoutStatus: 'payout_requested' });
+    }
 
-  return json(res, 405, { ok: false, error: 'Method not allowed' });
+    return json(res, 405, { ok: false, error: 'Method not allowed' });
+  } catch (error) {
+    logSecurityEvent(req, 'rewards_api_error', { message: error.message });
+    return json(res, 500, { ok: false, error: 'Rewards API failed' });
+  }
 };
 
 module.exports.createOrUpdateRewardForOrder = async function createOrUpdateRewardForOrder(order) {
