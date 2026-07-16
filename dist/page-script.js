@@ -3125,28 +3125,11 @@ function initHomeBanners() {
   const banners = [
     {
       image: '/assets/zavora-premium-hero.png',
-      label: 'Premium Streetwear',
-      copy: 'Timeless design, premium quality, and everyday excellence for the modern streetwear wardrobe.'
+      label: '',
+      copy: ''
     }
   ];
-  const label = hero.querySelector('.eyebrow');
-  const copy = hero.querySelector('p:not(.eyebrow)');
-  const dots = document.createElement('div');
-  dots.className = 'hero-dots';
-  dots.innerHTML = banners.map((_, index) => `<button type="button" aria-label="Show banner ${index + 1}"></button>`).join('');
-  hero.appendChild(dots);
-
-  let active = 0;
-  function showBanner(index) {
-    active = index;
-    image.src = banners[index].image;
-    if (label) label.textContent = banners[index].label;
-    if (copy) copy.textContent = banners[index].copy;
-    dots.querySelectorAll('button').forEach((button, buttonIndex) => button.classList.toggle('active', buttonIndex === index));
-  }
-  dots.querySelectorAll('button').forEach((button, index) => button.addEventListener('click', () => showBanner(index)));
-  showBanner(0);
-  setInterval(() => showBanner((active + 1) % banners.length), 5000);
+  image.src = banners[0].image;
 }
 
 initHomeBanners();
