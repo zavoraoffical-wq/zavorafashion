@@ -2217,6 +2217,8 @@ document.addEventListener('click', async (event) => {
   const payNow = event.target.closest('.pay-now');
   if (payNow && window.location.pathname.endsWith('checkout.html')) {
     event.preventDefault();
+    alert('Zavora payments are coming soon. Checkout is temporarily paused.');
+    return;
     if (!(await fetchAuthSession(true))) {
       savePendingCommerceAction('checkout', null, 'checkout.html');
       showLoginRequiredModal('checkout.html');
@@ -2623,9 +2625,13 @@ function initPaymentMethodUi() {
   const pay = document.querySelector('.pay-now');
   if (!methods) return;
   function update() {
-    if (paypal) paypal.hidden = false;
-    if (panel) panel.textContent = 'Card, Apple Pay, and Google Pay checkout are coming soon. Please use PayPal today.';
-    if (pay && pay.dataset.payTotal) pay.textContent = pay.dataset.payTotal;
+    if (paypal) paypal.hidden = true;
+    if (panel) panel.textContent = 'All payment methods are coming soon. Checkout is temporarily paused while Zavora activates payments.';
+    if (pay) {
+      pay.textContent = 'Payments Coming Soon';
+      pay.setAttribute('aria-disabled', 'true');
+      pay.classList.add('disabled');
+    }
   }
   methods.addEventListener('change', update);
   update();
@@ -3118,29 +3124,9 @@ function initHomeBanners() {
 
   const banners = [
     {
-      image: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1800&q=82',
-      label: 'Summer 2026 Drop',
-      copy: 'Luxury minimal streetwear for evenings, airports, city walks, and everything that needs confidence.'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1800&q=82',
-      label: 'Oversized Collection',
-      copy: 'Heavy layers, wide proportions, and quiet premium details for daily styling.'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1800&q=82',
-      label: 'New Arrivals',
-      copy: 'Fresh silhouettes in black, white, gray, and gold accents.'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=1800&q=82',
-      label: 'Best Sellers',
-      copy: 'The pieces customers keep choosing for a complete city wardrobe.'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=1800&q=82',
-      label: 'Limited Edition',
-      copy: 'Gold label essentials. Small batch. No restock.'
+      image: '/assets/zavora-premium-hero.png',
+      label: 'Premium Streetwear',
+      copy: 'Timeless design, premium quality, and everyday excellence for the modern streetwear wardrobe.'
     }
   ];
   const label = hero.querySelector('.eyebrow');
