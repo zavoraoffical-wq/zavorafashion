@@ -27,6 +27,7 @@ const WISHLIST_KEY = 'zavoraWishlist';
 const APPLIED_GIFT_KEY = 'zavoraAppliedGiftCard';
 const AUTH_OTP_PENDING_KEY = 'zavoraAuthOtpPending';
 const ORDER_HISTORY_KEY = 'zavoraOrders';
+const ADDRESS_BOOK_KEY = 'zavoraAddresses';
 const SUPPORT_EMAIL = 'support@zavorafashion.com';
 const NOREPLY_EMAIL = 'noreply@zavorafashion.com';
 const LEGAL_EMAIL = 'legal@zavorafashion.com';
@@ -66,14 +67,28 @@ function money(value) {
 
 function getSavedCart() {
   try {
-    return JSON.parse(localStorage.getItem(PAGE_CART_KEY)) || [];
+    const raw = JSON.parse(localStorage.getItem(PAGE_CART_KEY)) || [];
+    return normalizeCartItems(raw);
   } catch (error) {
     return [];
   }
 }
 
 function saveSavedCart(cart) {
-  localStorage.setItem(PAGE_CART_KEY, JSON.stringify(cart));
+  localStorage.setItem(PAGE_CART_KEY, JSON.stringify(normalizeCartItems(cart)));
+}
+
+function normalizeCartItems(cart = []) {
+  const seen = new Set();
+  return (Array.isArray(cart) ? cart : []).filter((item) => {
+    const key = String(item?.id || item?.printfulId || item?.name || '').trim();
+    const name = String(item?.name || '').trim().toLowerCase();
+    if (!key || !name || name === 'zavora product' || name === 'undefined') return false;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    item.qty = Math.max(1, Number(item.qty || 1));
+    return true;
+  });
 }
 
 function getLoginUrl(next = window.location.href) {
@@ -90,7 +105,14 @@ function getWishlist() {
 }
 
 function saveWishlist(items) {
-  localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
+  const seen = new Set();
+  const clean = (Array.isArray(items) ? items : []).filter((item) => {
+    const key = productKey(item);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  localStorage.setItem(WISHLIST_KEY, JSON.stringify(clean));
 }
 
 let authUser = null;
@@ -427,6 +449,41 @@ function saveSavedOrders(orders) {
   localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders));
 }
 
+function getDashboardOrders() {
+  const email = String(authDashboardData?.user?.email || authUser?.email || '').toLowerCase();
+  const liveOrders = Array.isArray(authDashboardData?.orders) ? authDashboardData.orders : [];
+  const localOrders = getSavedOrders().filter((order) => !email || String(order.email || '').toLowerCase() === email);
+  const seen = new Set();
+  return [...liveOrders, ...localOrders].filter((order) => {
+    const key = String(order?.id || '').replace(/^#/, '');
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function getSavedAddresses() {
+  try {
+    const all = JSON.parse(localStorage.getItem(ADDRESS_BOOK_KEY)) || [];
+    const email = String(authDashboardData?.user?.email || authUser?.email || '').toLowerCase();
+    return (Array.isArray(all) ? all : []).filter((item) => !email || String(item.email || '').toLowerCase() === email);
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveSavedAddresses(addresses) {
+  const email = String(authDashboardData?.user?.email || authUser?.email || '').toLowerCase();
+  let all = [];
+  try {
+    all = JSON.parse(localStorage.getItem(ADDRESS_BOOK_KEY)) || [];
+  } catch (error) {
+    all = [];
+  }
+  const other = (Array.isArray(all) ? all : []).filter((item) => String(item.email || '').toLowerCase() !== email);
+  localStorage.setItem(ADDRESS_BOOK_KEY, JSON.stringify([...other, ...addresses.map((item) => ({ ...item, email }))]));
+}
+
 function createTestOrder(method = 'PayPal') {
   const cart = getSavedCart();
   if (!cart.length) return null;
@@ -502,7 +559,7 @@ async function persistOrder(order) {
 }
 
 function cartQuantity() {
-  return getSavedCart().reduce((sum, item) => sum + Number(item.qty || 1), 0);
+  return getSavedCart().length;
 }
 
 function normalizeHeaderSelectors() {
@@ -662,8 +719,11 @@ function hydrateHeaderIcons() {
 function syncHeaderCounts() {
   document.querySelectorAll('.header-actions .cart-button').forEach((cart) => {
     const homeCount = cart.querySelector('#cartCount');
-    if (homeCount) return;
-    cart.textContent = `Bag ${cartQuantity()}`;
+    if (homeCount) {
+      homeCount.textContent = cartQuantity();
+    } else {
+      cart.textContent = `Bag ${cartQuantity()}`;
+    }
   });
 
   document.querySelectorAll('.header-actions a[aria-label="Account"], .header-actions button[aria-label="Account"], .header-actions a[aria-label="Wishlist"], .header-actions button[aria-label="Wishlist"], .header-actions a[href="account.html"]').forEach((button) => {
@@ -761,7 +821,7 @@ const accountViews = {
   `,
   addresses: `
     <article class="dashboard-card dashboard-wide"><span>Primary Address</span><h3>No saved address</h3><p>Add a delivery address for faster checkout.</p></article>
-    <article class="dashboard-card dashboard-wide address-form"><span>Add Address</span><h3>Add new delivery address</h3><div class="mini-form"><input placeholder="Full name"><input placeholder="Street address"><input placeholder="City"><input placeholder="ZIP code"></div><button class="secondary-btn slim-btn" type="button" data-add-address>Add address</button></article>
+    <article class="dashboard-card dashboard-wide address-form"><span>Add Address</span><h3>Add new delivery address</h3><div class="mini-form"><input data-address-field="name" placeholder="Full name"><input data-address-field="street" placeholder="Street address"><input data-address-field="city" placeholder="City"><input data-address-field="zip" placeholder="ZIP code"></div><button class="secondary-btn slim-btn" type="button" data-add-address>Add address</button></article>
   `,
   profile: `
     <article class="dashboard-card dashboard-wide"><span>Profile</span><h3 data-profile-name>Zavora Customer</h3><p>Email: <strong data-profile-email></strong> / Country: USA / Currency: USD</p><div class="mini-form"><input data-profile-name-input placeholder="Full name"></div><button class="text-link" type="button" data-profile-save>Save profile</button></article>
@@ -1050,7 +1110,7 @@ function setDashboardView(view = 'dashboard') {
     const count = getWishlist().length;
     const copy = wishlistCard?.querySelector('p');
     if (copy) copy.textContent = count ? `${count} saved product${count === 1 ? '' : 's'} in your wishlist.` : 'No saved products yet.';
-    const latestOrder = authDashboardData?.orders?.[0] || getSavedOrders()[0];
+    const latestOrder = getDashboardOrders()[0];
     const orderCard = [...grid.querySelectorAll('.dashboard-card')].find((card) => card.querySelector('h3')?.textContent.trim() === 'Recent Order');
     if (orderCard) {
       const rewardText = latestOrder?.rewardId ? ` Reward ID: ${latestOrder.rewardId}.` : (Number(latestOrder?.total || 0) >= 100 ? ' Reward ID appears here after delivery and 24-hour clearance.' : '');
@@ -1058,6 +1118,10 @@ function setDashboardView(view = 'dashboard') {
       const link = orderCard.querySelector('a');
       if (link && latestOrder) link.href = `track-order.html?order=${encodeURIComponent(latestOrder.id)}&email=${encodeURIComponent(latestOrder.email)}`;
     }
+    const addressCard = [...grid.querySelectorAll('.dashboard-card')].find((card) => card.querySelector('h3')?.textContent.trim() === 'Saved Addresses');
+    const addressCopy = addressCard?.querySelector('p');
+    const addressCount = getSavedAddresses().length;
+    if (addressCopy) addressCopy.textContent = addressCount ? `${addressCount} saved address${addressCount === 1 ? '' : 'es'} ready for checkout.` : 'No saved address yet.';
   }
   if (view === 'wishlist') {
     const wishlist = getWishlist();
@@ -1082,7 +1146,7 @@ function setDashboardView(view = 'dashboard') {
     if (input) input.value = account.name || '';
   }
   if (view === 'orders') {
-    const orders = authDashboardData?.orders?.length ? authDashboardData.orders : [];
+    const orders = getDashboardOrders();
     const cards = getGiftCards();
     grid.innerHTML = `
       ${orders.length ? orders.map((order) => `
@@ -1106,6 +1170,22 @@ function setDashboardView(view = 'dashboard') {
         </article>
       `).join(''));
     }
+  }
+  if (view === 'addresses') {
+    const addresses = getSavedAddresses();
+    const cards = addresses.map((address, index) => `
+      <article class="dashboard-card dashboard-wide" data-address-card="${index}">
+        <span>${index === 0 ? 'Primary Address' : `Saved Address ${index + 1}`}</span>
+        <h3>${address.name || 'Zavora customer'}</h3>
+        <p>${[address.street, address.city, address.zip].filter(Boolean).join(', ')}</p>
+        <button class="text-link" type="button" data-edit-address="${index}">Edit address</button>
+        <button class="text-link" type="button" data-remove-address="${index}">Remove</button>
+      </article>
+    `).join('');
+    grid.innerHTML = `
+      ${cards || '<article class="dashboard-card dashboard-wide"><span>Primary Address</span><h3>No saved address</h3><p>Add a delivery address for faster checkout.</p></article>'}
+      <article class="dashboard-card dashboard-wide address-form"><span>${grid.dataset.editAddress ? 'Edit Address' : 'Add Address'}</span><h3>${grid.dataset.editAddress ? 'Update delivery address' : 'Add new delivery address'}</h3><div class="mini-form"><input data-address-field="name" placeholder="Full name"><input data-address-field="street" placeholder="Street address"><input data-address-field="city" placeholder="City"><input data-address-field="zip" placeholder="ZIP code"></div><button class="secondary-btn slim-btn" type="button" data-add-address>${grid.dataset.editAddress ? 'Save address' : 'Add address'}</button></article>
+    `;
   }
   if (view === 'rewards') {
     refreshWalletBalance();
@@ -1929,10 +2009,49 @@ document.addEventListener('click', async (event) => {
   if (event.target.closest('[data-add-address]')) {
     event.preventDefault();
     const form = event.target.closest('.address-form');
-    const values = [...form.querySelectorAll('input')].map((input) => input.value.trim()).filter(Boolean);
-    const address = values.length ? values.join(', ') : 'New USA address saved for checkout';
-    form.insertAdjacentHTML('afterend', `<article class="dashboard-card dashboard-wide"><span>Saved Address</span><h3>New Address</h3><p>${address}</p><button class="text-link" type="button">Edit address</button></article>`);
-    form.querySelectorAll('input').forEach((input) => input.value = '');
+    const grid = document.querySelector('.dashboard-grid');
+    const fields = {};
+    form.querySelectorAll('[data-address-field]').forEach((input) => {
+      fields[input.dataset.addressField] = input.value.trim();
+    });
+    if (!fields.name && !fields.street && !fields.city && !fields.zip) return;
+    const addresses = getSavedAddresses();
+    const editIndex = grid?.dataset.editAddress ? Number(grid.dataset.editAddress) : -1;
+    if (editIndex >= 0) {
+      addresses[editIndex] = fields;
+      delete grid.dataset.editAddress;
+    } else {
+      addresses.unshift(fields);
+    }
+    saveSavedAddresses(addresses);
+    setDashboardView('addresses');
+    return;
+  }
+
+  const editAddress = event.target.closest('[data-edit-address]');
+  if (editAddress) {
+    event.preventDefault();
+    const grid = document.querySelector('.dashboard-grid');
+    const index = Number(editAddress.dataset.editAddress);
+    const address = getSavedAddresses()[index];
+    if (!grid || !address) return;
+    grid.dataset.editAddress = String(index);
+    const form = grid.querySelector('.address-form');
+    form.querySelector('[data-address-field="name"]').value = address.name || '';
+    form.querySelector('[data-address-field="street"]').value = address.street || '';
+    form.querySelector('[data-address-field="city"]').value = address.city || '';
+    form.querySelector('[data-address-field="zip"]').value = address.zip || '';
+    form.querySelector('[data-add-address]').textContent = 'Save address';
+    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const removeAddress = event.target.closest('[data-remove-address]');
+  if (removeAddress) {
+    event.preventDefault();
+    const index = Number(removeAddress.dataset.removeAddress);
+    saveSavedAddresses(getSavedAddresses().filter((_, addressIndex) => addressIndex !== index));
+    setDashboardView('addresses');
     return;
   }
 
@@ -2369,8 +2488,8 @@ document.addEventListener('click', async (event) => {
   }
   const pageRemove = event.target.closest('[data-page-remove]');
   if (pageRemove) {
-    const id = Number(pageRemove.dataset.pageRemove);
-    const nextCart = getSavedCart().filter((item) => Number(item.id) !== id);
+    const id = String(pageRemove.dataset.pageRemove);
+    const nextCart = getSavedCart().filter((item) => String(item.id) !== id);
     saveSavedCart(nextCart);
     renderSavedCart(document);
     renderSavedCart(document.querySelector('#pageCartDrawer') || document);
@@ -3123,26 +3242,67 @@ function initHomeBanners() {
   const source = hero?.querySelector('source');
   const dots = Array.from(hero?.querySelectorAll('.hero-dots button') || []);
   if (!hero || !image) return;
+  const eyebrow = hero.querySelector('.hero-content .eyebrow');
+  const title = hero.querySelector('.hero-content h1');
+  const copy = hero.querySelector('.hero-content p:not(.eyebrow)');
+  const cta = hero.querySelector('.hero-content .primary-cta');
 
   const banners = [
-    '/assets/zavora-hero-clean-hoodie.png',
-    '/assets/zavora-hero-clean-stairs.png',
-    '/assets/zavora-hero-clean-collection.png'
+    {
+      image: '/assets/zavora-hero-clean-hoodie.png',
+      eyebrow: 'Premium streetwear',
+      title: 'Zavora Fashion',
+      copy: 'Timeless essentials, clean silhouettes, and everyday luxury built for the modern wardrobe.',
+      cta: 'Shop Collection',
+      href: 'collections.html'
+    },
+    {
+      image: '/assets/zavora-hero-clean-stairs.png',
+      eyebrow: 'New arrivals',
+      title: 'Modern Essentials',
+      copy: 'Clean hoodies, tees, and elevated layers designed for daily movement.',
+      cta: 'Explore New',
+      href: 'new-arrivals.html'
+    },
+    {
+      image: '/assets/zavora-hero-clean-collection.png',
+      eyebrow: 'Limited drop',
+      title: 'Built For The Bold',
+      copy: 'Small-batch streetwear pieces with a sharp luxury finish.',
+      cta: 'Shop Limited',
+      href: 'limited.html'
+    },
+    {
+      image: '/assets/zavora-premium-hero.png',
+      eyebrow: 'Luxury essentials',
+      title: 'Everyday Excellence',
+      copy: 'Premium quality, refined comfort, and pieces that hold their shape.',
+      cta: 'Shop Best Sellers',
+      href: 'best-sellers.html'
+    }
   ];
   let active = 0;
   const setBanner = (index) => {
     const next = banners[index];
     dots.forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === index));
+    if (eyebrow) eyebrow.textContent = next.eyebrow;
+    if (title) title.textContent = next.title;
+    if (copy) copy.textContent = next.copy;
+    if (cta) {
+      cta.textContent = next.cta;
+      cta.href = next.href;
+    }
     image.style.opacity = '0.28';
     setTimeout(() => {
-      image.src = next;
-      if (source) source.srcset = next;
+      image.src = next.image;
+      if (source) source.srcset = next.image;
       image.style.opacity = '1';
     }, 180);
   };
 
-  image.src = banners[0];
-  if (source) source.srcset = banners[0];
+  image.src = banners[0].image;
+  if (source) source.srcset = banners[0].image;
+  setBanner(0);
   dots.forEach((dot, index) => {
     dot.addEventListener('click', () => {
       active = index;
