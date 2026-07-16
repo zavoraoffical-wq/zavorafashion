@@ -11,7 +11,12 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
 body {
   margin: 0;
   background: var(--white);
@@ -19,6 +24,8 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   letter-spacing: 0;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 html.dark,
 body.dark {
@@ -577,6 +584,7 @@ h2 {
   grid-auto-columns: minmax(260px, 22vw);
   gap: 16px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
   padding-bottom: 12px;
@@ -2050,6 +2058,8 @@ h2 {
   grid-auto-columns: minmax(260px, 24%);
   gap: 18px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   padding-bottom: 12px;
 }
@@ -2857,14 +2867,14 @@ h2 {
     min-height: 62px;
     gap: 8px;
     align-items: center;
-    overflow: visible;
+    overflow: hidden;
     transform: none;
   }
   .site-header,
   .page-header { grid-template-columns: 42px minmax(0, 1fr) auto; }
   .site-header .header-actions,
   .page-header .header-actions {
-    max-width: 110px;
+    max-width: none;
     overflow: visible;
   }
   .page-header .mobile-menu {
@@ -2887,7 +2897,7 @@ h2 {
   .brand,
   .page-header .brand {
     justify-self: start;
-    max-width: 100%;
+    max-width: calc(100vw - 212px);
     overflow: hidden;
     font-size: clamp(11px, 3.2vw, 14px);
     letter-spacing: 1.4px;
@@ -2900,7 +2910,8 @@ h2 {
   .brand span,
   .page-header .brand span {
     min-width: 0;
-    overflow: visible;
+    overflow: hidden;
+    text-overflow: clip;
     white-space: nowrap;
   }
   .brand-mark { width: 17px; height: 17px; flex: 0 0 17px; }
@@ -2914,13 +2925,15 @@ h2 {
   .page-header .header-actions .header-dropdown,
   .header-actions [data-dark],
   .page-header .header-actions [data-dark],
-  .header-actions [data-profile],
-  .page-header .header-actions [data-profile],
   .header-actions a[aria-label="Wishlist"],
   .header-actions button[aria-label="Wishlist"],
-  .header-actions a[aria-label="Account"],
-  .header-actions button[aria-label="Account"] {
+  .header-actions a[aria-label="Account"]:not([data-profile]),
+  .header-actions button[aria-label="Account"]:not([data-profile]) {
     display: none;
+  }
+  .header-actions [data-profile],
+  .page-header .header-actions [data-profile] {
+    display: inline-flex;
   }
   .icon-button,
   .page-header .header-actions a,
@@ -3018,7 +3031,7 @@ h2 {
     overflow-y: auto;
     z-index: 220;
     backdrop-filter: none;
-    transform: translateX(-24px);
+    transform: translateX(-110%);
     gap: 0;
   }
   .mobile-panel.open { transform: none; }
@@ -3123,17 +3136,19 @@ h2 {
     font-size: 13px;
     letter-spacing: 1.4px;
     gap: 5px;
+    max-width: calc(100vw - 176px);
   }
   .brand-mark { width: 17px; height: 17px; flex-basis: 17px; }
   .icon-button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    min-width: 36px;
-    width: 36px;
+    min-width: 32px;
+    width: 32px;
+    height: 34px;
   }
   .cart-button,
   .page-header .cart-button {
-    min-width: 56px;
+    min-width: 48px;
     padding: 0 8px;
     font-size: 12px;
   }

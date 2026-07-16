@@ -37,11 +37,15 @@ function addBrandHeadTags() {
     '<link rel="icon" type="image/png" href="/assets/zavora-logo.png">',
     '<link rel="apple-touch-icon" href="/assets/zavora-logo.png">'
   ].join('\n    ');
+  const analyticsScript = '<script defer src="/_vercel/insights/script.js"></script>';
 
   for (const file of walkHtmlFiles(target)) {
     let html = fs.readFileSync(file, 'utf8');
     if (!html.includes('rel="icon"') && html.includes('</head>')) {
       html = html.replace('</head>', `    ${faviconTags}\n  </head>`);
+    }
+    if (!html.includes('/_vercel/insights/script.js') && html.includes('</body>')) {
+      html = html.replace('</body>', `  ${analyticsScript}\n</body>`);
     }
     fs.writeFileSync(file, html);
   }

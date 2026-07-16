@@ -65,6 +65,23 @@ function money(value) {
   return `${currency.symbol}${converted.toLocaleString(currency.locale, { maximumFractionDigits: digits, minimumFractionDigits: digits })}`;
 }
 
+const DEMO_PRODUCT_NAMES = new Set([
+  'studio wide trouser',
+  'monogram cap',
+  'noir oversized hoodie',
+  'gold label tee',
+  'avenue cargo pant',
+  'ivory heavyweight tee',
+  'zavora cropped jacket'
+]);
+
+function cartLineKey(item = {}) {
+  const base = String(item?.id || item?.printfulId || item?.name || '').trim();
+  const color = String(item?.color || item?.colors?.[0] || '').trim().toLowerCase();
+  const size = String(item?.size || item?.sizes?.[0] || '').trim().toLowerCase();
+  return [base, color, size].filter(Boolean).join('::');
+}
+
 function getSavedCart() {
   try {
     const raw = JSON.parse(localStorage.getItem(PAGE_CART_KEY)) || [];
@@ -81,9 +98,9 @@ function saveSavedCart(cart) {
 function normalizeCartItems(cart = []) {
   const seen = new Set();
   return (Array.isArray(cart) ? cart : []).filter((item) => {
-    const key = String(item?.id || item?.printfulId || item?.name || '').trim();
+    const key = cartLineKey(item);
     const name = String(item?.name || '').trim().toLowerCase();
-    if (!key || !name || name === 'zavora product' || name === 'undefined') return false;
+    if (!key || !name || name === 'zavora product' || name === 'undefined' || DEMO_PRODUCT_NAMES.has(name)) return false;
     if (seen.has(key)) return false;
     seen.add(key);
     item.qty = Math.max(1, Number(item.qty || 1));
@@ -278,7 +295,7 @@ function addProductToCart(product, overrides = {}) {
   const line = cartLineFromProduct(product, overrides);
   if (!line) return false;
   const cart = getSavedCart();
-  const found = cart.find((item) => String(item.id) === String(line.id));
+  const found = cart.find((item) => cartLineKey(item) === cartLineKey(line));
   if (found) found.qty = Number(found.qty || 1) + 1;
   else cart.push(line);
   saveSavedCart(cart);
@@ -1366,9 +1383,9 @@ function renderSavedCart(scope = document) {
   if (items) {
     items.innerHTML = cart.length ? cart.map((item) => `
       <div class="cart-item">
-        <img src="${item.img || 'assets/studio-wide-trouser.png'}" alt="${item.name || 'Zavora product'}" onerror="this.src='assets/studio-wide-trouser.png'">
+        <img src="${item.img || item.image || ZAVORA_LOGO}" alt="${item.name || 'Zavora product'}" onerror="this.src='${ZAVORA_LOGO}'">
         <div><h3>${item.name || 'Zavora product'}</h3><span>${item.qty || 1} x ${money(item.price)}</span></div>
-        <button type="button" data-page-remove="${item.id}" aria-label="Remove ${item.name || 'item'}">&times;</button>
+        <button type="button" data-page-remove="${cartLineKey(item)}" aria-label="Remove ${item.name || 'item'}">&times;</button>
       </div>
     `).join('') : '<p>Your bag is ready for something iconic.</p>';
   }
@@ -2507,11 +2524,12 @@ document.addEventListener('click', async (event) => {
   const pageRemove = event.target.closest('[data-page-remove]');
   if (pageRemove) {
     const id = String(pageRemove.dataset.pageRemove);
-    const nextCart = getSavedCart().filter((item) => String(item.id) !== id);
+    const nextCart = getSavedCart().filter((item) => cartLineKey(item) !== id);
     saveSavedCart(nextCart);
     renderSavedCart(document);
     renderSavedCart(document.querySelector('#pageCartDrawer') || document);
     hydrateCheckoutSummary();
+    syncHeaderCounts();
   }
   if (event.target.closest('[data-catalog-reset]')) {
     document.querySelectorAll('[data-catalog-filter]').forEach((filter) => {
@@ -2985,7 +3003,12 @@ async function initDynamicRelatedProducts() {
       ['New Arrivals', base.filter((item) => item.collection?.includes('new'))],
       ['Best Sellers', base.filter((item) => item.collection?.includes('best') || item.popularity >= 84)],
       ['Similar Products', base.filter((item) => item.category === current?.category)]
-    ].map(([title, products]) => [title, uniqueProducts(products).slice(0, 10)]);
+    ].map(([title, products]) => [title, uniqueProducts(products).slice(0, 10)])
+      .filter(([, products]) => products.length);
+    if (!rails.length) {
+      anchor.remove();
+      return;
+    }
     const section = document.createElement('section');
     section.className = 'section product-smart-rails';
     section.dataset.smartProductRails = 'true';
