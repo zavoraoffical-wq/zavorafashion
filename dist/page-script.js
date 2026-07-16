@@ -3120,16 +3120,33 @@ initProductOptions();
 function initHomeBanners() {
   const hero = document.querySelector('.hero');
   const image = hero?.querySelector('img');
-  if (!hero || !image || document.querySelector('.hero-dots')) return;
+  const source = hero?.querySelector('source');
+  if (!hero || !image) return;
 
   const banners = [
-    {
-      image: '/assets/zavora-premium-hero.png',
-      label: '',
-      copy: ''
-    }
+    '/assets/zavora-hero-clean-hoodie.png',
+    '/assets/zavora-hero-clean-stairs.png',
+    '/assets/zavora-hero-clean-collection.png'
   ];
-  image.src = banners[0].image;
+  let active = 0;
+  const setBanner = (index) => {
+    const next = banners[index];
+    image.style.opacity = '0.28';
+    setTimeout(() => {
+      image.src = next;
+      if (source) source.srcset = next;
+      image.style.opacity = '1';
+    }, 180);
+  };
+
+  image.src = banners[0];
+  if (source) source.srcset = banners[0];
+  if (banners.length > 1) {
+    setInterval(() => {
+      active = (active + 1) % banners.length;
+      setBanner(active);
+    }, 5000);
+  }
 }
 
 initHomeBanners();
