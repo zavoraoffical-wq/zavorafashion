@@ -8,7 +8,7 @@ function json(res, status, body) {
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_ORDERS_TABLE = process.env.SUPABASE_ORDERS_TABLE || process.env.ORDERS_TABLE || 'orders';
-const { db: mongoDb } = require('../lib/auth-lib');
+const { db: mongoDb, getSessionUser } = require('../lib/auth-lib');
 const { createOrUpdateRewardForOrder } = require('./rewards');
 
 function normalizeOrder(input = {}) {
@@ -74,9 +74,12 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
+      const sessionUser = await getSessionUser(req);
+      if (!sessionUser) return json(res, 401, { ok: false, error: 'Login required before placing an order' });
       const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
       const { orderId, email, payload } = normalizeOrder(body);
       if (!orderId || !email) return json(res, 400, { ok: false, error: 'Order ID and email are required' });
+      if (email !== sessionUser.email) return json(res, 403, { ok: false, error: 'Order email must match logged-in account' });
       let existing = {};
       try {
         const existingResponse = await supabase(`?select=payload&order_id=eq.${encodeURIComponent(orderId)}&email=eq.${encodeURIComponent(email)}&limit=1`);

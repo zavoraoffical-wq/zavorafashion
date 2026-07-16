@@ -474,9 +474,10 @@ async function requestOrderConfirmation(order) {
 
 async function persistOrder(order) {
   try {
-    await fetch('/api/orders', {
+    const response = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         orderId: order.id,
         email: order.email,
@@ -490,7 +491,14 @@ async function persistOrder(order) {
         createdAt: order.createdAt
       })
     });
+    const data = await response.json().catch(() => ({}));
+    if (response.ok && data.order) {
+      const saved = { ...order, ...data.order };
+      localStorage.setItem('zavoraLastOrder', JSON.stringify(saved));
+      return saved;
+    }
   } catch (error) {}
+  return order;
 }
 
 function cartQuantity() {
@@ -1042,10 +1050,11 @@ function setDashboardView(view = 'dashboard') {
     const count = getWishlist().length;
     const copy = wishlistCard?.querySelector('p');
     if (copy) copy.textContent = count ? `${count} saved product${count === 1 ? '' : 's'} in your wishlist.` : 'No saved products yet.';
-    const latestOrder = getSavedOrders()[0];
+    const latestOrder = authDashboardData?.orders?.[0] || getSavedOrders()[0];
     const orderCard = [...grid.querySelectorAll('.dashboard-card')].find((card) => card.querySelector('h3')?.textContent.trim() === 'Recent Order');
     if (orderCard) {
-      orderCard.querySelector('p').textContent = latestOrder ? `#${latestOrder.id.replace(/^#/, '')} is ${latestOrder.status || 'active'}.` : 'No orders yet. Your first checkout will appear here.';
+      const rewardText = latestOrder?.rewardId ? ` Reward ID: ${latestOrder.rewardId}.` : (Number(latestOrder?.total || 0) >= 100 ? ' Reward ID appears here after delivery and 24-hour clearance.' : '');
+      orderCard.querySelector('p').textContent = latestOrder ? `#${latestOrder.id.replace(/^#/, '')} is ${latestOrder.status || 'active'}.${rewardText}` : 'No orders yet. Your first checkout will appear here.';
       const link = orderCard.querySelector('a');
       if (link && latestOrder) link.href = `track-order.html?order=${encodeURIComponent(latestOrder.id)}&email=${encodeURIComponent(latestOrder.email)}`;
     }
@@ -1081,6 +1090,7 @@ function setDashboardView(view = 'dashboard') {
           <span>Order History</span>
           <h3>#${order.id.replace(/^#/, '')}</h3>
           <p>${order.items?.[0]?.name || 'Zavora order'} / ${order.method || 'PayPal'} / ${order.status || 'Active'} / Total ${money(order.total || 0)}</p>
+          <p>${order.rewardId ? `Reward ID: ${order.rewardId}` : Number(order.total || 0) >= 100 ? 'Reward ID appears after delivery and 24-hour clearance.' : 'Reward not available for orders under $100.'}</p>
           <div class="mini-status"><i style="width:${order.status === 'Delivered' ? 100 : order.status === 'Shipped' ? 78 : 46}%"></i></div>
           <a class="text-link" href="track-order.html?order=${encodeURIComponent(order.id)}&email=${encodeURIComponent(order.email)}">Track live order</a>
         </article>
@@ -2207,6 +2217,11 @@ document.addEventListener('click', async (event) => {
   const payNow = event.target.closest('.pay-now');
   if (payNow && window.location.pathname.endsWith('checkout.html')) {
     event.preventDefault();
+    if (!(await fetchAuthSession(true))) {
+      savePendingCommerceAction('checkout', null, 'checkout.html');
+      showLoginRequiredModal('checkout.html');
+      return;
+    }
     const method = 'PayPal';
     const order = createTestOrder(method);
     if (!order) {

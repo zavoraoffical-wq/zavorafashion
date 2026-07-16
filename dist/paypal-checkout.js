@@ -25,7 +25,14 @@ function initZavoraPayPal() {
       shape: 'rect',
       label: 'paypal'
     },
-    createOrder(data, actions) {
+    async createOrder(data, actions) {
+      const user = typeof fetchAuthSession === 'function' ? await fetchAuthSession(true) : null;
+      if (!user) {
+        if (typeof savePendingCommerceAction === 'function') savePendingCommerceAction('checkout', null, 'checkout.html');
+        if (typeof showLoginRequiredModal === 'function') showLoginRequiredModal('checkout.html');
+        else window.location.href = `login.html?next=${encodeURIComponent('checkout.html')}`;
+        throw new Error('Login required before PayPal checkout');
+      }
       return actions.order.create({
         purchase_units: [{
           description: 'Zavora Fashion Order',
@@ -37,9 +44,21 @@ function initZavoraPayPal() {
       });
     },
     onApprove(data, actions) {
-      return actions.order.capture().then(() => {
-        localStorage.setItem('zavoraLastOrder', data.orderID || 'PAYPAL-ORDER');
-        window.location.href = 'order-success.html';
+      return actions.order.capture().then(async () => {
+        const user = typeof fetchAuthSession === 'function' ? await fetchAuthSession(true) : null;
+        if (!user) {
+          window.location.href = `login.html?next=${encodeURIComponent('checkout.html')}`;
+          return;
+        }
+        const order = typeof createTestOrder === 'function' ? createTestOrder('PayPal') : null;
+        if (!order) {
+          container.insertAdjacentHTML('beforeend', '<p class="login-error">Your bag is empty. Add a product before payment.</p>');
+          return;
+        }
+        order.paypalOrderId = data.orderID || '';
+        if (typeof persistOrder === 'function') await persistOrder(order);
+        if (typeof requestOrderConfirmation === 'function') requestOrderConfirmation(order);
+        window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=paypal`;
       });
     },
     onError() {
