@@ -16,6 +16,8 @@ html {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 body {
   margin: 0;
@@ -40,6 +42,7 @@ a { color: inherit; text-decoration: none; }
 button, select, input { font: inherit; }
 button { cursor: pointer; }
 img { display: block; max-width: 100%; }
+svg { max-width: 100%; }
 
 .site-header {
   position: fixed;
@@ -2870,6 +2873,8 @@ h2 {
   body {
     position: relative;
     touch-action: pan-y;
+    width: 100vw;
+    max-width: 100vw;
   }
   main,
   section,
@@ -2890,45 +2895,48 @@ h2 {
   .site-header,
   .page-header {
     top: 0;
-    height: 62px;
-    padding: 0 12px;
-    min-height: 62px;
-    gap: 8px;
+    height: 60px;
+    width: 100%;
+    max-width: 100vw;
+    padding: 0 8px;
+    min-height: 60px;
+    gap: 5px;
     align-items: center;
     overflow: hidden;
     transform: none;
   }
   .site-header,
-  .page-header { grid-template-columns: 42px minmax(0, 1fr) auto; }
-  .site-header .header-actions,
-  .page-header .header-actions {
-    max-width: none;
-    overflow: visible;
-  }
+  .page-header { grid-template-columns: 36px minmax(0, 1fr) auto; }
+  .site-header .mobile-menu,
   .page-header .mobile-menu {
     grid-column: 1;
     grid-row: 1;
-    display: block;
+    display: inline-flex;
     justify-self: start;
   }
+  .site-header .brand,
   .page-header .brand {
     grid-column: 2;
     grid-row: 1;
   }
+  .site-header .header-actions,
   .page-header .header-actions {
     grid-column: 3;
     grid-row: 1;
+    max-width: none;
+    overflow: visible;
   }
+  .site-header .nav-links,
   .page-header .nav-links {
     display: none;
   }
   .brand,
   .page-header .brand {
     justify-self: start;
-    max-width: clamp(150px, calc(100vw - 214px), 196px);
+    max-width: clamp(116px, calc(100vw - 214px), 176px);
     overflow: hidden;
-    font-size: clamp(10px, 2.8vw, 14px);
-    letter-spacing: clamp(.25px, .28vw, 1.1px);
+    font-size: clamp(9.2px, 2.45vw, 12.5px);
+    letter-spacing: clamp(.2px, .18vw, .8px);
     line-height: 1;
     text-overflow: clip;
     gap: 3px;
@@ -2942,13 +2950,13 @@ h2 {
     text-overflow: clip;
     white-space: nowrap;
   }
-  .brand-mark { width: 17px; height: 17px; flex: 0 0 17px; }
+  .brand-mark { width: 16px; height: 16px; flex: 0 0 16px; }
   .header-actions,
   .page-header .header-actions {
-    gap: 5px;
+    gap: 4px;
     flex-wrap: nowrap;
     justify-content: flex-end;
-    max-width: calc(100vw - 92px);
+    max-width: calc(100vw - 72px);
     min-width: 0;
   }
   .header-actions .header-dropdown,
@@ -2972,26 +2980,26 @@ h2 {
   .icon-button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    min-width: 36px;
-    width: 36px;
-    height: 36px;
+    min-width: 33px;
+    width: 33px;
+    height: 34px;
     display: inline-flex;
   }
   .icon-button svg {
-    width: 17px;
-    height: 17px;
+    width: 16px;
+    height: 16px;
   }
   .cart-button,
   .page-header .cart-button {
-    height: 36px;
-    min-width: 44px;
+    height: 34px;
+    min-width: 40px;
     padding: 0 5px;
-    font-size: 12px;
+    font-size: 11px;
     display: inline-flex;
   }
   .mobile-menu {
-    width: 34px;
-    min-width: 34px;
+    width: 32px;
+    min-width: 32px;
     height: 34px;
     background: rgba(255,255,255,.16);
   }
@@ -3048,6 +3056,29 @@ h2 {
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
   }
+  .home-product-slider,
+  .home-product-row,
+  .recommendation-slider,
+  .slider-track,
+  .carousel,
+  .product-strip {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    scroll-snap-type: x mandatory;
+  }
+  .home-product-slider::-webkit-scrollbar,
+  .home-product-row::-webkit-scrollbar,
+  .recommendation-slider::-webkit-scrollbar,
+  .slider-track::-webkit-scrollbar,
+  .carousel::-webkit-scrollbar,
+  .product-strip::-webkit-scrollbar {
+    display: none;
+  }
   .product-rail-track::-webkit-scrollbar { display: none; }
   .product-rail-track { grid-auto-columns: minmax(250px, 82vw); }
   .product-rail-track > * { scroll-snap-align: start; }
@@ -3060,6 +3091,11 @@ h2 {
   .product-gallery,
   .product-gallery-main,
   .product-buy,
+  .product-detail,
+  .product-detail > *,
+  .product-page,
+  .product-info,
+  .product-thumbs,
   .zoom-frame,
   .info-stack,
   .account-nav,
@@ -3067,10 +3103,14 @@ h2 {
   .footer,
   .shop-layout,
   .catalog-layout,
-  .page-content {
+  .page-content,
+  .checkout-page,
+  .affiliate-dashboard,
+  .affiliate-main {
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    overflow-wrap: break-word;
   }
   .product-gallery {
     grid-template-columns: 1fr;
@@ -3080,7 +3120,8 @@ h2 {
   }
   .zoom-frame img,
   .product-gallery img,
-  .product-gallery-main img {
+  .product-gallery-main img,
+  .product-thumbs img {
     max-width: 100%;
     height: auto;
   }
@@ -3254,30 +3295,35 @@ h2 {
 @media (max-width: 380px) {
   .site-header,
   .page-header {
-    padding: 0 8px;
-    gap: 6px;
+    padding: 0 6px;
+    gap: 4px;
   }
   .site-header,
-  .page-header { grid-template-columns: 38px minmax(0, 1fr) auto; }
+  .page-header { grid-template-columns: 34px minmax(0, 1fr) auto; }
   .brand,
   .page-header .brand {
-    font-size: 9.4px;
-    letter-spacing: .1px;
+    font-size: 8.8px;
+    letter-spacing: 0;
     gap: 3px;
-    max-width: clamp(138px, calc(100vw - 204px), 166px);
+    max-width: clamp(108px, calc(100vw - 194px), 150px);
   }
-  .brand-mark { width: 14px; height: 14px; flex-basis: 14px; }
+  .brand-mark { width: 13px; height: 13px; flex-basis: 13px; }
   .icon-button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    min-width: 33px;
-    width: 33px;
-    height: 34px;
+    min-width: 31px;
+    width: 31px;
+    height: 32px;
   }
   .cart-button,
   .page-header .cart-button {
-    min-width: 42px;
-    padding: 0 5px;
-    font-size: 12px;
+    min-width: 38px;
+    padding: 0 4px;
+    font-size: 10.5px;
+  }
+  .mobile-menu {
+    width: 30px;
+    min-width: 30px;
+    height: 32px;
   }
 }

@@ -7,11 +7,21 @@
   --gold: #c9a227;
   --muted: #6a6a6a;
 }
-* { box-sizing: border-box; }
-html, body { margin: 0; max-width: 100%; overflow-x: hidden; }
+*,
+*::before,
+*::after { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 body { font-family: Arial, sans-serif; color: var(--ink); background: var(--soft); }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
+img, svg { max-width: 100%; }
 [data-affiliate-section][hidden] { display: none !important; }
 .affiliate-shell { background: var(--white); }
 .affiliate-hero {
@@ -170,6 +180,8 @@ button, input, select, textarea { font: inherit; }
   min-height: 100vh;
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 .affiliate-side {
   position: sticky;
@@ -455,6 +467,19 @@ button, input, select, textarea { font: inherit; }
   .affiliate-link-builder, .affiliate-profile-form { grid-template-columns: 1fr; }
 }
 @media (max-width: 620px) {
+  html, body {
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+  input,
+  select,
+  textarea {
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
+  }
   .affiliate-hero { min-height: 100svh; padding: 18px 18px 44px; }
   .affiliate-brand { align-items: flex-start; font-size: 12px; letter-spacing: .14em; }
   .affiliate-hero-grid { min-height: calc(100svh - 82px); }
@@ -465,7 +490,22 @@ button, input, select, textarea { font: inherit; }
   .affiliate-auth { padding: 82px 16px 24px; place-items: start center; }
   .affiliate-auth-logo { top: 22px; left: 18px; font-size: 12px; }
   .affiliate-auth-card { padding: 24px; }
-  .affiliate-main { padding: 18px; }
+  .affiliate-dashboard {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  .affiliate-main {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 18px;
+    overflow-x: hidden;
+  }
+  .affiliate-side {
+    width: 100%;
+    max-width: 100%;
+  }
   .affiliate-dashboard-hero h1 { font-size: 44px; }
   .affiliate-dashboard-hero > div,
   .affiliate-qr-card,
@@ -473,4 +513,17 @@ button, input, select, textarea { font: inherit; }
   .affiliate-payout-form,
   .affiliate-history-list div { grid-template-columns: 1fr; display: grid; }
   .affiliate-link-row { grid-template-columns: 1fr; }
+  .affiliate-dash-card,
+  .affiliate-dashboard-hero,
+  .affiliate-dashboard-hero > div,
+  .affiliate-qr-card,
+  .affiliate-metric,
+  .affiliate-wide-card,
+  .affiliate-link-row,
+  .affiliate-link-row input {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
