@@ -75,7 +75,7 @@ function affiliateId(app) {
 }
 
 function affiliatePassword() {
-  return `Zavora${Math.random().toString(36).slice(2, 8).toUpperCase()}!`;
+  return `Zavora-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${String(Date.now()).slice(-4)}`;
 }
 
 function affiliateCoupon(id) {
@@ -89,7 +89,7 @@ function approvalEmail(app) {
     'Your account has been approved.',
     '',
     `Login URL: https://www.zavorafashion.com/affiliate-login.html`,
-    `Temporary Password: ${app.password || ''}`,
+    `Affiliate Password: ${app.password || ''}`,
     `Affiliate Link: ${app.link || ''}`,
     `Commission Rate: ${app.commission || 10}%`,
     `Dashboard URL: https://www.zavorafashion.com/affiliate-dashboard.html`,
@@ -150,6 +150,7 @@ function renderAffiliatesPanel() {
               <button data-affiliate-action="approve" data-affiliate-target="${app.id}">Approve</button>
               <button data-affiliate-action="reject" data-affiliate-target="${app.id}">Reject</button>
               <button data-affiliate-action="suspend" data-affiliate-target="${app.id}">Suspend</button>
+              <button data-affiliate-action="reset-login" data-affiliate-target="${app.id}">Reset Login</button>
               <button data-affiliate-action="delete" data-affiliate-target="${app.id}">Delete</button>
               <button data-affiliate-action="copy-email" data-affiliate-target="${app.id}">Copy Email</button>
             </td>
@@ -513,6 +514,15 @@ document.addEventListener('click', async (event) => {
         app.link = app.link || `https://www.zavorafashion.com/?ref=${encodeURIComponent(app.affiliateId)}`;
         app.approvedAt = new Date().toISOString();
       }
+      if (actionName === 'reset-login') {
+        app.status = 'approved';
+        app.affiliateId = affiliateId(app);
+        app.password = affiliatePassword();
+        app.commission = Number(app.commission || 10);
+        app.coupon = app.coupon || affiliateCoupon(app.affiliateId);
+        app.link = app.link || `https://www.zavorafashion.com/?ref=${encodeURIComponent(app.affiliateId)}`;
+        app.loginUpdatedAt = new Date().toISOString();
+      }
       if (actionName === 'reject') app.status = 'rejected';
       if (actionName === 'suspend') app.status = 'suspended';
       return app;
@@ -529,6 +539,16 @@ document.addEventListener('click', async (event) => {
       } catch (error) {
         navigator.clipboard?.writeText(approvalEmail(updated));
         toast('Approved. Email failed, approval email copied');
+      }
+      return;
+    }
+    if (actionName === 'reset-login' && updated) {
+      try {
+        await sendAffiliateApprovalEmail(updated);
+        toast('Fresh affiliate login sent');
+      } catch (error) {
+        navigator.clipboard?.writeText(approvalEmail(updated));
+        toast('Fresh login copied. Email failed');
       }
       return;
     }

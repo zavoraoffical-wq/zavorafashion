@@ -148,13 +148,13 @@
   function login(form) {
     const data = new FormData(form);
     const email = String(data.get('email') || '').trim().toLowerCase();
-    const password = String(data.get('password') || '');
+    const password = String(data.get('password') || '').trim();
     const app = readApps().find((item) => String(item.email || '').toLowerCase() === email);
     if (!app || app.status !== 'approved') {
       setMessage(form, 'Affiliate account is not approved yet.', true);
       return;
     }
-    if (!app.password || app.password !== password) {
+    if (!app.password || String(app.password).trim() !== password) {
       setMessage(form, 'Invalid affiliate credentials.', true);
       return;
     }
@@ -341,15 +341,35 @@
       window.location.replace('affiliate-login.html');
       return;
     }
+    const activeHash = (window.location.hash || '#overview').replace('#', '') || 'overview';
+    const sectionGroup = {
+      overview: 'overview',
+      stats: 'stats',
+      charts: 'charts',
+      links: 'links',
+      coupons: 'coupons',
+      payouts: 'payouts',
+      orders: 'orders',
+      assets: 'assets',
+      leaderboard: 'assets',
+      notifications: 'assets',
+      profile: 'profile',
+      support: 'profile'
+    }[activeHash] || 'overview';
     const stats = calcStats(app);
     const link = baseReferral(app);
     const status = app.status === 'approved' ? 'Active' : app.status || 'Pending';
     const commission = Number(app.commission || 10);
     document.querySelectorAll('.affiliate-side a[href*="#"]').forEach((item) => {
-      item.classList.toggle('active', item.hash === (window.location.hash || '#overview'));
+      const itemHash = item.hash.replace('#', '') || 'overview';
+      item.classList.toggle('active',
+        itemHash === activeHash ||
+        (itemHash === 'assets' && ['leaderboard', 'notifications'].includes(activeHash)) ||
+        (itemHash === 'profile' && activeHash === 'support')
+      );
     });
     root.innerHTML = `
-      <section class="affiliate-dashboard-hero" id="overview">
+      <section class="affiliate-dashboard-hero" id="overview" data-affiliate-section="overview">
         <div>
           <p class="affiliate-eyebrow">Affiliate Control Center</p>
           <h1>Welcome back, ${escapeHtml(app.fullName || 'Zavora Partner')}</h1>
@@ -370,7 +390,7 @@
         </aside>
       </section>
 
-      <section class="affiliate-metrics affiliate-metrics-wide" id="stats">
+      <section class="affiliate-metrics affiliate-metrics-wide" id="stats" data-affiliate-section="stats">
         ${metric("Today's Clicks", stats.todayClicks)}
         ${metric("Today's Orders", stats.todayOrders)}
         ${metric("Today's Revenue", money(stats.todayRevenue))}
@@ -388,7 +408,7 @@
         ${metric('Average Order Value', money(stats.averageOrderValue))}
       </section>
 
-      <section class="affiliate-dashboard-grid affiliate-dashboard-grid-wide" id="charts">
+      <section class="affiliate-dashboard-grid affiliate-dashboard-grid-wide" id="charts" data-affiliate-section="charts">
         ${chartBars('Daily Earnings', app.dailyEarnings || [stats.todayCommission])}
         ${chartBars('Monthly Earnings', app.monthlyEarnings || [stats.monthEarnings])}
         ${chartBars('Clicks', app.clickSeries || [stats.todayClicks, stats.monthClicks])}
@@ -398,7 +418,7 @@
         <article class="affiliate-dash-card"><h2>Traffic Sources</h2>${emptyList('Traffic source data will appear after tracked clicks.')}</article>
       </section>
 
-      <section class="affiliate-dashboard-grid" id="links">
+      <section class="affiliate-dashboard-grid" id="links" data-affiliate-section="links">
         <article class="affiliate-dash-card affiliate-wide-card">
           <p class="affiliate-eyebrow">Referral Links</p>
           <h2>Link Builder</h2>
@@ -409,14 +429,17 @@
           </form>
           <div class="affiliate-link-list">${referralLinks(app)}</div>
         </article>
-        <article class="affiliate-dash-card" id="coupons">
+      </section>
+
+      <section class="affiliate-dashboard-grid" id="coupons" data-affiliate-section="coupons">
+        <article class="affiliate-dash-card affiliate-wide-card">
           <p class="affiliate-eyebrow">Coupons</p>
           <h2>Personal Coupon</h2>
           ${couponRows(app)}
         </article>
       </section>
 
-      <section class="affiliate-dashboard-grid" id="payouts">
+      <section class="affiliate-dashboard-grid" id="payouts" data-affiliate-section="payouts">
         <article class="affiliate-dash-card affiliate-payout-card">
           <p class="affiliate-eyebrow">Payouts</p>
           <h2>Withdraw Earnings</h2>
@@ -440,7 +463,7 @@
         </article>
       </section>
 
-      <section class="affiliate-dashboard-grid" id="orders">
+      <section class="affiliate-dashboard-grid" id="orders" data-affiliate-section="orders">
         <article class="affiliate-dash-card affiliate-wide-card">
           <p class="affiliate-eyebrow">Orders</p>
           <h2>Referral Orders</h2>
@@ -448,7 +471,7 @@
         </article>
       </section>
 
-      <section class="affiliate-dashboard-grid" id="assets">
+      <section class="affiliate-dashboard-grid" id="assets" data-affiliate-section="assets">
         <article class="affiliate-dash-card affiliate-wide-card">
           <p class="affiliate-eyebrow">Marketing Material</p>
           <h2>Brand Assets</h2>
@@ -460,7 +483,7 @@
         <article class="affiliate-dash-card" id="notifications"><h2>Notifications</h2>${(app.notifications || []).length ? app.notifications.map((item) => `<p>${escapeHtml(item.message || item)}</p>`).join('') : emptyList('Commission, payout, coupon, and campaign alerts appear here.')}</article>
       </section>
 
-      <section class="affiliate-dashboard-grid" id="profile">
+      <section class="affiliate-dashboard-grid" id="profile" data-affiliate-section="profile">
         <article class="affiliate-dash-card">
           <p class="affiliate-eyebrow">Profile</p>
           <h2>Partner Profile</h2>
@@ -484,6 +507,9 @@
         </article>
       </section>
     `;
+    root.querySelectorAll('[data-affiliate-section]').forEach((section) => {
+      section.hidden = section.dataset.affiliateSection !== sectionGroup;
+    });
   }
 
   function requestPayout(form) {
