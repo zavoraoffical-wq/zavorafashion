@@ -2897,10 +2897,10 @@ h2 {
   .brand,
   .page-header .brand {
     justify-self: start;
-    max-width: clamp(118px, calc(100vw - 250px), 178px);
+    max-width: clamp(142px, calc(100vw - 220px), 190px);
     overflow: hidden;
-    font-size: clamp(10px, 2.95vw, 14px);
-    letter-spacing: clamp(.45px, .22vw, 1.2px);
+    font-size: clamp(9px, 2.7vw, 13px);
+    letter-spacing: clamp(.3px, .16vw, 1px);
     line-height: 1;
     text-overflow: clip;
     gap: 3px;
@@ -2944,15 +2944,15 @@ h2 {
   .icon-button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    min-width: 34px;
-    width: 34px;
+    min-width: 32px;
+    width: 32px;
     height: 34px;
     display: inline-flex;
   }
   .cart-button,
   .page-header .cart-button {
     height: 34px;
-    min-width: 42px;
+    min-width: 40px;
     padding: 0 5px;
     font-size: 11px;
     display: inline-flex;
@@ -3153,17 +3153,17 @@ h2 {
   .page-header { grid-template-columns: 38px minmax(0, 1fr) auto; }
   .brand,
   .page-header .brand {
-    font-size: 11px;
-    letter-spacing: 1px;
-    gap: 5px;
-    max-width: clamp(78px, calc(100vw - 252px), 148px);
+    font-size: 9px;
+    letter-spacing: .35px;
+    gap: 3px;
+    max-width: clamp(118px, calc(100vw - 208px), 154px);
   }
-  .brand-mark { width: 17px; height: 17px; flex-basis: 17px; }
+  .brand-mark { width: 14px; height: 14px; flex-basis: 14px; }
   .icon-button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    min-width: 32px;
-    width: 32px;
+    min-width: 30px;
+    width: 30px;
     height: 34px;
   }
   .cart-button,

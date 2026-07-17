@@ -2,13 +2,19 @@
   const APP_KEY = 'zavoraAffiliateApplications';
   const SESSION_KEY = 'zavoraAffiliateSession';
   const ATTRIBUTION_KEY = 'zavoraAffiliateAttribution';
+  const ORDER_KEY = 'zavoraOrders';
+  const MIN_PAYOUT = 5;
+
+  function readJson(key, fallback) {
+    try {
+      return JSON.parse(localStorage.getItem(key)) || fallback;
+    } catch (error) {
+      return fallback;
+    }
+  }
 
   function readApps() {
-    try {
-      return JSON.parse(localStorage.getItem(APP_KEY)) || [];
-    } catch (error) {
-      return [];
-    }
+    return readJson(APP_KEY, []);
   }
 
   function saveApps(apps) {
@@ -19,11 +25,42 @@
     return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
   }
 
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[char]);
+  }
+
+  function money(value) {
+    return `$${Number(value || 0).toFixed(2)}`;
+  }
+
+  function percent(value) {
+    return `${Number(value || 0).toFixed(1)}%`;
+  }
+
+  function formatDate(value) {
+    if (!value) return 'Not available';
+    return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
   function setMessage(form, message, isError) {
     const box = form?.querySelector('[data-affiliate-message]');
     if (!box) return;
     box.textContent = message;
     box.style.color = isError ? '#8b0000' : '#c9a227';
+  }
+
+  function tierFor(app) {
+    const commission = Number(app.commission || 10);
+    if (commission >= 20) return 'Elite Partner';
+    if (commission >= 15) return 'Pro Partner';
+    if (commission >= 12) return 'Growth Partner';
+    return 'Launch Partner';
   }
 
   function submitApplication(form) {
@@ -52,6 +89,13 @@
       pendingBalance: 0,
       paidBalance: 0,
       availableBalance: 0,
+      approvedBalance: 0,
+      lifetimeRevenue: 0,
+      lifetimeCommission: 0,
+      referralLinks: [],
+      coupons: [],
+      payoutRequests: [],
+      notifications: [],
       createdAt: new Date().toISOString()
     });
     saveApps(apps);
@@ -78,14 +122,11 @@
       affiliateId: app.affiliateId,
       expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
     }));
-    window.location.href = 'affiliate-dashboard.html';
+    window.location.href = 'affiliate-dashboard.html#overview';
   }
 
   function currentAffiliate() {
-    let session = null;
-    try {
-      session = JSON.parse(localStorage.getItem(SESSION_KEY)) || null;
-    } catch (error) {}
+    const session = readJson(SESSION_KEY, null);
     if (!session || Date.now() > Number(session.expiresAt || 0)) {
       localStorage.removeItem(SESSION_KEY);
       return null;
@@ -102,21 +143,141 @@
     return apps[index];
   }
 
+  function baseReferral(app) {
+    return app.link || `https://www.zavorafashion.com/?ref=${encodeURIComponent(app.affiliateId || app.id)}`;
+  }
+
+  function qrUrl(value) {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=10&data=${encodeURIComponent(value)}`;
+  }
+
+  function affiliateOrders(app) {
+    const orders = [
+      ...(app.referralOrders || []),
+      ...readJson(ORDER_KEY, []).filter((order) => {
+        const ref = order.affiliateRef || order.ref || order.affiliateId;
+        return ref && String(ref) === String(app.affiliateId || app.id);
+      })
+    ];
+    const seen = new Set();
+    return orders.filter((order) => {
+      const id = String(order.id || order.orderId || '');
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }
+
+  function calcStats(app) {
+    const orders = affiliateOrders(app);
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const monthKey = new Date().toISOString().slice(0, 7);
+    const todayOrders = orders.filter((order) => String(order.createdAt || '').slice(0, 10) === todayKey);
+    const monthOrders = orders.filter((order) => String(order.createdAt || '').slice(0, 7) === monthKey);
+    const revenue = orders.reduce((sum, order) => sum + Number(order.total || order.orderValue || 0), 0) || Number(app.revenue || app.lifetimeRevenue || 0);
+    const commissionRate = Number(app.commission || 10);
+    const lifetimeCommission = Number(app.lifetimeCommission || revenue * commissionRate / 100 || 0);
+    const clicks = Number(app.clicks || 0);
+    const orderCount = orders.length || Number(app.orders || 0);
+    const averageOrderValue = orderCount ? revenue / orderCount : 0;
+    return {
+      orders,
+      todayClicks: Number(app.todayClicks || 0),
+      todayOrders: todayOrders.length,
+      todayRevenue: todayOrders.reduce((sum, order) => sum + Number(order.total || order.orderValue || 0), 0),
+      todayCommission: todayOrders.reduce((sum, order) => sum + Number(order.total || order.orderValue || 0), 0) * commissionRate / 100,
+      monthClicks: Number(app.monthClicks || clicks),
+      monthOrders: monthOrders.length || orderCount,
+      monthRevenue: monthOrders.reduce((sum, order) => sum + Number(order.total || order.orderValue || 0), 0) || revenue,
+      monthEarnings: Number(app.monthEarnings || lifetimeCommission),
+      pendingBalance: Number(app.pendingBalance || 0),
+      approvedBalance: Number(app.approvedBalance || app.availableBalance || 0),
+      paidBalance: Number(app.paidBalance || 0),
+      lifetimeRevenue: revenue,
+      lifetimeCommission,
+      conversionRate: clicks ? (orderCount / clicks) * 100 : 0,
+      averageOrderValue
+    };
+  }
+
+  function metric(label, value) {
+    return `<div class="affiliate-metric"><span>${label}</span><strong>${value}</strong></div>`;
+  }
+
+  function chartBars(label, values) {
+    const max = Math.max(1, ...values);
+    return `
+      <article class="affiliate-dash-card affiliate-chart-card">
+        <h3>${label}</h3>
+        <div class="affiliate-bars">
+          ${values.map((value) => `<i style="height:${Math.max(4, (Number(value || 0) / max) * 100)}%"><span>${Number(value || 0).toFixed(0)}</span></i>`).join('')}
+        </div>
+      </article>
+    `;
+  }
+
+  function emptyList(message) {
+    return `<p class="affiliate-muted">${message}</p>`;
+  }
+
   function payoutHistory(app) {
     const rows = app.payoutRequests || [];
-    if (!rows.length) {
-      return '<p>No payout requests yet. Manual payout methods: PayPal, Bank, UPI.</p>';
-    }
+    if (!rows.length) return emptyList('No payout requests yet.');
     return `
       <div class="affiliate-history-list">
         ${rows.map((row) => `
           <div>
-            <strong>$${Number(row.amount || 0).toFixed(2)} via ${row.method || 'PayPal'}</strong>
-            <span>${row.status || 'pending'} / ${new Date(row.createdAt || Date.now()).toLocaleDateString()}</span>
+            <strong>${money(row.amount)} via ${escapeHtml(row.method || 'PayPal')}</strong>
+            <span>${escapeHtml(row.status || 'pending')} / ${formatDate(row.createdAt)}</span>
           </div>
         `).join('')}
       </div>
     `;
+  }
+
+  function ordersTable(orders, commission) {
+    if (!orders.length) return emptyList('Referral orders appear here after tracked checkout.');
+    return `
+      <div class="affiliate-table-wrap">
+        <table class="affiliate-table">
+          <thead><tr><th>Order</th><th>Product</th><th>Country</th><th>Value</th><th>Commission</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>
+            ${orders.map((order) => {
+              const total = Number(order.total || order.orderValue || 0);
+              return `<tr><td>${escapeHtml(order.id || order.orderId)}</td><td>${escapeHtml(order.product || order.item || 'Zavora order')}</td><td>${escapeHtml(order.country || 'USA')}</td><td>${money(total)}</td><td>${money(total * commission / 100)}</td><td>${escapeHtml(order.status || 'pending')}</td><td>${formatDate(order.createdAt)}</td></tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function couponRows(app) {
+    const coupons = app.coupons?.length ? app.coupons : [{ code: app.coupon, discount: 10, active: Boolean(app.coupon), usage: 0, sales: 0, revenue: 0 }];
+    return coupons.filter((coupon) => coupon.code).map((coupon) => `
+      <div class="affiliate-coupon-row">
+        <strong>${escapeHtml(coupon.code)}</strong>
+        <span>${coupon.active === false ? 'Disabled' : 'Active'} / ${Number(coupon.discount || 10)}% off</span>
+        <span>Usage ${Number(coupon.usage || 0)} / Revenue ${money(coupon.revenue)}</span>
+      </div>
+    `).join('') || emptyList('No coupon assigned yet.');
+  }
+
+  function referralLinks(app) {
+    const standard = [
+      ['Homepage', baseReferral(app)],
+      ['Men', `https://www.zavorafashion.com/men.html?ref=${encodeURIComponent(app.affiliateId || app.id)}`],
+      ['Women', `https://www.zavorafashion.com/women.html?ref=${encodeURIComponent(app.affiliateId || app.id)}`],
+      ['Collections', `https://www.zavorafashion.com/collections.html?ref=${encodeURIComponent(app.affiliateId || app.id)}`]
+    ];
+    const custom = app.referralLinks || [];
+    return [...standard, ...custom.map((link) => [link.label || 'Custom', link.url])].map(([label, url]) => `
+      <div class="affiliate-link-row">
+        <span>${escapeHtml(label)}</span>
+        <input value="${escapeHtml(url)}" readonly>
+        <button data-copy="${escapeHtml(url)}">Copy</button>
+      </div>
+    `).join('');
   }
 
   function renderDashboard() {
@@ -127,80 +288,148 @@
       window.location.replace('affiliate-login.html');
       return;
     }
-    const link = app.link || `https://www.zavorafashion.com/?ref=${encodeURIComponent(app.affiliateId || app.id)}`;
-    const available = Number(app.availableBalance || 0);
-    const pendingPayouts = (app.payoutRequests || []).filter((item) => item.status === 'pending');
+    const stats = calcStats(app);
+    const link = baseReferral(app);
+    const status = app.status === 'approved' ? 'Active' : app.status || 'Pending';
+    const commission = Number(app.commission || 10);
     document.querySelectorAll('.affiliate-side a[href*="#"]').forEach((item) => {
       item.classList.toggle('active', item.hash === (window.location.hash || '#overview'));
     });
     root.innerHTML = `
-      <div class="affiliate-dash-hero" id="overview">
-        <article class="affiliate-dash-card">
-          <p class="affiliate-eyebrow">Welcome</p>
-          <h1>${app.fullName || 'Zavora Partner'}</h1>
-          <p>Affiliate ID: <strong>${app.affiliateId || app.id}</strong> / Commission: <strong>${app.commission || 10}%</strong></p>
-          <p class="affiliate-muted">Use your link and coupon to send traffic to Zavora Fashion. Orders, commissions, and payout requests stay inside this separate affiliate portal.</p>
+      <section class="affiliate-dashboard-hero" id="overview">
+        <div>
+          <p class="affiliate-eyebrow">Affiliate Control Center</p>
+          <h1>Welcome back, ${escapeHtml(app.fullName || 'Zavora Partner')}</h1>
+          <div class="affiliate-status-grid">
+            <span>Affiliate ID <strong>${escapeHtml(app.affiliateId || app.id)}</strong></span>
+            <span>Status <strong>${escapeHtml(status)}</strong></span>
+            <span>Commission <strong>${commission}%</strong></span>
+            <span>Tier <strong>${tierFor(app)}</strong></span>
+            <span>Member Since <strong>${formatDate(app.createdAt)}</strong></span>
+            <span>Country <strong>${escapeHtml(app.country || 'Not set')}</strong></span>
+          </div>
+        </div>
+        <aside class="affiliate-qr-card">
+          <img src="${qrUrl(link)}" alt="Affiliate QR code" loading="lazy">
+          <p>Referral Code</p>
+          <strong>${escapeHtml(app.coupon || app.affiliateId || app.id)}</strong>
+          <button data-copy="${escapeHtml(link)}">Copy Referral Link</button>
+        </aside>
+      </section>
+
+      <section class="affiliate-metrics affiliate-metrics-wide" id="stats">
+        ${metric("Today's Clicks", stats.todayClicks)}
+        ${metric("Today's Orders", stats.todayOrders)}
+        ${metric("Today's Revenue", money(stats.todayRevenue))}
+        ${metric("Today's Commission", money(stats.todayCommission))}
+        ${metric('This Month Clicks', stats.monthClicks)}
+        ${metric('This Month Orders', stats.monthOrders)}
+        ${metric('This Month Revenue', money(stats.monthRevenue))}
+        ${metric('This Month Earnings', money(stats.monthEarnings))}
+        ${metric('Pending Balance', money(stats.pendingBalance))}
+        ${metric('Approved Balance', money(stats.approvedBalance))}
+        ${metric('Paid Balance', money(stats.paidBalance))}
+        ${metric('Lifetime Revenue', money(stats.lifetimeRevenue))}
+        ${metric('Lifetime Commission', money(stats.lifetimeCommission))}
+        ${metric('Conversion Rate', percent(stats.conversionRate))}
+        ${metric('Average Order Value', money(stats.averageOrderValue))}
+      </section>
+
+      <section class="affiliate-dashboard-grid affiliate-dashboard-grid-wide" id="charts">
+        ${chartBars('Daily Earnings', app.dailyEarnings || [stats.todayCommission])}
+        ${chartBars('Monthly Earnings', app.monthlyEarnings || [stats.monthEarnings])}
+        ${chartBars('Clicks', app.clickSeries || [stats.todayClicks, stats.monthClicks])}
+        ${chartBars('Orders', app.orderSeries || [stats.todayOrders, stats.monthOrders])}
+        <article class="affiliate-dash-card"><h2>Top Products</h2>${emptyList('Top products will appear after referral orders.')}</article>
+        <article class="affiliate-dash-card"><h2>Top Countries</h2>${emptyList('Country analytics will appear after tracked orders.')}</article>
+        <article class="affiliate-dash-card"><h2>Traffic Sources</h2>${emptyList('Traffic source data will appear after tracked clicks.')}</article>
+      </section>
+
+      <section class="affiliate-dashboard-grid" id="links">
+        <article class="affiliate-dash-card affiliate-wide-card">
+          <p class="affiliate-eyebrow">Referral Links</p>
+          <h2>Link Builder</h2>
+          <form class="affiliate-link-builder" data-affiliate-link-form>
+            <input name="label" placeholder="Campaign label">
+            <input name="url" placeholder="Paste product, category, collection, or custom URL">
+            <button class="affiliate-primary" type="submit">Generate Link</button>
+          </form>
+          <div class="affiliate-link-list">${referralLinks(app)}</div>
         </article>
-        <article class="affiliate-dash-card">
-          <h2>$${available.toFixed(2)}</h2>
-          <p>Available balance. Minimum withdrawal is $50.</p>
-          <button class="affiliate-primary" type="button" data-affiliate-withdraw>Withdraw</button>
+        <article class="affiliate-dash-card" id="coupons">
+          <p class="affiliate-eyebrow">Coupons</p>
+          <h2>Personal Coupon</h2>
+          ${couponRows(app)}
         </article>
-      </div>
-      <div class="affiliate-metrics">
-        <div class="affiliate-metric"><span>Clicks</span><strong>${app.clicks || 0}</strong></div>
-        <div class="affiliate-metric"><span>Orders</span><strong>${app.orders || 0}</strong></div>
-        <div class="affiliate-metric"><span>Revenue</span><strong>$${Number(app.revenue || 0).toFixed(0)}</strong></div>
-        <div class="affiliate-metric"><span>Pending</span><strong>$${Number(app.pendingBalance || 0).toFixed(0)}</strong></div>
-      </div>
-      <div class="affiliate-dashboard-grid">
-        <article class="affiliate-dash-card">
-          <h2>Referral Link</h2>
-          <div class="copy-row"><input value="${link}" readonly><button data-copy="${link}">Copy</button></div>
-          <h2>Coupon Code</h2>
-          <div class="copy-row"><input value="${app.coupon || ''}" readonly><button data-copy="${app.coupon || ''}">Copy</button></div>
-        </article>
-        <article class="affiliate-dash-card affiliate-payout-card" id="payouts">
+      </section>
+
+      <section class="affiliate-dashboard-grid" id="payouts">
+        <article class="affiliate-dash-card affiliate-payout-card">
           <p class="affiliate-eyebrow">Payouts</p>
-          <h2>PayPal Payout</h2>
-          <p class="affiliate-muted">Add the PayPal email where affiliate payout money should be sent. Withdrawal requests are reviewed manually by Zavora Admin.</p>
-          <form class="affiliate-payout-form" data-affiliate-payout-form>
+          <h2>Withdraw Earnings</h2>
+          <p class="affiliate-muted">Minimum withdrawal is ${money(MIN_PAYOUT)}. Available methods: PayPal and Bank Transfer.</p>
+          <form class="affiliate-payout-form premium-payout-form" data-affiliate-payout-form>
             <select name="method" aria-label="Payout method">
               <option value="PayPal" ${app.payoutMethod === 'PayPal' ? 'selected' : ''}>PayPal</option>
-              <option value="Bank" ${app.payoutMethod === 'Bank' ? 'selected' : ''}>Bank Transfer</option>
-              <option value="UPI" ${app.payoutMethod === 'UPI' ? 'selected' : ''}>UPI</option>
+              <option value="Bank Transfer" ${app.payoutMethod === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
             </select>
-            <input name="paypalEmail" type="email" placeholder="PayPal email address" value="${app.paypalEmail || app.email || ''}">
-            <input name="amount" type="number" min="50" step="0.01" placeholder="Amount" value="${available >= 50 ? available.toFixed(2) : ''}">
-            <button class="affiliate-primary" type="submit">Request Payout</button>
+            <input name="paypalEmail" type="email" placeholder="PayPal email address" value="${escapeHtml(app.paypalEmail || app.email || '')}">
+            <input name="bankName" placeholder="Bank name" value="${escapeHtml(app.bankName || '')}">
+            <input name="accountHolder" placeholder="Account holder name" value="${escapeHtml(app.accountHolder || app.fullName || '')}">
+            <input name="amount" type="number" min="${MIN_PAYOUT}" step="0.01" placeholder="Amount" value="${stats.approvedBalance >= MIN_PAYOUT ? stats.approvedBalance.toFixed(2) : ''}">
+            <button class="affiliate-primary" type="submit">Request Withdrawal</button>
           </form>
-          <p class="affiliate-message" data-affiliate-payout-message>${pendingPayouts.length ? `${pendingPayouts.length} payout request pending admin review.` : ''}</p>
+          <p class="affiliate-message" data-affiliate-payout-message></p>
         </article>
         <article class="affiliate-dash-card">
-          <h2>Payment History</h2>
+          <h2>Payout History</h2>
           ${payoutHistory(app)}
-          <p>Paid balance: $${Number(app.paidBalance || 0).toFixed(2)}</p>
         </article>
-        <article class="affiliate-dash-card" id="orders">
-          <h2>Recent Orders</h2>
-          <p>Referral orders appear here after tracked checkout.</p>
+      </section>
+
+      <section class="affiliate-dashboard-grid" id="orders">
+        <article class="affiliate-dash-card affiliate-wide-card">
+          <p class="affiliate-eyebrow">Orders</p>
+          <h2>Referral Orders</h2>
+          ${ordersTable(stats.orders, commission)}
         </article>
-        <article class="affiliate-dash-card">
-          <h2>Leaderboard</h2>
-          <p>Your rank appears after affiliate sales begin.</p>
-        </article>
-        <article class="affiliate-dash-card" id="assets">
-          <h2>Marketing Assets</h2>
+      </section>
+
+      <section class="affiliate-dashboard-grid" id="assets">
+        <article class="affiliate-dash-card affiliate-wide-card">
+          <p class="affiliate-eyebrow">Marketing Material</p>
+          <h2>Brand Assets</h2>
           <div class="asset-grid">
-            <span>Product Images</span><span>Lifestyle Images</span><span>Videos</span><span>Banners</span><span>Instagram Templates</span><span>Pinterest Pins</span><span>YouTube Thumbnails</span><span>Logos</span><span>Brand Kit</span>
+            <span>Product Images</span><span>Lifestyle Images</span><span>Videos</span><span>Banners</span><span>Instagram Posts</span><span>Stories</span><span>Pinterest Pins</span><span>TikTok Videos</span><span>YouTube Thumbnails</span><span>Logos</span><span>Brand Guidelines</span>
           </div>
         </article>
-        <article class="affiliate-dash-card" id="support">
-          <h2>FAQ and Support</h2>
-          <p>For affiliate help, contact affiliates@zavorafashion.com. Commission is manual payout after order clearance.</p>
-          <p class="affiliate-muted">Approval, suspension, payout status, and commission rate are controlled by Zavora Admin.</p>
+        <article class="affiliate-dash-card" id="leaderboard"><h2>Leaderboard</h2>${emptyList('Top affiliates and monthly winners appear after live sales.')}</article>
+        <article class="affiliate-dash-card" id="notifications"><h2>Notifications</h2>${(app.notifications || []).length ? app.notifications.map((item) => `<p>${escapeHtml(item.message || item)}</p>`).join('') : emptyList('Commission, payout, coupon, and campaign alerts appear here.')}</article>
+      </section>
+
+      <section class="affiliate-dashboard-grid" id="profile">
+        <article class="affiliate-dash-card">
+          <p class="affiliate-eyebrow">Profile</p>
+          <h2>Partner Profile</h2>
+          <form class="affiliate-profile-form" data-affiliate-profile-form>
+            <input name="fullName" placeholder="Full name" value="${escapeHtml(app.fullName || '')}">
+            <input name="phone" placeholder="Phone" value="${escapeHtml(app.phone || '')}">
+            <input name="country" placeholder="Country" value="${escapeHtml(app.country || '')}">
+            <button class="affiliate-primary" type="submit">Save Profile</button>
+          </form>
         </article>
-      </div>
+        <article class="affiliate-dash-card">
+          <p class="affiliate-eyebrow">Security</p>
+          <h2>Login Protection</h2>
+          <p>2FA ready. Session expires automatically after 7 days.</p>
+          <p class="affiliate-muted">Device login history, IP logs, and audit logs are reserved for database-backed tracking.</p>
+        </article>
+        <article class="affiliate-dash-card" id="support">
+          <p class="affiliate-eyebrow">Support</p>
+          <h2>Affiliate Team</h2>
+          <p>Contact affiliates@zavorafashion.com for tickets, payout review, campaign help, and program questions.</p>
+        </article>
+      </section>
     `;
   }
 
@@ -211,24 +440,32 @@
     const data = new FormData(form);
     const method = String(data.get('method') || 'PayPal');
     const paypalEmail = String(data.get('paypalEmail') || '').trim().toLowerCase();
+    const bankName = String(data.get('bankName') || '').trim();
+    const accountHolder = String(data.get('accountHolder') || '').trim();
     const amount = Number(data.get('amount') || 0);
-    const available = Number(app.availableBalance || 0);
+    const available = Number(app.approvedBalance || app.availableBalance || 0);
     if (method === 'PayPal' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paypalEmail)) {
       if (message) message.textContent = 'Enter a valid PayPal email address.';
       return;
     }
-    if (amount < 50) {
-      if (message) message.textContent = 'Minimum withdrawal is $50.';
+    if (method === 'Bank Transfer' && (!bankName || !accountHolder)) {
+      if (message) message.textContent = 'Enter bank name and account holder.';
+      return;
+    }
+    if (amount < MIN_PAYOUT) {
+      if (message) message.textContent = `Minimum withdrawal is ${money(MIN_PAYOUT)}.`;
       return;
     }
     if (amount > available) {
-      if (message) message.textContent = 'Requested amount is higher than available balance.';
+      if (message) message.textContent = 'Requested amount is higher than approved balance.';
       return;
     }
     const request = {
       id: uid('PAYOUT'),
       method,
       paypalEmail,
+      bankName,
+      accountHolder,
       amount,
       status: 'pending',
       createdAt: new Date().toISOString()
@@ -237,12 +474,47 @@
       ...draft,
       payoutMethod: method,
       paypalEmail,
-      availableBalance: Math.max(0, available - amount),
-      payoutRequests: [request, ...(draft.payoutRequests || [])]
+      bankName,
+      accountHolder,
+      approvedBalance: Math.max(0, Number(draft.approvedBalance || draft.availableBalance || 0) - amount),
+      availableBalance: Math.max(0, Number(draft.availableBalance || 0) - amount),
+      pendingBalance: Number(draft.pendingBalance || 0) + amount,
+      payoutRequests: [request, ...(draft.payoutRequests || [])],
+      notifications: [{ message: `Withdrawal request ${request.id} sent for admin review.`, createdAt: request.createdAt }, ...(draft.notifications || [])]
     }));
     renderDashboard();
     const freshMessage = document.querySelector('[data-affiliate-payout-message]');
-    if (freshMessage) freshMessage.textContent = 'Payout request sent to Zavora Admin.';
+    if (freshMessage) freshMessage.textContent = 'Withdrawal request sent to Zavora Admin.';
+  }
+
+  function addReferralLink(form) {
+    const app = currentAffiliate();
+    if (!app) return;
+    const data = new FormData(form);
+    const label = String(data.get('label') || 'Custom Campaign').trim();
+    const rawUrl = String(data.get('url') || '').trim();
+    if (!rawUrl || !/^https?:\/\//i.test(rawUrl)) return;
+    const joiner = rawUrl.includes('?') ? '&' : '?';
+    const url = `${rawUrl}${joiner}ref=${encodeURIComponent(app.affiliateId || app.id)}`;
+    updateAffiliateRecord(app.id, (draft) => ({
+      ...draft,
+      referralLinks: [{ id: uid('LINK'), label, url, createdAt: new Date().toISOString() }, ...(draft.referralLinks || [])]
+    }));
+    form.reset();
+    renderDashboard();
+  }
+
+  function saveProfile(form) {
+    const app = currentAffiliate();
+    if (!app) return;
+    const data = new FormData(form);
+    updateAffiliateRecord(app.id, (draft) => ({
+      ...draft,
+      fullName: String(data.get('fullName') || draft.fullName || '').trim(),
+      phone: String(data.get('phone') || draft.phone || '').trim(),
+      country: String(data.get('country') || draft.country || '').trim()
+    }));
+    renderDashboard();
   }
 
   function captureAttribution() {
@@ -259,6 +531,9 @@
   document.addEventListener('submit', (event) => {
     const apply = event.target.closest('[data-affiliate-apply]');
     const loginForm = event.target.closest('[data-affiliate-login]');
+    const payoutForm = event.target.closest('[data-affiliate-payout-form]');
+    const linkForm = event.target.closest('[data-affiliate-link-form]');
+    const profileForm = event.target.closest('[data-affiliate-profile-form]');
     if (apply) {
       event.preventDefault();
       submitApplication(apply);
@@ -267,10 +542,17 @@
       event.preventDefault();
       login(loginForm);
     }
-    const payoutForm = event.target.closest('[data-affiliate-payout-form]');
     if (payoutForm) {
       event.preventDefault();
       requestPayout(payoutForm);
+    }
+    if (linkForm) {
+      event.preventDefault();
+      addReferralLink(linkForm);
+    }
+    if (profileForm) {
+      event.preventDefault();
+      saveProfile(profileForm);
     }
   });
 
@@ -289,6 +571,14 @@
       document.querySelector('#payouts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
+
+  window.addEventListener('hashchange', renderDashboard);
+  window.addEventListener('storage', (event) => {
+    if ([APP_KEY, SESSION_KEY, ORDER_KEY].includes(event.key)) renderDashboard();
+  });
+  window.setInterval(() => {
+    if (document.querySelector('[data-affiliate-dashboard-content]')) renderDashboard();
+  }, 15000);
 
   captureAttribution();
   renderDashboard();
