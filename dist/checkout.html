@@ -22,18 +22,18 @@
             <div class="payment-methods" role="radiogroup" aria-label="Payment methods">
               <label class="payment-soon"><input type="radio" name="payment" disabled><span class="pay-icon visa">Visa</span><small>Coming Soon</small></label>
               <label class="payment-soon"><input type="radio" name="payment" disabled><span class="pay-icon mastercard">Mastercard</span><small>Coming Soon</small></label>
-              <label class="payment-soon"><input type="radio" name="payment" disabled><span class="pay-icon paypal">PayPal</span><small>Coming Soon</small></label>
+              <label class="payment-live"><input type="radio" name="payment" value="paypal" checked><span class="pay-icon paypal">PayPal</span><small>Secure PayPal checkout</small></label>
               <label class="payment-soon"><input type="radio" name="payment" disabled><span class="pay-icon apple">Apple Pay</span><small>Coming Soon</small></label>
               <label class="payment-soon"><input type="radio" name="payment" disabled><span class="pay-icon google">Google Pay</span><small>Coming Soon</small></label>
             </div>
-            <div class="coming-soon-panel">All payment methods are coming soon. Checkout is temporarily paused while Zavora activates payments.</div>
+            <div class="coming-soon-panel">PayPal is live. Card, Apple Pay, and Google Pay are coming soon.</div>
             <label class="promo">Coupon code<input placeholder="ZAVORA10"></label>
             <div class="paypal-checkout">
               <p class="eyebrow">PayPal Checkout</p>
               <div id="paypal-button-container"></div>
-              <p class="secure-note">PayPal is coming soon.</p>
+              <p class="secure-note">Login is required before payment. PayPal opens a secure checkout window.</p>
             </div>
-            <a class="primary-cta pay-now disabled" href="#" aria-disabled="true" data-pay-total>Payments Coming Soon</a>
+            <a class="primary-cta pay-now" href="#paypal-button-container" data-pay-total>Continue with PayPal</a>
           </form>
         </div>
         <aside class="order-summary">
@@ -48,11 +48,13 @@
           <div class="summary-line"><span>Shipping</span><strong data-shipping-total>Free</strong></div>
           <div class="summary-line"><span>Discount</span><strong data-gift-discount>-$0</strong></div>
           <div class="summary-total"><span>Total</span><strong data-checkout-total>$0</strong></div>
-          <p class="secure-note">Secure checkout is coming soon. Your bag will stay saved in your account.</p>
+          <p class="secure-note">Secure PayPal checkout is active. Your bag stays saved in your account.</p>
         </aside>
       </section>
     </main>
     <footer class="footer"><section class="footer-bottom"><nav class="footer-links" aria-label="Footer navigation"><a href="shop.html">Shop</a><a href="about.html">About</a><a href="journal.html">Journal</a><a href="track-order.html">Track Order</a><a href="return-refund-policy.html">Returns</a><a href="privacy-policy.html">Privacy</a><a href="terms-conditions.html">Terms</a><a href="contact.html">Contact</a></nav><p class="footer-copy">Follow @ZavoraFashion<br>© 2026 Zavora Fashion</p><form class="footer-newsletter"><input type="email" placeholder="Email" aria-label="Newsletter email"><button type="button">Join</button></form></section></footer>
     <script src="page-script.js" defer></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=Af3xVk9GdDsErkni42qDBN90HZ8jXDKMGZrMN3a7B-nNVaaPa9EL7tnlKLgPgOKs8rIQi-nPjsrkanft&currency=USD" defer></script>
+    <script src="paypal-checkout.js" defer></script>
   </body>
 </html>

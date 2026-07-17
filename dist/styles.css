@@ -1067,9 +1067,13 @@ h2 {
 .payment-soon {
   opacity: .55;
 }
-.payment-active {
+.payment-active,
+.payment-live {
   border-color: var(--gold) !important;
   background: color-mix(in srgb, var(--gold) 10%, var(--white)) !important;
+}
+.payment-live small {
+  color: var(--muted);
 }
 .coming-soon-panel {
   border: 1px solid var(--line);

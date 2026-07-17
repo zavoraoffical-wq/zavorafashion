@@ -2785,12 +2785,16 @@ function initPaymentMethodUi() {
   const pay = document.querySelector('.pay-now');
   if (!methods) return;
   function update() {
-    if (paypal) paypal.hidden = true;
-    if (panel) panel.textContent = 'All payment methods are coming soon. Checkout is temporarily paused while Zavora activates payments.';
+    const selected = methods.querySelector('input[name="payment"]:checked')?.value || 'paypal';
+    if (paypal) paypal.hidden = selected !== 'paypal';
+    if (panel) panel.textContent = selected === 'paypal'
+      ? 'PayPal is live. Card, Apple Pay, and Google Pay are coming soon.'
+      : 'This payment method is coming soon.';
     if (pay) {
-      pay.textContent = 'Payments Coming Soon';
-      pay.setAttribute('aria-disabled', 'true');
-      pay.classList.add('disabled');
+      pay.textContent = selected === 'paypal' ? 'Continue with PayPal' : 'Payment Coming Soon';
+      pay.setAttribute('aria-disabled', selected === 'paypal' ? 'false' : 'true');
+      pay.classList.toggle('disabled', selected !== 'paypal');
+      pay.href = selected === 'paypal' ? '#paypal-button-container' : '#';
     }
   }
   methods.addEventListener('change', update);
