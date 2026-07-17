@@ -98,6 +98,28 @@ function approvalEmail(app) {
   ].join('\n');
 }
 
+async function sendAffiliateApprovalEmail(app) {
+  const response = await fetch('/api/admin?action=affiliate-approval-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      email: app.email,
+      fullName: app.fullName,
+      password: app.password,
+      affiliateId: app.affiliateId,
+      link: app.link,
+      coupon: app.coupon,
+      commission: app.commission
+    })
+  }).catch(() => null);
+  const data = await response?.json?.().catch(() => ({}));
+  if (!response?.ok || !data?.ok) {
+    throw new Error(data?.error || 'Approval email failed');
+  }
+  return data;
+}
+
 function renderAffiliatesPanel() {
   const root = document.querySelector('[data-affiliate-panel]');
   if (!root) return;
@@ -498,7 +520,17 @@ document.addEventListener('click', async (event) => {
       toast('Approval email copied');
       return;
     }
-    toast(actionName === 'approve' ? 'Affiliate approved and credentials generated' : `Affiliate ${actionName}ed`);
+    if (actionName === 'approve' && updated) {
+      try {
+        await sendAffiliateApprovalEmail(updated);
+        toast('Affiliate approved and welcome email sent');
+      } catch (error) {
+        navigator.clipboard?.writeText(approvalEmail(updated));
+        toast('Approved. Email failed, approval email copied');
+      }
+      return;
+    }
+    toast(`Affiliate ${actionName}ed`);
     return;
   }
 

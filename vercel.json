@@ -74,6 +74,10 @@
     {
       "source": "/api/auto-import-printful",
       "destination": "/api/admin?action=auto-import-printful"
+    },
+    {
+      "source": "/api/affiliate-approval-email",
+      "destination": "/api/admin?action=affiliate-approval-email"
     }
   ],
   "crons": [

@@ -6,6 +6,7 @@ const stats = require('../api-disabled/admin-stats');
 const orders = require('../api-disabled/orders');
 const rewards = require('../api-disabled/rewards');
 const autoImportPrintful = require('../api-disabled/auto-import-printful');
+const affiliateApprovalEmail = require('../api-disabled/affiliate-approval-email');
 const { validAdminSession } = require('../lib/admin-auth');
 const { logSecurityEvent, rateLimit, setSecurityHeaders } = require('../lib/security');
 
@@ -43,6 +44,7 @@ module.exports = async function handler(req, res) {
   if (action === 'orders') return orders(req, res);
   if (action === 'rewards') return rewards(req, res);
   if (action === 'auto-import-printful') return autoImportPrintful(req, res);
+  if (action === 'affiliate-approval-email') return affiliateApprovalEmail(req, res);
 
   return json(req, res, 404, {
     ok: false,
