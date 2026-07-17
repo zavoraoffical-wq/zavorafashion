@@ -80,12 +80,6 @@
       "destination": "/api/admin?action=affiliate-approval-email"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/admin?action=auto-import-printful",
-      "schedule": "0 8 * * *"
-    }
-  ],
   "functions": {
     "api/printful-products.js": {
       "maxDuration": 60
