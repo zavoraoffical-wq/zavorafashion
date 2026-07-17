@@ -58,8 +58,8 @@ module.exports = async function handler(req, res) {
     return json(req, res, 400, { ok: false, error: 'Affiliate credentials are required' });
   }
 
-  const loginUrl = 'https://www.zavorafashion.com/affiliate/login';
-  const dashboardUrl = 'https://www.zavorafashion.com/affiliate/dashboard';
+  const loginUrl = 'https://www.zavorafashion.com/affiliate-login.html';
+  const dashboardUrl = 'https://www.zavorafashion.com/affiliate-dashboard.html';
   const safeName = escapeHtml(name);
   const safePassword = escapeHtml(password);
   const safeAffiliateId = escapeHtml(affiliateId);

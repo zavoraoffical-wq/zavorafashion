@@ -88,11 +88,11 @@ function approvalEmail(app) {
     '',
     'Your account has been approved.',
     '',
-    `Login URL: https://www.zavorafashion.com/affiliate/login`,
+    `Login URL: https://www.zavorafashion.com/affiliate-login.html`,
     `Temporary Password: ${app.password || ''}`,
     `Affiliate Link: ${app.link || ''}`,
     `Commission Rate: ${app.commission || 10}%`,
-    `Dashboard URL: https://www.zavorafashion.com/affiliate/dashboard`,
+    `Dashboard URL: https://www.zavorafashion.com/affiliate-dashboard.html`,
     '',
     'Zavora Fashion Partner Team'
   ].join('\n');
@@ -137,13 +137,15 @@ function renderAffiliatesPanel() {
     <table class="admin-table affiliate-table">
       <thead><tr><th>Affiliate</th><th>Audience</th><th>Status</th><th>Commission</th><th>Link</th><th>Actions</th></tr></thead>
       <tbody>
-        ${apps.map((app) => `
+        ${apps.map((app) => {
+          const latestPayout = (app.payoutRequests || [])[0];
+          return `
           <tr data-affiliate-id="${app.id}">
             <td><strong>${app.fullName || 'Applicant'}</strong><br><span>${app.email || ''}</span><br><small>${app.phone || ''} ${app.country || ''}</small></td>
             <td>${app.followers || '0'} followers<br><span>${app.monthlyTraffic || '0'} monthly traffic</span><br><small>${app.promotionMethod || ''}</small></td>
             <td><span class="pill ${app.status === 'approved' ? 'green' : app.status === 'pending' ? 'gold' : ''}">${app.status || 'pending'}</span></td>
             <td><input class="affiliate-commission-input" data-affiliate-commission="${app.id}" type="number" min="1" max="50" value="${app.commission || 10}">%</td>
-            <td><code>${app.link || 'Pending approval'}</code><br><small>${app.coupon || ''}</small></td>
+            <td><code>${app.link || 'Pending approval'}</code><br><small>${app.coupon || ''}</small>${latestPayout ? `<br><small>Payout: ${latestPayout.status} / ${latestPayout.method} / $${Number(latestPayout.amount || 0).toFixed(2)}</small>` : ''}</td>
             <td class="affiliate-actions">
               <button data-affiliate-action="approve" data-affiliate-target="${app.id}">Approve</button>
               <button data-affiliate-action="reject" data-affiliate-target="${app.id}">Reject</button>
@@ -152,7 +154,7 @@ function renderAffiliatesPanel() {
               <button data-affiliate-action="copy-email" data-affiliate-target="${app.id}">Copy Email</button>
             </td>
           </tr>
-        `).join('')}
+        `}).join('')}
       </tbody>
     </table>
   `;

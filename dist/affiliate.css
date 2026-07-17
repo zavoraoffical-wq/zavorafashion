@@ -195,6 +195,12 @@ button, input, select, textarea { font: inherit; }
   display: flex;
   align-items: center;
 }
+.affiliate-side a.active,
+.affiliate-side a:hover,
+.affiliate-side button:hover {
+  border-color: rgba(201,162,39,.55);
+  background: rgba(201,162,39,.14);
+}
 .affiliate-main { padding: clamp(24px, 4vw, 60px); }
 .affiliate-dash-hero {
   display: grid;
@@ -207,6 +213,10 @@ button, input, select, textarea { font: inherit; }
   box-shadow: 0 20px 70px rgba(0,0,0,.05);
 }
 .affiliate-dash-card h1, .affiliate-dash-card h2 { margin: 0 0 12px; font: clamp(34px, 5vw, 72px)/.92 Georgia, serif; }
+.affiliate-muted {
+  color: var(--muted);
+  line-height: 1.65;
+}
 .affiliate-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -227,6 +237,49 @@ button, input, select, textarea { font: inherit; }
 }
 .copy-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin: 10px 0; }
 .copy-row input { min-height: 48px; border: 1px solid var(--line); padding: 0 12px; }
+.copy-row button,
+.affiliate-payout-form button {
+  border: 1px solid var(--line);
+  background: var(--black);
+  color: var(--white);
+  padding: 0 18px;
+  min-height: 48px;
+}
+.affiliate-payout-card {
+  border-color: rgba(201,162,39,.5);
+}
+.affiliate-payout-form {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 130px auto;
+  gap: 10px;
+  align-items: center;
+  margin: 18px 0 8px;
+}
+.affiliate-payout-form input,
+.affiliate-payout-form select {
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  padding: 0 14px;
+}
+.affiliate-history-list {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0;
+}
+.affiliate-history-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+  padding: 14px;
+}
+.affiliate-history-list span {
+  color: var(--muted);
+  text-transform: capitalize;
+}
 .asset-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -237,6 +290,7 @@ button, input, select, textarea { font: inherit; }
   .affiliate-hero-grid, .affiliate-form-wrap, .affiliate-dash-hero, .affiliate-dashboard, .affiliate-dashboard-grid { grid-template-columns: 1fr; }
   .affiliate-benefits, .affiliate-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .affiliate-side { position: static; height: auto; }
+  .affiliate-payout-form { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 620px) {
   .affiliate-hero { min-height: 100svh; padding: 18px 18px 44px; }
@@ -250,4 +304,6 @@ button, input, select, textarea { font: inherit; }
   .affiliate-auth-logo { top: 22px; left: 18px; font-size: 12px; }
   .affiliate-auth-card { padding: 24px; }
   .affiliate-main { padding: 18px; }
+  .affiliate-payout-form,
+  .affiliate-history-list div { grid-template-columns: 1fr; display: grid; }
 }

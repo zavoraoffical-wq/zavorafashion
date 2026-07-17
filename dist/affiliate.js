@@ -93,6 +93,32 @@
     return readApps().find((app) => app.id === session.id && app.status === 'approved') || null;
   }
 
+  function updateAffiliateRecord(id, updater) {
+    const apps = readApps();
+    const index = apps.findIndex((item) => String(item.id) === String(id));
+    if (index < 0) return null;
+    apps[index] = updater({ ...apps[index] }) || apps[index];
+    saveApps(apps);
+    return apps[index];
+  }
+
+  function payoutHistory(app) {
+    const rows = app.payoutRequests || [];
+    if (!rows.length) {
+      return '<p>No payout requests yet. Manual payout methods: PayPal, Bank, UPI.</p>';
+    }
+    return `
+      <div class="affiliate-history-list">
+        ${rows.map((row) => `
+          <div>
+            <strong>$${Number(row.amount || 0).toFixed(2)} via ${row.method || 'PayPal'}</strong>
+            <span>${row.status || 'pending'} / ${new Date(row.createdAt || Date.now()).toLocaleDateString()}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
   function renderDashboard() {
     const root = document.querySelector('[data-affiliate-dashboard-content]');
     if (!root) return;
@@ -102,15 +128,21 @@
       return;
     }
     const link = app.link || `https://www.zavorafashion.com/?ref=${encodeURIComponent(app.affiliateId || app.id)}`;
+    const available = Number(app.availableBalance || 0);
+    const pendingPayouts = (app.payoutRequests || []).filter((item) => item.status === 'pending');
+    document.querySelectorAll('.affiliate-side a[href*="#"]').forEach((item) => {
+      item.classList.toggle('active', item.hash === (window.location.hash || '#overview'));
+    });
     root.innerHTML = `
       <div class="affiliate-dash-hero" id="overview">
         <article class="affiliate-dash-card">
           <p class="affiliate-eyebrow">Welcome</p>
           <h1>${app.fullName || 'Zavora Partner'}</h1>
           <p>Affiliate ID: <strong>${app.affiliateId || app.id}</strong> / Commission: <strong>${app.commission || 10}%</strong></p>
+          <p class="affiliate-muted">Use your link and coupon to send traffic to Zavora Fashion. Orders, commissions, and payout requests stay inside this separate affiliate portal.</p>
         </article>
         <article class="affiliate-dash-card">
-          <h2>$${Number(app.availableBalance || 0).toFixed(2)}</h2>
+          <h2>$${available.toFixed(2)}</h2>
           <p>Available balance. Minimum withdrawal is $50.</p>
           <button class="affiliate-primary" type="button" data-affiliate-withdraw>Withdraw</button>
         </article>
@@ -128,12 +160,28 @@
           <h2>Coupon Code</h2>
           <div class="copy-row"><input value="${app.coupon || ''}" readonly><button data-copy="${app.coupon || ''}">Copy</button></div>
         </article>
-        <article class="affiliate-dash-card" id="payouts">
-          <h2>Payment History</h2>
-          <p>No payouts yet. Manual payout methods: PayPal, Bank, UPI.</p>
-          <p>Paid balance: $${Number(app.paidBalance || 0).toFixed(2)}</p>
+        <article class="affiliate-dash-card affiliate-payout-card" id="payouts">
+          <p class="affiliate-eyebrow">Payouts</p>
+          <h2>PayPal Payout</h2>
+          <p class="affiliate-muted">Add the PayPal email where affiliate payout money should be sent. Withdrawal requests are reviewed manually by Zavora Admin.</p>
+          <form class="affiliate-payout-form" data-affiliate-payout-form>
+            <select name="method" aria-label="Payout method">
+              <option value="PayPal" ${app.payoutMethod === 'PayPal' ? 'selected' : ''}>PayPal</option>
+              <option value="Bank" ${app.payoutMethod === 'Bank' ? 'selected' : ''}>Bank Transfer</option>
+              <option value="UPI" ${app.payoutMethod === 'UPI' ? 'selected' : ''}>UPI</option>
+            </select>
+            <input name="paypalEmail" type="email" placeholder="PayPal email address" value="${app.paypalEmail || app.email || ''}">
+            <input name="amount" type="number" min="50" step="0.01" placeholder="Amount" value="${available >= 50 ? available.toFixed(2) : ''}">
+            <button class="affiliate-primary" type="submit">Request Payout</button>
+          </form>
+          <p class="affiliate-message" data-affiliate-payout-message>${pendingPayouts.length ? `${pendingPayouts.length} payout request pending admin review.` : ''}</p>
         </article>
         <article class="affiliate-dash-card">
+          <h2>Payment History</h2>
+          ${payoutHistory(app)}
+          <p>Paid balance: $${Number(app.paidBalance || 0).toFixed(2)}</p>
+        </article>
+        <article class="affiliate-dash-card" id="orders">
           <h2>Recent Orders</h2>
           <p>Referral orders appear here after tracked checkout.</p>
         </article>
@@ -149,10 +197,52 @@
         </article>
         <article class="affiliate-dash-card" id="support">
           <h2>FAQ and Support</h2>
-          <p>For affiliate help, contact support@zavorafashion.com. Commission is manual payout after order clearance.</p>
+          <p>For affiliate help, contact affiliates@zavorafashion.com. Commission is manual payout after order clearance.</p>
+          <p class="affiliate-muted">Approval, suspension, payout status, and commission rate are controlled by Zavora Admin.</p>
         </article>
       </div>
     `;
+  }
+
+  function requestPayout(form) {
+    const app = currentAffiliate();
+    if (!app) return;
+    const message = form.querySelector('[data-affiliate-payout-message]') || document.querySelector('[data-affiliate-payout-message]');
+    const data = new FormData(form);
+    const method = String(data.get('method') || 'PayPal');
+    const paypalEmail = String(data.get('paypalEmail') || '').trim().toLowerCase();
+    const amount = Number(data.get('amount') || 0);
+    const available = Number(app.availableBalance || 0);
+    if (method === 'PayPal' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paypalEmail)) {
+      if (message) message.textContent = 'Enter a valid PayPal email address.';
+      return;
+    }
+    if (amount < 50) {
+      if (message) message.textContent = 'Minimum withdrawal is $50.';
+      return;
+    }
+    if (amount > available) {
+      if (message) message.textContent = 'Requested amount is higher than available balance.';
+      return;
+    }
+    const request = {
+      id: uid('PAYOUT'),
+      method,
+      paypalEmail,
+      amount,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    updateAffiliateRecord(app.id, (draft) => ({
+      ...draft,
+      payoutMethod: method,
+      paypalEmail,
+      availableBalance: Math.max(0, available - amount),
+      payoutRequests: [request, ...(draft.payoutRequests || [])]
+    }));
+    renderDashboard();
+    const freshMessage = document.querySelector('[data-affiliate-payout-message]');
+    if (freshMessage) freshMessage.textContent = 'Payout request sent to Zavora Admin.';
   }
 
   function captureAttribution() {
@@ -177,6 +267,11 @@
       event.preventDefault();
       login(loginForm);
     }
+    const payoutForm = event.target.closest('[data-affiliate-payout-form]');
+    if (payoutForm) {
+      event.preventDefault();
+      requestPayout(payoutForm);
+    }
   });
 
   document.addEventListener('click', (event) => {
@@ -191,7 +286,7 @@
       window.location.href = 'affiliate-login.html';
     }
     if (event.target.closest('[data-affiliate-withdraw]')) {
-      alert('Withdrawal request sent to Zavora affiliate support.');
+      document.querySelector('#payouts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
 

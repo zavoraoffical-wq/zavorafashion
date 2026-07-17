@@ -2897,13 +2897,13 @@ h2 {
   .brand,
   .page-header .brand {
     justify-self: start;
-    max-width: clamp(92px, calc(100vw - 286px), 180px);
+    max-width: clamp(118px, calc(100vw - 250px), 178px);
     overflow: hidden;
-    font-size: clamp(11px, 3.2vw, 14px);
-    letter-spacing: 1.4px;
+    font-size: clamp(10px, 2.95vw, 14px);
+    letter-spacing: clamp(.45px, .22vw, 1.2px);
     line-height: 1;
     text-overflow: clip;
-    gap: 4px;
+    gap: 3px;
     min-width: 0;
     white-space: nowrap;
   }
@@ -2914,10 +2914,10 @@ h2 {
     text-overflow: clip;
     white-space: nowrap;
   }
-  .brand-mark { width: 17px; height: 17px; flex: 0 0 17px; }
+  .brand-mark { width: 16px; height: 16px; flex: 0 0 16px; }
   .header-actions,
   .page-header .header-actions {
-    gap: 6px;
+    gap: 4px;
     flex-wrap: nowrap;
     justify-content: flex-end;
     max-width: calc(100vw - 96px);
@@ -2944,23 +2944,23 @@ h2 {
   .icon-button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    min-width: 38px;
-    width: 38px;
-    height: 38px;
+    min-width: 34px;
+    width: 34px;
+    height: 34px;
     display: inline-flex;
   }
   .cart-button,
   .page-header .cart-button {
-    height: 38px;
-    min-width: 54px;
-    padding: 0 8px;
-    font-size: 12px;
+    height: 34px;
+    min-width: 42px;
+    padding: 0 5px;
+    font-size: 11px;
     display: inline-flex;
   }
   .mobile-menu {
-    width: 38px;
-    min-width: 38px;
-    height: 38px;
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
     background: rgba(255,255,255,.16);
   }
   .site-header.scrolled .mobile-menu,
