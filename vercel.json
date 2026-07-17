@@ -24,6 +24,26 @@
       "destination": "/admin-login.html"
     },
     {
+      "source": "/affiliate",
+      "destination": "/affiliate.html"
+    },
+    {
+      "source": "/affiliate/",
+      "destination": "/affiliate.html"
+    },
+    {
+      "source": "/affiliate/login",
+      "destination": "/affiliate-login.html"
+    },
+    {
+      "source": "/affiliate/dashboard",
+      "destination": "/affiliate-dashboard.html"
+    },
+    {
+      "source": "/affiliate/submitted",
+      "destination": "/affiliate-submitted.html"
+    },
+    {
       "source": "/api/admin-login",
       "destination": "/api/admin?action=login"
     },

@@ -415,6 +415,52 @@ button { cursor: pointer; }
   opacity: 1;
   transform: translateY(0);
 }
+
+.affiliate-admin-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.affiliate-admin-tools input,
+.affiliate-admin-tools select,
+.affiliate-commission-input {
+  min-height: 46px;
+  border: 1px solid rgba(0,0,0,.14);
+  background: #fff;
+  padding: 0 12px;
+}
+
+.affiliate-table code {
+  display: block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.affiliate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.affiliate-actions button {
+  min-height: 34px;
+}
+
+.empty-admin-state {
+  border: 1px solid rgba(0,0,0,.12);
+  padding: 24px;
+  color: #666;
+}
+
+@media (max-width: 760px) {
+  .affiliate-admin-tools {
+    grid-template-columns: 1fr;
+  }
+}
 .admin-login-body {
   min-height: 100vh;
   background:

@@ -23,6 +23,7 @@
           <button data-section="shipping">Shipping</button>
           <button data-section="coupons">Coupons</button>
           <button data-section="wishlist">Wishlist</button>
+          <button data-section="affiliates">Affiliates</button>
           <button data-section="reviews">Reviews</button>
           <button data-section="emails">Email Center</button>
           <button data-section="notifications">Notifications</button>
@@ -304,6 +305,28 @@
         <section class="admin-section" data-panel="shipping"></section>
         <section class="admin-section" data-panel="coupons"></section>
         <section class="admin-section" data-panel="wishlist"></section>
+        <section class="admin-section" data-panel="affiliates">
+          <article class="admin-card affiliate-admin-card">
+            <div class="card-head">
+              <div>
+                <h2>Affiliate Program</h2>
+                <p>Review applications, assign commissions, generate links, and manage partner status.</p>
+              </div>
+              <button data-affiliate-export>Export CSV</button>
+            </div>
+            <div class="affiliate-admin-tools">
+              <input data-affiliate-search type="search" placeholder="Search affiliates">
+              <select data-affiliate-filter>
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </div>
+            <div data-affiliate-panel></div>
+          </article>
+        </section>
         <section class="admin-section" data-panel="reviews"></section>
         <section class="admin-section" data-panel="notifications"></section>
         <section class="admin-section" data-panel="content"></section>

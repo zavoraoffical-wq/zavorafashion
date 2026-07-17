@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Affiliate Login | Zavora Fashion</title>
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" type="image/png" href="assets/zavora-logo.png">
+    <link rel="stylesheet" href="affiliate.css">
+  </head>
+  <body class="affiliate-auth-page">
+    <main class="affiliate-auth">
+      <a class="affiliate-auth-logo" href="affiliate.html"><img src="assets/zavora-logo.png" alt="">ZAVORA AFFILIATES</a>
+      <section class="affiliate-auth-card">
+        <p class="affiliate-eyebrow">Partner Login</p>
+        <h1>Access your affiliate dashboard.</h1>
+        <p>Only approved affiliates can sign in. This login is separate from customer accounts.</p>
+        <form data-affiliate-login>
+          <input name="email" type="email" placeholder="Affiliate email" required>
+          <input name="password" type="password" placeholder="Temporary or current password" required>
+          <button class="affiliate-primary" type="submit">Login</button>
+          <p class="affiliate-message" data-affiliate-message></p>
+        </form>
+      </section>
+    </main>
+    <script src="affiliate.js" defer></script>
+  </body>
+</html>

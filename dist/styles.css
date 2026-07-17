@@ -2897,7 +2897,7 @@ h2 {
   .brand,
   .page-header .brand {
     justify-self: start;
-    max-width: calc(100vw - 212px);
+    max-width: clamp(92px, calc(100vw - 286px), 180px);
     overflow: hidden;
     font-size: clamp(11px, 3.2vw, 14px);
     letter-spacing: 1.4px;
@@ -2920,16 +2920,22 @@ h2 {
     gap: 6px;
     flex-wrap: nowrap;
     justify-content: flex-end;
+    max-width: calc(100vw - 96px);
+    min-width: 0;
   }
   .header-actions .header-dropdown,
   .page-header .header-actions .header-dropdown,
   .header-actions [data-dark],
   .page-header .header-actions [data-dark],
-  .header-actions a[aria-label="Wishlist"],
-  .header-actions button[aria-label="Wishlist"],
   .header-actions a[aria-label="Account"]:not([data-profile]),
   .header-actions button[aria-label="Account"]:not([data-profile]) {
     display: none;
+  }
+  .header-actions [data-wishlist],
+  .page-header .header-actions [data-wishlist],
+  .header-actions a[aria-label="Wishlist"],
+  .page-header .header-actions a[aria-label="Wishlist"] {
+    display: inline-flex;
   }
   .header-actions [data-profile],
   .page-header .header-actions [data-profile] {
@@ -2998,7 +3004,21 @@ h2 {
   }
   .campaign, .campaign.tall { min-height: 430px; grid-row: auto; }
   .shop-layout { padding: 54px 18px; }
-  .product-rail-track { grid-auto-columns: 88vw; }
+  .product-rail,
+  .product-rail-track {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .product-rail-track::-webkit-scrollbar { display: none; }
+  .product-rail-track { grid-auto-columns: minmax(250px, 82vw); }
+  .product-rail-track > * { scroll-snap-align: start; }
   .product-detail {
     padding-top: 86px;
   }
@@ -3016,7 +3036,7 @@ h2 {
   .search-overlay label { font-size: 38px; }
   .mega-menu { display: none; }
   .mobile-panel {
-    width: min(360px, calc(100vw - 20px));
+    width: min(348px, calc(100vw - 28px));
     height: calc(100dvh - 20px);
     max-height: calc(100dvh - 20px);
     margin: 10px;
@@ -3133,10 +3153,10 @@ h2 {
   .page-header { grid-template-columns: 38px minmax(0, 1fr) auto; }
   .brand,
   .page-header .brand {
-    font-size: 13px;
-    letter-spacing: 1.4px;
+    font-size: 11px;
+    letter-spacing: 1px;
     gap: 5px;
-    max-width: calc(100vw - 176px);
+    max-width: clamp(78px, calc(100vw - 252px), 148px);
   }
   .brand-mark { width: 17px; height: 17px; flex-basis: 17px; }
   .icon-button,
@@ -3148,8 +3168,8 @@ h2 {
   }
   .cart-button,
   .page-header .cart-button {
-    min-width: 48px;
-    padding: 0 8px;
+    min-width: 42px;
+    padding: 0 5px;
     font-size: 12px;
   }
 }

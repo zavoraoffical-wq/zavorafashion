@@ -9,6 +9,7 @@ const sectionTitles = {
   shipping: 'Shipping',
   coupons: 'Coupons',
   wishlist: 'Wishlist',
+  affiliates: 'Affiliates',
   reviews: 'Reviews',
   emails: 'Email Center',
   notifications: 'Notifications',
@@ -25,6 +26,7 @@ const sectionTitles = {
 const ADMIN_SESSION_KEY = 'zavoraAdminSession';
 const ADMIN_EMAIL_KEY = 'zavoraAdminEmail';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
+const AFFILIATE_KEY = 'zavoraAffiliateApplications';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80';
 
 async function requireAdminSession() {
@@ -56,6 +58,106 @@ const quickPanels = {
   media: ['Images', 'Videos', 'Banners', 'Brand Logos', 'Icons', 'Documents']
 };
 
+function readAffiliates() {
+  try {
+    return JSON.parse(localStorage.getItem(AFFILIATE_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveAffiliates(apps) {
+  localStorage.setItem(AFFILIATE_KEY, JSON.stringify(apps));
+}
+
+function affiliateId(app) {
+  return app.affiliateId || `ZAF-${String(app.email || app.id || Date.now()).replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase()}${String(Date.now()).slice(-4)}`;
+}
+
+function affiliatePassword() {
+  return `Zavora${Math.random().toString(36).slice(2, 8).toUpperCase()}!`;
+}
+
+function affiliateCoupon(id) {
+  return `${String(id || 'ZAF').replace(/[^a-z0-9]/gi, '').slice(0, 8).toUpperCase()}10`;
+}
+
+function approvalEmail(app) {
+  return [
+    'Welcome to Zavora Fashion Affiliate Program',
+    '',
+    'Your account has been approved.',
+    '',
+    `Login URL: https://www.zavorafashion.com/affiliate/login`,
+    `Temporary Password: ${app.password || ''}`,
+    `Affiliate Link: ${app.link || ''}`,
+    `Commission Rate: ${app.commission || 10}%`,
+    `Dashboard URL: https://www.zavorafashion.com/affiliate/dashboard`,
+    '',
+    'Zavora Fashion Partner Team'
+  ].join('\n');
+}
+
+function renderAffiliatesPanel() {
+  const root = document.querySelector('[data-affiliate-panel]');
+  if (!root) return;
+  const query = (document.querySelector('[data-affiliate-search]')?.value || '').trim().toLowerCase();
+  const filter = document.querySelector('[data-affiliate-filter]')?.value || 'all';
+  const apps = readAffiliates().filter((app) => {
+    const haystack = `${app.fullName || ''} ${app.email || ''} ${app.country || ''} ${app.status || ''}`.toLowerCase();
+    return (!query || haystack.includes(query)) && (filter === 'all' || app.status === filter);
+  });
+  if (!apps.length) {
+    root.innerHTML = '<div class="empty-admin-state">No affiliate applications yet. New applications from /affiliate will appear here.</div>';
+    return;
+  }
+  root.innerHTML = `
+    <table class="admin-table affiliate-table">
+      <thead><tr><th>Affiliate</th><th>Audience</th><th>Status</th><th>Commission</th><th>Link</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${apps.map((app) => `
+          <tr data-affiliate-id="${app.id}">
+            <td><strong>${app.fullName || 'Applicant'}</strong><br><span>${app.email || ''}</span><br><small>${app.phone || ''} ${app.country || ''}</small></td>
+            <td>${app.followers || '0'} followers<br><span>${app.monthlyTraffic || '0'} monthly traffic</span><br><small>${app.promotionMethod || ''}</small></td>
+            <td><span class="pill ${app.status === 'approved' ? 'green' : app.status === 'pending' ? 'gold' : ''}">${app.status || 'pending'}</span></td>
+            <td><input class="affiliate-commission-input" data-affiliate-commission="${app.id}" type="number" min="1" max="50" value="${app.commission || 10}">%</td>
+            <td><code>${app.link || 'Pending approval'}</code><br><small>${app.coupon || ''}</small></td>
+            <td class="affiliate-actions">
+              <button data-affiliate-action="approve" data-affiliate-target="${app.id}">Approve</button>
+              <button data-affiliate-action="reject" data-affiliate-target="${app.id}">Reject</button>
+              <button data-affiliate-action="suspend" data-affiliate-target="${app.id}">Suspend</button>
+              <button data-affiliate-action="delete" data-affiliate-target="${app.id}">Delete</button>
+              <button data-affiliate-action="copy-email" data-affiliate-target="${app.id}">Copy Email</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function updateAffiliate(id, updater) {
+  const apps = readAffiliates();
+  const index = apps.findIndex((app) => String(app.id) === String(id));
+  if (index < 0) return null;
+  apps[index] = updater({ ...apps[index] }) || apps[index];
+  saveAffiliates(apps);
+  renderAffiliatesPanel();
+  return apps[index];
+}
+
+function exportAffiliates() {
+  const rows = [['Name', 'Email', 'Phone', 'Country', 'Status', 'Commission', 'Affiliate ID', 'Coupon', 'Link']];
+  readAffiliates().forEach((app) => rows.push([app.fullName, app.email, app.phone, app.country, app.status, app.commission, app.affiliateId, app.coupon, app.link]));
+  const csv = rows.map((row) => row.map((cell) => `"${String(cell || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'zavora-affiliates.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
 function toast(message) {
   const box = document.querySelector('[data-toast-box]');
   if (!box) return;
@@ -72,6 +174,7 @@ function setSection(name) {
   document.querySelectorAll('[data-panel]').forEach((panel) => panel.classList.toggle('active', panel.dataset.panel === name));
   document.querySelector('[data-sidebar]')?.classList.remove('open');
   window.history.replaceState(null, '', `#${name}`);
+  if (name === 'affiliates') renderAffiliatesPanel();
 }
 
 function renderQuickPanels() {
@@ -366,6 +469,45 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  const affiliateAction = event.target.closest('[data-affiliate-action]');
+  if (affiliateAction) {
+    const id = affiliateAction.dataset.affiliateTarget;
+    const actionName = affiliateAction.dataset.affiliateAction;
+    if (actionName === 'delete') {
+      saveAffiliates(readAffiliates().filter((app) => String(app.id) !== String(id)));
+      renderAffiliatesPanel();
+      toast('Affiliate deleted');
+      return;
+    }
+    const updated = updateAffiliate(id, (app) => {
+      if (actionName === 'approve') {
+        app.status = 'approved';
+        app.affiliateId = affiliateId(app);
+        app.password = app.password || affiliatePassword();
+        app.commission = Number(app.commission || 10);
+        app.coupon = app.coupon || affiliateCoupon(app.affiliateId);
+        app.link = app.link || `https://www.zavorafashion.com/?ref=${encodeURIComponent(app.affiliateId)}`;
+        app.approvedAt = new Date().toISOString();
+      }
+      if (actionName === 'reject') app.status = 'rejected';
+      if (actionName === 'suspend') app.status = 'suspended';
+      return app;
+    });
+    if (actionName === 'copy-email' && updated) {
+      navigator.clipboard?.writeText(approvalEmail(updated));
+      toast('Approval email copied');
+      return;
+    }
+    toast(actionName === 'approve' ? 'Affiliate approved and credentials generated' : `Affiliate ${actionName}ed`);
+    return;
+  }
+
+  if (event.target.closest('[data-affiliate-export]')) {
+    exportAffiliates();
+    toast('Affiliate CSV exported');
+    return;
+  }
+
   const saveOrder = event.target.closest('[data-save-order]');
   if (saveOrder) {
     const row = saveOrder.closest('[data-admin-order]');
@@ -422,11 +564,29 @@ document.addEventListener('submit', (event) => {
 });
 
 document.addEventListener('input', (event) => {
+  if (event.target?.matches?.('[data-affiliate-search]')) {
+    renderAffiliatesPanel();
+    return;
+  }
   if (event.target?.id !== 'adminSearch') return;
   const query = event.target.value.trim().toLowerCase();
   document.querySelectorAll('.admin-section.active .admin-card, .admin-section.active tbody tr').forEach((item) => {
     item.style.display = !query || item.textContent.toLowerCase().includes(query) ? '' : 'none';
   });
+});
+
+document.addEventListener('change', (event) => {
+  if (event.target?.matches?.('[data-affiliate-filter]')) {
+    renderAffiliatesPanel();
+    return;
+  }
+  if (event.target?.matches?.('[data-affiliate-commission]')) {
+    updateAffiliate(event.target.dataset.affiliateCommission, (app) => {
+      app.commission = Number(event.target.value || 10);
+      return app;
+    });
+    return;
+  }
 });
 
 async function bootAdmin() {
