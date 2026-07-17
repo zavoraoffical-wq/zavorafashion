@@ -2855,9 +2855,16 @@ h2 {
 }
 
 @media (max-width: 720px) {
+  *,
+  *::before,
+  *::after {
+    max-width: 100%;
+  }
   html, body {
+    width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    overscroll-behavior-x: none;
   }
   .site-header,
   .page-header {
@@ -2920,7 +2927,7 @@ h2 {
     gap: 4px;
     flex-wrap: nowrap;
     justify-content: flex-end;
-    max-width: calc(100vw - 96px);
+    max-width: calc(100vw - 92px);
     min-width: 0;
   }
   .header-actions .header-dropdown,
@@ -3021,6 +3028,36 @@ h2 {
   .product-rail-track > * { scroll-snap-align: start; }
   .product-detail {
     padding-top: 86px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .product-gallery,
+  .product-gallery-main,
+  .product-buy,
+  .zoom-frame,
+  .info-stack,
+  .account-nav,
+  .dashboard-content,
+  .footer,
+  .shop-layout,
+  .catalog-layout,
+  .page-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .product-gallery {
+    grid-template-columns: 1fr;
+  }
+  .product-gallery .zoom-frame {
+    max-width: 100%;
+  }
+  .zoom-frame img,
+  .product-gallery img,
+  .product-gallery-main img {
+    max-width: 100%;
+    height: auto;
   }
   .product-buy {
     position: static;
@@ -3153,10 +3190,10 @@ h2 {
   .page-header { grid-template-columns: 38px minmax(0, 1fr) auto; }
   .brand,
   .page-header .brand {
-    font-size: 9px;
-    letter-spacing: .35px;
+    font-size: 8.4px;
+    letter-spacing: .15px;
     gap: 3px;
-    max-width: clamp(118px, calc(100vw - 208px), 154px);
+    max-width: clamp(126px, calc(100vw - 194px), 160px);
   }
   .brand-mark { width: 14px; height: 14px; flex-basis: 14px; }
   .icon-button,

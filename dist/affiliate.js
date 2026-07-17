@@ -21,6 +21,48 @@
     localStorage.setItem(APP_KEY, JSON.stringify(apps));
   }
 
+  function ensureDemoAffiliate() {
+    const demoEmail = 'affiliate@zavorafashion.com';
+    const apps = readApps();
+    let demo = apps.find((item) => String(item.email || '').toLowerCase() === demoEmail);
+    if (!demo) {
+      demo = {
+        id: 'AFF-DEMO-ZAVORA',
+        affiliateId: 'ZAF-DEMO2026',
+        fullName: 'Zavora Demo Partner',
+        email: demoEmail,
+        password: 'ZavoraDemo5',
+        phone: '+1 555 0148',
+        country: 'USA',
+        instagram: '@zavorapartner',
+        promotionMethod: 'Premium streetwear content',
+        status: 'approved',
+        commission: 15,
+        clicks: 0,
+        todayClicks: 0,
+        monthClicks: 0,
+        orders: 0,
+        revenue: 0,
+        pendingBalance: 0,
+        paidBalance: 0,
+        availableBalance: 5,
+        approvedBalance: 5,
+        lifetimeRevenue: 0,
+        lifetimeCommission: 0,
+        coupon: 'ZAFDEMO15',
+        link: 'https://www.zavorafashion.com/?ref=ZAF-DEMO2026',
+        referralLinks: [],
+        coupons: [{ code: 'ZAFDEMO15', discount: 15, active: true, usage: 0, sales: 0, revenue: 0 }],
+        payoutRequests: [],
+        notifications: [{ message: 'Demo affiliate account is approved and ready for preview.', createdAt: new Date().toISOString() }],
+        createdAt: '2026-07-17T00:00:00.000Z'
+      };
+      apps.unshift(demo);
+      saveApps(apps);
+    }
+    return demo;
+  }
+
   function uid(prefix) {
     return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
   }
@@ -120,6 +162,17 @@
       id: app.id,
       email: app.email,
       affiliateId: app.affiliateId,
+      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
+    }));
+    window.location.href = 'affiliate-dashboard.html#overview';
+  }
+
+  function loginDemoAffiliate() {
+    const demo = ensureDemoAffiliate();
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      id: demo.id,
+      email: demo.email,
+      affiliateId: demo.affiliateId,
       expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
     }));
     window.location.href = 'affiliate-dashboard.html#overview';
@@ -566,6 +619,9 @@
     if (event.target.closest('[data-affiliate-logout]')) {
       localStorage.removeItem(SESSION_KEY);
       window.location.href = 'affiliate-login.html';
+    }
+    if (event.target.closest('[data-affiliate-demo]')) {
+      loginDemoAffiliate();
     }
     if (event.target.closest('[data-affiliate-withdraw]')) {
       document.querySelector('#payouts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
