@@ -28,6 +28,7 @@ const ADMIN_EMAIL_KEY = 'zavoraAdminEmail';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const AFFILIATE_KEY = 'zavoraAffiliateApplications';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80';
+let affiliateServerLoaded = false;
 
 async function requireAdminSession() {
   try {
@@ -68,6 +69,50 @@ function readAffiliates() {
 
 function saveAffiliates(apps) {
   localStorage.setItem(AFFILIATE_KEY, JSON.stringify(apps));
+}
+
+function mergeAffiliateList(serverApps = []) {
+  const map = new Map();
+  readAffiliates().forEach((app) => map.set(String(app.id || app._id || app.email), app));
+  serverApps.forEach((app) => {
+    const key = String(app.id || app._id || app.email);
+    map.set(key, { ...(map.get(key) || {}), ...app, id: app.id || app._id || key });
+  });
+  const merged = [...map.values()].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  saveAffiliates(merged);
+  return merged;
+}
+
+async function syncAffiliatesFromServer(force = false) {
+  if (affiliateServerLoaded && !force) return readAffiliates();
+  const response = await fetch('/api/admin?action=affiliates', { credentials: 'include' }).catch(() => null);
+  const data = await response?.json?.().catch(() => ({}));
+  if (response?.ok && data?.apps) {
+    affiliateServerLoaded = true;
+    return mergeAffiliateList(data.apps);
+  }
+  return readAffiliates();
+}
+
+async function saveAffiliateToServer(app) {
+  if (!app?.id) return false;
+  const response = await fetch('/api/admin?action=affiliates', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ mode: 'save', id: app.id, app })
+  }).catch(() => null);
+  return Boolean(response?.ok);
+}
+
+async function deleteAffiliateFromServer(id) {
+  const response = await fetch('/api/admin?action=affiliates', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ mode: 'delete', id })
+  }).catch(() => null);
+  return Boolean(response?.ok);
 }
 
 function affiliateId(app) {
@@ -120,9 +165,10 @@ async function sendAffiliateApprovalEmail(app) {
   return data;
 }
 
-function renderAffiliatesPanel() {
+async function renderAffiliatesPanel() {
   const root = document.querySelector('[data-affiliate-panel]');
   if (!root) return;
+  await syncAffiliatesFromServer();
   const query = (document.querySelector('[data-affiliate-search]')?.value || '').trim().toLowerCase();
   const filter = document.querySelector('[data-affiliate-filter]')?.value || 'all';
   const apps = readAffiliates().filter((app) => {
@@ -161,13 +207,14 @@ function renderAffiliatesPanel() {
   `;
 }
 
-function updateAffiliate(id, updater) {
+async function updateAffiliate(id, updater) {
   const apps = readAffiliates();
   const index = apps.findIndex((app) => String(app.id) === String(id));
   if (index < 0) return null;
   apps[index] = updater({ ...apps[index] }) || apps[index];
   saveAffiliates(apps);
-  renderAffiliatesPanel();
+  await saveAffiliateToServer(apps[index]);
+  await renderAffiliatesPanel();
   return apps[index];
 }
 
@@ -500,11 +547,12 @@ document.addEventListener('click', async (event) => {
     const actionName = affiliateAction.dataset.affiliateAction;
     if (actionName === 'delete') {
       saveAffiliates(readAffiliates().filter((app) => String(app.id) !== String(id)));
-      renderAffiliatesPanel();
+      await deleteAffiliateFromServer(id);
+      await renderAffiliatesPanel();
       toast('Affiliate deleted');
       return;
     }
-    const updated = updateAffiliate(id, (app) => {
+    const updated = await updateAffiliate(id, (app) => {
       if (actionName === 'approve') {
         app.status = 'approved';
         app.affiliateId = affiliateId(app);

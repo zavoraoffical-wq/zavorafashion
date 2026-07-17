@@ -2863,8 +2863,29 @@ h2 {
   html, body {
     width: 100%;
     max-width: 100%;
+    min-width: 0;
     overflow-x: hidden;
     overscroll-behavior-x: none;
+  }
+  body {
+    position: relative;
+    touch-action: pan-y;
+  }
+  main,
+  section,
+  form,
+  aside,
+  article,
+  .page-shell {
+    min-width: 0;
+    max-width: 100%;
+  }
+  input,
+  select,
+  textarea {
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
   }
   .site-header,
   .page-header {
@@ -2904,10 +2925,10 @@ h2 {
   .brand,
   .page-header .brand {
     justify-self: start;
-    max-width: clamp(142px, calc(100vw - 220px), 190px);
+    max-width: clamp(150px, calc(100vw - 214px), 196px);
     overflow: hidden;
-    font-size: clamp(9px, 2.7vw, 13px);
-    letter-spacing: clamp(.3px, .16vw, 1px);
+    font-size: clamp(10px, 2.8vw, 14px);
+    letter-spacing: clamp(.25px, .28vw, 1.1px);
     line-height: 1;
     text-overflow: clip;
     gap: 3px;
@@ -2921,10 +2942,10 @@ h2 {
     text-overflow: clip;
     white-space: nowrap;
   }
-  .brand-mark { width: 16px; height: 16px; flex: 0 0 16px; }
+  .brand-mark { width: 17px; height: 17px; flex: 0 0 17px; }
   .header-actions,
   .page-header .header-actions {
-    gap: 4px;
+    gap: 5px;
     flex-wrap: nowrap;
     justify-content: flex-end;
     max-width: calc(100vw - 92px);
@@ -2951,17 +2972,21 @@ h2 {
   .icon-button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    min-width: 32px;
-    width: 32px;
-    height: 34px;
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
     display: inline-flex;
+  }
+  .icon-button svg {
+    width: 17px;
+    height: 17px;
   }
   .cart-button,
   .page-header .cart-button {
-    height: 34px;
-    min-width: 40px;
+    height: 36px;
+    min-width: 44px;
     padding: 0 5px;
-    font-size: 11px;
+    font-size: 12px;
     display: inline-flex;
   }
   .mobile-menu {
@@ -3064,6 +3089,52 @@ h2 {
   }
   .product-buy h1 {
     font-size: 40px;
+  }
+  .checkout-page,
+  .checkout-main,
+  .order-summary,
+  .checkout-form,
+  .form-grid,
+  .shipping-methods,
+  .payment-methods,
+  .summary-detail,
+  .summary-line,
+  .summary-total {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .checkout-page {
+    padding: 92px 14px 42px;
+    gap: 18px;
+    overflow: hidden;
+  }
+  .checkout-main h1 {
+    font-size: clamp(39px, 13vw, 56px);
+    line-height: .94;
+    overflow-wrap: anywhere;
+  }
+  .checkout-form,
+  .order-summary {
+    padding: 20px;
+  }
+  .checkout-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .checkout-steps span,
+  .checkout-steps a {
+    min-width: 0;
+    font-size: 12px;
+    letter-spacing: .08em;
+  }
+  .shipping-methods,
+  .payment-methods {
+    grid-template-columns: 1fr;
+  }
+  .payment-methods label,
+  .shipping-methods label {
+    min-width: 0;
   }
   .product-grid, .reviews, .category-grid, .gallery, .service-grid { grid-template-columns: 1fr; }
   .product-toolbar { align-items: flex-start; gap: 14px; flex-direction: column; }
@@ -3190,17 +3261,17 @@ h2 {
   .page-header { grid-template-columns: 38px minmax(0, 1fr) auto; }
   .brand,
   .page-header .brand {
-    font-size: 8.4px;
-    letter-spacing: .15px;
+    font-size: 9.4px;
+    letter-spacing: .1px;
     gap: 3px;
-    max-width: clamp(126px, calc(100vw - 194px), 160px);
+    max-width: clamp(138px, calc(100vw - 204px), 166px);
   }
   .brand-mark { width: 14px; height: 14px; flex-basis: 14px; }
   .icon-button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    min-width: 30px;
-    width: 30px;
+    min-width: 33px;
+    width: 33px;
     height: 34px;
   }
   .cart-button,

@@ -21,46 +21,14 @@
     localStorage.setItem(APP_KEY, JSON.stringify(apps));
   }
 
-  function ensureDemoAffiliate() {
-    const demoEmail = 'affiliate@zavorafashion.com';
+  function mergeAffiliate(app) {
+    if (!app?.id) return null;
     const apps = readApps();
-    let demo = apps.find((item) => String(item.email || '').toLowerCase() === demoEmail);
-    if (!demo) {
-      demo = {
-        id: 'AFF-DEMO-ZAVORA',
-        affiliateId: 'ZAF-DEMO2026',
-        fullName: 'Zavora Demo Partner',
-        email: demoEmail,
-        password: 'ZavoraDemo5',
-        phone: '+1 555 0148',
-        country: 'USA',
-        instagram: '@zavorapartner',
-        promotionMethod: 'Premium streetwear content',
-        status: 'approved',
-        commission: 15,
-        clicks: 0,
-        todayClicks: 0,
-        monthClicks: 0,
-        orders: 0,
-        revenue: 0,
-        pendingBalance: 0,
-        paidBalance: 0,
-        availableBalance: 5,
-        approvedBalance: 5,
-        lifetimeRevenue: 0,
-        lifetimeCommission: 0,
-        coupon: 'ZAFDEMO15',
-        link: 'https://www.zavorafashion.com/?ref=ZAF-DEMO2026',
-        referralLinks: [],
-        coupons: [{ code: 'ZAFDEMO15', discount: 15, active: true, usage: 0, sales: 0, revenue: 0 }],
-        payoutRequests: [],
-        notifications: [{ message: 'Demo affiliate account is approved and ready for preview.', createdAt: new Date().toISOString() }],
-        createdAt: '2026-07-17T00:00:00.000Z'
-      };
-      apps.unshift(demo);
-      saveApps(apps);
-    }
-    return demo;
+    const index = apps.findIndex((item) => String(item.id) === String(app.id) || String(item.email || '').toLowerCase() === String(app.email || '').toLowerCase());
+    if (index >= 0) apps[index] = { ...apps[index], ...app };
+    else apps.unshift(app);
+    saveApps(apps);
+    return app;
   }
 
   function uid(prefix) {
@@ -105,7 +73,7 @@
     return 'Launch Partner';
   }
 
-  function submitApplication(form) {
+  async function submitApplication(form) {
     const data = new FormData(form);
     const app = Object.fromEntries(data.entries());
     if (!app.agree) {
@@ -119,7 +87,7 @@
       setMessage(form, `Application already exists with status: ${existing.status || 'pending'}.`, true);
       return;
     }
-    apps.unshift({
+    const draft = {
       ...app,
       email,
       id: uid('AFF'),
@@ -139,40 +107,51 @@
       payoutRequests: [],
       notifications: [],
       createdAt: new Date().toISOString()
-    });
+    };
+    setMessage(form, 'Submitting application...');
+    const response = await fetch('/api/affiliate?action=apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(draft)
+    }).catch(() => null);
+    const result = await response?.json?.().catch(() => ({}));
+    if (response?.ok && result?.app) {
+      mergeAffiliate(result.app);
+      setMessage(form, result.message || 'Application submitted for admin review.');
+      window.setTimeout(() => window.location.href = 'affiliate-submitted.html', 650);
+      return;
+    }
+    apps.unshift(draft);
     saveApps(apps);
     setMessage(form, 'Application submitted for admin review.');
     window.setTimeout(() => window.location.href = 'affiliate-submitted.html', 650);
   }
 
-  function login(form) {
+  async function login(form) {
     const data = new FormData(form);
     const email = String(data.get('email') || '').trim().toLowerCase();
     const password = String(data.get('password') || '').trim();
-    const app = readApps().find((item) => String(item.email || '').toLowerCase() === email);
+    setMessage(form, 'Checking affiliate access...');
+    const response = await fetch('/api/affiliate?action=login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    }).catch(() => null);
+    const result = await response?.json?.().catch(() => ({}));
+    const serverValidated = Boolean(response?.ok && result?.app);
+    const app = serverValidated ? mergeAffiliate(result.app) : readApps().find((item) => String(item.email || '').toLowerCase() === email);
     if (!app || app.status !== 'approved') {
-      setMessage(form, 'Affiliate account is not approved yet.', true);
+      setMessage(form, result?.error || 'Affiliate account is not approved yet.', true);
       return;
     }
-    if (!app.password || String(app.password).trim() !== password) {
-      setMessage(form, 'Invalid affiliate credentials.', true);
+    if (!serverValidated && (!app.password || String(app.password).trim() !== password)) {
+      setMessage(form, result?.error || 'Invalid affiliate credentials.', true);
       return;
     }
     localStorage.setItem(SESSION_KEY, JSON.stringify({
       id: app.id,
       email: app.email,
       affiliateId: app.affiliateId,
-      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
-    }));
-    window.location.href = 'affiliate-dashboard.html#overview';
-  }
-
-  function loginDemoAffiliate() {
-    const demo = ensureDemoAffiliate();
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
-      id: demo.id,
-      email: demo.email,
-      affiliateId: demo.affiliateId,
       expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
     }));
     window.location.href = 'affiliate-dashboard.html#overview';
@@ -645,9 +624,6 @@
     if (event.target.closest('[data-affiliate-logout]')) {
       localStorage.removeItem(SESSION_KEY);
       window.location.href = 'affiliate-login.html';
-    }
-    if (event.target.closest('[data-affiliate-demo]')) {
-      loginDemoAffiliate();
     }
     if (event.target.closest('[data-affiliate-withdraw]')) {
       document.querySelector('#payouts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

@@ -165,19 +165,6 @@ button, input, select, textarea { font: inherit; }
 .affiliate-auth-card h1 { font-size: clamp(44px, 8vw, 82px); color: var(--ink); }
 .affiliate-auth-card p { color: var(--muted); line-height: 1.7; }
 .affiliate-auth-card form { display: grid; gap: 14px; }
-.affiliate-demo-access {
-  display: grid;
-  gap: 10px;
-  margin-top: 8px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
-}
-.affiliate-demo-access p {
-  margin: 0;
-}
-.affiliate-demo-access small {
-  color: var(--muted);
-}
 .affiliate-dashboard-page { background: #eeeeeb; }
 .affiliate-dashboard {
   min-height: 100vh;
