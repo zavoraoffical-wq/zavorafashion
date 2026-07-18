@@ -10,7 +10,7 @@ function affiliateId(app) {
 
 function publicAffiliate(app) {
   if (!app) return null;
-  const { password, ...safe } = app;
+  const { password, resetOtp, resetOtpExpiresAt, ...safe } = app;
   return safe;
 }
 
@@ -97,6 +97,52 @@ async function sendWelcomeEmail(record) {
       text
     })
   }).catch(() => null);
+}
+
+async function sendPasswordResetEmail(record, otp) {
+  if (!process.env.RESEND_API_KEY || !validateEmail(record.email)) return false;
+  const loginUrl = 'https://www.zavorafashion.com/affiliate-login.html';
+  const safeName = escapeHtml(record.fullName || 'Zavora Partner');
+  const safeOtp = escapeHtml(otp);
+  const html = `
+    <div style="font-family:Arial,sans-serif;background:#f5f3ef;padding:28px;color:#111">
+      <div style="max-width:640px;margin:0 auto;background:#fff;border:1px solid #ddd;padding:32px">
+        <p style="letter-spacing:4px;font-weight:800;color:#c9a227">ZAVORA FASHION AFFILIATES</p>
+        <h1 style="font-family:Georgia,serif;font-size:38px;line-height:1.1;margin:18px 0">Reset your affiliate password.</h1>
+        <p>Hello ${safeName},</p>
+        <p>Your one-time password reset code is:</p>
+        <div style="font-size:34px;letter-spacing:8px;font-weight:800;border:1px solid #ddd;background:#f7f7f7;padding:18px;margin:22px 0;text-align:center">${safeOtp}</div>
+        <p>This code expires in 10 minutes. If you did not request this reset, ignore this email.</p>
+        <p><a href="${loginUrl}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:14px 22px;letter-spacing:2px">OPEN AFFILIATE LOGIN</a></p>
+        <p>Zavora Fashion Affiliate Team</p>
+      </div>
+    </div>
+  `;
+  const text = [
+    'Zavora Fashion Affiliate Password Reset',
+    '',
+    `Hello ${record.fullName || 'Zavora Partner'},`,
+    `Your password reset code is: ${otp}`,
+    'This code expires in 10 minutes.',
+    `Login URL: ${loginUrl}`,
+    '',
+    'Zavora Fashion Affiliate Team'
+  ].join('\n');
+  const response = await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: affiliateSender(),
+      to: record.email,
+      subject: 'Your Zavora Affiliate Password Reset Code',
+      html,
+      text
+    })
+  }).catch(() => null);
+  return Boolean(response?.ok);
 }
 
 function normalizeApplication(body = {}) {
@@ -220,6 +266,53 @@ module.exports = async function handler(req, res) {
     if (!app.password || String(app.password).trim() !== password) return json(res, 401, { ok: false, error: 'Invalid affiliate credentials.' });
     await collection.updateOne({ _id: app._id }, { $set: { lastLoginAt: new Date().toISOString() } });
     return json(res, 200, { ok: true, app: publicAffiliate(app) });
+  }
+
+  if (req.method === 'POST' && action === 'forgot-start') {
+    const body = parseBody(req);
+    const email = String(body.email || '').trim().toLowerCase();
+    if (!validateEmail(email)) return json(res, 400, { ok: false, error: 'Valid affiliate email is required.' });
+    const app = await collection.findOne({ email });
+    if (!app || app.status !== 'approved') return json(res, 404, { ok: false, error: 'Approved affiliate account not found.' });
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    await collection.updateOne(
+      { _id: app._id },
+      {
+        $set: {
+          resetOtp: otp,
+          resetOtpExpiresAt: Date.now() + (10 * 60 * 1000),
+          updatedAt: new Date().toISOString()
+        }
+      }
+    );
+    const sent = await sendPasswordResetEmail(app, otp);
+    return json(res, 200, {
+      ok: true,
+      message: sent ? 'OTP sent to your affiliate email.' : 'OTP generated, but email service is not ready.'
+    });
+  }
+
+  if (req.method === 'POST' && action === 'forgot-reset') {
+    const body = parseBody(req);
+    const email = String(body.email || '').trim().toLowerCase();
+    const otp = String(body.otp || '').replace(/\D/g, '').slice(0, 6);
+    const password = cleanString(body.password || '', 120);
+    if (!validateEmail(email) || otp.length !== 6 || password.length < 6) {
+      return json(res, 400, { ok: false, error: 'Email, 6-digit OTP, and new password are required.' });
+    }
+    const app = await collection.findOne({ email });
+    if (!app || app.status !== 'approved') return json(res, 404, { ok: false, error: 'Approved affiliate account not found.' });
+    if (!app.resetOtp || String(app.resetOtp) !== otp || Date.now() > Number(app.resetOtpExpiresAt || 0)) {
+      return json(res, 401, { ok: false, error: 'Invalid or expired OTP.' });
+    }
+    await collection.updateOne(
+      { _id: app._id },
+      {
+        $set: { password, updatedAt: new Date().toISOString(), passwordChangedAt: new Date().toISOString() },
+        $unset: { resetOtp: '', resetOtpExpiresAt: '' }
+      }
+    );
+    return json(res, 200, { ok: true, message: 'Affiliate password updated.' });
   }
 
   return json(res, 404, { ok: false, error: 'Unknown affiliate action' });

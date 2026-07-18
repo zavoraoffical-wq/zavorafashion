@@ -871,6 +871,28 @@ h2 {
   border: 1px solid var(--line);
   background: var(--soft);
   font: 25px/1 Georgia, serif;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.premium-category-grid a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.64)), var(--cat-img) center/cover;
+  transform: scale(1.01);
+  transition: transform .5s ease;
+  z-index: -1;
+}
+
+.premium-category-grid a:hover::before {
+  transform: scale(1.06);
+}
+
+.premium-category-grid a span {
+  color: #fff;
+  text-shadow: 0 12px 28px rgba(0,0,0,.4);
 }
 .gallery {
   display: grid;

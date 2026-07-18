@@ -3,6 +3,7 @@
   const SESSION_KEY = 'zavoraAffiliateSession';
   const ATTRIBUTION_KEY = 'zavoraAffiliateAttribution';
   const ORDER_KEY = 'zavoraOrders';
+  const RESET_KEY = 'zavoraAffiliatePasswordReset';
   const MIN_PAYOUT = 5;
 
   function readJson(key, fallback) {
@@ -60,6 +61,13 @@
 
   function setMessage(form, message, isError) {
     const box = form?.querySelector('[data-affiliate-message]');
+    if (!box) return;
+    box.textContent = message;
+    box.style.color = isError ? '#8b0000' : '#c9a227';
+  }
+
+  function setForgotMessage(form, message, isError) {
+    const box = form?.querySelector('[data-affiliate-forgot-message]');
     if (!box) return;
     box.textContent = message;
     box.style.color = isError ? '#8b0000' : '#c9a227';
@@ -189,6 +197,77 @@
     window.location.href = 'affiliate-dashboard.html#overview';
   }
 
+  function localAffiliateByEmail(email) {
+    return readApps().find((item) => String(item.email || '').toLowerCase() === String(email || '').toLowerCase());
+  }
+
+  async function sendForgotOtp(form) {
+    const email = String(new FormData(form).get('email') || '').trim().toLowerCase();
+    if (!email) {
+      setForgotMessage(form, 'Enter your affiliate email first.', true);
+      return;
+    }
+    setForgotMessage(form, 'Sending OTP...');
+    const response = await fetch('/api/affiliate?action=forgot-start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    }).catch(() => null);
+    const result = await response?.json?.().catch(() => ({}));
+    if (response?.ok && result?.ok) {
+      setForgotMessage(form, result.message || 'OTP sent to your affiliate email.');
+      return;
+    }
+    const app = localAffiliateByEmail(email);
+    if (!app || app.status !== 'approved') {
+      setForgotMessage(form, result?.error || 'Approved affiliate account not found.', true);
+      return;
+    }
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    localStorage.setItem(RESET_KEY, JSON.stringify({ email, otp, expiresAt: Date.now() + (10 * 60 * 1000) }));
+    setForgotMessage(form, `Email service is unavailable. Test OTP for this browser: ${otp}`, true);
+  }
+
+  async function resetPassword(form) {
+    const data = new FormData(form);
+    const email = String(data.get('email') || '').trim().toLowerCase();
+    const otp = String(data.get('otp') || '').replace(/\D/g, '').slice(0, 6);
+    const password = String(data.get('password') || '').trim();
+    if (!email || otp.length !== 6 || password.length < 6) {
+      setForgotMessage(form, 'Enter email, 6-digit OTP, and a new password with at least 6 characters.', true);
+      return;
+    }
+    setForgotMessage(form, 'Updating password...');
+    const response = await fetch('/api/affiliate?action=forgot-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, password })
+    }).catch(() => null);
+    const result = await response?.json?.().catch(() => ({}));
+    if (response?.ok && result?.ok) {
+      const app = localAffiliateByEmail(email);
+      if (app) {
+        updateAffiliateRecord(app.id, (draft) => ({ ...draft, password }));
+      }
+      localStorage.removeItem(RESET_KEY);
+      form.reset();
+      setForgotMessage(form, 'Password updated. Login with your new password.');
+      return;
+    }
+    const localReset = readJson(RESET_KEY, null);
+    if (localReset?.email === email && localReset.otp === otp && Date.now() <= Number(localReset.expiresAt || 0)) {
+      const app = localAffiliateByEmail(email);
+      if (app) {
+        updateAffiliateRecord(app.id, (draft) => ({ ...draft, password }));
+        localStorage.removeItem(RESET_KEY);
+        form.reset();
+        setForgotMessage(form, 'Password updated locally. Login with your new password.');
+        return;
+      }
+    }
+    setForgotMessage(form, result?.error || 'Invalid or expired OTP.', true);
+  }
+
   function currentAffiliate() {
     const session = readJson(SESSION_KEY, null);
     if (!session || Date.now() > Number(session.expiresAt || 0)) {
@@ -269,7 +348,7 @@
     const prizes = [
       ['1st Prize', 'iPhone 19 launch phone', 50],
       ['2nd Prize', '$2,000 creator bonus', 20],
-      ['3rd Prize', '$500 creator bonus', 10]
+      ['3rd Prize', '$1,000 creator bonus', 10]
     ];
     return `
       <div class="affiliate-prize-grid">
@@ -698,6 +777,7 @@
     const payoutForm = event.target.closest('[data-affiliate-payout-form]');
     const linkForm = event.target.closest('[data-affiliate-link-form]');
     const profileForm = event.target.closest('[data-affiliate-profile-form]');
+    const forgotForm = event.target.closest('[data-affiliate-forgot]');
     if (apply) {
       event.preventDefault();
       submitApplication(apply);
@@ -718,6 +798,10 @@
       event.preventDefault();
       saveProfile(profileForm);
     }
+    if (forgotForm) {
+      event.preventDefault();
+      resetPassword(forgotForm);
+    }
   });
 
   document.addEventListener('click', (event) => {
@@ -733,6 +817,16 @@
     }
     if (event.target.closest('[data-affiliate-withdraw]')) {
       document.querySelector('#payouts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    const forgotOpen = event.target.closest('[data-affiliate-forgot-open]');
+    if (forgotOpen) {
+      const panel = document.querySelector('[data-affiliate-forgot]');
+      if (panel) panel.hidden = !panel.hidden;
+    }
+    const forgotSend = event.target.closest('[data-affiliate-forgot-send]');
+    if (forgotSend) {
+      const form = forgotSend.closest('[data-affiliate-forgot]');
+      if (form) sendForgotOtp(form);
     }
   });
 

@@ -176,6 +176,30 @@ img, svg { max-width: 100%; }
 .affiliate-auth-card h1 { font-size: clamp(44px, 8vw, 82px); color: var(--ink); }
 .affiliate-auth-card p { color: var(--muted); line-height: 1.7; }
 .affiliate-auth-card form { display: grid; gap: 14px; }
+.affiliate-text-button {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  justify-self: start;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.affiliate-forgot-panel {
+  margin-top: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.affiliate-forgot-panel[hidden] { display: none !important; }
+.affiliate-forgot-panel h2 {
+  margin: 0;
+  font: 32px/1 Georgia, serif;
+}
+.affiliate-secondary.dark {
+  border-color: var(--line);
+  color: var(--ink);
+  background: transparent;
+}
 .affiliate-dashboard-page { background: #eeeeeb; }
 .affiliate-dashboard {
   min-height: 100vh;
@@ -473,6 +497,34 @@ img, svg { max-width: 100%; }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
+
+.affiliate-rules {
+  border-top: 1px solid rgba(201,162,39,.25);
+}
+
+.affiliate-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.affiliate-rules-grid article {
+  border: 1px solid rgba(201,162,39,.24);
+  background: rgba(255,255,255,.78);
+  padding: 22px;
+}
+
+.affiliate-rules-grid h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.affiliate-rules-grid p {
+  margin: 0;
+  color: #5f5f5f;
+  line-height: 1.55;
+}
 .affiliate-prize-card {
   border: 1px solid rgba(201,162,39,.4);
   background: rgba(255,255,255,.06);
@@ -539,7 +591,7 @@ img, svg { max-width: 100%; }
   .affiliate-hero-grid { min-height: calc(100svh - 82px); }
   .affiliate-hero h1 { font-size: 48px; }
   .affiliate-lead { font-size: 16px; }
-  .affiliate-benefits, .affiliate-metrics, .form-grid, .asset-grid, .affiliate-status-grid, .affiliate-prize-grid { grid-template-columns: 1fr; }
+  .affiliate-benefits, .affiliate-metrics, .form-grid, .asset-grid, .affiliate-status-grid, .affiliate-prize-grid, .affiliate-rules-grid { grid-template-columns: 1fr; }
   .affiliate-section { padding: 44px 18px; }
   .affiliate-auth { padding: 82px 16px 24px; place-items: start center; }
   .affiliate-auth-logo { top: 22px; left: 18px; font-size: 12px; }
