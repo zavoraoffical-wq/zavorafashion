@@ -468,8 +468,8 @@ img, svg { max-width: 100%; }
 }
 @media (max-width: 620px) {
   html, body {
-    width: 100vw;
-    max-width: 100vw;
+    width: 100%;
+    max-width: 100%;
     overflow-x: hidden;
     overscroll-behavior-x: none;
   }
@@ -492,7 +492,7 @@ img, svg { max-width: 100%; }
   .affiliate-auth-card { padding: 24px; }
   .affiliate-dashboard {
     width: 100%;
-    max-width: 100vw;
+    max-width: 100%;
     overflow-x: hidden;
   }
   .affiliate-main {
@@ -525,5 +525,40 @@ img, svg { max-width: 100%; }
     max-width: 100%;
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 620px) {
+  body,
+  .affiliate-shell,
+  .affiliate-hero,
+  .affiliate-section,
+  .affiliate-dashboard,
+  .affiliate-main,
+  .affiliate-side,
+  .affiliate-auth,
+  .affiliate-auth-card,
+  .affiliate-form-wrap,
+  .affiliate-dash-card,
+  .affiliate-table-wrap {
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .affiliate-hero,
+  .affiliate-section,
+  .affiliate-main,
+  .affiliate-auth {
+    overflow-x: hidden;
+  }
+
+  .affiliate-actions,
+  .affiliate-brand,
+  .copy-row,
+  .affiliate-payout-form,
+  .affiliate-link-row {
+    min-width: 0;
+    max-width: 100%;
   }
 }

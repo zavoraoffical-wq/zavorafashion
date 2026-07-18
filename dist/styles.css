@@ -3511,3 +3511,157 @@ h2 {
     max-width: calc(100% - 24px);
   }
 }
+
+/* Final phone fit guard. This sits last so older header/product rules cannot
+   push the document wider than the device viewport. */
+@media (max-width: 720px) {
+  :root { --mobile-header-h: 58px; }
+
+  html,
+  body {
+    inline-size: 100%;
+    max-inline-size: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-inline-size: 0;
+  }
+
+  .site-header,
+  .page-header {
+    min-height: var(--mobile-header-h);
+    height: var(--mobile-header-h);
+    inline-size: 100%;
+    max-inline-size: 100%;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) max-content;
+    gap: 5px;
+    padding: 0 6px;
+    overflow: hidden;
+  }
+
+  .mobile-menu {
+    inline-size: 32px;
+    min-inline-size: 32px;
+    block-size: 34px;
+  }
+
+  .site-header .brand,
+  .page-header .brand,
+  .brand {
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    justify-self: stretch;
+    font-size: clamp(10px, 2.72vw, 12px);
+    letter-spacing: clamp(.55px, .22vw, 1px);
+    gap: 4px;
+  }
+
+  .brand span,
+  .site-header .brand span,
+  .page-header .brand span {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .brand-mark {
+    inline-size: 15px;
+    block-size: 15px;
+    flex: 0 0 15px;
+  }
+
+  .site-header .header-actions,
+  .page-header .header-actions,
+  .header-actions {
+    inline-size: auto;
+    min-inline-size: 0;
+    max-inline-size: none;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .icon-button,
+  .site-header .header-actions a,
+  .site-header .header-actions button,
+  .page-header .header-actions a,
+  .page-header .header-actions button {
+    inline-size: 30px;
+    min-inline-size: 30px;
+    block-size: 34px;
+    padding: 0;
+  }
+
+  .icon-button svg {
+    inline-size: 15px;
+    block-size: 15px;
+  }
+
+  .cart-button,
+  .site-header .cart-button,
+  .page-header .cart-button {
+    inline-size: auto;
+    min-inline-size: 38px;
+    block-size: 34px;
+    padding: 0 4px;
+    font-size: 10px;
+  }
+
+  .hero,
+  .catalog-shop,
+  .shop-layout,
+  .product-detail,
+  .checkout-page,
+  .tracking-page,
+  .dashboard-grid,
+  .account-layout,
+  .footer,
+  .mobile-panel {
+    inline-size: 100%;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 390px) {
+  .site-header,
+  .page-header {
+    grid-template-columns: 31px minmax(0, 1fr) max-content;
+    gap: 4px;
+    padding: 0 5px;
+  }
+
+  .site-header .brand,
+  .page-header .brand,
+  .brand {
+    font-size: clamp(9.4px, 2.55vw, 10.6px);
+    letter-spacing: .45px;
+  }
+
+  .brand-mark {
+    inline-size: 13px;
+    block-size: 13px;
+    flex-basis: 13px;
+  }
+
+  .icon-button,
+  .site-header .header-actions a,
+  .site-header .header-actions button,
+  .page-header .header-actions a,
+  .page-header .header-actions button {
+    inline-size: 28px;
+    min-inline-size: 28px;
+  }
+
+  .cart-button,
+  .site-header .cart-button,
+  .page-header .cart-button {
+    min-inline-size: 36px;
+    font-size: 9.5px;
+  }
+}
