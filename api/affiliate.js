@@ -286,10 +286,10 @@ module.exports = async function handler(req, res) {
       }
     );
     const sent = await sendPasswordResetEmail(app, otp);
-    return json(res, 200, {
-      ok: true,
-      message: sent ? 'OTP sent to your affiliate email.' : 'OTP generated, but email service is not ready.'
-    });
+    if (!sent) {
+      return json(res, 503, { ok: false, error: 'Email OTP service is not ready. Please contact affiliates@zavorafashion.com.' });
+    }
+    return json(res, 200, { ok: true, message: 'OTP sent to your affiliate email.' });
   }
 
   if (req.method === 'POST' && action === 'forgot-reset') {

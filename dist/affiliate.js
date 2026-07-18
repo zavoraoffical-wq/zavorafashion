@@ -218,14 +218,7 @@
       setForgotMessage(form, result.message || 'OTP sent to your affiliate email.');
       return;
     }
-    const app = localAffiliateByEmail(email);
-    if (!app || app.status !== 'approved') {
-      setForgotMessage(form, result?.error || 'Approved affiliate account not found.', true);
-      return;
-    }
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
-    localStorage.setItem(RESET_KEY, JSON.stringify({ email, otp, expiresAt: Date.now() + (10 * 60 * 1000) }));
-    setForgotMessage(form, `Email service is unavailable. Test OTP for this browser: ${otp}`, true);
+    setForgotMessage(form, result?.error || 'Email OTP service is not ready. Please try again or contact affiliates@zavorafashion.com.', true);
   }
 
   async function resetPassword(form) {
@@ -252,18 +245,8 @@
       localStorage.removeItem(RESET_KEY);
       form.reset();
       setForgotMessage(form, 'Password updated. Login with your new password.');
+      window.alert('Password updated. Login with your new password.');
       return;
-    }
-    const localReset = readJson(RESET_KEY, null);
-    if (localReset?.email === email && localReset.otp === otp && Date.now() <= Number(localReset.expiresAt || 0)) {
-      const app = localAffiliateByEmail(email);
-      if (app) {
-        updateAffiliateRecord(app.id, (draft) => ({ ...draft, password }));
-        localStorage.removeItem(RESET_KEY);
-        form.reset();
-        setForgotMessage(form, 'Password updated locally. Login with your new password.');
-        return;
-      }
     }
     setForgotMessage(form, result?.error || 'Invalid or expired OTP.', true);
   }
