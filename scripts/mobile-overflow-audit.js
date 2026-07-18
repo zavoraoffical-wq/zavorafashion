@@ -5,6 +5,7 @@ const { spawn } = require('child_process');
 
 const root = path.resolve(__dirname, '..', 'public');
 const edge = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const baseUrl = process.env.BASE_URL ? process.env.BASE_URL.replace(/\/+$/, '') : '';
 const widths = [320, 360, 375, 390, 414, 430];
 const pages = [
   'index.html',
@@ -77,7 +78,10 @@ async function waitForDebugger(port) {
 }
 
 async function main() {
-  const server = http.createServer((req, res) => {
+  let server;
+  let sitePort;
+  if (!baseUrl) {
+    server = http.createServer((req, res) => {
     const clean = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html';
     const file = path.join(root, clean);
     if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
@@ -87,9 +91,10 @@ async function main() {
     }
     res.writeHead(200, { 'Content-Type': contentType(file) });
     fs.createReadStream(file).pipe(res);
-  });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const sitePort = server.address().port;
+    });
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    sitePort = server.address().port;
+  }
   const debugPort = 9223;
   const userDataDir = path.join('C:\\tmp', `zavora-edge-${Date.now()}`);
   const browser = spawn(edge, [
@@ -122,8 +127,9 @@ async function main() {
           deviceScaleFactor: 2,
           mobile: true
         });
-        await cdp.send('Page.navigate', { url: `http://127.0.0.1:${sitePort}/${page}` });
-        await new Promise(resolve => setTimeout(resolve, 700));
+        const url = baseUrl ? `${baseUrl}/${page}` : `http://127.0.0.1:${sitePort}/${page}`;
+        await cdp.send('Page.navigate', { url });
+        await new Promise(resolve => setTimeout(resolve, baseUrl ? 2500 : 700));
         const result = await cdp.send('Runtime.evaluate', {
           returnByValue: true,
           expression: `(() => {
@@ -153,7 +159,30 @@ async function main() {
             };
           })()`
         });
-        const value = result.result.value;
+        const value = result.result && result.result.value;
+        if (!value) {
+          const location = await cdp.send('Runtime.evaluate', {
+            returnByValue: true,
+            expression: `({ href: location.href, title: document.title, readyState: document.readyState })`
+          });
+          failures.push({
+            page,
+            width,
+            innerWidth: 0,
+            scrollWidth: 0,
+            bodyScrollWidth: 0,
+            offenders: [{
+              tag: 'audit',
+              id: '',
+              cls: `evaluation failed ${JSON.stringify(location.result && location.result.value)}`,
+              left: 0,
+              right: 0,
+              width: 0,
+              position: 'n/a'
+            }]
+          });
+          continue;
+        }
         if (value.scrollWidth > width + 1 || value.offenders.length) {
           failures.push({ page, width, ...value });
         }
@@ -175,7 +204,7 @@ async function main() {
     socket.close();
   } finally {
     browser.kill();
-    server.close();
+    if (server) server.close();
     setTimeout(() => {
       try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch {}
     }, 250);
