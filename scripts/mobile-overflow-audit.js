@@ -4,7 +4,13 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const root = path.resolve(__dirname, '..', 'public');
-const edge = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const browserCandidates = [
+  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+  'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'
+];
+const browserPath = browserCandidates.find(candidate => fs.existsSync(candidate));
 const baseUrl = process.env.BASE_URL ? process.env.BASE_URL.replace(/\/+$/, '') : '';
 const widths = [320, 360, 375, 390, 414, 430];
 const pages = [
@@ -78,6 +84,9 @@ async function waitForDebugger(port) {
 }
 
 async function main() {
+  if (!browserPath) {
+    throw new Error('No Chrome or Edge executable found for mobile audit.');
+  }
   let server;
   let sitePort;
   if (!baseUrl) {
@@ -95,10 +104,13 @@ async function main() {
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     sitePort = server.address().port;
   }
-  const debugPort = 9223;
+  const debugServer = http.createServer();
+  await new Promise(resolve => debugServer.listen(0, '127.0.0.1', resolve));
+  const debugPort = debugServer.address().port;
+  await new Promise(resolve => debugServer.close(resolve));
   const userDataDir = path.join('C:\\tmp', `zavora-edge-${Date.now()}`);
-  const browser = spawn(edge, [
-    '--headless',
+  const browser = spawn(browserPath, [
+    '--headless=new',
     '--disable-gpu',
     '--no-first-run',
     '--disable-extensions',
@@ -155,6 +167,8 @@ async function main() {
               innerWidth,
               scrollWidth: doc.scrollWidth,
               bodyScrollWidth: document.body ? document.body.scrollWidth : 0,
+              viewportMeta: document.querySelector('meta[name="viewport"]')?.getAttribute('content') || '',
+              visualScale: window.visualViewport ? window.visualViewport.scale : 1,
               offenders
             };
           })()`
@@ -183,7 +197,11 @@ async function main() {
           });
           continue;
         }
-        if (value.scrollWidth > width + 1 || value.offenders.length) {
+        const viewportLocked = /width=device-width/.test(value.viewportMeta)
+          && /initial-scale=1/.test(value.viewportMeta)
+          && /maximum-scale=1/.test(value.viewportMeta)
+          && /user-scalable=no/.test(value.viewportMeta);
+        if (value.scrollWidth > width + 1 || value.offenders.length || !viewportLocked || value.visualScale !== 1) {
           failures.push({ page, width, ...value });
         }
       }
@@ -193,6 +211,9 @@ async function main() {
       console.log(`FAIL: ${failures.length} viewport checks still have overflow.`);
       for (const failure of failures.slice(0, 25)) {
         console.log(`${failure.page} @ ${failure.width}px: doc=${failure.scrollWidth}, body=${failure.bodyScrollWidth}, viewport=${failure.innerWidth}`);
+        if (!/maximum-scale=1/.test(failure.viewportMeta || '') || !/user-scalable=no/.test(failure.viewportMeta || '')) {
+          console.log(`  viewport meta not locked: ${failure.viewportMeta || 'missing'}`);
+        }
         for (const item of failure.offenders.slice(0, 3)) {
           console.log(`  ${item.tag}${item.id ? `#${item.id}` : ''}${item.cls ? `.${item.cls.replace(/\s+/g, '.')}` : ''} left=${item.left} right=${item.right} width=${item.width} pos=${item.position}`);
         }
