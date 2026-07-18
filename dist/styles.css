@@ -929,7 +929,7 @@ h2 {
   width: min(430px, 100%);
   height: 100vh;
   padding: 24px;
-  transform: translateX(30px);
+  transform: translate3d(100%, 0, 0);
   overflow: auto;
 }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; }
@@ -2863,11 +2863,6 @@ h2 {
 }
 
 @media (max-width: 720px) {
-  *,
-  *::before,
-  *::after {
-    max-width: 100%;
-  }
   html, body {
     width: 100%;
     max-width: 100%;
@@ -3676,8 +3671,8 @@ h2 {
   }
 }
 
-/* 320-430px hard stop: keeps storefront, account, cart, checkout,
-   affiliate links, and legal pages inside the visible phone viewport. */
+/* Canonical phone viewport rules: target the actual overflow sources instead
+   of resizing every element on the page. */
 @media (max-width: 430px) {
   html,
   body {
@@ -3693,15 +3688,7 @@ h2 {
     touch-action: pan-y;
   }
 
-  body > *,
   main,
-  header,
-  footer,
-  section,
-  article,
-  aside,
-  nav,
-  form,
   .page-shell,
   .section,
   .catalog-shop,
@@ -3752,32 +3739,43 @@ h2 {
   }
 
   .mobile-panel {
-    width: min(340px, calc(100% - 20px)) !important;
-    max-width: calc(100% - 20px) !important;
+    width: min(340px, calc(100% - 20px));
+    max-width: calc(100% - 20px);
     min-width: 0 !important;
-    margin: 10px !important;
-    transform: translateX(-110%);
+    top: 10px;
+    bottom: 10px;
+    left: 10px;
+    right: auto;
+    margin: 0;
+    transform: translate3d(-110%, 0, 0);
     box-sizing: border-box;
   }
 
   .mobile-panel.open {
-    transform: none;
+    transform: translate3d(0, 0, 0);
   }
 
   .drawer {
-    width: min(420px, 100%) !important;
+    width: 100% !important;
     max-width: 100% !important;
     right: 0;
     left: auto;
+    transform: translate3d(100%, 0, 0);
     overflow-x: hidden;
+  }
+
+  .drawer.open {
+    transform: translate3d(0, 0, 0);
   }
 
   .search-overlay,
   .quick-view,
   .account-panel,
   .login-required-modal {
-    width: min(100%, calc(100% - 20px));
-    max-width: calc(100% - 20px);
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
     overflow-x: hidden;
   }
 
@@ -3815,5 +3813,19 @@ h2 {
   .campaign-grid,
   .footer-grid {
     grid-template-columns: 1fr;
+  }
+
+  .size-chart {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .size-chart th,
+  .size-chart td {
+    padding: 8px 6px;
+    font-size: 13px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
