@@ -39,7 +39,8 @@ body.dark {
   --panel: rgba(8, 8, 8, .92);
 }
 a { color: inherit; text-decoration: none; }
-button, select, input { font: inherit; }
+button, select, input, textarea { font: inherit; }
+input, select, textarea { font-size: 16px; }
 button { cursor: pointer; }
 img { display: block; max-width: 100%; }
 svg { max-width: 100%; }
@@ -1657,7 +1658,7 @@ h2 {
 }
 .mastercard-logo i {
   background: #eb001b;
-  margin-right: -7px;
+  margin-right: 0;
 }
 .mastercard-logo b {
   background: #f79e1b;
@@ -3619,11 +3620,20 @@ h2 {
   .tracking-page,
   .dashboard-grid,
   .account-layout,
-  .footer,
-  .mobile-panel {
+  .footer {
     inline-size: 100%;
     max-inline-size: 100%;
     min-inline-size: 0;
+    overflow-x: hidden;
+  }
+
+  .mobile-panel {
+    inline-size: min(340px, calc(100% - 20px));
+    max-inline-size: calc(100% - 20px);
+    min-inline-size: 0;
+    margin: 10px;
+    left: 0;
+    right: auto;
     overflow-x: hidden;
   }
 }
@@ -3663,5 +3673,147 @@ h2 {
   .page-header .cart-button {
     min-inline-size: 36px;
     font-size: 9.5px;
+  }
+}
+
+/* 320-430px hard stop: keeps storefront, account, cart, checkout,
+   affiliate links, and legal pages inside the visible phone viewport. */
+@media (max-width: 430px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden !important;
+    overscroll-behavior-x: none;
+  }
+
+  body {
+    position: relative;
+    touch-action: pan-y;
+  }
+
+  body > *,
+  main,
+  header,
+  footer,
+  section,
+  article,
+  aside,
+  nav,
+  form,
+  .page-shell,
+  .section,
+  .catalog-shop,
+  .shop-layout,
+  .product-detail,
+  .checkout-page,
+  .tracking-page,
+  .dashboard-grid,
+  .account-layout,
+  .footer,
+  .footer-grid,
+  .footer-bottom {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  .site-header,
+  .page-header {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+  }
+
+  .mobile-panel {
+    width: min(340px, calc(100% - 20px)) !important;
+    max-width: calc(100% - 20px) !important;
+    min-width: 0 !important;
+    margin: 10px !important;
+    transform: translateX(-110%);
+    box-sizing: border-box;
+  }
+
+  .mobile-panel.open {
+    transform: none;
+  }
+
+  .drawer {
+    width: min(420px, 100%) !important;
+    max-width: 100% !important;
+    right: 0;
+    left: auto;
+    overflow-x: hidden;
+  }
+
+  .search-overlay,
+  .quick-view,
+  .account-panel,
+  .login-required-modal {
+    width: min(100%, calc(100% - 20px));
+    max-width: calc(100% - 20px);
+    overflow-x: hidden;
+  }
+
+  .product-rail-track,
+  .home-product-slider,
+  .home-product-row,
+  .recommendation-slider,
+  .slider-track,
+  .carousel,
+  .product-strip {
+    grid-auto-columns: minmax(220px, 86%);
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .product-card,
+  .product-media,
+  .product-card img,
+  .product-gallery,
+  .product-gallery-main,
+  .zoom-frame,
+  .product-buy,
+  .checkout-panel,
+  .order-summary,
+  .form-panel,
+  .policy-card,
+  .dashboard-card {
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .catalog-grid,
+  .product-grid,
+  .campaign-grid,
+  .footer-grid {
+    grid-template-columns: 1fr;
   }
 }
