@@ -3331,3 +3331,183 @@ h2 {
     height: 32px;
   }
 }
+
+/* Production mobile containment: prevents phone browsers from zooming out/in
+   because one fixed/header or slider element is wider than the viewport. */
+@media (max-width: 720px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  body {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body > *,
+  main,
+  header,
+  footer,
+  section,
+  .page-shell,
+  .site-header,
+  .page-header,
+  .hero,
+  .catalog-shop,
+  .shop-layout,
+  .product-detail,
+  .checkout-page,
+  .dashboard-grid,
+  .affiliate-dashboard,
+  .affiliate-main {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .site-header,
+  .page-header {
+    left: 0;
+    right: 0;
+    width: auto;
+    max-width: none;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    padding-inline: 6px;
+    column-gap: 5px;
+    overflow: hidden;
+  }
+
+  .site-header .brand,
+  .page-header .brand,
+  .brand {
+    max-width: none;
+    width: 100%;
+    min-width: 0;
+    font-size: clamp(10px, 2.6vw, 12px);
+    letter-spacing: clamp(.7px, .24vw, 1.2px);
+    gap: 4px;
+  }
+
+  .brand span,
+  .page-header .brand span,
+  .site-header .brand span {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+
+  .brand-mark {
+    width: 15px;
+    height: 15px;
+    flex-basis: 15px;
+  }
+
+  .header-actions,
+  .page-header .header-actions,
+  .site-header .header-actions {
+    max-width: none;
+    width: auto;
+    flex: 0 0 auto;
+    gap: 4px;
+  }
+
+  .icon-button,
+  .page-header .header-actions a,
+  .page-header .header-actions button,
+  .site-header .header-actions a,
+  .site-header .header-actions button {
+    width: 31px;
+    min-width: 31px;
+    height: 34px;
+  }
+
+  .cart-button,
+  .page-header .cart-button,
+  .site-header .cart-button {
+    width: auto;
+    min-width: 39px;
+    height: 34px;
+    padding-inline: 4px;
+    font-size: 10.5px;
+  }
+
+  .mobile-menu {
+    width: 31px;
+    min-width: 31px;
+    height: 34px;
+  }
+
+  .hero {
+    width: 100%;
+    min-height: 100svh;
+  }
+
+  .hero picture,
+  .hero img {
+    width: 100%;
+    max-width: none;
+  }
+
+  .hero-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .hero h1,
+  .product-buy h1,
+  .checkout-main h1,
+  .dashboard-grid h1,
+  .affiliate-main h1 {
+    overflow-wrap: anywhere;
+  }
+
+  .product-rail,
+  .product-rail-track,
+  .home-product-slider,
+  .home-product-row,
+  .recommendation-slider,
+  .slider-track,
+  .carousel,
+  .product-strip {
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .product-rail-track,
+  .home-product-slider,
+  .home-product-row,
+  .recommendation-slider,
+  .slider-track,
+  .carousel,
+  .product-strip {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(252px, 86vw);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .product-rail-track > *,
+  .home-product-slider > *,
+  .home-product-row > *,
+  .recommendation-slider > *,
+  .slider-track > *,
+  .carousel > *,
+  .product-strip > * {
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  .mobile-panel {
+    width: min(340px, calc(100% - 24px));
+    max-width: calc(100% - 24px);
+  }
+}
