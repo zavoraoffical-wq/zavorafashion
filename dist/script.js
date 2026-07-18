@@ -778,6 +778,16 @@ $('[data-search]').addEventListener('click', () => {
   $('#searchInput').focus();
 });
 $('[data-close-search]').addEventListener('click', () => $('#searchOverlay').classList.remove('open'));
+function unlockBodyScroll() {
+  document.body.classList.remove('mobile-menu-open');
+  document.documentElement.classList.remove('mobile-menu-open');
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  document.documentElement.style.overflow = '';
+}
+
 function openMobileMenu() {
   $('#mobilePanel').classList.add('open');
   document.body.classList.add('mobile-menu-open');
@@ -785,8 +795,11 @@ function openMobileMenu() {
 
 function closeMobileMenu() {
   $('#mobilePanel').classList.remove('open');
-  document.body.classList.remove('mobile-menu-open');
+  unlockBodyScroll();
 }
+
+window.addEventListener('pageshow', unlockBodyScroll);
+window.addEventListener('hashchange', unlockBodyScroll);
 
 const megaMenuData = {
   women: {

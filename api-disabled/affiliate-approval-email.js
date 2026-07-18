@@ -76,7 +76,7 @@ module.exports = async function handler(req, res) {
         <p>Your affiliate account has been approved. Use the credentials below to access your separate affiliate dashboard.</p>
         <div style="border:1px solid #ddd;background:#f7f7f7;padding:18px;margin:22px 0">
           <p><strong>Affiliate ID:</strong> ${safeAffiliateId}</p>
-          <p><strong>Affiliate Password:</strong> ${safePassword}</p>
+          <p><strong>Your Password:</strong> ${safePassword}</p>
           <p><strong>Commission Rate:</strong> ${safeCommission}%</p>
           <p><strong>Coupon Code:</strong> ${safeCoupon}</p>
           <p><strong>Affiliate Link:</strong> <a href="${safeLink}">${safeLink}</a></p>
@@ -96,7 +96,7 @@ module.exports = async function handler(req, res) {
     'Your affiliate account has been approved.',
     '',
     `Login URL: ${loginUrl}`,
-    `Affiliate Password: ${password}`,
+    `Your Password: ${password}`,
     `Affiliate ID: ${affiliateId}`,
     `Affiliate Link: ${link}`,
     `Coupon Code: ${coupon}`,

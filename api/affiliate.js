@@ -2,6 +2,8 @@ const crypto = require('crypto');
 const { cleanString, rateLimit, setSecurityHeaders, validateEmail } = require('../lib/security');
 const { db, json, parseBody } = require('../lib/auth-lib');
 
+const RESEND_API_URL = 'https://api.resend.com/emails';
+
 function affiliateId(app) {
   return app.affiliateId || `ZAF-${String(app.email || app.id || Date.now()).replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase()}${String(Date.now()).slice(-4)}`;
 }
@@ -12,10 +14,96 @@ function publicAffiliate(app) {
   return safe;
 }
 
+function affiliateCoupon(id) {
+  return `${String(id || 'ZAF').replace(/[^a-z0-9]/gi, '').slice(0, 10).toUpperCase()}10`;
+}
+
+function affiliateSender() {
+  const configured = process.env.AFFILIATE_FROM_EMAIL || process.env.AFFILIATES_FROM_EMAIL;
+  const fallback = 'Zavora Fashion Affiliates <affiliates@zavorafashion.com>';
+  const value = String(configured || fallback).trim();
+  if (!value) return fallback;
+  return value.includes('<') ? value : `Zavora Fashion Affiliates <${value}>`;
+}
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+async function sendWelcomeEmail(record) {
+  if (!process.env.RESEND_API_KEY || !validateEmail(record.email)) return;
+  const loginUrl = 'https://www.zavorafashion.com/affiliate-login.html';
+  const dashboardUrl = 'https://www.zavorafashion.com/affiliate-dashboard.html';
+  const safeName = escapeHtml(record.fullName || 'Zavora Partner');
+  const safePassword = escapeHtml(record.password || '');
+  const safeAffiliateId = escapeHtml(record.affiliateId || record.id);
+  const safeCoupon = escapeHtml(record.coupon || '');
+  const safeLink = escapeHtml(record.link || '');
+  const safeCommission = escapeHtml(String(record.commission || 10));
+  const html = `
+    <div style="font-family:Arial,sans-serif;background:#f5f3ef;padding:28px;color:#111">
+      <div style="max-width:680px;margin:0 auto;background:#fff;border:1px solid #ddd;padding:32px">
+        <p style="letter-spacing:4px;font-weight:800;color:#c9a227">ZAVORA FASHION AFFILIATES</p>
+        <h1 style="font-family:Georgia,serif;font-size:42px;line-height:1.05;margin:18px 0">Welcome to Zavora Fashion Affiliate Program.</h1>
+        <p>Hello ${safeName},</p>
+        <p>Your affiliate account is active. Use your password below to access your separate affiliate dashboard.</p>
+        <div style="border:1px solid #ddd;background:#f7f7f7;padding:18px;margin:22px 0">
+          <p><strong>Affiliate ID:</strong> ${safeAffiliateId}</p>
+          <p><strong>Your Password:</strong> ${safePassword}</p>
+          <p><strong>Commission Rate:</strong> ${safeCommission}%</p>
+          <p><strong>Coupon Code:</strong> ${safeCoupon}</p>
+          <p><strong>Affiliate Link:</strong> <a href="${safeLink}">${safeLink}</a></p>
+        </div>
+        <p><a href="${loginUrl}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:14px 22px;letter-spacing:2px">LOGIN TO DASHBOARD</a></p>
+        <p style="color:#666">Dashboard URL: <a href="${dashboardUrl}">${dashboardUrl}</a></p>
+        <p style="border-top:1px solid #ddd;padding-top:18px;margin-top:24px">Payouts are reviewed every 7 days. Minimum withdrawal is $5.</p>
+        <p>Zavora Fashion Affiliate Team</p>
+      </div>
+    </div>
+  `;
+  const text = [
+    'Welcome to Zavora Fashion Affiliate Program',
+    '',
+    `Hello ${record.fullName || 'Zavora Partner'},`,
+    'Your affiliate account is active.',
+    '',
+    `Login URL: ${loginUrl}`,
+    `Your Password: ${record.password || ''}`,
+    `Affiliate ID: ${record.affiliateId || record.id}`,
+    `Affiliate Link: ${record.link || ''}`,
+    `Coupon Code: ${record.coupon || ''}`,
+    `Commission Rate: ${record.commission || 10}%`,
+    `Dashboard URL: ${dashboardUrl}`,
+    '',
+    'Payouts are reviewed every 7 days. Minimum withdrawal is $5.',
+    'Zavora Fashion Affiliate Team'
+  ].join('\n');
+  await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: affiliateSender(),
+      to: record.email,
+      subject: 'Welcome to Zavora Fashion Affiliate Program',
+      html,
+      text
+    })
+  }).catch(() => null);
+}
+
 function normalizeApplication(body = {}) {
   return {
     fullName: cleanString(body.fullName || body.name || '', 120),
     email: String(body.email || '').trim().toLowerCase(),
+    password: cleanString(body.password || '', 120),
     phone: cleanString(body.phone || '', 40),
     country: cleanString(body.country || '', 80),
     website: cleanString(body.website || '', 220),
@@ -46,6 +134,7 @@ module.exports = async function handler(req, res) {
     const app = normalizeApplication(body);
     if (!validateEmail(app.email)) return json(res, 400, { ok: false, error: 'Valid email is required.' });
     if (!app.fullName) return json(res, 400, { ok: false, error: 'Full name is required.' });
+    if (!app.password || app.password.length < 6) return json(res, 400, { ok: false, error: 'Create a password with at least 6 characters.' });
 
     const existing = await collection.findOne({ email: app.email });
     if (existing) {
@@ -53,16 +142,21 @@ module.exports = async function handler(req, res) {
         ok: true,
         exists: true,
         app: publicAffiliate(existing),
-        message: `Application already exists with status: ${existing.status || 'pending'}.`
+        message: existing.status === 'approved' ? 'Affiliate account already exists. Please login.' : `Affiliate profile already exists with status: ${existing.status || 'pending'}.`
       });
     }
 
     const id = `AFF-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+    const newAffiliateId = affiliateId({ ...app, id });
+    const coupon = affiliateCoupon(newAffiliateId);
     const record = {
       ...app,
       _id: id,
       id,
-      status: 'pending',
+      status: 'approved',
+      affiliateId: newAffiliateId,
+      coupon,
+      link: `https://www.zavorafashion.com/?ref=${encodeURIComponent(newAffiliateId)}`,
       commission: 10,
       clicks: 0,
       orders: 0,
@@ -76,12 +170,14 @@ module.exports = async function handler(req, res) {
       referralLinks: [],
       coupons: [],
       payoutRequests: [],
-      notifications: [],
+      notifications: [{ message: 'Affiliate account created. Welcome to Zavora Fashion.', createdAt: new Date().toISOString() }],
+      approvedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     await collection.insertOne(record);
-    return json(res, 200, { ok: true, app: publicAffiliate(record) });
+    sendWelcomeEmail(record);
+    return json(res, 200, { ok: true, app: publicAffiliate(record), message: 'Affiliate account created. Welcome email sent from affiliates@zavorafashion.com.' });
   }
 
   if (req.method === 'POST' && action === 'click') {

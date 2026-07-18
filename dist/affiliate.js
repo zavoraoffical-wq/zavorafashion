@@ -73,6 +73,14 @@
     return 'Launch Partner';
   }
 
+  function affiliateCode(app) {
+    return app.affiliateId || `ZAF-${String(app.email || app.id || Date.now()).replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase()}${String(Date.now()).slice(-4)}`;
+  }
+
+  function affiliateCoupon(id) {
+    return `${String(id || 'ZAF').replace(/[^a-z0-9]/gi, '').slice(0, 8).toUpperCase()}10`;
+  }
+
   async function submitApplication(form) {
     const data = new FormData(form);
     const app = Object.fromEntries(data.entries());
@@ -82,17 +90,28 @@
     }
     const apps = readApps();
     const email = String(app.email || '').trim().toLowerCase();
-    const existing = apps.find((item) => String(item.email || '').toLowerCase() === email);
-    if (existing) {
-      setMessage(form, `Application already exists with status: ${existing.status || 'pending'}.`, true);
+    const password = String(app.password || '').trim();
+    if (password.length < 6) {
+      setMessage(form, 'Create a password with at least 6 characters.', true);
       return;
     }
+    const existing = apps.find((item) => String(item.email || '').toLowerCase() === email);
+    if (existing) {
+      setMessage(form, 'Affiliate account already exists. Please login.', true);
+      return;
+    }
+    const localId = uid('AFF');
+    const localAffiliateId = affiliateCode({ ...app, id: localId, email });
     const draft = {
       ...app,
       email,
-      id: uid('AFF'),
-      status: 'pending',
+      password,
+      id: localId,
+      status: 'approved',
+      affiliateId: localAffiliateId,
       commission: 10,
+      coupon: affiliateCoupon(localAffiliateId),
+      link: `https://www.zavorafashion.com/?ref=${encodeURIComponent(localAffiliateId)}`,
       clicks: 0,
       orders: 0,
       revenue: 0,
@@ -106,9 +125,10 @@
       coupons: [],
       payoutRequests: [],
       notifications: [],
+      approvedAt: new Date().toISOString(),
       createdAt: new Date().toISOString()
     };
-    setMessage(form, 'Submitting application...');
+    setMessage(form, 'Creating affiliate account...');
     const response = await fetch('/api/affiliate?action=apply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -116,15 +136,27 @@
     }).catch(() => null);
     const result = await response?.json?.().catch(() => ({}));
     if (response?.ok && result?.app) {
-      mergeAffiliate(result.app);
-      setMessage(form, result.message || 'Application submitted for admin review.');
-      window.setTimeout(() => window.location.href = 'affiliate-submitted.html', 650);
+      const saved = mergeAffiliate({ ...draft, ...result.app, password });
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        id: saved.id,
+        email: saved.email,
+        affiliateId: saved.affiliateId,
+        expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
+      }));
+      setMessage(form, result.message || 'Affiliate account created.');
+      window.setTimeout(() => window.location.href = 'affiliate-dashboard.html#overview', 650);
       return;
     }
     apps.unshift(draft);
     saveApps(apps);
-    setMessage(form, 'Application submitted for admin review.');
-    window.setTimeout(() => window.location.href = 'affiliate-submitted.html', 650);
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      id: draft.id,
+      email: draft.email,
+      affiliateId: draft.affiliateId,
+      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
+    }));
+    setMessage(form, 'Affiliate account created.');
+    window.setTimeout(() => window.location.href = 'affiliate-dashboard.html#overview', 650);
   }
 
   async function login(form) {
@@ -232,6 +264,57 @@
     };
   }
 
+  function prizeProgress(stats) {
+    const sales = Number(stats.monthOrders || stats.orders?.length || 0);
+    const prizes = [
+      ['1st Prize', 'iPhone 19 launch phone', 50],
+      ['2nd Prize', '$2,000 creator bonus', 20],
+      ['3rd Prize', '$500 creator bonus', 10]
+    ];
+    return `
+      <div class="affiliate-prize-grid">
+        ${prizes.map(([label, prize, target]) => {
+          const progress = Math.min(100, sales / target * 100);
+          return `
+            <article class="affiliate-prize-card">
+              <span>${label}</span>
+              <h3>${prize}</h3>
+              <p>${sales}/${target} product sales</p>
+              <div class="affiliate-progress"><i style="width:${progress}%"></i></div>
+              <small>${progress >= 100 ? 'Target achieved. Zavora team will verify and contact you.' : `${target - sales} more sales to unlock.`}</small>
+            </article>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function leaderboardRows(currentApp) {
+    const rows = readApps()
+      .filter((app) => app.status === 'approved')
+      .map((app) => {
+        const stats = calcStats(app);
+        return { app, stats, sales: Number(stats.monthOrders || stats.orders?.length || 0), revenue: Number(stats.monthRevenue || stats.lifetimeRevenue || 0) };
+      })
+      .sort((a, b) => b.sales - a.sales || b.revenue - a.revenue)
+      .slice(0, 25);
+    if (!rows.length) return emptyList('Leaderboard starts when affiliates begin tracking sales.');
+    return `
+      <div class="affiliate-table-wrap">
+        <table class="affiliate-table">
+          <thead><tr><th>Rank</th><th>Affiliate</th><th>Sales</th><th>Revenue</th><th>Prize Track</th></tr></thead>
+          <tbody>
+            ${rows.map((row, index) => {
+              const track = row.sales >= 50 ? '1st Prize' : row.sales >= 20 ? '2nd Prize' : row.sales >= 10 ? '3rd Prize' : 'Building';
+              const me = row.app.id === currentApp.id ? ' class="is-current-affiliate"' : '';
+              return `<tr${me}><td>#${index + 1}</td><td>${escapeHtml(row.app.fullName || 'Zavora Partner')}</td><td>${row.sales}</td><td>${money(row.revenue)}</td><td>${track}</td></tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
   function metric(label, value) {
     return `<div class="affiliate-metric"><span>${label}</span><strong>${value}</strong></div>`;
   }
@@ -328,12 +411,13 @@
       links: 'links',
       coupons: 'coupons',
       payouts: 'payouts',
+      prizes: 'prizes',
       orders: 'orders',
       assets: 'assets',
-      leaderboard: 'assets',
-      notifications: 'assets',
+      leaderboard: 'leaderboard',
+      notifications: 'notifications',
       profile: 'profile',
-      support: 'profile'
+      support: 'support'
     }[activeHash] || 'overview';
     const stats = calcStats(app);
     const link = baseReferral(app);
@@ -341,11 +425,7 @@
     const commission = Number(app.commission || 10);
     document.querySelectorAll('.affiliate-side a[href*="#"]').forEach((item) => {
       const itemHash = item.hash.replace('#', '') || 'overview';
-      item.classList.toggle('active',
-        itemHash === activeHash ||
-        (itemHash === 'assets' && ['leaderboard', 'notifications'].includes(activeHash)) ||
-        (itemHash === 'profile' && activeHash === 'support')
-      );
+      item.classList.toggle('active', itemHash === activeHash);
     });
     root.innerHTML = `
       <section class="affiliate-dashboard-hero" id="overview" data-affiliate-section="overview">
@@ -422,7 +502,7 @@
         <article class="affiliate-dash-card affiliate-payout-card">
           <p class="affiliate-eyebrow">Payouts</p>
           <h2>Withdraw Earnings</h2>
-          <p class="affiliate-muted">Minimum withdrawal is ${money(MIN_PAYOUT)}. Available methods: PayPal and Bank Transfer.</p>
+          <p class="affiliate-muted">Minimum withdrawal is ${money(MIN_PAYOUT)}. Payouts are reviewed every 7 days. Available methods: PayPal and Bank Transfer.</p>
           <form class="affiliate-payout-form premium-payout-form" data-affiliate-payout-form>
             <select name="method" aria-label="Payout method">
               <option value="PayPal" ${app.payoutMethod === 'PayPal' ? 'selected' : ''}>PayPal</option>
@@ -442,6 +522,15 @@
         </article>
       </section>
 
+      <section class="affiliate-dashboard-grid" id="prizes" data-affiliate-section="prizes">
+        <article class="affiliate-dash-card affiliate-wide-card">
+          <p class="affiliate-eyebrow">Creator Prize Challenge</p>
+          <h2>Sell more. Unlock premium rewards.</h2>
+          <p class="affiliate-muted">Targets are based on tracked product sales. Zavora verifies each milestone before prize approval.</p>
+          ${prizeProgress(stats)}
+        </article>
+      </section>
+
       <section class="affiliate-dashboard-grid" id="orders" data-affiliate-section="orders">
         <article class="affiliate-dash-card affiliate-wide-card">
           <p class="affiliate-eyebrow">Orders</p>
@@ -458,8 +547,22 @@
             <span>Product Images</span><span>Lifestyle Images</span><span>Videos</span><span>Banners</span><span>Instagram Posts</span><span>Stories</span><span>Pinterest Pins</span><span>TikTok Videos</span><span>YouTube Thumbnails</span><span>Logos</span><span>Brand Guidelines</span>
           </div>
         </article>
-        <article class="affiliate-dash-card" id="leaderboard"><h2>Leaderboard</h2>${emptyList('Top affiliates and monthly winners appear after live sales.')}</article>
-        <article class="affiliate-dash-card" id="notifications"><h2>Notifications</h2>${(app.notifications || []).length ? app.notifications.map((item) => `<p>${escapeHtml(item.message || item)}</p>`).join('') : emptyList('Commission, payout, coupon, and campaign alerts appear here.')}</article>
+      </section>
+
+      <section class="affiliate-dashboard-grid" id="leaderboard" data-affiliate-section="leaderboard">
+        <article class="affiliate-dash-card affiliate-wide-card">
+          <p class="affiliate-eyebrow">Leaderboard</p>
+          <h2>Creator rankings</h2>
+          ${leaderboardRows(app)}
+        </article>
+      </section>
+
+      <section class="affiliate-dashboard-grid" id="notifications" data-affiliate-section="notifications">
+        <article class="affiliate-dash-card affiliate-wide-card">
+          <p class="affiliate-eyebrow">Notifications</p>
+          <h2>Program updates</h2>
+          ${(app.notifications || []).length ? app.notifications.map((item) => `<p>${escapeHtml(item.message || item)}</p>`).join('') : emptyList('Commission, payout, coupon, and campaign alerts appear here.')}
+        </article>
       </section>
 
       <section class="affiliate-dashboard-grid" id="profile" data-affiliate-section="profile">
@@ -479,10 +582,13 @@
           <p>2FA ready. Session expires automatically after 7 days.</p>
           <p class="affiliate-muted">Device login history, IP logs, and audit logs are reserved for database-backed tracking.</p>
         </article>
-        <article class="affiliate-dash-card" id="support">
+      </section>
+
+      <section class="affiliate-dashboard-grid" id="support" data-affiliate-section="support">
+        <article class="affiliate-dash-card affiliate-wide-card">
           <p class="affiliate-eyebrow">Support</p>
           <h2>Affiliate Team</h2>
-          <p>Contact affiliates@zavorafashion.com for tickets, payout review, campaign help, and program questions.</p>
+          <p>Contact affiliates@zavorafashion.com for affiliate program questions, payout review, and campaign help. For customer support issues, contact help@zavorafashion.com.</p>
         </article>
       </section>
     `;

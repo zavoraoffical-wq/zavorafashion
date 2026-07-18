@@ -229,7 +229,7 @@ svg { max-width: 100%; }
   z-index: 120;
 }
 .mobile-menu-open {
-  overflow: hidden;
+  overflow-x: hidden;
 }
 .mega-menu.open, .mobile-panel.open, .search-overlay.open, .drawer.open, .quick-view.open, .account-panel.open {
   transform: none;
@@ -3680,12 +3680,32 @@ h2 {
     max-width: 100%;
     min-width: 0;
     overflow-x: hidden !important;
+    overflow-y: auto !important;
+    height: auto !important;
     overscroll-behavior-x: none;
   }
 
   body {
     position: relative;
     touch-action: pan-y;
+    min-height: 100%;
+  }
+
+  body.mobile-menu-open {
+    overflow-y: auto !important;
+    position: relative !important;
+  }
+
+  .mobile-panel.open,
+  .search-overlay.open,
+  .drawer.open,
+  .quick-view.open,
+  .account-panel.open,
+  [data-login-required-modal].open {
+    max-height: calc(100svh - 18px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
   main,

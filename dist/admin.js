@@ -134,7 +134,7 @@ function approvalEmail(app) {
     'Your account has been approved.',
     '',
     `Login URL: https://www.zavorafashion.com/affiliate-login.html`,
-    `Affiliate Password: ${app.password || ''}`,
+    `Your Password: ${app.password || ''}`,
     `Affiliate Link: ${app.link || ''}`,
     `Commission Rate: ${app.commission || 10}%`,
     `Dashboard URL: https://www.zavorafashion.com/affiliate-dashboard.html`,
