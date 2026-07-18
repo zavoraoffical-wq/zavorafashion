@@ -7,6 +7,7 @@ const session = require('../api-disabled/auth-session');
 const start = require('../api-disabled/auth-start');
 const updateProfile = require('../api-disabled/auth-update-profile');
 const verifyOtp = require('../api-disabled/auth-verify-otp');
+const newsletter = require('../api-disabled/send-newsletter-confirmation');
 const { setSecurityHeaders } = require('../lib/security');
 const { json } = require('../lib/auth-lib');
 
@@ -18,6 +19,7 @@ const handlers = {
   logout,
   session,
   start,
+  newsletter,
   'update-profile': updateProfile,
   'verify-otp': verifyOtp
 };

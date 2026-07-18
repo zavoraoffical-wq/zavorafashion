@@ -80,6 +80,10 @@
       "destination": "/api/admin?action=affiliate-approval-email"
     },
     {
+      "source": "/api/send-newsletter-confirmation",
+      "destination": "/api/auth?action=newsletter"
+    },
+    {
       "source": "/api/auth-change-password",
       "destination": "/api/auth?action=change-password"
     },

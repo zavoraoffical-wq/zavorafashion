@@ -1970,8 +1970,8 @@ document.addEventListener('click', async (event) => {
     const sent = await requestNewsletterEmail(email);
     newsletterButton.textContent = originalText || 'Join';
     if (note) note.textContent = sent
-      ? 'Newsletter confirmation sent from hello@zavorafashion.com.'
-      : 'Newsletter saved. Email service is not ready yet.';
+      ? 'Newsletter welcome email sent. Check inbox or spam.'
+      : 'Newsletter saved locally, but email sending is not configured yet.';
     return;
   }
 
@@ -2785,16 +2785,14 @@ function initPaymentMethodUi() {
   const pay = document.querySelector('.pay-now');
   if (!methods) return;
   function update() {
-    const selected = methods.querySelector('input[name="payment"]:checked')?.value || 'paypal';
-    if (paypal) paypal.hidden = selected !== 'paypal';
-    if (panel) panel.textContent = selected === 'paypal'
-      ? 'PayPal is live. Card, Apple Pay, and Google Pay are coming soon.'
-      : 'This payment method is coming soon.';
+    const selected = methods.querySelector('input[name="payment"]:checked')?.value || '';
+    if (paypal) paypal.hidden = true;
+    if (panel) panel.textContent = 'PayPal, card, Apple Pay, and Google Pay are coming soon.';
     if (pay) {
-      pay.textContent = selected === 'paypal' ? 'Continue with PayPal' : 'Payment Coming Soon';
-      pay.setAttribute('aria-disabled', selected === 'paypal' ? 'false' : 'true');
-      pay.classList.toggle('disabled', selected !== 'paypal');
-      pay.href = selected === 'paypal' ? '#paypal-button-container' : '#';
+      pay.textContent = 'Payment Coming Soon';
+      pay.setAttribute('aria-disabled', 'true');
+      pay.classList.add('disabled');
+      pay.href = '#';
     }
   }
   methods.addEventListener('change', update);
@@ -3296,6 +3294,11 @@ function initAffiliateAttribution() {
       expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
       capturedAt: new Date().toISOString()
     }));
+    fetch('/api/affiliate?action=click', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref, page: window.location.pathname })
+    }).catch(() => {});
   } catch (error) {}
 }
 

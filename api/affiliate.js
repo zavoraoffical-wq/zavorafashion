@@ -84,6 +84,36 @@ module.exports = async function handler(req, res) {
     return json(res, 200, { ok: true, app: publicAffiliate(record) });
   }
 
+  if (req.method === 'POST' && action === 'click') {
+    const body = parseBody(req);
+    const ref = cleanString(body.ref || '', 80);
+    const page = cleanString(body.page || '', 180);
+    if (!ref) return json(res, 400, { ok: false, error: 'Referral code is required.' });
+    const app = await collection.findOne({
+      $or: [
+        { affiliateId: ref },
+        { id: ref },
+        { 'coupons.code': ref },
+        { coupons: ref }
+      ]
+    });
+    if (!app) return json(res, 200, { ok: true, tracked: false });
+    await collection.updateOne(
+      { _id: app._id },
+      {
+        $inc: { clicks: 1 },
+        $set: { lastClickAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        $push: {
+          clickEvents: {
+            $each: [{ ref, page, at: new Date().toISOString() }],
+            $slice: -100
+          }
+        }
+      }
+    );
+    return json(res, 200, { ok: true, tracked: true });
+  }
+
   if (req.method === 'POST' && action === 'login') {
     const body = parseBody(req);
     const email = String(body.email || '').trim().toLowerCase();
