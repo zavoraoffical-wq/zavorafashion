@@ -78,6 +78,42 @@
     {
       "source": "/api/affiliate-approval-email",
       "destination": "/api/admin?action=affiliate-approval-email"
+    },
+    {
+      "source": "/api/auth-change-password",
+      "destination": "/api/auth?action=change-password"
+    },
+    {
+      "source": "/api/auth-dashboard",
+      "destination": "/api/auth?action=dashboard"
+    },
+    {
+      "source": "/api/auth-forgot-start",
+      "destination": "/api/auth?action=forgot-start"
+    },
+    {
+      "source": "/api/auth-login",
+      "destination": "/api/auth?action=login"
+    },
+    {
+      "source": "/api/auth-logout",
+      "destination": "/api/auth?action=logout"
+    },
+    {
+      "source": "/api/auth-session",
+      "destination": "/api/auth?action=session"
+    },
+    {
+      "source": "/api/auth-start",
+      "destination": "/api/auth?action=start"
+    },
+    {
+      "source": "/api/auth-update-profile",
+      "destination": "/api/auth?action=update-profile"
+    },
+    {
+      "source": "/api/auth-verify-otp",
+      "destination": "/api/auth?action=verify-otp"
     }
   ],
   "headers": [
