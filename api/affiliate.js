@@ -19,19 +19,34 @@ function affiliateCoupon(id) {
 }
 
 function cleanSenderValue(value = '') {
-  return String(value || '').trim().replace(/^[A-Z0-9_]+\s*=\s*/i, '');
+  return String(value || '')
+    .trim()
+    .replace(/^[A-Z0-9_]+\s*=\s*/i, '')
+    .replace(/^['"]|['"]$/g, '')
+    .trim();
+}
+
+function envValue(...names) {
+  for (const name of names) {
+    const value = cleanSenderValue(process.env[name]);
+    if (value) return value;
+  }
+  return '';
+}
+
+function resendApiKey() {
+  return envValue('RESEND_API_KEY', 'RESEND_KEY', 'RESEND_TOKEN');
 }
 
 function affiliateSender() {
-  const configured = process.env.AFFILIATE_FROM_EMAIL
-    || process.env.AFFILIATES_FROM_EMAIL
-    || process.env.NOREPLY_FROM_EMAIL
-    || process.env.RESEND_FROM_EMAIL
-    || process.env.FROM_EMAIL;
+  const configured = envValue('AFFILIATE_FROM_EMAIL', 'AFFILIATES_FROM_EMAIL', 'NOREPLY_FROM_EMAIL', 'RESEND_FROM_EMAIL', 'FROM_EMAIL');
   const fallback = 'Zavora Fashion Affiliates <affiliates@zavorafashion.com>';
   const value = cleanSenderValue(configured || fallback);
   if (!value) return fallback;
-  return value.includes('<') ? value : `Zavora Fashion Affiliates <${value}>`;
+  const match = value.match(/<([^>]+)>/) || value.match(/([^\s<>]+@[^\s<>]+)/);
+  const email = String(match?.[1] || '').toLowerCase();
+  if (!email.endsWith('@zavorafashion.com')) return fallback;
+  return value.includes('<') ? value : `Zavora Fashion Affiliates <${email}>`;
 }
 
 function escapeHtml(value = '') {
@@ -44,7 +59,8 @@ function escapeHtml(value = '') {
 }
 
 async function sendWelcomeEmail(record) {
-  if (!process.env.RESEND_API_KEY || !validateEmail(record.email)) return;
+  const apiKey = resendApiKey();
+  if (!apiKey || !validateEmail(record.email)) return;
   const loginUrl = 'https://www.zavorafashion.com/affiliate/login';
   const dashboardUrl = 'https://www.zavorafashion.com/affiliate/dashboard';
   const safeName = escapeHtml(record.fullName || 'Zavora Partner');
@@ -94,7 +110,7 @@ async function sendWelcomeEmail(record) {
   await fetch(RESEND_API_URL, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -108,7 +124,8 @@ async function sendWelcomeEmail(record) {
 }
 
 async function sendPasswordResetEmail(record, otp) {
-  if (!process.env.RESEND_API_KEY || !validateEmail(record.email)) return false;
+  const apiKey = resendApiKey();
+  if (!apiKey || !validateEmail(record.email)) return false;
   const loginUrl = 'https://www.zavorafashion.com/affiliate/login';
   const safeName = escapeHtml(record.fullName || 'Zavora Partner');
   const safeOtp = escapeHtml(otp);
@@ -139,7 +156,7 @@ async function sendPasswordResetEmail(record, otp) {
   const response = await fetch(RESEND_API_URL, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({

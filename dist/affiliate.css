@@ -575,8 +575,8 @@ img, svg { max-width: 100%; }
 @media (max-width: 620px) {
   html, body {
     width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
+    max-width: 100dvw;
+    overflow-x: clip;
     overscroll-behavior-x: none;
   }
   input,
@@ -598,8 +598,8 @@ img, svg { max-width: 100%; }
   .affiliate-auth-card { padding: 24px; }
   .affiliate-dashboard {
     width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
+    max-width: 100dvw;
+    overflow-x: clip;
   }
   .affiliate-main {
     width: 100%;
@@ -673,9 +673,9 @@ img, svg { max-width: 100%; }
   html,
   body {
     width: 100%;
-    max-width: 100%;
+    max-width: 100dvw;
     min-width: 0;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
     overflow-y: auto !important;
     height: auto !important;
     overscroll-behavior-x: none;
@@ -717,7 +717,7 @@ img, svg { max-width: 100%; }
   .affiliate-payout-form,
   .affiliate-profile-form {
     width: 100%;
-    max-width: 100%;
+    max-width: 100dvw;
     min-width: 0;
     box-sizing: border-box;
     overflow-x: hidden;
@@ -743,9 +743,9 @@ img, svg { max-width: 100%; }
   .affiliate-shell,
   .affiliate-dashboard {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 100dvw !important;
     min-width: 0 !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
   }
 
   .affiliate-hero,
@@ -764,9 +764,22 @@ img, svg { max-width: 100%; }
   .affiliate-profile-form,
   .affiliate-prize-banner {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 100dvw !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
+  }
+
+  .affiliate-sidebar,
+  .affiliate-content,
+  .affiliate-stats-grid,
+  .affiliate-charts,
+  .affiliate-card-grid,
+  .affiliate-marketing-grid,
+  .affiliate-table {
+    width: 100% !important;
+    max-width: 100dvw !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
   }
 
   .affiliate-dashboard,

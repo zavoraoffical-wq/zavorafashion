@@ -4016,22 +4016,36 @@ h2 {
   html,
   body {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 100dvw !important;
     min-width: 0 !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
+    overscroll-behavior-x: none !important;
   }
 
   body {
     touch-action: auto;
   }
 
+  input,
+  select,
+  textarea,
+  button {
+    font-size: 16px !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
   .site-header,
   .page-header {
-    width: 100% !important;
-    max-width: 100% !important;
-    grid-template-columns: 32px minmax(132px, 1fr) 150px !important;
-    gap: 4px !important;
-    padding: 0 8px !important;
+    width: 100dvw !important;
+    max-width: 100dvw !important;
+    left: 0 !important;
+    right: auto !important;
+    grid-template-columns: 32px minmax(116px, 1fr) 144px !important;
+    gap: 3px !important;
+    padding: 0 6px !important;
+    overflow: hidden !important;
   }
 
   .site-header .brand,
@@ -4039,8 +4053,16 @@ h2 {
   .brand {
     min-width: 0 !important;
     max-width: 100% !important;
-    font-size: clamp(10px, 2.9vw, 12px) !important;
-    letter-spacing: .08em !important;
+    font-size: clamp(9px, 2.7vw, 11px) !important;
+    letter-spacing: .055em !important;
+    gap: 4px !important;
+  }
+
+  .site-header .brand-mark,
+  .page-header .brand-mark,
+  .brand-mark {
+    width: 14px !important;
+    height: 14px !important;
   }
 
   .site-header .brand span,
@@ -4054,11 +4076,11 @@ h2 {
   .site-header .header-actions,
   .page-header .header-actions {
     display: grid !important;
-    grid-template-columns: repeat(3, 34px) 42px !important;
-    gap: 4px !important;
-    width: 150px !important;
-    min-width: 150px !important;
-    max-width: 150px !important;
+    grid-template-columns: repeat(3, 31px) 42px !important;
+    gap: 3px !important;
+    width: 144px !important;
+    min-width: 144px !important;
+    max-width: 144px !important;
   }
 
   .site-header .header-actions select,
@@ -4072,10 +4094,10 @@ h2 {
   .site-header .header-actions button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    width: 34px !important;
-    min-width: 34px !important;
-    max-width: 34px !important;
-    height: 36px !important;
+    width: 31px !important;
+    min-width: 31px !important;
+    max-width: 31px !important;
+    height: 34px !important;
   }
 
   .site-header .cart-button,
@@ -4102,30 +4124,48 @@ h2 {
     min-width: 0 !important;
     overflow-x: hidden !important;
   }
+
+  .site-header ~ main,
+  .page-header ~ main,
+  main,
+  section,
+  .section,
+  .products-grid,
+  .catalog-products,
+  .product-card,
+  .product-media,
+  .hero img,
+  .hero-slide img {
+    max-width: 100dvw !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
 }
 
 @media (max-width: 360px) {
   .site-header,
   .page-header {
-    grid-template-columns: 30px minmax(120px, 1fr) 142px !important;
-    padding-inline: 6px !important;
+    grid-template-columns: 30px minmax(104px, 1fr) 136px !important;
+    gap: 2px !important;
+    padding-inline: 5px !important;
   }
 
   .site-header .header-actions,
   .page-header .header-actions {
-    grid-template-columns: repeat(3, 32px) 40px !important;
-    width: 142px !important;
-    min-width: 142px !important;
-    max-width: 142px !important;
+    grid-template-columns: repeat(3, 29px) 39px !important;
+    gap: 2px !important;
+    width: 136px !important;
+    min-width: 136px !important;
+    max-width: 136px !important;
   }
 
   .site-header .header-actions a,
   .site-header .header-actions button,
   .page-header .header-actions a,
   .page-header .header-actions button {
-    width: 32px !important;
-    min-width: 32px !important;
-    max-width: 32px !important;
+    width: 29px !important;
+    min-width: 29px !important;
+    max-width: 29px !important;
   }
 
   .site-header .cart-button,

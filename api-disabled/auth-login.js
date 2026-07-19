@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
         { upsert: true }
       );
       logSecurityEvent(req, 'login_failed_unknown_user', { email });
-      return json(res, 401, { error: 'Invalid email or password' });
+      return json(res, 404, { error: 'ACCOUNT_NOT_FOUND' });
     }
     const valid = await bcrypt.compare(password, user.passwordHash || '');
     if (!valid) {
@@ -43,6 +43,8 @@ module.exports = async function handler(req, res) {
     return json(res, 200, { ok: true, user: publicUser(user) });
   } catch (error) {
     logSecurityEvent(req, 'login_error', { message: error.message });
-    return json(res, 500, { error: 'Login failed' });
+    const message = String(error.message || '');
+    const serviceError = /AUTH_JWT_SECRET|database connection|Supabase|MONGODB|JWT/i.test(message);
+    return json(res, 500, { error: serviceError ? 'Login service is not ready. Please contact support@zavorafashion.com.' : 'Login failed' });
   }
 };
