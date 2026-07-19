@@ -2638,7 +2638,7 @@ function enhanceFooter() {
       <a href="careers.html">Careers</a>
       <a href="press.html">Press</a>
       <a href="journal.html">Journal</a>
-      <a href="affiliate.html">Affiliate Program</a>
+      <a href="/affiliate">Affiliate Program</a>
       <div class="social-links">
         <a href="journal.html"><span class="icon-badge"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.5"></circle><path d="M17 7h.01"></path></svg></span>Instagram</a>
         <a href="journal.html"><span class="icon-badge"><svg viewBox="0 0 24 24"><path d="M14 4v11.2a4.2 4.2 0 1 1-4.2-4.2"></path><path d="M14 4c1.1 3 3 4.8 6 5"></path></svg></span>TikTok</a>
@@ -2677,8 +2677,8 @@ function enhanceFooter() {
   `;
   footer.insertBefore(mega, footerBottom || null);
   const bottomLinks = footer.querySelector('.footer-links');
-  if (bottomLinks && !bottomLinks.querySelector('[href="affiliate.html"]')) {
-    bottomLinks.insertAdjacentHTML('beforeend', '<a href="affiliate.html">Affiliate Program</a>');
+  if (bottomLinks && !bottomLinks.querySelector('[href="/affiliate"]')) {
+    bottomLinks.insertAdjacentHTML('beforeend', '<a href="/affiliate">Affiliate Program</a>');
   }
 }
 

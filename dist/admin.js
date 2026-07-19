@@ -24,7 +24,6 @@ const sectionTitles = {
 };
 
 const ADMIN_SESSION_KEY = 'zavoraAdminSession';
-const ADMIN_EMAIL_KEY = 'zavoraAdminEmail';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const AFFILIATE_KEY = 'zavoraAffiliateApplications';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80';
@@ -133,11 +132,11 @@ function approvalEmail(app) {
     '',
     'Your account has been approved.',
     '',
-    `Login URL: https://www.zavorafashion.com/affiliate-login.html`,
+    `Login URL: https://www.zavorafashion.com/affiliate/login`,
     `Your Password: ${app.password || ''}`,
     `Affiliate Link: ${app.link || ''}`,
     `Commission Rate: ${app.commission || 10}%`,
-    `Dashboard URL: https://www.zavorafashion.com/affiliate-dashboard.html`,
+    `Dashboard URL: https://www.zavorafashion.com/affiliate/dashboard`,
     '',
     'Zavora Fashion Partner Team'
   ].join('\n');
@@ -507,7 +506,6 @@ async function importPrintfulUrl(form) {
 document.addEventListener('click', async (event) => {
   if (event.target.closest('.logout-btn')) {
     localStorage.removeItem(ADMIN_SESSION_KEY);
-    localStorage.removeItem(ADMIN_EMAIL_KEY);
     window.location.href = '/api/admin?action=logout';
     return;
   }

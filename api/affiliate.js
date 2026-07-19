@@ -18,10 +18,18 @@ function affiliateCoupon(id) {
   return `${String(id || 'ZAF').replace(/[^a-z0-9]/gi, '').slice(0, 10).toUpperCase()}10`;
 }
 
+function cleanSenderValue(value = '') {
+  return String(value || '').trim().replace(/^[A-Z0-9_]+\s*=\s*/i, '');
+}
+
 function affiliateSender() {
-  const configured = process.env.AFFILIATE_FROM_EMAIL || process.env.AFFILIATES_FROM_EMAIL;
+  const configured = process.env.AFFILIATE_FROM_EMAIL
+    || process.env.AFFILIATES_FROM_EMAIL
+    || process.env.NOREPLY_FROM_EMAIL
+    || process.env.RESEND_FROM_EMAIL
+    || process.env.FROM_EMAIL;
   const fallback = 'Zavora Fashion Affiliates <affiliates@zavorafashion.com>';
-  const value = String(configured || fallback).trim();
+  const value = cleanSenderValue(configured || fallback);
   if (!value) return fallback;
   return value.includes('<') ? value : `Zavora Fashion Affiliates <${value}>`;
 }
@@ -37,8 +45,8 @@ function escapeHtml(value = '') {
 
 async function sendWelcomeEmail(record) {
   if (!process.env.RESEND_API_KEY || !validateEmail(record.email)) return;
-  const loginUrl = 'https://www.zavorafashion.com/affiliate-login.html';
-  const dashboardUrl = 'https://www.zavorafashion.com/affiliate-dashboard.html';
+  const loginUrl = 'https://www.zavorafashion.com/affiliate/login';
+  const dashboardUrl = 'https://www.zavorafashion.com/affiliate/dashboard';
   const safeName = escapeHtml(record.fullName || 'Zavora Partner');
   const safePassword = escapeHtml(record.password || '');
   const safeAffiliateId = escapeHtml(record.affiliateId || record.id);
@@ -101,7 +109,7 @@ async function sendWelcomeEmail(record) {
 
 async function sendPasswordResetEmail(record, otp) {
   if (!process.env.RESEND_API_KEY || !validateEmail(record.email)) return false;
-  const loginUrl = 'https://www.zavorafashion.com/affiliate-login.html';
+  const loginUrl = 'https://www.zavorafashion.com/affiliate/login';
   const safeName = escapeHtml(record.fullName || 'Zavora Partner');
   const safeOtp = escapeHtml(otp);
   const html = `

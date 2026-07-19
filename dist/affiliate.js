@@ -152,19 +152,10 @@
         expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
       }));
       setMessage(form, result.message || 'Affiliate account created.');
-      window.setTimeout(() => window.location.href = 'affiliate-dashboard.html#overview', 650);
+      window.setTimeout(() => window.location.href = '/affiliate/dashboard#overview', 650);
       return;
     }
-    apps.unshift(draft);
-    saveApps(apps);
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
-      id: draft.id,
-      email: draft.email,
-      affiliateId: draft.affiliateId,
-      expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
-    }));
-    setMessage(form, 'Affiliate account created.');
-    window.setTimeout(() => window.location.href = 'affiliate-dashboard.html#overview', 650);
+    setMessage(form, result?.error || 'Affiliate account could not be created. Please try again or contact affiliates@zavorafashion.com.', true);
   }
 
   async function login(form) {
@@ -179,13 +170,9 @@
     }).catch(() => null);
     const result = await response?.json?.().catch(() => ({}));
     const serverValidated = Boolean(response?.ok && result?.app);
-    const app = serverValidated ? mergeAffiliate(result.app) : readApps().find((item) => String(item.email || '').toLowerCase() === email);
+    const app = serverValidated ? mergeAffiliate(result.app) : null;
     if (!app || app.status !== 'approved') {
       setMessage(form, result?.error || 'Affiliate account is not approved yet.', true);
-      return;
-    }
-    if (!serverValidated && (!app.password || String(app.password).trim() !== password)) {
-      setMessage(form, result?.error || 'Invalid affiliate credentials.', true);
       return;
     }
     localStorage.setItem(SESSION_KEY, JSON.stringify({
@@ -194,7 +181,7 @@
       affiliateId: app.affiliateId,
       expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000)
     }));
-    window.location.href = 'affiliate-dashboard.html#overview';
+    window.location.href = '/affiliate/dashboard#overview';
   }
 
   function localAffiliateByEmail(email) {
@@ -462,7 +449,7 @@
     if (!root) return;
     const app = currentAffiliate();
     if (!app) {
-      window.location.replace('affiliate-login.html');
+      window.location.replace('/affiliate/login');
       return;
     }
     const activeHash = (window.location.hash || '#overview').replace('#', '') || 'overview';
@@ -796,7 +783,7 @@
     }
     if (event.target.closest('[data-affiliate-logout]')) {
       localStorage.removeItem(SESSION_KEY);
-      window.location.href = 'affiliate-login.html';
+      window.location.href = '/affiliate/login';
     }
     if (event.target.closest('[data-affiliate-withdraw]')) {
       document.querySelector('#payouts')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

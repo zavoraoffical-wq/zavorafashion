@@ -3713,6 +3713,12 @@ h2 {
     min-height: 100%;
   }
 
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   body.mobile-menu-open {
     overflow-y: auto !important;
     position: relative !important;
@@ -3778,6 +3784,88 @@ h2 {
     left: 0;
     right: 0;
     overflow: hidden;
+    grid-template-columns: 32px minmax(0, 1fr) max-content;
+    gap: 5px;
+    padding-inline: 8px;
+  }
+
+  .site-header .mobile-menu,
+  .page-header .mobile-menu {
+    width: 32px;
+    min-width: 32px;
+    height: 36px;
+  }
+
+  .site-header .brand,
+  .page-header .brand {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    justify-self: stretch;
+    gap: 4px;
+    font-size: clamp(9.5px, 2.65vw, 12px);
+    letter-spacing: clamp(.35px, .2vw, .9px);
+  }
+
+  .site-header .brand span,
+  .page-header .brand span {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  .site-header .brand-mark,
+  .page-header .brand-mark {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+  }
+
+  .site-header .header-actions,
+  .page-header .header-actions {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    flex: 0 0 auto;
+    gap: 4px;
+  }
+
+  .site-header .header-actions select,
+  .page-header .header-actions select,
+  .site-header .header-actions [data-dark],
+  .page-header .header-actions [data-dark] {
+    display: none !important;
+  }
+
+  .site-header .header-actions a,
+  .site-header .header-actions button,
+  .page-header .header-actions a,
+  .page-header .header-actions button {
+    width: 34px;
+    min-width: 34px;
+    height: 36px;
+    padding: 0;
+  }
+
+  .site-header .header-actions svg,
+  .page-header .header-actions svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .site-header .cart-button,
+  .page-header .cart-button {
+    width: auto;
+    min-width: 42px;
+    max-width: 42px;
+    height: 36px;
+    padding: 0 3px;
+    font-size: 10px;
+    line-height: 1.05;
+    white-space: normal;
   }
 
   .mobile-panel {
@@ -3833,6 +3921,21 @@ h2 {
     min-width: 0;
   }
 
+  .hero,
+  .hero-slide,
+  .hero-track,
+  .promo-strip,
+  .category-card,
+  .campaign,
+  .footer-top,
+  .footer-bottom,
+  .footer-gallery,
+  .instagram-grid {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
   .product-card,
   .product-media,
   .product-card img,
@@ -3869,5 +3972,166 @@ h2 {
     line-height: 1.25;
     white-space: normal;
     overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 360px) {
+  .site-header,
+  .page-header {
+    grid-template-columns: 30px minmax(0, 1fr) max-content;
+    gap: 3px;
+    padding-inline: 6px;
+  }
+
+  .site-header .mobile-menu,
+  .page-header .mobile-menu {
+    width: 30px;
+    min-width: 30px;
+  }
+
+  .site-header .header-actions a,
+  .site-header .header-actions button,
+  .page-header .header-actions a,
+  .page-header .header-actions button {
+    width: 31px;
+    min-width: 31px;
+  }
+
+  .site-header .cart-button,
+  .page-header .cart-button {
+    min-width: 39px;
+    max-width: 39px;
+    font-size: 9px;
+  }
+
+  .site-header .brand,
+  .page-header .brand {
+    font-size: 8.7px;
+    letter-spacing: .2px;
+  }
+}
+
+/* Final mobile viewport lock: keep every storefront page inside the device width. */
+@media (max-width: 430px) {
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  body {
+    touch-action: auto;
+  }
+
+  .site-header,
+  .page-header {
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-template-columns: 32px minmax(132px, 1fr) 150px !important;
+    gap: 4px !important;
+    padding: 0 8px !important;
+  }
+
+  .site-header .brand,
+  .page-header .brand,
+  .brand {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    font-size: clamp(10px, 2.9vw, 12px) !important;
+    letter-spacing: .08em !important;
+  }
+
+  .site-header .brand span,
+  .page-header .brand span,
+  .brand span {
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+  }
+
+  .site-header .header-actions,
+  .page-header .header-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, 34px) 42px !important;
+    gap: 4px !important;
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+  }
+
+  .site-header .header-actions select,
+  .page-header .header-actions select,
+  .site-header .header-actions [data-dark],
+  .page-header .header-actions [data-dark] {
+    display: none !important;
+  }
+
+  .site-header .header-actions a,
+  .site-header .header-actions button,
+  .page-header .header-actions a,
+  .page-header .header-actions button {
+    width: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+    height: 36px !important;
+  }
+
+  .site-header .cart-button,
+  .page-header .cart-button {
+    width: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+  }
+
+  .hero,
+  .hero-track,
+  .hero-slide,
+  .shop-layout,
+  .product-detail,
+  .checkout-page,
+  .dashboard-grid,
+  .footer,
+  .search-overlay,
+  .drawer,
+  .mobile-panel,
+  .recommendation-slider,
+  .product-rail-track {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .site-header,
+  .page-header {
+    grid-template-columns: 30px minmax(120px, 1fr) 142px !important;
+    padding-inline: 6px !important;
+  }
+
+  .site-header .header-actions,
+  .page-header .header-actions {
+    grid-template-columns: repeat(3, 32px) 40px !important;
+    width: 142px !important;
+    min-width: 142px !important;
+    max-width: 142px !important;
+  }
+
+  .site-header .header-actions a,
+  .site-header .header-actions button,
+  .page-header .header-actions a,
+  .page-header .header-actions button {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+  }
+
+  .site-header .cart-button,
+  .page-header .cart-button {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
   }
 }

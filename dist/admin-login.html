@@ -15,9 +15,9 @@
         <img class="admin-login-logo" src="assets/zavora-logo.png" alt="Zavora Fashion">
         <h1>Zavora Admin</h1>
         <p>Secure login is protected by password and one-time email OTP from Zavora Support.</p>
-        <form class="admin-form" data-admin-login-form>
-          <input type="email" placeholder="Admin email" autocomplete="email" required>
-          <input type="password" placeholder="Admin password" autocomplete="current-password" required>
+        <form class="admin-form" data-admin-login-form autocomplete="off">
+          <input type="email" placeholder="Admin email" autocomplete="off" data-lpignore="true" data-form-type="other" required>
+          <input type="password" placeholder="Admin password" autocomplete="new-password" data-lpignore="true" data-form-type="other" required>
           <button class="primary-admin" type="submit">Send OTP</button>
           <p class="admin-login-note" data-admin-login-note>OTP will be sent to the admin email only.</p>
         </form>

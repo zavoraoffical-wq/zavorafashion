@@ -20,9 +20,12 @@ function escapeHtml(value = '') {
 }
 
 function affiliateSender() {
-  const configured = process.env.AFFILIATE_FROM_EMAIL || process.env.AFFILIATES_FROM_EMAIL;
+  const configured = process.env.AFFILIATE_FROM_EMAIL
+    || process.env.AFFILIATES_FROM_EMAIL
+    || process.env.NOREPLY_FROM_EMAIL
+    || process.env.RESEND_FROM_EMAIL;
   const fallback = 'Zavora Fashion Affiliates <affiliates@zavorafashion.com>';
-  const value = String(configured || fallback).trim();
+  const value = String(configured || fallback).trim().replace(/^[A-Z0-9_]+\s*=\s*/i, '');
   if (!value) return fallback;
   if (value.includes('<')) return value;
   return `Zavora Fashion Affiliates <${value}>`;
@@ -58,8 +61,8 @@ module.exports = async function handler(req, res) {
     return json(req, res, 400, { ok: false, error: 'Affiliate credentials are required' });
   }
 
-  const loginUrl = 'https://www.zavorafashion.com/affiliate-login.html';
-  const dashboardUrl = 'https://www.zavorafashion.com/affiliate-dashboard.html';
+  const loginUrl = 'https://www.zavorafashion.com/affiliate/login';
+  const dashboardUrl = 'https://www.zavorafashion.com/affiliate/dashboard';
   const safeName = escapeHtml(name);
   const safePassword = escapeHtml(password);
   const safeAffiliateId = escapeHtml(affiliateId);

@@ -7,7 +7,9 @@ function rewardCode() {
 }
 
 function rewardSender() {
-  const configured = process.env.REWARDS_FROM_EMAIL || process.env.NOREPLY_FROM_EMAIL || 'noreply@zavorafashion.com';
+  const configured = String(process.env.REWARDS_FROM_EMAIL || process.env.NOREPLY_FROM_EMAIL || 'noreply@zavorafashion.com')
+    .trim()
+    .replace(/^[A-Z0-9_]+\s*=\s*/i, '');
   return configured.includes('<') ? configured : `Zavora Rewards <${configured}>`;
 }
 

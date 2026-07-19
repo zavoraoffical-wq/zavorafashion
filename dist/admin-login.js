@@ -1,5 +1,4 @@
 const ADMIN_SESSION_KEY = 'zavoraAdminSession';
-const ADMIN_EMAIL_KEY = 'zavoraAdminEmail';
 
 fetch('/api/admin?action=session')
   .then((response) => response.json())
@@ -52,7 +51,6 @@ document.addEventListener('submit', async (event) => {
       return;
     }
     localStorage.setItem(ADMIN_SESSION_KEY, data.session);
-    localStorage.setItem(ADMIN_EMAIL_KEY, data.email);
     window.location.href = 'admin.html';
     return;
   }
@@ -78,7 +76,6 @@ document.addEventListener('submit', async (event) => {
     return;
   }
   if (data.passwordOnly) {
-    localStorage.setItem(ADMIN_EMAIL_KEY, data.email || email);
     window.location.href = 'admin.html';
     return;
   }
