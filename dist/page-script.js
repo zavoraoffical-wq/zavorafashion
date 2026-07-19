@@ -1007,7 +1007,7 @@ async function requestPasswordLogin(email, password) {
       body: JSON.stringify({ email, password })
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || 'Login failed');
+    if (!response.ok) throw new Error(`${data.error || 'Login failed'}${data.detail ? ` ${data.detail}` : ''}`);
     return data;
   } catch (error) {
     return { ok: false, error: error.message };

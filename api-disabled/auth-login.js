@@ -75,7 +75,10 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     logSecurityEvent(req, 'login_error', { message: error.message });
     const message = String(error.message || '');
-    const serviceError = /AUTH_JWT_SECRET|database connection|Supabase|MONGODB|JWT/i.test(message);
-    return json(res, 500, { error: serviceError ? 'Login service is not ready. Please contact support@zavorafashion.com.' : 'Login failed' });
+    const serviceError = /AUTH_JWT_SECRET|database connection|Supabase|MONGODB|JWT|schema cache|app_documents|PostgREST|database/i.test(message);
+    return json(res, 500, {
+      error: serviceError ? 'Login service is not ready. Please contact support@zavorafashion.com.' : 'Login failed',
+      detail: serviceError ? message.slice(0, 240) : undefined
+    });
   }
 };
