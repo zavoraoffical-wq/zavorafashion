@@ -120,6 +120,10 @@
       "destination": "/api/auth?action=forgot-start"
     },
     {
+      "source": "/api/auth-health",
+      "destination": "/api/auth?action=health"
+    },
+    {
       "source": "/api/auth-login",
       "destination": "/api/auth?action=login"
     },

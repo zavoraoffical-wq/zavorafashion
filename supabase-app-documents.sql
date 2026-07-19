@@ -12,3 +12,27 @@ create table if not exists public.app_documents (
 create index if not exists app_documents_collection_idx on public.app_documents (collection);
 create index if not exists app_documents_collection_email_idx on public.app_documents (collection, email);
 create index if not exists app_documents_updated_at_idx on public.app_documents (updated_at desc);
+
+create or replace function public.set_app_documents_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists app_documents_updated_at on public.app_documents;
+create trigger app_documents_updated_at
+before update on public.app_documents
+for each row
+execute function public.set_app_documents_updated_at();
+
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on public.app_documents to anon, authenticated, service_role;
+grant usage, select on sequence public.app_documents_id_seq to anon, authenticated, service_role;
+
+alter table public.app_documents disable row level security;
+
+notify pgrst, 'reload schema';

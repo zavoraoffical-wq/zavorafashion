@@ -1,6 +1,7 @@
 const changePassword = require('../api-disabled/auth-change-password');
 const dashboard = require('../api-disabled/auth-dashboard');
 const forgotStart = require('../api-disabled/auth-forgot-start');
+const health = require('../api-disabled/auth-health');
 const login = require('../api-disabled/auth-login');
 const logout = require('../api-disabled/auth-logout');
 const session = require('../api-disabled/auth-session');
@@ -15,6 +16,7 @@ const handlers = {
   'change-password': changePassword,
   dashboard,
   'forgot-start': forgotStart,
+  health,
   login,
   logout,
   session,
