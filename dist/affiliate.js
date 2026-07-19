@@ -205,7 +205,8 @@
       setForgotMessage(form, result.message || 'OTP sent to your affiliate email.');
       return;
     }
-    setForgotMessage(form, result?.error || 'Email OTP service is not ready. Please try again or contact affiliates@zavorafashion.com.', true);
+    const detail = result?.detail ? ` ${result.detail}` : '';
+    setForgotMessage(form, `${result?.error || 'Email OTP service is not ready. Please try again or contact affiliates@zavorafashion.com.'}${detail}`, true);
   }
 
   async function resetPassword(form) {

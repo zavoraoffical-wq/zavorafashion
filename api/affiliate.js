@@ -35,7 +35,7 @@ function envValue(...names) {
 }
 
 function resendApiKey() {
-  return envValue('RESEND_API_KEY', 'RESEND_KEY', 'RESEND_TOKEN');
+  return envValue('RESEND_API_KEY', 'RESEND_KEY', 'RESEND_TOKEN', 'RESEND_API', 'RESEND_APIKEY');
 }
 
 function affiliateSender() {
@@ -125,7 +125,8 @@ async function sendWelcomeEmail(record) {
 
 async function sendPasswordResetEmail(record, otp) {
   const apiKey = resendApiKey();
-  if (!apiKey || !validateEmail(record.email)) return false;
+  if (!apiKey) return { ok: false, error: 'Missing RESEND_API_KEY' };
+  if (!validateEmail(record.email)) return { ok: false, error: 'Invalid affiliate email' };
   const loginUrl = 'https://www.zavorafashion.com/affiliate/login';
   const safeName = escapeHtml(record.fullName || 'Zavora Partner');
   const safeOtp = escapeHtml(otp);
@@ -166,8 +167,12 @@ async function sendPasswordResetEmail(record, otp) {
       html,
       text
     })
-  }).catch(() => null);
-  return Boolean(response?.ok);
+  }).catch((error) => ({ ok: false, text: async () => error.message }));
+  if (!response?.ok) {
+    const detail = await response?.text?.().catch(() => '') || 'Email delivery failed';
+    return { ok: false, error: detail };
+  }
+  return { ok: true };
 }
 
 function normalizeApplication(body = {}) {
@@ -195,9 +200,10 @@ module.exports = async function handler(req, res) {
   setSecurityHeaders(req, res);
   if (!rateLimit(req, res, 'affiliate-api', { windowMs: 60_000, max: 40 })) return;
 
-  const action = String(req.query.action || '').trim();
-  const database = await db();
-  const collection = database.collection('affiliates');
+  try {
+    const action = String(req.query.action || '').trim();
+    const database = await db();
+    const collection = database.collection('affiliates');
 
   if (req.method === 'POST' && action === 'apply') {
     const body = parseBody(req);
@@ -311,8 +317,12 @@ module.exports = async function handler(req, res) {
       }
     );
     const sent = await sendPasswordResetEmail(app, otp);
-    if (!sent) {
-      return json(res, 503, { ok: false, error: 'Email OTP service is not ready. Please contact affiliates@zavorafashion.com.' });
+    if (!sent.ok) {
+      return json(res, 503, {
+        ok: false,
+        error: 'Email OTP service is not ready. Please contact affiliates@zavorafashion.com.',
+        detail: String(sent.error || '').slice(0, 240)
+      });
     }
     return json(res, 200, { ok: true, message: 'OTP sent to your affiliate email.' });
   }
@@ -340,5 +350,12 @@ module.exports = async function handler(req, res) {
     return json(res, 200, { ok: true, message: 'Affiliate password updated.' });
   }
 
-  return json(res, 404, { ok: false, error: 'Unknown affiliate action' });
+    return json(res, 404, { ok: false, error: 'Unknown affiliate action' });
+  } catch (error) {
+    return json(res, 500, {
+      ok: false,
+      error: 'Affiliate service error. Please contact affiliates@zavorafashion.com.',
+      detail: String(error.message || '').slice(0, 240)
+    });
+  }
 };
