@@ -44,6 +44,30 @@
       "destination": "/affiliate-submitted.html"
     },
     {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/forgot-password",
+      "destination": "/forgot-password.html"
+    },
+    {
+      "source": "/sign-up",
+      "destination": "/sign-up.html"
+    },
+    {
+      "source": "/register",
+      "destination": "/sign-up.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/my-account",
+      "destination": "/my-account.html"
+    },
+    {
       "source": "/api/admin-login",
       "destination": "/api/admin?action=login"
     },

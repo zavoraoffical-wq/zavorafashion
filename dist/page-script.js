@@ -830,9 +830,15 @@ function syncPageHeader() {
   }
 }
 
+function currentPageKey() {
+  const path = window.location.pathname.replace(/\/+$/, '');
+  const last = path.split('/').pop() || 'index';
+  return last.endsWith('.html') ? last : `${last}.html`;
+}
+
 async function enforceAuthState() {
   await fetchAuthSession(true);
-  const pageName = window.location.pathname.split('/').pop();
+  const pageName = currentPageKey();
   const protectedCommercePages = ['checkout.html', 'wishlist.html', 'rewards.html'];
   if (pageName === 'logout.html') {
     await logoutUser();
@@ -2194,8 +2200,9 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
-  const loginTrigger = event.target.closest('a[href="dashboard.html"].primary-cta');
-  if (loginTrigger && (window.location.pathname.endsWith('sign-up.html') || window.location.pathname.endsWith('register.html'))) {
+  const pageName = currentPageKey();
+  const loginTrigger = event.target.closest('a[href="dashboard.html"].primary-cta, a[href="/dashboard.html"].primary-cta');
+  if (loginTrigger && (pageName === 'sign-up.html' || pageName === 'register.html')) {
     event.preventDefault();
     const form = loginTrigger.closest('.form-panel');
     const inputs = form ? [...form.querySelectorAll('input')] : [];
@@ -2231,7 +2238,7 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
-  if (loginTrigger && window.location.pathname.endsWith('login.html')) {
+  if (loginTrigger && pageName === 'login.html') {
     event.preventDefault();
     const email = document.querySelector('.auth-card input[type="email"]')?.value.trim().toLowerCase();
     const password = document.querySelector('.auth-card input[type="password"]')?.value.trim();
@@ -2275,7 +2282,7 @@ document.addEventListener('click', async (event) => {
   }
 
   const resetTrigger = event.target.closest('.auth-card .primary-cta');
-  if (resetTrigger && !resetTrigger.matches('[data-verify-reset-otp]') && window.location.pathname.endsWith('forgot-password.html')) {
+  if (resetTrigger && !resetTrigger.matches('[data-verify-reset-otp]') && pageName === 'forgot-password.html') {
     event.preventDefault();
     const form = resetTrigger.closest('.form-panel');
     const email = form?.querySelector('input[type="email"]')?.value.trim().toLowerCase();
