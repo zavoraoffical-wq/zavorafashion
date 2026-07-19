@@ -1,6 +1,10 @@
 const { bcrypt, db, json, normalizeEmail, parseBody, publicUser, setSessionCookie, validateEmail } = require('../lib/auth-lib');
 const { logSecurityEvent, rateLimit } = require('../lib/security');
 
+function isBcryptHash(value) {
+  return /^\$2[aby]\$\d{2}\$/.test(String(value || ''));
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
   if (!rateLimit(req, res, 'auth-login', { windowMs: 60_000, max: 10 })) return;
@@ -27,7 +31,30 @@ module.exports = async function handler(req, res) {
       logSecurityEvent(req, 'login_failed_unknown_user', { email });
       return json(res, 404, { error: 'ACCOUNT_NOT_FOUND' });
     }
-    const valid = await bcrypt.compare(password, user.passwordHash || '');
+    let valid = false;
+    const passwordHash = String(user.passwordHash || '');
+    if (isBcryptHash(passwordHash)) {
+      try {
+        valid = await bcrypt.compare(password, passwordHash);
+      } catch (error) {
+        valid = false;
+      }
+    }
+
+    const legacyPassword = String(user.password || user.pass || user.rawPassword || '').trim();
+    if (!valid && legacyPassword && legacyPassword === password) {
+      const migratedHash = await bcrypt.hash(password, 12);
+      await database.collection('users').updateOne(
+        { _id: user._id },
+        {
+          $set: { passwordHash: migratedHash, updatedAt: new Date() },
+          $unset: { password: '', pass: '', rawPassword: '' }
+        }
+      ).catch(() => {});
+      user.passwordHash = migratedHash;
+      valid = true;
+    }
+
     if (!valid) {
       const failed = Number(attempt?.count || 0) + 1;
       await attempts.updateOne(
@@ -39,6 +66,10 @@ module.exports = async function handler(req, res) {
       return json(res, 401, { error: 'Invalid email or password' });
     }
     await attempts.deleteOne({ email }).catch(() => {});
+    await database.collection('users').updateOne(
+      { _id: user._id },
+      { $set: { lastLoginAt: new Date(), updatedAt: new Date() } }
+    ).catch(() => {});
     setSessionCookie(req, res, user);
     return json(res, 200, { ok: true, user: publicUser(user) });
   } catch (error) {
