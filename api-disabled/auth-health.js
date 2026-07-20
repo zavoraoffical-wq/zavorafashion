@@ -22,6 +22,14 @@ module.exports = async function handler(req, res) {
         'SUPABASE_ANON_KEY',
         'NEXT_PUBLIC_SUPABASE_ANON_KEY'
       ),
+      postgres: hasAnyEnv(
+        'POSTGRES_URL',
+        'POSTGRES_URL_NON_POOLING',
+        'POSTGRES_PRISMA_URL',
+        'DATABASE_URL',
+        'SUPABASE_DB_URL',
+        'SUPABASE_POSTGRES_URL'
+      ),
       resend: hasAnyEnv('RESEND_API_KEY', 'RESEND_KEY', 'RESEND_TOKEN')
     },
     storage: null
