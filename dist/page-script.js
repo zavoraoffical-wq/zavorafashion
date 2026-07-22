@@ -998,7 +998,13 @@ async function requestAuthStart(payload) {
   }
 }
 
+let passwordLoginPending = false;
+
 async function requestPasswordLogin(email, password) {
+  if (passwordLoginPending) {
+    return { ok: false, error: 'Login is already processing. Please wait.' };
+  }
+  passwordLoginPending = true;
   try {
     const response = await fetch('/api/auth-login', {
       method: 'POST',
@@ -1011,8 +1017,21 @@ async function requestPasswordLogin(email, password) {
     return data;
   } catch (error) {
     return { ok: false, error: error.message };
+  } finally {
+    passwordLoginPending = false;
   }
 }
+
+// The auth UI uses link-styled actions. Make keyboard/Enter submission follow
+// the same validated API flow instead of reloading the static page.
+document.addEventListener('submit', (event) => {
+  const form = event.target.closest('.auth-card .form-panel');
+  if (!form) return;
+  const action = form.querySelector('a.primary-cta[href="dashboard.html"], a.primary-cta[href="/dashboard.html"]');
+  if (!action) return;
+  event.preventDefault();
+  action.click();
+});
 
 async function verifyAuthOtp(payload) {
   try {
@@ -2400,8 +2419,6 @@ document.addEventListener('click', async (event) => {
   const payNow = event.target.closest('.pay-now');
   if (payNow && window.location.pathname.endsWith('checkout.html')) {
     event.preventDefault();
-    alert('Zavora payments are coming soon. Checkout is temporarily paused.');
-    return;
     if (!(await fetchAuthSession(true))) {
       savePendingCommerceAction('checkout', null, 'checkout.html');
       showLoginRequiredModal('checkout.html');
@@ -2814,15 +2831,14 @@ function initPaymentMethodUi() {
   const pay = document.querySelector('.pay-now');
   if (!methods) return;
   function update() {
-    const selected = methods.querySelector('input[name="payment"]:checked')?.value || '';
-    if (paypal) paypal.hidden = true;
-    if (panel) panel.textContent = 'PayPal, card, Apple Pay, and Google Pay are coming soon.';
-    if (pay) {
-      pay.textContent = 'Payment Coming Soon';
-      pay.setAttribute('aria-disabled', 'true');
-      pay.classList.add('disabled');
-      pay.href = '#';
-    }
+    const selected = methods.querySelector('input[name="payment"]:checked')?.value || 'paypal';
+    const cod = selected === 'cod';
+    if (paypal) paypal.hidden = cod;
+    if (panel) panel.textContent = cod
+      ? 'Cash on Delivery test mode is active. Place the order now and track it with order ID plus email.'
+      : 'Card, Apple Pay, and Google Pay checkout are coming soon. Please use PayPal or COD test mode today.';
+    if (pay && cod) pay.textContent = 'Place COD Order';
+    if (pay && !cod && pay.dataset.payTotal) pay.textContent = pay.dataset.payTotal;
   }
   methods.addEventListener('change', update);
   update();
