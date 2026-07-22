@@ -474,7 +474,7 @@ function renderDailyFeature() {
         </div>
       </div>
       <a class="daily-feature-media" href="product.html?id=${encodeURIComponent(product.id)}" data-home-open-product="${product.id}" aria-label="Open ${product.name}">
-        <img src="${product.img}" alt="${product.name}" loading="lazy">
+        <img src="${product.img}" alt="${product.name}">
       </a>
     </section>
   `);
@@ -571,8 +571,8 @@ function productCard(product) {
   return `
     <article class="product-card" data-product-id="${product.id}">
       <div class="product-media">
-        <img loading="lazy" src="${product.img}" alt="${product.name}">
-        <img loading="lazy" class="alt" src="${product.alt}" alt="${product.name} alternate view">
+        <img src="${product.img}" alt="${product.name}">
+        <img class="alt" src="${product.alt}" alt="${product.name} alternate view">
         <span class="badge">${product.badge}</span>
         <button class="wish ${homeWishlistHas(product) ? 'active' : ''}" data-home-wishlist="${product.id}" aria-label="Add ${product.name} to wishlist">♡</button>
       </div>
@@ -847,7 +847,7 @@ function updateMegaMenu(type) {
     visual = document.createElement('a');
     visual.className = 'mega-visual';
     visual.setAttribute('aria-label', 'Shop Zavora edit');
-    visual.innerHTML = '<img src="" alt="" loading="lazy">';
+    visual.innerHTML = '<img src="" alt="">';
     menu.appendChild(visual);
   }
   if (eyebrow) eyebrow.textContent = data.label;

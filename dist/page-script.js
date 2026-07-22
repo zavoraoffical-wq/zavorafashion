@@ -669,7 +669,7 @@ function normalizeHeaderSelectors() {
           <div class="mega-grid"></div>
         </div>
         <a class="mega-visual" href="women.html" aria-label="Shop women">
-          <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80" alt="Zavora women streetwear" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80" alt="Zavora women streetwear">
         </a>
       </div>
     `);
@@ -1573,8 +1573,8 @@ function catalogCard(item) {
   return `
     <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-gender="${String(item.gender || '').toLowerCase()}" data-category="${item.category}" data-collection="${collections}" data-color="${colors.join(' ')}" data-size="${(item.sizes || [size]).join(' ')}" data-price="${item.price}">
       <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" aria-label="Open ${item.name} detail page">
-        <img class="card-img-primary" src="${image}" alt="${item.name}" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'">
-        <img class="card-img-hover" src="${hoverImage}" alt="${item.name} hover view" loading="lazy" onerror="this.style.display='none'">
+        <img class="card-img-primary" src="${image}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'">
+        <img class="card-img-hover" src="${hoverImage}" alt="${item.name} hover view" onerror="this.style.display='none'">
         <span class="badge">${item.badge}</span>
         <button class="wish" type="button" data-wishlist-product="${item.id}" aria-label="Add ${item.name} to wishlist">♡</button>
       </a>
@@ -2894,7 +2894,7 @@ function renderProductGallery(product, images = []) {
       <img data-gallery-main src="${galleryImages[0]}" alt="${product?.name || 'Zavora product'} main view" loading="eager" onerror="this.src='assets/studio-wide-trouser.png'">
     </div>
     ${galleryImages.length > 1 ? `<div class="product-thumbs" aria-label="Product gallery thumbnails">
-      ${galleryImages.map((src, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-gallery-thumb="${src}" aria-label="View product image ${index + 1}"><img src="${src}" alt="" loading="lazy" onerror="this.src='assets/studio-wide-trouser.png'"></button>`).join('')}
+      ${galleryImages.map((src, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-gallery-thumb="${src}" aria-label="View product image ${index + 1}"><img src="${src}" alt="" onerror="this.src='assets/studio-wide-trouser.png'"></button>`).join('')}
     </div>` : ''}
   `;
   gallery.querySelectorAll('[data-gallery-thumb]').forEach((thumb) => {
