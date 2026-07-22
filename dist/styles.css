@@ -554,15 +554,17 @@ h2 {
   color: #000;
 }
 .daily-feature-media {
-  min-height: 620px;
+  min-height: 380px;
+  max-height: 680px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.16);
 }
 .daily-feature-media img {
   width: 100%;
   height: 100%;
-  min-height: 620px;
+  max-height: 680px;
   object-fit: cover;
+  object-position: center top;
   transition: transform .6s ease;
 }
 .daily-feature-media:hover img {
@@ -4296,6 +4298,24 @@ svg {
     overflow-x: hidden !important;
   }
 
+  .daily-feature {
+    grid-template-columns: 1fr !important;
+  }
+  .daily-feature-copy {
+    min-height: auto !important;
+    padding: 34px 20px !important;
+  }
+  .daily-feature-media {
+    min-height: 280px !important;
+    max-height: 460px !important;
+  }
+  .daily-feature-media img {
+    min-height: 280px !important;
+    max-height: 460px !important;
+    object-fit: cover !important;
+    object-position: center top !important;
+  }
+
   .site-header ~ main,
   .page-header ~ main,
   main,
@@ -4307,9 +4327,10 @@ svg {
   .product-media,
   .hero img,
   .hero-slide img {
-    max-width: 100dvw !important;
+    max-width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
+    object-position: center top !important;
   }
 }
 
