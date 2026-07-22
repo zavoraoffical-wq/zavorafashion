@@ -58,7 +58,7 @@ function addBrandHeadTags() {
     '<link rel="apple-touch-icon" href="/assets/zavora-logo.png">'
   ].join('\n    ');
   const analyticsScript = '<script defer src="/_vercel/insights/script.js"></script>';
-  const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">';
+  const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
   const googleVerificationTag = '<meta name="google-site-verification" content="4AjlsEXnNoFfemeS-JvQk7talZoGEnLllMa-zfCByb8" />';
 
   for (const file of walkHtmlFiles(target)) {

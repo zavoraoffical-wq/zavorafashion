@@ -15,12 +15,10 @@ html {
   scroll-behavior: smooth;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden !important;
-  touch-action: manipulation;
+  overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  overscroll-behavior-y: none;
 }
 body {
   margin: 0;
@@ -29,11 +27,15 @@ body {
   color: var(--text);
   font-family: Arial, Helvetica, sans-serif;
   letter-spacing: 0;
-  overflow-x: hidden !important;
+  overflow-x: hidden;
   width: 100%;
   max-width: 100%;
   min-height: 100vh;
-  touch-action: manipulation;
+}
+@media (max-width: 1023px) {
+  html, body {
+    touch-action: manipulation;
+  }
 }
 html.dark,
 body.dark {
