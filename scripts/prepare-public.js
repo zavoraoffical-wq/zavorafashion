@@ -61,8 +61,10 @@ function addBrandHeadTags() {
   const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
   const googleVerificationTag = '<meta name="google-site-verification" content="4AjlsEXnNoFfemeS-JvQk7talZoGEnLllMa-zfCByb8" />';
 
+  const cssVersionTag = `href="styles.css?v=${Date.now()}"`;
   for (const file of walkHtmlFiles(target)) {
     let html = fs.readFileSync(file, 'utf8');
+    html = html.replace(/href=["']styles\.css(\?v=[^"']*)?["']/gi, cssVersionTag);
     html = removeMetaByName(html, 'viewport');
     html = removeMetaByName(html, 'google-site-verification');
     html = ensureHeadTag(html, viewportTag);
