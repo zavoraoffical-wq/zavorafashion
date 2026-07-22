@@ -14,9 +14,8 @@
 html {
   scroll-behavior: smooth;
   width: 100%;
-  max-width: 100vw;
+  max-width: 100%;
   overflow-x: hidden;
-  touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -29,8 +28,8 @@ body {
   letter-spacing: 0;
   overflow-x: hidden;
   width: 100%;
-  max-width: 100vw;
-  touch-action: manipulation;
+  max-width: 100%;
+  min-height: 100vh;
 }
 html.dark,
 body.dark {
@@ -41,10 +40,10 @@ body.dark {
   --line: #2d2d2d;
   --panel: rgba(8, 8, 8, .92);
 }
-a { color: inherit; text-decoration: none; touch-action: manipulation; }
-button, select, input, textarea { font: inherit; touch-action: manipulation; }
-input, select, textarea { font-size: 16px !important; }
-button { cursor: pointer; touch-action: manipulation; }
+a { color: inherit; text-decoration: none; }
+button, select, input, textarea { font: inherit; }
+input, select, textarea { font-size: 16px; }
+button { cursor: pointer; }
 img { display: block; max-width: 100%; }
 svg { max-width: 100%; }
 
