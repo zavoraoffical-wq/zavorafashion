@@ -1,3 +1,9 @@
+if (typeof window !== 'undefined') {
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((eventName) => {
+    window.addEventListener(eventName, (e) => e.preventDefault(), { passive: false });
+  });
+}
+
 const pageHeader = document.querySelector('.page-header');
 const quickProducts = [
   'Oversized Tees',
