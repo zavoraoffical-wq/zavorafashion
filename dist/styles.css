@@ -862,20 +862,35 @@ h2 {
 .category-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 14px;
   margin-top: 28px;
 }
 .category-grid a {
-  min-height: 170px;
+  min-height: 220px;
   display: flex;
-  align-items: end;
-  padding: 18px;
-  border: 1px solid var(--line);
-  background: var(--soft);
-  font: 25px/1 Georgia, serif;
+  align-items: flex-end;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background-size: cover;
+  background-position: center;
+  font: 600 22px/1.2 system-ui, -apple-system, sans-serif;
+  color: #ffffff !important;
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  text-decoration: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.category-grid a span {
+  position: relative;
+  z-index: 2;
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+}
+.category-grid a:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
 }
 
 .premium-category-grid a::before {

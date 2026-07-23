@@ -411,20 +411,26 @@ function initLocalizationSelectors() {
   const savedCurrency = localStorage.getItem(CURRENCY_KEY) || 'USD';
   const savedCountry = localStorage.getItem(COUNTRY_KEY) || 'USA';
   document.querySelectorAll('select[aria-label="Currency selector"]').forEach((select) => {
-    if ([...select.options].some((option) => option.value === savedCurrency || option.textContent === savedCurrency)) {
-      select.value = savedCurrency;
-    }
-    select.addEventListener('change', () => {
-      localStorage.setItem(CURRENCY_KEY, select.value || 'USD');
+    [...select.options].forEach((opt) => {
+      if (opt.value === savedCurrency || opt.textContent.trim() === savedCurrency) {
+        select.value = opt.value || opt.textContent.trim();
+      }
+    });
+    select.addEventListener('change', (e) => {
+      const selected = e.target.value || e.target.options[e.target.selectedIndex]?.text || 'USD';
+      localStorage.setItem(CURRENCY_KEY, selected.trim());
       window.location.reload();
     });
   });
   document.querySelectorAll('select[aria-label="Country selector"]').forEach((select) => {
-    if ([...select.options].some((option) => option.value === savedCountry || option.textContent === savedCountry)) {
-      select.value = savedCountry;
-    }
-    select.addEventListener('change', () => {
-      localStorage.setItem(COUNTRY_KEY, select.value || 'USA');
+    [...select.options].forEach((opt) => {
+      if (opt.value === savedCountry || opt.textContent.trim() === savedCountry) {
+        select.value = opt.value || opt.textContent.trim();
+      }
+    });
+    select.addEventListener('change', (e) => {
+      const selected = e.target.value || e.target.options[e.target.selectedIndex]?.text || 'USA';
+      localStorage.setItem(COUNTRY_KEY, selected.trim());
     });
   });
 }
@@ -3504,35 +3510,19 @@ function initHomeBanners() {
   const banners = [
     {
       image: '/assets/zavora-hero-clean-hoodie.png',
-      eyebrow: 'Premium streetwear',
-      title: 'Zavora Fashion',
-      copy: 'Timeless essentials, clean silhouettes, and everyday luxury built for the modern wardrobe.',
-      cta: 'Shop Collection',
-      href: 'collections.html'
+      eyebrow: '☀️ USA Summer Sale',
+      title: 'Get 15% OFF Premium Streetwear',
+      copy: 'Elevate your summer wardrobe with clean oversized tees, hoodies, and vacation streetwear. Use Code: SUMMER15 at checkout. Limited Time Only.',
+      cta: 'Shop Summer Sale (Code: SUMMER15)',
+      href: 'shop.html'
     },
     {
       image: '/assets/zavora-hero-clean-stairs.png',
-      eyebrow: 'New arrivals',
-      title: 'Modern Essentials',
-      copy: 'Clean hoodies, tees, and elevated layers designed for daily movement.',
-      cta: 'Explore New',
-      href: 'new-arrivals.html'
-    },
-    {
-      image: '/assets/zavora-hero-clean-collection.png',
-      eyebrow: 'Limited drop',
-      title: 'Built For The Bold',
-      copy: 'Small-batch streetwear pieces with a sharp luxury finish.',
-      cta: 'Shop Limited',
-      href: 'limited.html'
-    },
-    {
-      image: '/assets/zavora-premium-hero.png',
-      eyebrow: 'Luxury essentials',
-      title: 'Everyday Excellence',
-      copy: 'Premium quality, refined comfort, and pieces that hold their shape.',
-      cta: 'Shop Best Sellers',
-      href: 'best-sellers.html'
+      eyebrow: '🔥 First Order Special',
+      title: '$10 OFF Your First Purchase',
+      copy: 'New to Zavora Fashion? Save $10 on orders over $49 with fast USA shipping. Use Code: WELCOME10 at checkout.',
+      cta: 'Claim $10 OFF (Code: WELCOME10)',
+      href: 'shop.html'
     }
   ];
   let active = 0;
