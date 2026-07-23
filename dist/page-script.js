@@ -697,7 +697,7 @@ function normalizeHeaderSelectors() {
     panel.setAttribute('aria-hidden', 'true');
     panel.innerHTML = `
       <button class="close" data-page-close-mobile aria-label="Close menu"></button>
-      <a href="index.html">Home</a>
+      <a href="/">Home</a>
       <a href="women.html">Women</a>
       <a href="men.html">Men</a>
       <a href="new-arrivals.html">New</a>
