@@ -2703,10 +2703,12 @@ function enhanceFooter() {
       <a href="journal.html">Journal</a>
       <a href="/affiliate">Affiliate Program</a>
       <div class="social-links">
-        <a href="journal.html"><span class="icon-badge"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.5"></circle><path d="M17 7h.01"></path></svg></span>Instagram</a>
-        <a href="journal.html"><span class="icon-badge"><svg viewBox="0 0 24 24"><path d="M14 4v11.2a4.2 4.2 0 1 1-4.2-4.2"></path><path d="M14 4c1.1 3 3 4.8 6 5"></path></svg></span>TikTok</a>
-        <a href="journal.html"><span class="icon-badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M10.5 20c.8-2.5 1.1-4.9 1.7-7.2"></path><path d="M10 13.5c-1.2-2.4.2-5.2 2.9-5.2 2 0 3.3 1.4 3.3 3.2 0 2.2-1.2 4-3 4-.9 0-1.5-.5-1.7-1.1"></path></svg></span>Pinterest</a>
-        <a href="journal.html"><span class="icon-badge"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="4"></rect><path d="m10 9 5 3-5 3Z"></path></svg></span>YouTube</a>
+        <a href="https://www.instagram.com/zavora_fashion/" target="_blank" rel="noopener"><span class="icon-badge"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.5"></circle><path d="M17 7h.01"></path></svg></span>Instagram</a>
+        <a href="https://www.tiktok.com/@zavoraoffical" target="_blank" rel="noopener"><span class="icon-badge"><svg viewBox="0 0 24 24"><path d="M14 4v11.2a4.2 4.2 0 1 1-4.2-4.2"></path><path d="M14 4c1.1 3 3 4.8 6 5"></path></svg></span>TikTok</a>
+        <a href="https://www.pinterest.com/zavoraoffical/" target="_blank" rel="noopener"><span class="icon-badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M10.5 20c.8-2.5 1.1-4.9 1.7-7.2"></path><path d="M10 13.5c-1.2-2.4.2-5.2 2.9-5.2 2 0 3.3 1.4 3.3 3.2 0 2.2-1.2 4-3 4-.9 0-1.5-.5-1.7-1.1"></path></svg></span>Pinterest</a>
+        <a href="https://www.youtube.com/@zavoraoffical" target="_blank" rel="noopener"><span class="icon-badge"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="4"></rect><path d="m10 9 5 3-5 3Z"></path></svg></span>YouTube</a>
+        <a href="https://www.facebook.com/profile.php/?id=61579777109389" target="_blank" rel="noopener"><span class="icon-badge"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></span>Facebook</a>
+        <a href="https://x.com/zavoraoffical" target="_blank" rel="noopener"><span class="icon-badge"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg></span>X (Twitter)</a>
       </div>
     </div>
     <div>
