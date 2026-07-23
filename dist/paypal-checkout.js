@@ -1,12 +1,29 @@
 function zavoraCheckoutTotal() {
   try {
-    const cart = JSON.parse(localStorage.getItem('zavoraCart')) || [];
-    const total = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
-    const appliedGift = JSON.parse(localStorage.getItem('zavoraAppliedGiftCard') || 'null');
-    const discount = appliedGift?.code ? Math.min(total || 168, Number(appliedGift.balance || appliedGift.value || 0)) : 0;
-    return Math.max(0.01, (total > 0 ? total : 168) - discount);
+    const cart = typeof getSavedCart === 'function' ? getSavedCart() : (JSON.parse(localStorage.getItem('zavora_cart')) || []);
+    const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+    const shipping = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
+
+    let couponDiscount = 0;
+    try {
+      const coupon = JSON.parse(localStorage.getItem('zavoraAppliedCoupon') || 'null');
+      if (coupon?.code) {
+        const code = String(coupon.code).toUpperCase();
+        if (code === 'WELCOME10') couponDiscount = subtotal >= 49 ? 10 : 0;
+        else if (code === 'SUMMER15') couponDiscount = subtotal * 0.15;
+      }
+    } catch(e) {}
+
+    let giftDiscount = 0;
+    try {
+      const gift = JSON.parse(localStorage.getItem('zavoraAppliedGiftCard') || 'null');
+      if (gift?.code) giftDiscount = Math.min(subtotal - couponDiscount, Number(gift.balance || gift.value || 0));
+    } catch(e) {}
+
+    const totalDiscount = couponDiscount + giftDiscount;
+    return Math.max(0.01, subtotal + shipping - totalDiscount);
   } catch (error) {
-    return 168;
+    return 0.01;
   }
 }
 
@@ -18,6 +35,7 @@ function initZavoraPayPal() {
     return;
   }
 
+  container.innerHTML = '';
   window.paypal.Buttons({
     style: {
       layout: 'vertical',
@@ -26,12 +44,10 @@ function initZavoraPayPal() {
       label: 'paypal'
     },
     async createOrder(data, actions) {
-      const user = typeof fetchAuthSession === 'function' ? await fetchAuthSession(true) : null;
-      if (!user) {
-        if (typeof savePendingCommerceAction === 'function') savePendingCommerceAction('checkout', null, 'checkout.html');
-        if (typeof showLoginRequiredModal === 'function') showLoginRequiredModal('checkout.html');
-        else window.location.href = `login.html?next=${encodeURIComponent('checkout.html')}`;
-        throw new Error('Login required before PayPal checkout');
+      const cart = typeof getSavedCart === 'function' ? getSavedCart() : (JSON.parse(localStorage.getItem('zavora_cart')) || []);
+      if (!cart || !cart.length) {
+        alert('Your bag is empty. Add a product before checkout.');
+        throw new Error('Cart empty');
       }
       return actions.order.create({
         purchase_units: [{
@@ -45,14 +61,9 @@ function initZavoraPayPal() {
     },
     onApprove(data, actions) {
       return actions.order.capture().then(async () => {
-        const user = typeof fetchAuthSession === 'function' ? await fetchAuthSession(true) : null;
-        if (!user) {
-          window.location.href = `login.html?next=${encodeURIComponent('checkout.html')}`;
-          return;
-        }
         const order = typeof createTestOrder === 'function' ? createTestOrder('PayPal') : null;
         if (!order) {
-          container.insertAdjacentHTML('beforeend', '<p class="login-error">Your bag is empty. Add a product before payment.</p>');
+          alert('Error placing order. Please try again.');
           return;
         }
         order.paypalOrderId = data.orderID || '';
@@ -61,7 +72,7 @@ function initZavoraPayPal() {
         window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=paypal`;
       });
     },
-    onError() {
+    onError(err) {
       container.insertAdjacentHTML('beforeend', '<p class="login-error">PayPal payment could not be completed. Please try again.</p>');
     }
   }).render('#paypal-button-container');
