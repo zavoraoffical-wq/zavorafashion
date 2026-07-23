@@ -15,12 +15,10 @@ module.exports = async function handler(req, res) {
       authJwtSecret: hasAnyEnv('AUTH_JWT_SECRET', 'JWT_SECRET'),
       mongo: hasAnyEnv('MONGODB_URI', 'MONGO_URI'),
       supabaseUrl: hasAnyEnv('SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL'),
-      supabaseKey: hasAnyEnv(
+      supabaseServiceRoleKey: hasAnyEnv(
         'SUPABASE_SERVICE_ROLE_KEY',
         'SUPABASE_SERVICE_KEY',
-        'SUPABASE_SECRET_KEY',
-        'SUPABASE_ANON_KEY',
-        'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+        'SUPABASE_SECRET_KEY'
       ),
       postgres: hasAnyEnv(
         'POSTGRES_URL',

@@ -548,7 +548,33 @@ function createTestOrder(method = 'PayPal') {
   orders.unshift(order);
   saveSavedOrders(orders);
   localStorage.setItem('zavoraLastOrder', JSON.stringify(order));
+
+  // Deduct gift card balance, clear applied gift card and clear the cart bag
+  finalizeOrderPayment(cart);
+
   return order;
+}
+
+function finalizeOrderPayment(cartItems) {
+  try {
+    const applied = JSON.parse(localStorage.getItem(APPLIED_GIFT_KEY));
+    if (applied && applied.code) {
+      const subtotal = cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+      const discountUsed = Math.min(subtotal, Number(applied.balance || applied.value || 0));
+      if (discountUsed > 0) {
+        const giftCards = JSON.parse(localStorage.getItem(GIFT_CARD_KEY)) || [];
+        const index = giftCards.findIndex((card) => card.code === applied.code);
+        if (index !== -1) {
+          giftCards[index].balance = Math.max(0, Number(giftCards[index].balance || 0) - discountUsed);
+          localStorage.setItem(GIFT_CARD_KEY, JSON.stringify(giftCards));
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error finalizing gift card payment:', error);
+  }
+  localStorage.removeItem(APPLIED_GIFT_KEY);
+  saveSavedCart([]);
 }
 
 async function requestOrderConfirmation(order) {
@@ -2503,7 +2529,7 @@ document.addEventListener('click', async (event) => {
     giftCards.push(card);
     saveGiftCards(giftCards);
     const cart = getSavedCart();
-    cart.push({ id: Date.now(), name: `Zavora Gift Card ${money(value)}`, price: value, color: 'Digital', sizes: ['Gift'], qty: 1, img: 'assets/studio-wide-trouser.png', giftCode: code });
+    cart.push({ id: Date.now(), name: `Zavora Gift Card ${money(value)}`, price: value, color: 'Digital', sizes: ['Gift'], qty: 1, img: 'assets/zavora-logo.png', giftCode: code });
     saveSavedCart(cart);
     document.querySelector('[data-gift-code]').textContent = code;
     document.querySelector('[data-gift-status]').textContent = `${money(value)} gift card added to bag. Card number: ${code}`;
@@ -2842,7 +2868,7 @@ function initPaymentMethodUi() {
     if (paypal) paypal.hidden = cod;
     if (panel) panel.textContent = cod
       ? 'Cash on Delivery test mode is active. Place the order now and track it with order ID plus email.'
-      : 'Card, Apple Pay, and Google Pay checkout are coming soon. Please use PayPal or COD test mode today.';
+      : 'Card, Apple Pay, and Google Pay checkout are coming soon. Please use PayPal today.';
     if (pay && cod) pay.textContent = 'Place COD Order';
     if (pay && !cod && pay.dataset.payTotal) pay.textContent = pay.dataset.payTotal;
   }
