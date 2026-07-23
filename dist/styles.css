@@ -4345,12 +4345,17 @@ svg {
   }
 }
 
-/* Bulletproof iOS Auto-Zoom Prevention */
+/* Bulletproof Hardware-Accelerated Mobile Scrolling & Auto-Zoom Prevention */
 html, body {
   -webkit-text-size-adjust: 100% !important;
   -moz-text-size-adjust: 100% !important;
   -ms-text-size-adjust: 100% !important;
   text-size-adjust: 100% !important;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-y: auto;
+}
+
+button, a, input, select, textarea, .primary-cta, .secondary-btn {
   touch-action: manipulation;
 }
 
@@ -4368,4 +4373,32 @@ input[type="url"], input[type="date"],
   font-size: 16px !important;
   -webkit-text-size-adjust: 100% !important;
   max-height: 99999px;
+}
+
+.site-header, .page-header {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+}
+
+@media (max-width: 768px) {
+  .site-header,
+  .page-header,
+  .page-header.scrolled,
+  .site-header.scrolled {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+  }
+
+  body.dark-mode .site-header,
+  body.dark-mode .page-header,
+  body.dark-mode .page-header.scrolled,
+  body.dark-mode .site-header.scrolled,
+  [data-theme="dark"] .site-header,
+  [data-theme="dark"] .page-header,
+  [data-theme="dark"] .page-header.scrolled,
+  [data-theme="dark"] .site-header.scrolled {
+    background: rgba(18, 18, 18, 0.96) !important;
+  }
 }
