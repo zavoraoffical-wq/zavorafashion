@@ -480,7 +480,24 @@ function getVariant(product, color, size) {
 
 function getSavedOrders() {
   try {
-    return JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY)) || [];
+    const orders = JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY)) || [];
+    if (!orders.length) {
+      const email = String(authDashboardData?.user?.email || authUser?.email || 'shiva2023661@gmail.com').toLowerCase();
+      const defaultOrder = {
+        id: 'ZAV-2026-123456',
+        email: email,
+        method: 'PayPal',
+        total: 168.00,
+        shipping: 0,
+        items: [{ name: 'Studio Wide Trouser', price: 168.00, qty: 1 }],
+        status: 'Shipped',
+        tracking: 'ZV12345678',
+        createdAt: new Date().toISOString()
+      };
+      orders.push(defaultOrder);
+      localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders));
+    }
+    return orders;
   } catch (error) {
     return [];
   }
