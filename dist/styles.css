@@ -4345,7 +4345,27 @@ svg {
   }
 }
 
-/* Force inputs to 16px to prevent iOS auto-zoom */
-input, select, textarea {
+/* Bulletproof iOS Auto-Zoom Prevention */
+html, body {
+  -webkit-text-size-adjust: 100% !important;
+  -moz-text-size-adjust: 100% !important;
+  -ms-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+  touch-action: manipulation;
+}
+
+input, select, textarea,
+input[type="text"], input[type="password"], input[type="email"],
+input[type="number"], input[type="tel"], input[type="search"],
+input[type="url"], input[type="date"],
+.form-panel input, .form-panel select, .form-panel textarea,
+.mini-form input, .mini-form select, .mini-form textarea,
+.auth-card input, .auth-card select, .auth-card textarea,
+.checkout-form input, .checkout-form select, .checkout-form textarea,
+.search-overlay input, .search-overlay select, .search-overlay textarea,
+.footer-newsletter input, .coupon-row input, .launch-form input,
+.control-grid input, .dialog input, .drawer input, .modal input {
   font-size: 16px !important;
+  -webkit-text-size-adjust: 100% !important;
+  max-height: 99999px;
 }

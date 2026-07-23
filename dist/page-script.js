@@ -2,6 +2,23 @@ if (typeof window !== 'undefined') {
   ['gesturestart', 'gesturechange', 'gestureend'].forEach((eventName) => {
     window.addEventListener(eventName, (e) => e.preventDefault(), { passive: false });
   });
+
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      if (e.target && !['INPUT', 'TEXTAREA', 'SELECT', 'A', 'BUTTON'].includes(e.target.tagName)) {
+        e.preventDefault();
+      }
+    }
+    lastTouchEnd = now;
+  }, false);
+
+  document.addEventListener('focusin', (e) => {
+    if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+      e.target.style.fontSize = '16px';
+    }
+  });
 }
 
 function trackMetaEvent(eventName, params = {}) {
