@@ -3051,6 +3051,34 @@ function renderProductGallery(product, images = []) {
   });
 }
 
+function productGalleryImages(product) {
+  const groups = product?.variantGroups || {};
+  const firstGroup = groups[Object.keys(groups)[0]];
+  if (firstGroup?.images?.length) return firstGroup.images;
+  return Array.from(new Set([
+    ...(product?.images || []),
+    product?.img,
+    product?.image
+  ].filter(Boolean)));
+}
+
+function updateProductStockNote(product) {
+  const stock = getProductStock(product);
+  const note = document.querySelector('[data-stock-note]');
+  const add = document.querySelector('[data-product-add], .product-actions .primary-cta');
+  const buy = document.querySelector('[data-buy-now]');
+  const isLimited = String(product?.badge || '').toLowerCase().includes('limited') || (product?.collection || []).includes('limited');
+  if (note) {
+    note.hidden = !isLimited && stock > 0;
+    note.textContent = stock > 0 ? `${stock} available` : 'Out of stock';
+  }
+  [add, buy].forEach((button) => {
+    if (!button) return;
+    button.toggleAttribute('aria-disabled', stock <= 0);
+    button.classList.toggle('disabled', stock <= 0);
+  });
+}
+
 function updateDynamicProductMedia() {
   if (!isCurrentPage('product')) return;
   const product = getSelectedProduct();
@@ -3058,44 +3086,29 @@ function updateDynamicProductMedia() {
   const { color, size } = selectedProductOptions();
   const variant = getVariant(product, color, size);
   const group = productVariantGroup(product, color);
-  const mainImage = document.querySelector('.product-gallery img');
-  if (mainImage && (variant?.image || group?.images?.[0])) {
-    mainImage.src = variant?.image || group?.images?.[0];
+  renderProductGallery(product, group?.images?.length ? group.images : (variant?.images || product.images || [variant?.image || product.img || product.image]));
+  const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
+  if (group?.sizes?.length && optionRows[1]) {
+    const activeSize = size;
+    optionRows[1].innerHTML = `${group.sizes.map((itemSize, index) => `<button type="button" class="${itemSize === activeSize || (!group.sizes.includes(activeSize) && index === 0) ? 'active' : ''}">${itemSize}</button>`).join('')}<a href="style-guide.html">Size Guide</a>`;
   }
 }
 
-async function refreshSelectedProductFromUrl() {
+function refreshSelectedProductFromUrl() {
   if (!isCurrentPage('product')) return;
   const id = new URLSearchParams(window.location.search).get('id');
-  if (!id) return;
-
-  const current = getSelectedProduct();
-  if (current && (String(current.id) === String(id) || String(current.printfulId) === String(id))) {
-    initDynamicProductPage();
-    return;
-  }
-
-  let product = [...(window.__zavoraCatalogProducts || []), ...(window.__zavoraSearchProducts || [])]
-    .find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
-
-  if (!product) {
-    try {
-      const pages = await Promise.all([
-        fetchCatalogProducts('men', 1000).catch(() => []),
-        fetchCatalogProducts('women', 1000).catch(() => [])
-      ]);
-      const all = pages.flat();
-      product = all.find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
+  if (!id || window.__zavoraProductRefreshId === id) return;
+  window.__zavoraProductRefreshId = id;
+  Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))
+    .then((pages) => {
+      const products = pages.flat();
+      const product = products.find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
       if (product) {
-        window.__zavoraCatalogProducts = all;
+        localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(product));
+        initDynamicProductPage();
       }
-    } catch (error) {}
-  }
-
-  if (product) {
-    localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(product));
-    initDynamicProductPage();
-  }
+    })
+    .catch(() => {});
 }
 
 function initDynamicProductPage() {
@@ -3133,14 +3146,38 @@ function initDynamicProductPage() {
     optionRows[0].innerHTML = colors.map((color, index) => {
       const key = normalizedProductColor(color);
       const label = groups[key]?.label || (color === 'default' ? 'Original' : `${color[0].toUpperCase()}${color.slice(1)}`);
-      return `<button class="${index === 0 ? 'active' : ''}" type="button" data-color-option="${color}">${label}</button>`;
+      return `<button type="button" class="${index === 0 ? 'active' : ''}" data-color="${key}">${label}</button>`;
     }).join('');
   }
   if (optionRows[1]) {
-    optionRows[1].innerHTML = sizes.map((size, index) => `<button class="${index === 0 ? 'active' : ''}" type="button" data-size-option="${size}">${size}</button>`).join('');
+    optionRows[1].innerHTML = `${sizes.map((size, index) => `<button type="button" class="${index === 0 ? 'active' : ''}">${size}</button>`).join('')}<a href="style-guide.html">Size Guide</a>`;
   }
-  updateDynamicProductMedia();
+  const actions = document.querySelector('.product-actions');
+  if (actions && !document.querySelector('[data-stock-note]')) {
+    actions.insertAdjacentHTML('beforebegin', '<p class="stock-note" data-stock-note></p>');
+  }
+  const add = document.querySelector('.product-actions .primary-cta');
+  const wishlistButton = document.querySelector('.product-actions .secondary-btn');
+  if (add) {
+    add.href = '#';
+    add.dataset.productAdd = 'true';
+    add.textContent = 'Add to Cart';
+  }
+  if (wishlistButton) {
+    wishlistButton.href = '#';
+    wishlistButton.dataset.addSelectedWishlist = 'true';
+  }
+  const buy = [...document.querySelectorAll('.product-buy > .primary-cta')].find((link) => !link.closest('.product-actions'));
+  if (buy) {
+    buy.href = '#';
+    buy.dataset.buyNow = 'true';
+    buy.textContent = 'Buy Now';
+  }
+  document.querySelectorAll('.split-band article:first-child p').forEach((node) => {
+    node.textContent = product.description || node.textContent;
+  });
   updateProductStockNote(product);
+  refreshSelectedProductFromUrl();
 }
 
 async function initDynamicRelatedProducts() {
