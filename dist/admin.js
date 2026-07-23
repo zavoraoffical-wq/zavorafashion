@@ -368,40 +368,72 @@ function renderLiveProductRows(products = []) {
 function renderLiveOrders(stats) {
   const body = document.querySelector('[data-panel="orders"] tbody');
   if (!body) return;
-  const rows = Array.isArray(stats.orders) && stats.orders.length ? stats.orders : [];
+  let serverOrders = Array.isArray(stats?.orders) ? stats.orders : [];
+  let localOrders = [];
+  try {
+    localOrders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+  } catch (e) {}
+
+  try {
+    const lastOrder = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+    if (lastOrder && lastOrder.id) {
+      localOrders.unshift(lastOrder);
+    }
+  } catch (e) {}
+
+  const seen = new Set();
+  const rows = [...serverOrders, ...localOrders].filter((order) => {
+    if (!order || !order.id) return false;
+    const idStr = String(order.id).trim();
+    if (seen.has(idStr)) return false;
+    seen.add(idStr);
+    return true;
+  });
+
   if (!rows.length) {
-    body.innerHTML = '<tr><td colspan="5">No live orders yet. New checkout orders will appear here automatically.</td></tr>';
+    body.innerHTML = '<tr><td colspan="6">No live orders yet. New checkout orders will appear here automatically.</td></tr>';
     return;
   }
-  body.innerHTML = rows.map((order) => `
-    <tr data-admin-order="${order.id}">
-      <td>${order.id}</td>
-      <td>${order.customer || 'Zavora customer'}<br><span>${order.email || 'orders@zavorafashion.com'}</span></td>
-      <td>${order.payment || order.method || 'Pending'}</td>
-      <td>
-        <select data-order-status>
-          ${['Order confirmed', 'Packing', 'Shipped', 'Delivered', 'Cancelled', 'Returned', 'Refunded'].map((status) => `<option ${String(order.status || '').includes(status) ? 'selected' : ''}>${status}</option>`).join('')}
-        </select>
-        <input data-order-tracking value="${order.tracking || ''}" placeholder="Tracking number">
-      </td>
-      <td><button data-save-order="${order.id}">Save Update</button></td>
-    </tr>
-  `).join('');
+
+  body.innerHTML = rows.map((order) => {
+    const itemsList = Array.isArray(order.items) && order.items.length
+      ? order.items.map(i => `${i.name || 'Product'} (Qty ${i.qty || 1})`).join(', ')
+      : (order.item || 'Zavora streetwear item');
+    const totalVal = typeof order.total === 'number' ? `$${order.total.toFixed(2)}` : (order.total || '$0.00');
+
+    return `
+      <tr data-admin-order="${order.id}">
+        <td><strong>${order.id}</strong></td>
+        <td>${order.customer || 'Zavora customer'}<br><span style="font-size:12px;opacity:0.75;">${order.email || 'orders@zavorafashion.com'}</span></td>
+        <td><strong>${totalVal}</strong><br><span style="font-size:11px;opacity:0.75;">${itemsList}</span></td>
+        <td>${order.payment || order.method || 'PayPal / Direct'}</td>
+        <td>
+          <select data-order-status>
+            ${['Paid', 'Order confirmed', 'Packing', 'Shipped', 'Delivered', 'Cancelled', 'Returned', 'Refunded'].map((status) => `<option ${String(order.status || '').toLowerCase().includes(status.toLowerCase()) ? 'selected' : ''}>${status}</option>`).join('')}
+          </select>
+          <input data-order-tracking value="${order.tracking || ''}" placeholder="Tracking number" style="margin-top:4px;width:100%;font-size:12px;">
+        </td>
+        <td><button data-save-order="${order.id}">Save Update</button></td>
+      </tr>
+    `;
+  }).join('');
 }
 
 async function refreshLiveAdminDashboard() {
+  let stats = { orders: [] };
   try {
     const response = await fetch('/api/admin?action=stats');
-    const stats = await response.json();
-    if (!response.ok || !stats.ok) return;
-    setStatCards(stats);
-    renderLiveTopProducts(stats.topProducts || []);
-    renderLiveProductRows(stats.topProducts || []);
-    renderLiveOrders(stats);
-    renderRewardClaims(stats.rewardClaims || []);
-    const bell = document.querySelector('.admin-icon-btn');
-    if (bell) bell.textContent = `Live ${stats.products || 0}`;
+    const data = await response.json();
+    if (response.ok && data.ok) stats = data;
   } catch (error) {}
+
+  setStatCards(stats);
+  renderLiveTopProducts(stats.topProducts || []);
+  renderLiveProductRows(stats.topProducts || []);
+  renderLiveOrders(stats);
+  renderRewardClaims(stats.rewardClaims || []);
+  const bell = document.querySelector('.admin-icon-btn');
+  if (bell) bell.textContent = `Live ${stats.products || 0}`;
 }
 
 function addAdminProduct(form) {
