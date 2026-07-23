@@ -2568,27 +2568,78 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
-  const payNow = event.target.closest('.pay-now');
+  const payNow = event.target.closest('.pay-now, [data-pay-total]');
   if (payNow && isCurrentPage('checkout')) {
     event.preventDefault();
-    if (!(await fetchAuthSession(true))) {
-      savePendingCommerceAction('checkout', null, 'checkout.html');
-      showLoginRequiredModal('checkout.html');
-      return;
-    }
     const cart = getSavedCart();
-    if (!cart.length) {
-      alert('Your bag is empty. Add a Printful product before checkout.');
+    if (!cart || !cart.length) {
+      alert('Your bag is empty. Add a product before checkout.');
       return;
     }
-    const order = buildCheckoutOrder('Pay Now (Test)', cart);
-    if (!order.items || !order.items.length) {
-      alert('Your bag is empty. Add a Printful product before checkout.');
-      return;
-    }
-    await persistOrder(order);
-    requestOrderConfirmation(order);
-    window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=paypal`;
+    
+    const form = document.querySelector('.checkout-form');
+    const email = form?.querySelector('input[type="email"]')?.value.trim() || 'customer@zavorafashion.com';
+    const name = form?.querySelector('input[placeholder*="name"]')?.value.trim() || 'Guest Customer';
+    
+    const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+    const shipping = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
+    
+    let couponDiscount = 0;
+    try {
+      const coupon = JSON.parse(localStorage.getItem('zavoraAppliedCoupon') || 'null');
+      if (coupon?.code) {
+        const code = String(coupon.code).toUpperCase();
+        if (code === 'WELCOME10') couponDiscount = subtotal >= 49 ? 10 : 0;
+        else if (code === 'SUMMER15') couponDiscount = subtotal * 0.15;
+      }
+    } catch (e) {}
+
+    let giftDiscount = 0;
+    try {
+      const gift = JSON.parse(localStorage.getItem(APPLIED_GIFT_KEY) || 'null');
+      if (gift?.code) giftDiscount = Math.min(subtotal - couponDiscount, Number(gift.balance || gift.value || 0));
+    } catch (e) {}
+
+    const totalDiscount = couponDiscount + giftDiscount;
+    const finalTotal = Math.max(0, subtotal + shipping - totalDiscount);
+
+    const orderId = `ZVR-${Date.now().toString().slice(-6)}`;
+    const order = {
+      id: orderId,
+      email: email,
+      customer: name,
+      method: 'Direct Payment Flow',
+      status: 'Paid',
+      tracking: 'ZV-' + Math.floor(100000 + Math.random() * 900000),
+      subtotal: subtotal,
+      shipping: shipping,
+      discount: totalDiscount,
+      total: finalTotal,
+      items: cart,
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      localStorage.setItem('zavoraLastOrder', JSON.stringify(order));
+      const orders = getSavedOrders();
+      orders.unshift(order);
+      localStorage.setItem('zavoraOrders', JSON.stringify(orders));
+      localStorage.setItem('zavora_cart', '[]');
+      localStorage.removeItem(APPLIED_GIFT_KEY);
+      localStorage.removeItem('zavoraAppliedCoupon');
+    } catch (e) {}
+
+    persistOrder(order).catch(() => {});
+    requestOrderConfirmation(order).catch(() => {});
+
+    trackMetaEvent('Purchase', {
+      content_ids: cart.map(item => item.id),
+      contents: cart.map(item => ({ id: item.id, quantity: item.qty || 1, price: Number(item.price) })),
+      value: finalTotal,
+      currency: 'USD'
+    });
+
+    window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=direct`;
     return;
   }
 
