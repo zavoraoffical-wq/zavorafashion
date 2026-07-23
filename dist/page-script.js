@@ -528,24 +528,7 @@ function getVariant(product, color, size) {
 
 function getSavedOrders() {
   try {
-    const orders = JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY)) || [];
-    if (!orders.length) {
-      const email = String(authDashboardData?.user?.email || authUser?.email || 'shiva2023661@gmail.com').toLowerCase();
-      const defaultOrder = {
-        id: 'ZAV-2026-123456',
-        email: email,
-        method: 'PayPal',
-        total: 168.00,
-        shipping: 0,
-        items: [{ name: 'Studio Wide Trouser', price: 168.00, qty: 1 }],
-        status: 'Shipped',
-        tracking: 'ZV12345678',
-        createdAt: new Date().toISOString()
-      };
-      orders.push(defaultOrder);
-      localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(orders));
-    }
-    return orders;
+    return JSON.parse(localStorage.getItem(ORDER_HISTORY_KEY)) || [];
   } catch (error) {
     return [];
   }
@@ -2967,14 +2950,33 @@ function initTrackOrderLookup() {
   const inputs = document.querySelectorAll('.tracking-form input');
   const params = new URLSearchParams(window.location.search);
 
+  const urlOrder = (params.get('order') || '').trim();
+  const urlEmail = (params.get('email') || '').trim();
+
+  if (urlOrder && inputs[0]) inputs[0].value = urlOrder;
+  if (urlEmail && inputs[1]) inputs[1].value = urlEmail;
+
   async function lookupOrder() {
-    const orderId = inputs[0]?.value.trim().replace(/^#/, '');
-    const email = inputs[1]?.value.trim().toLowerCase();
+    const orderId = (inputs[0]?.value || '').trim().replace(/^#/, '');
+    const email = (inputs[1]?.value || '').trim().toLowerCase();
     if (!orderId || !email) {
-      alert('Please enter order number and email.');
+      if (card) {
+        card.innerHTML = '<h2>Track Order</h2><p>Please enter your order number and email address above to view status.</p>';
+      }
       return;
     }
-    let order = getSavedOrders().find((item) => String(item.id).toLowerCase() === orderId.toLowerCase() && (!item.email || item.email.toLowerCase() === email));
+
+    let order = getSavedOrders().find((item) => String(item.id).toLowerCase().replace(/^#/, '') === orderId.toLowerCase() && (!item.email || item.email.toLowerCase() === email));
+    
+    if (!order) {
+      try {
+        const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+        if (last && String(last.id).toLowerCase().replace(/^#/, '') === orderId.toLowerCase()) {
+          order = last;
+        }
+      } catch (e) {}
+    }
+
     if (!order) {
       try {
         const response = await fetch(`/api/orders?order=${encodeURIComponent(orderId)}&email=${encodeURIComponent(email)}`);
@@ -2982,22 +2984,43 @@ function initTrackOrderLookup() {
         if (data.ok && data.order) order = data.order;
       } catch (error) {}
     }
+
     if (!order) {
-      alert('Order not found. Please check your details.');
+      if (card) {
+        card.innerHTML = `<h2>Order #${orderId}</h2><p style="color:#d9534f;margin-top:8px;">Order not found. Please check your order number and email address.</p>`;
+      }
       return;
     }
+
     if (card) {
+      const itemsText = Array.isArray(order.items) && order.items.length
+        ? order.items.map(i => `${i.name || 'Product'} (Qty ${i.qty || 1})`).join(', ')
+        : (order.item || 'Zavora apparel item');
+      
+      const created = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Today';
+      const status = order.status || 'Order confirmed';
+
       card.innerHTML = `
-        <div class="eyebrow">Order #${order.id}</div>
-        <h2>Status: ${order.status || 'Confirmed'}</h2>
-        <p>Placed on ${new Date(order.createdAt || Date.now()).toLocaleDateString()}</p>
-        <div class="tracking-timeline"><div class="timeline-step active">Placed</div><div class="timeline-step ${order.status === 'Shipped' || order.status === 'Delivered' ? 'active' : ''}">Packing</div><div class="timeline-step ${order.status === 'Delivered' ? 'active' : ''}">Shipped</div></div>
+        <div class="eyebrow">Order Status</div>
+        <h2>#${order.id.replace(/^#/, '')}</h2>
+        <p><strong>Items:</strong> ${itemsText}</p>
+        <p style="font-size:13px;margin-top:4px;"><strong>Total:</strong> ${money(order.total || 0)} | <strong>Date:</strong> ${created}</p>
+        <ol class="tracking-timeline" style="margin-top:16px;">
+          <li class="done"><strong>Order confirmed</strong><span>Payment processed (${order.method || 'PayPal / Direct'})</span></li>
+          <li class="${status !== 'Order confirmed' ? 'done' : ''}"><strong>Packing</strong><span>Zavora warehouse is preparing your package</span></li>
+          <li class="${status === 'Shipped' || status === 'Delivered' ? 'done' : ''}"><strong>Shipped</strong><span>Tracking: ${order.tracking || 'Assigned after dispatch'}</span></li>
+          <li class="${status === 'Delivered' ? 'done' : ''}"><strong>Delivered</strong><span>Estimated delivery in 3-5 business days</span></li>
+        </ol>
       `;
     }
-    initRealtimeTracking();
   }
-  button?.addEventListener('click', lookupOrder);
-  if (params.get('order') && params.get('email')) lookupOrder();
+
+  button?.addEventListener('click', (e) => {
+    e.preventDefault();
+    lookupOrder();
+  });
+
+  if (urlOrder && urlEmail) lookupOrder();
 }
 
 function initOrderSuccessDetails() {
