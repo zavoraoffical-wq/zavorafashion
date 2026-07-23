@@ -52,8 +52,34 @@ const icons = {
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>'
 };
 
-const plainCommercePages = ['login.html', 'dashboard.html', 'sign-up.html', 'forgot-password.html', 'checkout.html', 'order-success.html', 'track-order.html', 'contact.html', 'about.html', 'journal.html', 'return-refund-policy.html', 'returns.html', 'privacy-policy.html', 'terms-conditions.html', 'faq.html'];
-const catalogOnlyPages = ['women.html', 'men.html', 'new-arrivals.html', 'collections.html', 'best-sellers.html', 'limited.html', 'shop.html', 'product-filters.html', 'recommended-products.html', 'recently-viewed.html', 'trending.html', 'oversized.html'];
+function normalizePageName(raw) {
+  const path = (typeof raw === 'string' ? raw : (window.location.pathname || '')).split('?')[0].split('#')[0];
+  const last = path.split('/').pop() || 'index';
+  const clean = last.replace(/\.html$/i, '').toLowerCase();
+  return (clean === '' || clean === 'index') ? 'index' : clean;
+}
+
+function isCurrentPage(target) {
+  return normalizePageName(window.location.pathname) === normalizePageName(target);
+}
+
+const plainCommercePages = [
+  'login', 'login.html', 'dashboard', 'dashboard.html', 'sign-up', 'sign-up.html',
+  'forgot-password', 'forgot-password.html', 'checkout', 'checkout.html',
+  'order-success', 'order-success.html', 'track-order', 'track-order.html',
+  'contact', 'contact.html', 'about', 'about.html', 'journal', 'journal.html',
+  'return-refund-policy', 'return-refund-policy.html', 'returns', 'returns.html',
+  'privacy-policy', 'privacy-policy.html', 'terms-conditions', 'terms-conditions.html',
+  'faq', 'faq.html'
+];
+
+const catalogOnlyPages = [
+  'women', 'women.html', 'men', 'men.html', 'new-arrivals', 'new-arrivals.html',
+  'collections', 'collections.html', 'best-sellers', 'best-sellers.html',
+  'limited', 'limited.html', 'shop', 'shop.html', 'product-filters', 'product-filters.html',
+  'recommended-products', 'recommended-products.html', 'recently-viewed', 'recently-viewed.html',
+  'trending', 'trending.html', 'oversized', 'oversized.html'
+];
 const PAGE_CART_KEY = 'zavoraCart';
 const GIFT_CARD_KEY = 'zavoraGiftCards';
 const WISHLIST_KEY = 'zavoraWishlist';
@@ -415,7 +441,7 @@ function initLocalizationSelectors() {
 }
 
 async function loadDashboardData() {
-  if (!window.location.pathname.endsWith('dashboard.html')) return null;
+  if (!isCurrentPage('dashboard')) return null;
   try {
     const response = await fetch('/api/auth-dashboard', { credentials: 'include' });
     if (!response.ok) return null;
@@ -1213,34 +1239,35 @@ async function refreshWalletBalance() {
 }
 
 function renderRegisterPage() {
-  if (!window.location.pathname.endsWith('register.html')) return;
+  if (!isCurrentPage('register')) return;
   const main = document.querySelector('main');
   if (!main) return;
+
   main.innerHTML = `
     <section class="auth-page">
       <div class="auth-card">
-        <p class="eyebrow">Create Account</p>
-        <h1>Join Zavora</h1>
-        <p>Signup requires email OTP verification. Account will not be created until the code is verified.</p>
+        <p class="eyebrow">Zavora Membership</p>
+        <h1>Create Account</h1>
+        <p>Save shipping addresses, track Zavora orders, and unlock member rewards.</p>
         <form class="form-panel">
-          <input placeholder="Full name" autocomplete="name">
+          <input placeholder="Full Name" autocomplete="name">
           <input placeholder="Email address" type="email" autocomplete="email">
-          <input placeholder="Password" type="password" autocomplete="new-password">
-          <a class="primary-cta" href="dashboard.html">Send OTP</a>
-          <div class="auth-links"><span>Already have an account?</span><a class="text-link" href="login.html">Login</a></div>
+          <input placeholder="Password (8+ chars)" type="password" autocomplete="new-password">
+          <button class="primary-cta" type="button">Create Account</button>
+          <div class="form-subtext">Already have an account? <a href="login.html">Sign in</a></div>
         </form>
       </div>
       <aside class="auth-aside">
-        <strong>ZAVORA FASHION</strong>
-        <p>Your account is protected with a one-time verification code before dashboard access.</p>
-        <div class="auth-perks"><span>Email OTP</span><span>Secure Signup</span><span>Wishlist</span><span>Order Tracking</span></div>
+        <strong>ZAVORA MEMBER PERKS</strong>
+        <p>Save your sizes, fast checkout with saved addresses, order tracking, and exclusive streetwear access.</p>
+        <div class="auth-perks"><span>Saved addresses</span><span>Order tracking</span><span>Exclusive drops</span><span>Fast checkout</span></div>
       </aside>
     </section>
   `;
 }
 
 function resumePendingSignupOtp() {
-  if (!window.location.pathname.endsWith('sign-up.html') && !window.location.pathname.endsWith('register.html')) return;
+  if (!isCurrentPage('sign-up') && !isCurrentPage('register')) return;
   const pending = getPendingSignupOtp();
   const form = document.querySelector('.auth-card .form-panel');
   if (!pending || !form) return;
@@ -1732,19 +1759,20 @@ function categoryMatches(productCategory, requestedCategory) {
 }
 
 function productsForCatalogPage(products, pageName) {
+  const norm = normalizePageName(pageName);
   const urlCategory = new URLSearchParams(window.location.search).get('category');
   if (urlCategory) {
     products = products.filter((product) => categoryMatches(product.category, urlCategory));
   }
-  if (pageName === 'new-arrivals.html') {
+  if (norm === 'new-arrivals') {
     return products.filter((product) => product.collection?.includes('new'));
   }
-  if (pageName === 'limited.html') {
+  if (norm === 'limited') {
     return products
       .filter((product) => product.collection?.includes('limited'))
       .map((product, index) => ({ ...product, stock: Math.min(getProductStock(product), 1 + (index % 10)), badge: 'Limited' }));
   }
-  if (pageName === 'best-sellers.html') {
+  if (norm === 'best-sellers') {
     return products.filter((product) => product.collection?.includes('best') || product.popularity >= 84);
   }
   return products;
@@ -1779,10 +1807,10 @@ async function loadPrintfulCatalog() {
   if (!grid || grid.dataset.printfulLoaded) return;
   grid.dataset.printfulLoaded = 'true';
   try {
-    const pageName = window.location.pathname.split('/').pop();
-    const dataProducts = pageName === 'shop.html' || pageName === 'collections.html'
+    const pageName = normalizePageName(window.location.pathname);
+    const dataProducts = pageName === 'shop' || pageName === 'collections'
       ? (await Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))).flat()
-      : await fetchCatalogProducts(pageName === 'women.html' ? 'women' : 'men', 1000);
+      : await fetchCatalogProducts(pageName === 'women' ? 'women' : 'men', 1000);
     if (!dataProducts.length) return;
     const products = productsForCatalogPage(dataProducts, pageName);
     window.__zavoraCatalogProducts = products;
@@ -1796,9 +1824,9 @@ async function loadPrintfulCatalog() {
 
 function injectLargeCatalog() {
   const main = document.querySelector('main');
-  const pageName = window.location.pathname.split('/').pop();
-  if (!main || document.querySelector('.catalog-shop') || !catalogOnlyPages.includes(pageName)) return;
-  const isWomenPage = pageName === 'women.html';
+  const pageName = normalizePageName(window.location.pathname);
+  if (!main || document.querySelector('.catalog-shop') || (!catalogOnlyPages.includes(pageName) && !catalogOnlyPages.includes(`${pageName}.html`))) return;
+  const isWomenPage = pageName === 'women';
   const genderOptions = '<option value="all">All</option><option value="men">Men</option><option value="women">Women</option>';
   const categoryOptions = isWomenPage
     ? '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="baby-tees">Baby Tees</option><option value="hoodies">Hoodies</option><option value="cropped-hoodies">Cropped Hoodies</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="accessories">Accessories</option>'
@@ -2325,9 +2353,8 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
-  const pageName = currentPageKey();
   const loginTrigger = event.target.closest('a[href="dashboard.html"].primary-cta, a[href="/dashboard.html"].primary-cta');
-  if (loginTrigger && (pageName === 'sign-up.html' || pageName === 'register.html')) {
+  if (loginTrigger && (isCurrentPage('sign-up') || isCurrentPage('register'))) {
     event.preventDefault();
     const form = loginTrigger.closest('.form-panel');
     const inputs = form ? [...form.querySelectorAll('input')] : [];
@@ -2363,7 +2390,7 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
-  if (loginTrigger && pageName === 'login.html') {
+  if (loginTrigger && isCurrentPage('login')) {
     event.preventDefault();
     const email = document.querySelector('.auth-card input[type="email"]')?.value.trim().toLowerCase();
     const password = document.querySelector('.auth-card input[type="password"]')?.value.trim();
@@ -2407,7 +2434,7 @@ document.addEventListener('click', async (event) => {
   }
 
   const resetTrigger = event.target.closest('.auth-card .primary-cta');
-  if (resetTrigger && !resetTrigger.matches('[data-verify-reset-otp]') && pageName === 'forgot-password.html') {
+  if (resetTrigger && !resetTrigger.matches('[data-verify-reset-otp]') && isCurrentPage('forgot-password')) {
     event.preventDefault();
     const form = resetTrigger.closest('.form-panel');
     const email = form?.querySelector('input[type="email"]')?.value.trim().toLowerCase();
@@ -2523,17 +2550,20 @@ document.addEventListener('click', async (event) => {
   }
 
   const payNow = event.target.closest('.pay-now');
-  if (payNow && window.location.pathname.endsWith('checkout.html')) {
+  if (payNow && isCurrentPage('checkout')) {
     event.preventDefault();
     if (!(await fetchAuthSession(true))) {
       savePendingCommerceAction('checkout', null, 'checkout.html');
       showLoginRequiredModal('checkout.html');
       return;
     }
-    const method = 'PayPal';
-    const order = createTestOrder(method);
-    if (!order) {
-      hydrateCheckoutSummary();
+    const cart = getSavedCart();
+    if (!cart.length) {
+      alert('Your bag is empty. Add a Printful product before checkout.');
+      return;
+    }
+    const order = buildCheckoutOrder('Pay Now (Test)', cart);
+    if (!order.items || !order.items.length) {
       alert('Your bag is empty. Add a Printful product before checkout.');
       return;
     }
@@ -2554,7 +2584,7 @@ document.addEventListener('click', async (event) => {
 
   const buyNow = event.target.closest('[data-buy-now]');
   const addProduct = event.target.closest('[data-product-add], .product-actions .primary-cta');
-  if ((addProduct || buyNow) && window.location.pathname.endsWith('product.html')) {
+  if ((addProduct || buyNow) && isCurrentPage('product')) {
     event.preventDefault();
     const selected = getSelectedProduct();
     const title = selected?.name || document.querySelector('.product-buy h1')?.textContent.trim() || 'Zavora Fashion Product';
@@ -2860,48 +2890,40 @@ function trackingTemplate(order) {
 }
 
 function initTrackOrderLookup() {
-  if (!window.location.pathname.endsWith('track-order.html')) return;
+  if (!isCurrentPage('track-order')) return;
   const form = document.querySelector('.tracking-form .form-panel');
   const card = document.querySelector('.tracking-card');
-  if (!form || !card) return;
-  card.hidden = true;
-  let note = form.querySelector('[data-track-note]');
-  if (!note) {
-    note = document.createElement('p');
-    note.dataset.trackNote = 'true';
-    note.className = 'track-note';
-    form.appendChild(note);
-  }
-  const button = form.querySelector('.primary-cta');
-  const inputs = [...form.querySelectorAll('input')];
+  const button = document.querySelector('.tracking-form .primary-cta');
+  const inputs = document.querySelectorAll('.tracking-form input');
   const params = new URLSearchParams(window.location.search);
-  if (params.get('order')) inputs[0].value = `#${params.get('order').replace(/^#/, '')}`;
-  if (params.get('email')) inputs[1].value = params.get('email');
+
   async function lookupOrder() {
-    const orderId = inputs[0]?.value.trim().replace(/^#/, '').toUpperCase();
+    const orderId = inputs[0]?.value.trim().replace(/^#/, '');
     const email = inputs[1]?.value.trim().toLowerCase();
     if (!orderId || !email) {
-      note.textContent = 'Enter order ID and email to view tracking updates.';
-      card.hidden = true;
+      alert('Please enter order number and email.');
       return;
     }
-    note.textContent = 'Checking live order updates...';
-    let liveOrders = [];
-    try {
-      const response = await fetch(`/api/orders?orderId=${encodeURIComponent(orderId)}&email=${encodeURIComponent(email)}`);
-      const data = await response.json();
-      if (response.ok && data.ok) liveOrders = data.orders || [];
-    } catch (error) {}
-    const orders = [...liveOrders, ...getSavedOrders()];
-    const match = orders.find((order) => order.id.replace(/^#/, '').toUpperCase() === orderId && String(order.email || '').toLowerCase() === email);
-    if (!match) {
-      note.textContent = 'No matching order found. Check order ID and email address.';
-      card.hidden = true;
+    let order = getSavedOrders().find((item) => String(item.id).toLowerCase() === orderId.toLowerCase() && (!item.email || item.email.toLowerCase() === email));
+    if (!order) {
+      try {
+        const response = await fetch(`/api/orders?order=${encodeURIComponent(orderId)}&email=${encodeURIComponent(email)}`);
+        const data = await response.json();
+        if (data.ok && data.order) order = data.order;
+      } catch (error) {}
+    }
+    if (!order) {
+      alert('Order not found. Please check your details.');
       return;
     }
-    note.textContent = 'Tracking found. Live updates are now active.';
-    card.innerHTML = trackingTemplate(match);
-    card.hidden = false;
+    if (card) {
+      card.innerHTML = `
+        <div class="eyebrow">Order #${order.id}</div>
+        <h2>Status: ${order.status || 'Confirmed'}</h2>
+        <p>Placed on ${new Date(order.createdAt || Date.now()).toLocaleDateString()}</p>
+        <div class="tracking-timeline"><div class="timeline-step active">Placed</div><div class="timeline-step ${order.status === 'Shipped' || order.status === 'Delivered' ? 'active' : ''}">Packing</div><div class="timeline-step ${order.status === 'Delivered' ? 'active' : ''}">Shipped</div></div>
+      `;
+    }
     initRealtimeTracking();
   }
   button?.addEventListener('click', lookupOrder);
@@ -2909,7 +2931,7 @@ function initTrackOrderLookup() {
 }
 
 function initOrderSuccessDetails() {
-  if (!window.location.pathname.endsWith('order-success.html')) return;
+  if (!isCurrentPage('order-success')) return;
   let order = null;
   try {
     order = JSON.parse(localStorage.getItem('zavoraLastOrder'));
@@ -2947,7 +2969,7 @@ function initOrderSuccessDetails() {
 }
 
 function initPaymentMethodUi() {
-  if (!window.location.pathname.endsWith('checkout.html')) return;
+  if (!isCurrentPage('checkout')) return;
   const methods = document.querySelector('.payment-methods');
   const paypal = document.querySelector('.paypal-checkout');
   const panel = document.querySelector('.coming-soon-panel');
@@ -2991,8 +3013,8 @@ function selectedProductOptions() {
   const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
   const colorButton = optionRows[0]?.querySelector('button.active');
   return {
-    color: colorButton?.dataset.color || colorButton?.textContent.trim() || 'black',
-    size: optionRows[1]?.querySelector('button.active')?.textContent.trim() || 'M'
+    color: colorButton?.dataset.colorOption || colorButton?.textContent.trim() || 'black',
+    size: optionRows[1]?.querySelector('button.active')?.dataset.sizeOption || optionRows[1]?.querySelector('button.active')?.textContent.trim() || 'M'
   };
 }
 
@@ -3014,7 +3036,7 @@ function renderProductGallery(product, images = []) {
   gallery.classList.toggle('single-gallery', galleryImages.length === 1);
   gallery.innerHTML = `
     <div class="product-gallery-main zoom-frame">
-      <img data-gallery-main src="${galleryImages[0]}" alt="${product?.name || 'Zavora product'} main view" loading="eager" onerror="this.src='assets/studio-wide-trouser.png'">
+      <img data-gallery-main src="${galleryImages[0]}" alt="${product?.name || 'Zavora product'}" loading="eager" onerror="this.src='assets/studio-wide-trouser.png'">
     </div>
     ${galleryImages.length > 1 ? `<div class="product-thumbs" aria-label="Product gallery thumbnails">
       ${galleryImages.map((src, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-gallery-thumb="${src}" aria-label="View product image ${index + 1}"><img src="${src}" alt="" onerror="this.src='assets/studio-wide-trouser.png'"></button>`).join('')}
@@ -3030,75 +3052,40 @@ function renderProductGallery(product, images = []) {
 }
 
 function updateDynamicProductMedia() {
-  if (!window.location.pathname.endsWith('product.html')) return;
+  if (!isCurrentPage('product')) return;
   const product = getSelectedProduct();
   if (!product) return;
   const { color, size } = selectedProductOptions();
   const variant = getVariant(product, color, size);
   const group = productVariantGroup(product, color);
-  renderProductGallery(product, group?.images?.length ? group.images : (variant?.images || product.images || [variant?.image || product.img || product.image]));
-  const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
-  if (group?.sizes?.length && optionRows[1]) {
-    const activeSize = size;
-    optionRows[1].innerHTML = `${group.sizes.map((itemSize, index) => `<button type="button" class="${itemSize === activeSize || (!group.sizes.includes(activeSize) && index === 0) ? 'active' : ''}">${itemSize}</button>`).join('')}<a href="style-guide.html">Size Guide</a>`;
+  const mainImage = document.querySelector('.product-gallery img');
+  if (mainImage && (variant?.image || group?.images?.[0])) {
+    mainImage.src = variant?.image || group?.images?.[0];
   }
 }
 
 function refreshSelectedProductFromUrl() {
-  if (!window.location.pathname.endsWith('product.html')) return;
+  if (!isCurrentPage('product')) return;
   const id = new URLSearchParams(window.location.search).get('id');
   if (!id || window.__zavoraProductRefreshId === id) return;
   window.__zavoraProductRefreshId = id;
-  Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))
-    .then((pages) => {
-      const products = pages.flat();
-      const product = products.find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
-      if (product) {
-        rememberSelectedProduct(product);
-        initDynamicProductPage();
-      }
-    })
-    .catch(() => {});
-}
-
-function productGalleryImages(product) {
-  const groups = product?.variantGroups || {};
-  const firstGroup = groups[Object.keys(groups)[0]];
-  if (firstGroup?.images?.length) return firstGroup.images;
-  return Array.from(new Set([
-    ...(product?.images || []),
-    product?.img,
-    product?.image
-  ].filter(Boolean)));
-}
-
-function getRecentlyViewed() {
-  try {
-    return JSON.parse(localStorage.getItem('zavora_recently_viewed') || localStorage.getItem('zavora_recent') || '[]');
-  } catch (error) {
-    return [];
+  const wishlistProduct = document.querySelector('[data-wishlist-product]');
+  const wishlistId = wishlistProduct?.dataset.wishlistProduct;
+  let product = null;
+  if (wishlistId && wishlistId === id) {
+    product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(wishlistId));
   }
-}
-
-function updateProductStockNote(product) {
-  const stock = getProductStock(product);
-  const note = document.querySelector('[data-stock-note]');
-  const add = document.querySelector('[data-product-add], .product-actions .primary-cta');
-  const buy = document.querySelector('[data-buy-now]');
-  const isLimited = String(product?.badge || '').toLowerCase().includes('limited') || (product?.collection || []).includes('limited');
-  if (note) {
-    note.hidden = !isLimited && stock > 0;
-    note.textContent = stock > 0 ? `${stock} available` : 'Out of stock';
+  if (!product) {
+    product = [...(window.__zavoraCatalogProducts || []), ...(window.__zavoraSearchProducts || [])].find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
   }
-  [add, buy].forEach((button) => {
-    if (!button) return;
-    button.toggleAttribute('aria-disabled', stock <= 0);
-    button.classList.toggle('disabled', stock <= 0);
-  });
+  if (product) {
+    localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(product));
+    initDynamicProductPage();
+  }
 }
 
 function initDynamicProductPage() {
-  if (!window.location.pathname.endsWith('product.html')) return;
+  if (!isCurrentPage('product')) return;
   const product = getSelectedProduct();
   if (!product) return;
   // Track ViewContent event
@@ -3132,43 +3119,18 @@ function initDynamicProductPage() {
     optionRows[0].innerHTML = colors.map((color, index) => {
       const key = normalizedProductColor(color);
       const label = groups[key]?.label || (color === 'default' ? 'Original' : `${color[0].toUpperCase()}${color.slice(1)}`);
-      return `<button type="button" class="${index === 0 ? 'active' : ''}" data-color="${key}">${label}</button>`;
+      return `<button class="${index === 0 ? 'active' : ''}" type="button" data-color-option="${color}">${label}</button>`;
     }).join('');
   }
   if (optionRows[1]) {
-    optionRows[1].innerHTML = `${sizes.map((size, index) => `<button type="button" class="${index === 0 ? 'active' : ''}">${size}</button>`).join('')}<a href="style-guide.html">Size Guide</a>`;
+    optionRows[1].innerHTML = sizes.map((size, index) => `<button class="${index === 0 ? 'active' : ''}" type="button" data-size-option="${size}">${size}</button>`).join('');
   }
-  const actions = document.querySelector('.product-actions');
-  if (actions && !document.querySelector('[data-stock-note]')) {
-    actions.insertAdjacentHTML('beforebegin', '<p class="stock-note" data-stock-note></p>');
-  }
-  const add = document.querySelector('.product-actions .primary-cta');
-  const wishlistButton = document.querySelector('.product-actions .secondary-btn');
-  if (add) {
-    add.href = '#';
-    add.dataset.productAdd = 'true';
-    add.textContent = 'Add to Cart';
-  }
-  if (wishlistButton) {
-    wishlistButton.href = '#';
-    wishlistButton.dataset.addSelectedWishlist = 'true';
-  }
-  const buy = [...document.querySelectorAll('.product-buy > .primary-cta')].find((link) => !link.closest('.product-actions'));
-  if (buy) {
-    buy.href = '#';
-    buy.dataset.buyNow = 'true';
-    buy.textContent = 'Buy Now';
-  }
-  document.querySelectorAll('.split-band article:first-child p').forEach((node) => {
-    node.textContent = product.description || node.textContent;
-  });
-  updateProductStockNote(product);
   updateDynamicProductMedia();
-  refreshSelectedProductFromUrl();
+  updateProductStockNote(product);
 }
 
 async function initDynamicRelatedProducts() {
-  if (!window.location.pathname.endsWith('product.html')) return;
+  if (!isCurrentPage('product')) return;
   if (document.querySelector('[data-smart-product-rails]')) return;
   const anchor = [...document.querySelectorAll('.section-title')].find((section) => section.textContent.includes('Related Products'))?.parentElement
     || document.querySelector('.product-detail')?.parentElement;
@@ -3305,7 +3267,7 @@ function initProductOptions() {
 }
 
 async function initRewardsPage() {
-  if (!window.location.pathname.endsWith('rewards.html') && !document.querySelector('[data-wallet-balance]')) return;
+  if (!isCurrentPage('rewards') && !document.querySelector('[data-wallet-balance]')) return;
   refreshWalletBalance();
 }
 
