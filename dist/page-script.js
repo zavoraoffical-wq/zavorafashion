@@ -1604,12 +1604,13 @@ function hydrateCheckoutSummary() {
   const totalDiscount = couponDiscount + giftDiscount;
   const payable = Math.max(0, total + shippingCost - totalDiscount);
   summary.innerHTML = activeCart.length ? activeCart.map((item) => `
-    <a class="summary-product" href="product.html">
-      <img src="${item.img || 'assets/studio-wide-trouser.png'}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'">
-      <div><strong>${item.name}</strong><span>${item.color || 'Black'} / ${item.sizes?.[0] || 'M'} / Qty ${item.qty || 1}</span></div>
+    <div class="summary-product">
+      <img src="${item.img || item.image || 'assets/studio-wide-trouser.png'}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'">
+      <div><strong>${item.name}</strong><span>${item.color || 'Black'} / ${item.sizes?.[0] || item.size || 'M'} / Qty ${item.qty || 1}</span></div>
       <b>${money(Number(item.price || 0) * Number(item.qty || 1))}</b>
-    </a>
-  `).join('') : '<p class="secure-note">Your bag is empty. Add Printful products before checkout.</p>';
+      <button type="button" class="summary-remove-btn" data-checkout-remove="${cartLineKey(item)}" aria-label="Remove ${item.name}">&times;</button>
+    </div>
+  `).join('') : '<p class="secure-note">Your bag is empty. Add a product before checkout.</p>';
   document.querySelectorAll('[data-checkout-subtotal]').forEach((node) => {
     node.textContent = money(total);
   });
@@ -2809,9 +2810,9 @@ document.addEventListener('click', async (event) => {
   if (event.target.closest('[data-close-offer-claimed]')) {
     document.querySelector('[data-offer-claimed-modal]')?.classList.remove('open');
   }
-  const pageRemove = event.target.closest('[data-page-remove]');
+  const pageRemove = event.target.closest('[data-page-remove], [data-checkout-remove]');
   if (pageRemove) {
-    const id = String(pageRemove.dataset.pageRemove);
+    const id = String(pageRemove.dataset.pageRemove || pageRemove.dataset.checkoutRemove);
     const nextCart = getSavedCart().filter((item) => cartLineKey(item) !== id);
     saveSavedCart(nextCart);
     renderSavedCart(document);
