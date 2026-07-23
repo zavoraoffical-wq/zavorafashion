@@ -4344,3 +4344,8 @@ svg {
     max-width: 40px !important;
   }
 }
+
+/* Force inputs to 16px to prevent iOS auto-zoom */
+input, select, textarea {
+  font-size: 16px !important;
+}
