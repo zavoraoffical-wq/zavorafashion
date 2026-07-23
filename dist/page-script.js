@@ -221,12 +221,23 @@ async function fetchAuthSession(force = false) {
 }
 
 function getUserAccount() {
-  return authUser;
+  if (authUser && authUser.email) return authUser;
+  try {
+    const saved = JSON.parse(localStorage.getItem('zavoraUser') || localStorage.getItem('zavora_user') || 'null');
+    if (saved && (saved.email || saved.name)) return saved;
+  } catch (e) {}
+  if (authDashboardData?.user?.email) return authDashboardData.user;
+  return null;
 }
 
 function saveUserAccount(account) {
   authUser = account || authUser;
   authSessionLoaded = true;
+  if (account) {
+    try {
+      localStorage.setItem('zavoraUser', JSON.stringify(account));
+    } catch (e) {}
+  }
   updateAccountLinks();
 }
 
@@ -595,19 +606,30 @@ function createTestOrder(method = 'PayPal') {
   const cart = getSavedCart();
   if (!cart.length) return null;
   const form = document.querySelector('.checkout-form');
-  const email = form?.querySelector('input[type="email"]')?.value.trim().toLowerCase()
-    || authUser?.email
-    || 'customer@zavorafashion.com';
-  const name = form?.querySelector('input[placeholder*="name"]')?.value.trim()
-    || authUser?.name
-    || 'Guest Customer';
-  const phone = form?.querySelector('input[type="tel"]')?.value.trim()
-    || form?.querySelector('input[placeholder*="phone"]')?.value.trim()
-    || '';
+  const user = getUserAccount();
+
+  const formEmail = form?.querySelector('input[type="email"], input[placeholder*="Email"]')?.value.trim().toLowerCase();
+  const formName = form?.querySelector('input[placeholder*="name"]')?.value.trim();
+  const formPhone = form?.querySelector('input[type="tel"], input[placeholder*="phone"]')?.value.trim();
+
+  const email = formEmail || user?.email || authUser?.email || 'zavoraoffical@gmail.com';
+  const name = formName || user?.name || authUser?.name || (email ? email.split('@')[0] : 'Zavora Customer');
+  const phone = formPhone || user?.phone || authUser?.phone || '';
+
   const street = form?.querySelector('input[placeholder*="Street"]')?.value.trim() || '';
+  const apartment = form?.querySelector('input[placeholder*="Apartment"]')?.value.trim() || '';
   const city = form?.querySelector('input[placeholder*="City"]')?.value.trim() || '';
   const zip = form?.querySelector('input[placeholder*="ZIP"]')?.value.trim() || '';
-  const address = [street, city, zip].filter(Boolean).join(', ') || 'Standard Delivery Address';
+  let address = [street, apartment, city, zip].filter(Boolean).join(', ');
+  
+  if (!address && typeof getSavedAddresses === 'function') {
+    const savedAddrs = getSavedAddresses();
+    if (savedAddrs.length) {
+      const a = savedAddrs[0];
+      address = [a.street, a.apartment, a.city, a.zip].filter(Boolean).join(', ');
+    }
+  }
+  if (!address) address = '123 USA Luxury Way, Suite 4B, New York, NY 10001';
 
   const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
   const shippingCost = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
@@ -1590,6 +1612,19 @@ function renderSavedCart(scope = document) {
 function hydrateCheckoutSummary() {
   const summary = document.querySelector('[data-checkout-summary]');
   if (!summary) return;
+
+  const checkoutUser = getUserAccount();
+  if (checkoutUser) {
+    const emailField = document.querySelector('.checkout-form input[type="email"]');
+    if (emailField && !emailField.value && checkoutUser.email) emailField.value = checkoutUser.email;
+
+    const nameField = document.querySelector('.checkout-form input[placeholder*="name"]');
+    if (nameField && !nameField.value && checkoutUser.name) nameField.value = checkoutUser.name;
+
+    const phoneField = document.querySelector('.checkout-form input[type="tel"]');
+    if (phoneField && !phoneField.value && checkoutUser.phone) phoneField.value = checkoutUser.phone;
+  }
+
   const cart = getSavedCart();
   const activeCart = cart;
   const total = activeCart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);

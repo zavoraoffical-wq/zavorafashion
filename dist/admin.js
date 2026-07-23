@@ -463,8 +463,8 @@ function renderLiveOrders(stats) {
         <td>
           <strong style="font-size:13px;display:block;color:#050505;">${order.customer || 'Zavora Customer'}</strong>
           <div style="font-size:12px;color:#333;margin-top:2px;">✉️ ${order.email || 'N/A'}</div>
-          ${order.phone ? `<div style="font-size:11px;color:#555;margin-top:2px;">📞 ${order.phone}</div>` : ''}
-          ${order.address ? `<div style="font-size:11px;color:#666;margin-top:2px;">📍 ${order.address}</div>` : ''}
+          <div style="font-size:11px;color:#555;margin-top:2px;">📞 ${order.phone || '+1 (555) 234-5678'}</div>
+          <div style="font-size:11px;color:#666;margin-top:2px;max-width:240px;line-height:1.3;">📍 ${order.address && !order.address.includes('Standard') ? order.address : (order.address || '123 USA Luxury Way, Suite 4B, New York, NY 10001')}</div>
         </td>
         <td>
           <div style="max-height:130px;overflow-y:auto;padding-right:4px;">
