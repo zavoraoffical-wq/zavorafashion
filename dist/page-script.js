@@ -3043,7 +3043,12 @@ function initTrackOrderLookup() {
         : (order.item || 'Zavora apparel item');
       
       const created = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Today';
-      const status = order.status || 'Order confirmed';
+      const statusRaw = order.status || 'Order confirmed';
+      const s = String(statusRaw).toLowerCase();
+
+      const isPacking = s.includes('packing') || s.includes('shipped') || s.includes('delivered');
+      const isShipped = s.includes('shipped') || s.includes('delivered');
+      const isDelivered = s.includes('delivered');
 
       card.innerHTML = `
         <div class="eyebrow">Order Status</div>
@@ -3051,11 +3056,27 @@ function initTrackOrderLookup() {
         <p><strong>Items:</strong> ${itemsText}</p>
         <p style="font-size:13px;margin-top:4px;"><strong>Total:</strong> ${money(order.total || 0)} | <strong>Date:</strong> ${created}</p>
         <ol class="tracking-timeline" style="margin-top:16px;">
-          <li class="done"><strong>Order confirmed</strong><span>Payment processed (${order.method || 'PayPal / Direct'})</span></li>
-          <li class="${status !== 'Order confirmed' ? 'done' : ''}"><strong>Packing</strong><span>Zavora warehouse is preparing your package</span></li>
-          <li class="${status === 'Shipped' || status === 'Delivered' ? 'done' : ''}"><strong>Shipped</strong><span>Tracking: ${order.tracking || 'Assigned after dispatch'}</span></li>
-          <li class="${status === 'Delivered' ? 'done' : ''}"><strong>Delivered</strong><span>Estimated delivery in 3-5 business days</span></li>
+          <li class="done">
+            <strong>Order confirmed</strong>
+            <span>Payment received (${order.method || 'PayPal / Direct'})</span>
+          </li>
+          <li class="${isPacking ? 'done' : ''}">
+            <strong>Packing</strong>
+            <span>${isPacking ? 'Zavora warehouse has packed your package' : 'Zavora warehouse is preparing your package'}</span>
+          </li>
+          <li class="${isShipped ? 'done' : ''}">
+            <strong>Shipped</strong>
+            <span>Tracking Number: <strong>${order.tracking || 'Assigned after dispatch'}</strong></span>
+          </li>
+          <li class="${isDelivered ? 'done' : ''}">
+            <strong>Delivered</strong>
+            <span>${isDelivered ? 'Package delivered to shipping address' : 'Estimated delivery in 3-5 business days'}</span>
+          </li>
         </ol>
+        <div class="live-status-badge" style="margin-top:16px;padding:10px 14px;background:#f5f5f5;border-radius:6px;border-left:4px solid #2e7d32;font-size:13px;">
+          <strong>Current Status:</strong> <span style="color:#2e7d32;font-weight:700;">${statusRaw}</span>
+          ${order.tracking ? `<br><span style="font-size:12px;opacity:0.85;">Tracking Number: <strong>${order.tracking}</strong></span>` : ''}
+        </div>
       `;
     }
   }

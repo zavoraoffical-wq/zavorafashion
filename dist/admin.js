@@ -713,24 +713,50 @@ document.addEventListener('click', async (event) => {
   if (saveOrder) {
     const row = saveOrder.closest('[data-admin-order]');
     const id = saveOrder.dataset.saveOrder;
-    const email = row?.querySelector('td:nth-child(2) span')?.textContent.trim();
     const status = row?.querySelector('[data-order-status]')?.value || 'Order confirmed';
     const tracking = row?.querySelector('[data-order-tracking]')?.value.trim() || '';
+
     saveOrder.textContent = 'Saving...';
-    const response = await fetch('/api/admin?action=orders', {
+    saveOrder.disabled = true;
+
+    try {
+      let orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+      orders = orders.map((ord) => {
+        if (String(ord.id).toLowerCase().replace(/^#/, '') === String(id).toLowerCase().replace(/^#/, '')) {
+          ord.status = status;
+          if (tracking) ord.tracking = tracking;
+        }
+        return ord;
+      });
+      localStorage.setItem('zavoraOrders', JSON.stringify(orders));
+
+      const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+      if (last && String(last.id).toLowerCase().replace(/^#/, '') === String(id).toLowerCase().replace(/^#/, '')) {
+        last.status = status;
+        if (tracking) last.tracking = tracking;
+        localStorage.setItem('zavoraLastOrder', JSON.stringify(last));
+      }
+    } catch (e) {}
+
+    await fetch('/api/admin?action=orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         orderId: id,
-        email,
         status,
-        tracking,
-        payment: row?.children[2]?.textContent.trim() || 'Pending'
+        tracking
       })
     }).catch(() => null);
-    saveOrder.textContent = 'Save Update';
-    toast(response?.ok ? 'Order tracking updated' : 'Order update failed');
-    refreshLiveAdminDashboard();
+
+    saveOrder.textContent = '✓ Saved';
+    saveOrder.style.background = '#2e7d32';
+    toast(`Order #${id} updated: ${status}`);
+
+    setTimeout(() => {
+      saveOrder.textContent = 'Save Update';
+      saveOrder.style.background = '#050505';
+      saveOrder.disabled = false;
+    }, 2000);
     return;
   }
 
