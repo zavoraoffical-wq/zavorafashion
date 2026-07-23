@@ -919,8 +919,8 @@ const accountViews = {
     <article class="dashboard-card dashboard-wide address-form"><span>Add Address</span><h3>Add new delivery address</h3><div class="mini-form"><input data-address-field="name" placeholder="Full name"><input data-address-field="street" placeholder="Street address"><input data-address-field="city" placeholder="City"><input data-address-field="zip" placeholder="ZIP code"></div><button class="secondary-btn slim-btn" type="button" data-add-address>Add address</button></article>
   `,
   profile: `
-    <article class="dashboard-card dashboard-wide"><span>Profile</span><h3 data-profile-name>Zavora Customer</h3><p>Email: <strong data-profile-email></strong> / Country: USA / Currency: USD</p><div class="mini-form"><input data-profile-name-input placeholder="Full name"></div><button class="text-link" type="button" data-profile-save>Save profile</button></article>
-    <article class="dashboard-card dashboard-wide"><span>Security</span><h3>Password protected</h3><p>Your email stays locked. Only your profile name can be edited here.</p></article>
+    <article class="dashboard-card dashboard-wide"><span>Profile</span><h3 data-profile-name>Zavora Customer</h3><p>Email: <strong data-profile-email></strong> / Country: USA / Currency: USD</p><div class="mini-form"><input data-profile-name-input placeholder="Full name"></div><button class="secondary-btn slim-btn" type="button" data-profile-save>Save profile</button></article>
+    <article class="dashboard-card dashboard-wide"><span>Security</span><h3>Change Password</h3><p>Update your Zavora account password for secure checkout and saved address access.</p><div class="mini-form"><input type="password" placeholder="Current password"><input type="password" placeholder="New password"><input type="password" placeholder="Confirm password"></div><button class="secondary-btn slim-btn" type="button" data-password-save>Update password</button></article>
   `,
   'change-password': `
     <article class="dashboard-card dashboard-wide"><span>Security</span><h3>Change Password</h3><p>Update your Zavora account password for secure checkout and saved address access.</p><div class="mini-form"><input type="password" placeholder="Current password"><input type="password" placeholder="New password"><input type="password" placeholder="Confirm password"></div><button class="secondary-btn slim-btn" type="button" data-password-save>Update password</button></article>
@@ -1274,16 +1274,6 @@ function setDashboardView(view = 'dashboard') {
         </article>
       `).join('') : '<article class="dashboard-card dashboard-wide"><span>Orders</span><h3>No orders yet</h3><p>Your order history appears here after checkout.</p></article>'}
     `;
-    if (cards.length) {
-      grid.insertAdjacentHTML('beforeend', cards.map((card) => `
-        <article class="dashboard-card dashboard-wide gift-order-card">
-          <span>Gift Card Order</span>
-          <h3>${card.code}</h3>
-          <p>${money(card.value)} digital gift card / Balance ${money(card.balance)} / ${card.recipient || 'Zavora customer'}</p>
-          <button class="text-link" type="button" data-copy-gift="${card.code}">Copy card number</button>
-        </article>
-      `).join(''));
-    }
   }
   if (view === 'addresses') {
     const addresses = getSavedAddresses();
