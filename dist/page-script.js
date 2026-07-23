@@ -4,6 +4,16 @@ if (typeof window !== 'undefined') {
   });
 }
 
+function trackMetaEvent(eventName, params = {}) {
+  if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
+    try {
+      window.fbq('track', eventName, params);
+    } catch (e) {
+      console.error('[Meta Pixel] Error tracking:', e);
+    }
+  }
+}
+
 const pageHeader = document.querySelector('.page-header');
 const quickProducts = [
   'Oversized Tees',
@@ -1492,6 +1502,17 @@ function hydrateCheckoutSummary() {
   const activeCart = cart;
   const total = activeCart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
   const shippingCost = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
+
+  if (!window.__metaCheckoutInitiated && activeCart.length) {
+    window.__metaCheckoutInitiated = true;
+    trackMetaEvent('InitiateCheckout', {
+      content_ids: activeCart.map(item => item.id),
+      contents: activeCart.map(item => ({ id: item.id, quantity: item.qty || 1, price: Number(item.price) })),
+      num_items: activeCart.length,
+      value: total,
+      currency: 'USD'
+    });
+  }
   let giftDiscount = 0;
   try {
     const appliedGift = JSON.parse(localStorage.getItem(APPLIED_GIFT_KEY));
@@ -1818,6 +1839,12 @@ function filterLargeCatalog() {
   if (!filters.length) return;
   const values = Object.fromEntries([...filters].map((filter) => [filter.dataset.catalogFilter, filter.value]));
   const searchTerm = new URLSearchParams(window.location.search).get('search') || '';
+  if (searchTerm && !window.__metaSearchTracked) {
+    window.__metaSearchTracked = true;
+    trackMetaEvent('Search', {
+      search_string: searchTerm
+    });
+  }
   const forcedCategory = new URLSearchParams(window.location.search).get('category') || values.category;
   const grid = document.querySelector('[data-catalog-grid]');
   if (grid) {
@@ -1961,6 +1988,29 @@ document.addEventListener('change', (event) => {
 });
 
 document.addEventListener('click', async (event) => {
+  const contactSubmit = event.target.closest('.contact-clean .primary-cta');
+  if (contactSubmit) {
+    event.preventDefault();
+    const card = event.target.closest('.auth-card');
+    const inputs = card ? [...card.querySelectorAll('input, select, textarea')] : [];
+    const name = inputs[0]?.value.trim() || '';
+    const email = inputs[1]?.value.trim() || '';
+    const topic = inputs[2]?.value || 'Order help';
+    const message = inputs[3]?.value.trim() || '';
+    if (!name || !email || !message) {
+      alert('Please fill in all fields before sending.');
+      return;
+    }
+    trackMetaEvent('Contact', {
+      content_category: topic,
+      value: 0,
+      currency: 'USD'
+    });
+    alert('Thank you for contacting Zavora Fashion! Your support message has been sent successfully.');
+    if (card.querySelector('form')) card.querySelector('form').reset();
+    return;
+  }
+
   const rawAccountLink = event.target.closest('a');
   if (rawAccountLink && !rawAccountLink.closest('.auth-card')) {
     const rawHref = rawAccountLink.getAttribute('href') || '';
@@ -2504,6 +2554,14 @@ document.addEventListener('click', async (event) => {
     if (!(await requireCommerceAuth(buyNow ? 'buy-now' : 'cart', commerceProduct, 'checkout.html'))) return;
     const id = selected ? `${productKey(selected)}-${color}-${size}` : String(Date.now());
     addProductToCart(commerceProduct, { id, color, size });
+    // Track AddToCart event
+    trackMetaEvent('AddToCart', {
+      content_name: commerceProduct.name,
+      content_ids: [commerceProduct.id || id],
+      content_type: 'product',
+      value: Number(commerceProduct.price || price || 0),
+      currency: 'USD'
+    });
     if (selected) {
       setProductStock(selected, getProductStock(selected) - 1);
       updateProductStockNote(selected);
@@ -2847,6 +2905,16 @@ function initOrderSuccessDetails() {
     order = getSavedOrders().find((item) => item.id === paramOrder) || order;
   }
   if (!order) return;
+  // Track Purchase event once per load
+  if (!window.__metaPurchaseTracked) {
+    window.__metaPurchaseTracked = true;
+    trackMetaEvent('Purchase', {
+      content_ids: order.items?.map((item) => item.id) || [],
+      contents: order.items?.map((item) => ({ id: item.id, quantity: item.qty || 1, price: Number(item.price) })) || [],
+      value: Number(order.total || 0),
+      currency: 'USD'
+    });
+  }
   const success = document.querySelector('.success-page');
   if (success) {
     const eyebrow = success.querySelector('.eyebrow');
@@ -3016,6 +3084,15 @@ function initDynamicProductPage() {
   if (!window.location.pathname.endsWith('product.html')) return;
   const product = getSelectedProduct();
   if (!product) return;
+  // Track ViewContent event
+  trackMetaEvent('ViewContent', {
+    content_name: product.name,
+    content_category: product.category || 'Apparel',
+    content_ids: [product.id],
+    content_type: 'product',
+    value: Number(product.price || 0),
+    currency: 'USD'
+  });
   const title = document.querySelector('.product-buy h1');
   const price = document.querySelector('.product-buy .price');
   const description = document.querySelector('.product-buy > p:not(.eyebrow):not(.price)');
