@@ -2955,21 +2955,7 @@ function cleanAuthPageFooter() {
 }
 
 function initRealtimeTracking() {
-  const timeline = document.querySelector('.tracking-timeline');
-  const card = document.querySelector('.tracking-card');
-  if (!timeline || !card || document.querySelector('.live-tracking')) return;
-  const live = document.createElement('div');
-  live.className = 'live-tracking';
-  card.appendChild(live);
-  const steps = [...timeline.querySelectorAll('li')];
-  function update() {
-    const now = new Date();
-    const stage = Math.min(steps.length - 1, Math.floor((now.getSeconds() % 40) / 10));
-    steps.forEach((step, index) => step.classList.toggle('done', index <= stage));
-    live.innerHTML = `<strong>Live status:</strong> ${steps[stage].querySelector('strong').textContent}<span>Updated ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} / ETA ${new Date(now.getTime() + 3 * 86400000).toLocaleDateString()}</span>`;
-  }
-  update();
-  setInterval(update, 5000);
+  // Timeline status is dynamically managed by initTrackOrderLookup based on real order status
 }
 
 function trackingTemplate(order) {
@@ -3043,12 +3029,18 @@ function initTrackOrderLookup() {
         : (order.item || 'Zavora apparel item');
       
       const created = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Today';
-      const statusRaw = order.status || 'Order confirmed';
-      const s = String(statusRaw).toLowerCase();
+      const statusRaw = String(order.status || 'Paid').trim();
+      const s = statusRaw.toLowerCase();
 
-      const isPacking = s.includes('packing') || s.includes('shipped') || s.includes('delivered');
-      const isShipped = s.includes('shipped') || s.includes('delivered');
-      const isDelivered = s.includes('delivered');
+      const isPacking = s.includes('pack') || s.includes('ship') || s.includes('deliver') || s.includes('process');
+      const isShipped = s.includes('ship') || s.includes('deliver');
+      const isDelivered = s.includes('deliver');
+
+      let currentStageName = 'Order Confirmed';
+      if (isDelivered) currentStageName = 'Delivered';
+      else if (isShipped) currentStageName = 'Shipped';
+      else if (isPacking) currentStageName = 'Packing';
+      else currentStageName = statusRaw;
 
       card.innerHTML = `
         <div class="eyebrow">Order Status</div>
@@ -3062,11 +3054,11 @@ function initTrackOrderLookup() {
           </li>
           <li class="${isPacking ? 'done' : ''}">
             <strong>Packing</strong>
-            <span>${isPacking ? 'Zavora warehouse has packed your package' : 'Zavora warehouse is preparing your package'}</span>
+            <span>${isPacking ? 'Package packed at Zavora warehouse' : 'Zavora warehouse is preparing your package'}</span>
           </li>
           <li class="${isShipped ? 'done' : ''}">
             <strong>Shipped</strong>
-            <span>Tracking Number: <strong>${order.tracking || 'Assigned after dispatch'}</strong></span>
+            <span>${isShipped ? `Tracking Number: <strong>${order.tracking || 'Assigned'}</strong>` : (order.tracking ? `Tracking Number: <strong>${order.tracking}</strong>` : 'Tracking number will appear after dispatch')}</span>
           </li>
           <li class="${isDelivered ? 'done' : ''}">
             <strong>Delivered</strong>
@@ -3074,7 +3066,7 @@ function initTrackOrderLookup() {
           </li>
         </ol>
         <div class="live-status-badge" style="margin-top:16px;padding:10px 14px;background:#f5f5f5;border-radius:6px;border-left:4px solid #2e7d32;font-size:13px;">
-          <strong>Current Status:</strong> <span style="color:#2e7d32;font-weight:700;">${statusRaw}</span>
+          <strong>Current Order Status:</strong> <span style="color:#2e7d32;font-weight:700;">${statusRaw}</span>
           ${order.tracking ? `<br><span style="font-size:12px;opacity:0.85;">Tracking Number: <strong>${order.tracking}</strong></span>` : ''}
         </div>
       `;
