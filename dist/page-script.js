@@ -1559,14 +1559,31 @@ function hydrateCheckoutSummary() {
       currency: 'USD'
     });
   }
+  const APPLIED_COUPON_KEY = 'zavoraAppliedCoupon';
+  let couponDiscount = 0;
+  try {
+    const coupon = JSON.parse(localStorage.getItem(APPLIED_COUPON_KEY) || 'null');
+    if (coupon?.code) {
+      const code = String(coupon.code).toUpperCase();
+      if (code === 'WELCOME10') {
+        couponDiscount = total >= 49 ? 10 : 0;
+      } else if (code === 'SUMMER15') {
+        couponDiscount = total * 0.15;
+      }
+    }
+  } catch (e) {
+    couponDiscount = 0;
+  }
+
   let giftDiscount = 0;
   try {
     const appliedGift = JSON.parse(localStorage.getItem(APPLIED_GIFT_KEY));
-    if (appliedGift?.code) giftDiscount = Math.min(total, Number(appliedGift.balance || appliedGift.value || 0));
+    if (appliedGift?.code) giftDiscount = Math.min(total - couponDiscount, Number(appliedGift.balance || appliedGift.value || 0));
   } catch (error) {
     giftDiscount = 0;
   }
-  const payable = Math.max(0, total + shippingCost - giftDiscount);
+  const totalDiscount = couponDiscount + giftDiscount;
+  const payable = Math.max(0, total + shippingCost - totalDiscount);
   summary.innerHTML = activeCart.length ? activeCart.map((item) => `
     <a class="summary-product" href="product.html">
       <img src="${item.img || 'assets/studio-wide-trouser.png'}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'">
@@ -1578,7 +1595,7 @@ function hydrateCheckoutSummary() {
     node.textContent = money(total);
   });
   document.querySelectorAll('[data-gift-discount]').forEach((node) => {
-    node.textContent = giftDiscount ? `-${money(giftDiscount)}` : '-$0';
+    node.textContent = totalDiscount ? `-${money(totalDiscount)}` : '-$0';
   });
   document.querySelectorAll('[data-shipping-total]').forEach((node) => {
     node.textContent = shippingCost ? money(shippingCost) : 'Free';
@@ -3323,6 +3340,83 @@ async function initRewardsPage() {
 
 function initCheckoutGiftUi() {
   const promo = document.querySelector('.checkout-form .promo');
+  if (promo) {
+    if (!promo.querySelector('.coupon-apply-btn')) {
+      const input = promo.querySelector('input');
+      const container = document.createElement('div');
+      container.className = 'coupon-apply-row';
+      container.style.display = 'flex';
+      container.style.gap = '8px';
+      container.style.marginTop = '6px';
+
+      const applyBtn = document.createElement('button');
+      applyBtn.className = 'secondary-btn slim-btn coupon-apply-btn';
+      applyBtn.type = 'button';
+      applyBtn.textContent = 'Apply Coupon';
+
+      const statusP = document.createElement('p');
+      statusP.className = 'coupon-status-msg';
+      statusP.style.fontSize = '13px';
+      statusP.style.marginTop = '4px';
+      statusP.style.fontWeight = '500';
+
+      if (input) {
+        input.parentNode.appendChild(container);
+        container.appendChild(input);
+        container.appendChild(applyBtn);
+        promo.appendChild(statusP);
+
+        try {
+          const existing = JSON.parse(localStorage.getItem('zavoraAppliedCoupon') || 'null');
+          if (existing?.code) {
+            input.value = existing.code;
+            statusP.textContent = `✓ Coupon ${existing.code} applied!`;
+            statusP.style.color = '#2e7d32';
+          }
+        } catch (e) {}
+
+        const checkAndApply = () => {
+          const code = (input.value || '').trim().toUpperCase();
+          if (!code) {
+            statusP.textContent = 'Please enter a coupon code.';
+            statusP.style.color = '#d9534f';
+            return;
+          }
+          const cart = getSavedCart();
+          const total = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+
+          if (code === 'WELCOME10') {
+            if (total < 49) {
+              statusP.textContent = 'WELCOME10 requires a minimum order of $49.';
+              statusP.style.color = '#d9534f';
+              return;
+            }
+            localStorage.setItem('zavoraAppliedCoupon', JSON.stringify({ code: 'WELCOME10', discount: 10 }));
+            statusP.textContent = '✓ Coupon WELCOME10 applied ($10 OFF)!';
+            statusP.style.color = '#2e7d32';
+            hydrateCheckoutSummary();
+          } else if (code === 'SUMMER15') {
+            localStorage.setItem('zavoraAppliedCoupon', JSON.stringify({ code: 'SUMMER15', type: '15%' }));
+            statusP.textContent = '✓ Coupon SUMMER15 applied (15% OFF)!';
+            statusP.style.color = '#2e7d32';
+            hydrateCheckoutSummary();
+          } else {
+            statusP.textContent = 'Invalid coupon code. Valid coupons: WELCOME10, SUMMER15.';
+            statusP.style.color = '#d9534f';
+          }
+        };
+
+        applyBtn.addEventListener('click', checkAndApply);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            checkAndApply();
+          }
+        });
+      }
+    }
+  }
+
   if (!promo || document.querySelector('.gift-card-apply')) return;
   promo.insertAdjacentHTML('afterend', `
     <div class="gift-card-apply">
