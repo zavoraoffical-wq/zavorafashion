@@ -3188,35 +3188,32 @@ async function initDynamicRelatedProducts() {
   if (!anchor) return;
   try {
     const current = getSelectedProduct();
-    const gender = String(current?.gender || 'men').toLowerCase() === 'women' ? 'women' : 'men';
-    const allProducts = await fetchCatalogProducts(gender, 1000);
+    const pages = await Promise.all([
+      fetchCatalogProducts('men', 1000).catch(() => []),
+      fetchCatalogProducts('women', 1000).catch(() => [])
+    ]);
+    const allProducts = pages.flat();
     if (!Array.isArray(allProducts) || !allProducts.length) return;
-    const base = allProducts.filter((item) => String(item.id) !== String(current?.id));
-    const categoryFamily = similarCategoryList(current?.category);
-    const rails = [
-      ['Recommended For You', base.filter((item) => categoryFamily.includes(item.category))],
-      ['You May Also Like', base.filter((item) => item.category !== current?.category && adjacentCategoryList(current?.category).includes(item.category))],
-      ['Recently Viewed', getRecentlyViewed().filter((item) => String(item.id) !== String(current?.id) && String(item.gender || '').toLowerCase() === gender)],
-      ['New Arrivals', base.filter((item) => item.collection?.includes('new'))],
-      ['Best Sellers', base.filter((item) => item.collection?.includes('best') || item.popularity >= 84)],
-      ['Similar Products', base.filter((item) => item.category === current?.category)]
-    ].map(([title, products]) => [title, uniqueProducts(products).slice(0, 10)])
-      .filter(([, products]) => products.length);
-    if (!rails.length) {
-      anchor.remove();
-      return;
-    }
+    const realProducts = allProducts.filter((item) => String(item.id) !== String(current?.id));
+    if (!realProducts.length) return;
+
     const section = document.createElement('section');
     section.className = 'section product-smart-rails';
     section.dataset.smartProductRails = 'true';
-    section.innerHTML = rails.map(([title, products]) => `
-      <div class="product-rail">
-        <div class="global-rail-head"><div><p class="eyebrow">${title}</p><h2>${title}</h2></div></div>
-        <div class="product-rail-track">${products.length ? products.map(catalogCard).join('') : '<p class="catalog-loading">More products coming soon.</p>'}</div>
+    section.innerHTML = `
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">Related Products</p>
+          <h2>Recommended For You</h2>
+        </div>
+        <a class="text-link" href="shop.html">View all</a>
       </div>
-    `).join('');
+      <div class="page-grid catalog-grid">
+        ${realProducts.slice(0, 12).map(catalogCard).join('')}
+      </div>
+    `;
     anchor.replaceWith(section);
-    window.__zavoraCatalogProducts = uniqueProducts([...(window.__zavoraCatalogProducts || []), ...base]);
+    window.__zavoraCatalogProducts = uniqueProducts([...(window.__zavoraCatalogProducts || []), ...allProducts]);
     refreshWishlistButtons();
   } catch (error) {
     anchor.dataset.realRelatedLoaded = 'failed';
@@ -3475,6 +3472,7 @@ initFaqAccordions();
 initProductOptions();
 initDynamicProductPage();
 refreshSelectedProductFromUrl();
+initDynamicRelatedProducts();
 
 function initAffiliateAttribution() {
   const params = new URLSearchParams(window.location.search);
