@@ -539,16 +539,34 @@ function saveSavedOrders(orders) {
 }
 
 function getDashboardOrders() {
+  const localOrders = getSavedOrders();
+  let lastOrder = null;
+  try {
+    lastOrder = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+  } catch (e) {}
+
   const email = String(authDashboardData?.user?.email || authUser?.email || '').toLowerCase();
   const liveOrders = Array.isArray(authDashboardData?.orders) ? authDashboardData.orders : [];
-  const localOrders = getSavedOrders().filter((order) => !email || String(order.email || '').toLowerCase() === email);
+
   const seen = new Set();
-  return [...liveOrders, ...localOrders].filter((order) => {
-    const key = String(order?.id || '').replace(/^#/, '');
-    if (!key || seen.has(key)) return false;
+  const all = [];
+
+  if (lastOrder && lastOrder.id) {
+    const key = String(lastOrder.id).replace(/^#/, '');
     seen.add(key);
-    return true;
+    all.push(lastOrder);
+  }
+
+  [...localOrders, ...liveOrders].forEach((order) => {
+    if (!order || !order.id) return;
+    const key = String(order.id).replace(/^#/, '');
+    if (!seen.has(key)) {
+      seen.add(key);
+      all.push(order);
+    }
   });
+
+  return all.sort((a, b) => new Date(b.createdAt || Date.now()) - new Date(a.createdAt || Date.now()));
 }
 
 function getSavedAddresses() {
@@ -613,7 +631,10 @@ function createTestOrder(method = 'PayPal') {
   const totalDiscount = couponDiscount + giftDiscount;
   const finalTotal = Math.max(0, subtotal + shippingCost - totalDiscount);
 
-  const orderId = `ZVR-${String(Date.now()).slice(-6)}`;
+  const suffix = String(Date.now()).slice(-6);
+  const orderId = `ZVR-${suffix}`;
+  const trackingId = `ZV-${suffix}`;
+
   const order = {
     id: orderId,
     email: email,
@@ -622,7 +643,7 @@ function createTestOrder(method = 'PayPal') {
     address: address,
     method: method,
     status: 'Paid',
-    tracking: `ZV-${Math.floor(100000 + Math.random() * 900000)}`,
+    tracking: trackingId,
     subtotal: subtotal,
     shipping: shippingCost,
     discount: totalDiscount,
@@ -1353,18 +1374,24 @@ function setDashboardView(view = 'dashboard') {
   }
   if (view === 'orders') {
     const orders = getDashboardOrders();
-    const cards = getGiftCards();
     grid.innerHTML = `
-      ${orders.length ? orders.map((order) => `
-        <article class="dashboard-card dashboard-wide">
-          <span>Order History</span>
-          <h3>#${order.id.replace(/^#/, '')}</h3>
-          <p>${order.items?.[0]?.name || 'Zavora order'} / ${order.method || 'PayPal'} / ${order.status || 'Active'} / Total ${money(order.total || 0)}</p>
-          <p>${order.rewardId ? `Reward ID: ${order.rewardId}` : Number(order.total || 0) >= 100 ? 'Reward ID appears after delivery and 24-hour clearance.' : 'Reward not available for orders under $100.'}</p>
-          <div class="mini-status"><i style="width:${order.status === 'Delivered' ? 100 : order.status === 'Shipped' ? 78 : 46}%"></i></div>
-          <a class="text-link" href="track-order.html?order=${encodeURIComponent(order.id)}&email=${encodeURIComponent(order.email)}">Track live order</a>
-        </article>
-      `).join('') : '<article class="dashboard-card dashboard-wide"><span>Orders</span><h3>No orders yet</h3><p>Your order history appears here after checkout.</p></article>'}
+      ${orders.length ? orders.map((order) => {
+        const itemsList = Array.isArray(order.items) && order.items.length
+          ? order.items.map(i => `${i.name || 'Product'} (Qty ${i.qty || 1})`).join(', ')
+          : (order.item || 'Zavora order');
+        const emailParam = order.email || authDashboardData?.user?.email || authUser?.email || '';
+        return `
+          <article class="dashboard-card dashboard-wide">
+            <span>Order History</span>
+            <h3>#${String(order.id).replace(/^#/, '')}</h3>
+            <p><strong>Items:</strong> ${itemsList}</p>
+            <p style="font-size:13px;margin-top:4px;"><strong>Payment:</strong> ${order.method || 'PayPal'} | <strong>Status:</strong> ${order.status || 'Paid'} | <strong>Total:</strong> ${money(order.total || 0)}</p>
+            <p style="font-size:12px;opacity:0.75;margin-top:2px;">${order.rewardId ? `Reward ID: ${order.rewardId}` : Number(order.total || 0) >= 100 ? 'Reward ID appears after delivery and 24-hour clearance.' : 'Reward not available for orders under $100.'}</p>
+            <div class="mini-status"><i style="width:${order.status === 'Delivered' ? 100 : order.status === 'Shipped' ? 78 : order.status === 'Packing' ? 50 : 25}%"></i></div>
+            <a class="text-link" href="track-order.html?order=${encodeURIComponent(String(order.id).replace(/^#/, ''))}&email=${encodeURIComponent(emailParam)}">Track live order</a>
+          </article>
+        `;
+      }).join('') : '<article class="dashboard-card dashboard-wide"><span>Orders</span><h3>No orders yet</h3><p>Your order history appears here after checkout.</p></article>'}
     `;
   }
   if (view === 'addresses') {
@@ -2630,7 +2657,10 @@ document.addEventListener('click', async (event) => {
     const totalDiscount = couponDiscount + giftDiscount;
     const finalTotal = Math.max(0, subtotal + shipping - totalDiscount);
 
-    const orderId = `ZVR-${Date.now().toString().slice(-6)}`;
+    const suffix = String(Date.now()).slice(-6);
+    const orderId = `ZVR-${suffix}`;
+    const trackingId = `ZV-${suffix}`;
+
     const order = {
       id: orderId,
       email: email,
@@ -2639,7 +2669,7 @@ document.addEventListener('click', async (event) => {
       address: address,
       method: 'Direct Payment Flow',
       status: 'Paid',
-      tracking: 'ZV-' + Math.floor(100000 + Math.random() * 900000),
+      tracking: trackingId,
       subtotal: subtotal,
       shipping: shipping,
       discount: totalDiscount,
