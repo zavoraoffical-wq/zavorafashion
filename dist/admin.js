@@ -396,24 +396,50 @@ function renderLiveOrders(stats) {
   }
 
   body.innerHTML = rows.map((order) => {
-    const itemsList = Array.isArray(order.items) && order.items.length
-      ? order.items.map(i => `${i.name || 'Product'} (Qty ${i.qty || 1})`).join(', ')
-      : (order.item || 'Zavora streetwear item');
+    const items = Array.isArray(order.items) && order.items.length ? order.items : [];
+    const itemCount = items.reduce((sum, i) => sum + Number(i.qty || 1), 0);
     const totalVal = typeof order.total === 'number' ? `$${order.total.toFixed(2)}` : (order.total || '$0.00');
+
+    const itemThumbnails = items.length ? items.map((item) => {
+      const imgSrc = item.img || item.image || 'assets/studio-wide-trouser.png';
+      return `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <img src="${imgSrc}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'" style="width:42px;height:42px;object-fit:cover;border-radius:4px;border:1px solid #ddd;flex-shrink:0;">
+          <div>
+            <strong style="display:block;font-size:12px;line-height:1.2;">${item.name || 'Product'}</strong>
+            <span style="font-size:11px;color:#666;">Qty ${item.qty || 1} • ${item.color || 'Original'} / ${item.sizes?.[0] || item.size || 'M'}</span>
+          </div>
+        </div>
+      `;
+    }).join('') : `<span style="font-size:12px;">${order.item || 'Zavora item'}</span>`;
 
     return `
       <tr data-admin-order="${order.id}">
-        <td><strong>${order.id}</strong></td>
-        <td>${order.customer || 'Zavora customer'}<br><span style="font-size:12px;opacity:0.75;">${order.email || 'orders@zavorafashion.com'}</span></td>
-        <td><strong>${totalVal}</strong><br><span style="font-size:11px;opacity:0.75;">${itemsList}</span></td>
-        <td>${order.payment || order.method || 'PayPal / Direct'}</td>
         <td>
-          <select data-order-status>
+          <strong style="font-size:13px;display:block;">${order.id}</strong>
+          <span style="font-size:11px;color:#777;">${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Today'}</span>
+        </td>
+        <td>
+          <strong style="font-size:13px;display:block;">${order.customer || 'Zavora Customer'}</strong>
+          <span style="font-size:11px;color:#555;">${order.email || 'orders@zavorafashion.com'}</span>
+        </td>
+        <td>
+          <div style="max-height:120px;overflow-y:auto;padding-right:4px;">
+            ${itemThumbnails}
+          </div>
+          <span style="font-size:11px;font-weight:600;background:#eee;padding:2px 6px;border-radius:10px;display:inline-block;margin-top:2px;">Total Items: ${itemCount || 1}</span>
+        </td>
+        <td>
+          <strong style="font-size:14px;color:#2e7d32;display:block;">${totalVal}</strong>
+          <span style="font-size:11px;color:#666;">${order.payment || order.method || 'PayPal / Direct'}</span>
+        </td>
+        <td>
+          <select data-order-status style="padding:4px;font-size:12px;width:100%;">
             ${['Paid', 'Order confirmed', 'Packing', 'Shipped', 'Delivered', 'Cancelled', 'Returned', 'Refunded'].map((status) => `<option ${String(order.status || '').toLowerCase().includes(status.toLowerCase()) ? 'selected' : ''}>${status}</option>`).join('')}
           </select>
-          <input data-order-tracking value="${order.tracking || ''}" placeholder="Tracking number" style="margin-top:4px;width:100%;font-size:12px;">
+          <input data-order-tracking value="${order.tracking || ''}" placeholder="Tracking number" style="margin-top:4px;width:100%;font-size:11px;padding:4px;">
         </td>
-        <td><button data-save-order="${order.id}">Save Update</button></td>
+        <td><button data-save-order="${order.id}" style="padding:6px 10px;font-size:12px;">Save Update</button></td>
       </tr>
     `;
   }).join('');
