@@ -365,9 +365,35 @@ function renderLiveProductRows(products = []) {
   `).join('');
 }
 
+let currentOrderSearchQuery = '';
+
 function renderLiveOrders(stats) {
   const body = document.querySelector('[data-panel="orders"] tbody');
   if (!body) return;
+
+  let searchInput = document.querySelector('#adminOrderSearchInput');
+  if (!searchInput) {
+    const cardHead = document.querySelector('[data-panel="orders"] .card-head');
+    if (cardHead) {
+      const searchWrap = document.createElement('div');
+      searchWrap.className = 'admin-order-search-wrap';
+      searchWrap.style.margin = '12px 0 16px 0';
+      searchWrap.innerHTML = `
+        <input id="adminOrderSearchInput" type="search" placeholder="🔍 Search by Order ID (#ZVR-861988), Customer Name, Email, Phone, Address, or Item Name..." style="width:100%;padding:10px 14px;border-radius:6px;border:1px solid #ccc;font-size:14px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.05);">
+      `;
+      cardHead.insertAdjacentElement('afterend', searchWrap);
+      searchInput = document.querySelector('#adminOrderSearchInput');
+    }
+  }
+
+  if (searchInput && !searchInput.dataset.bound) {
+    searchInput.dataset.bound = 'true';
+    searchInput.addEventListener('input', (e) => {
+      currentOrderSearchQuery = (e.target.value || '').trim().toLowerCase();
+      renderLiveOrders(stats);
+    });
+  }
+
   let serverOrders = Array.isArray(stats?.orders) ? stats.orders : [];
   let localOrders = [];
   try {
@@ -382,7 +408,7 @@ function renderLiveOrders(stats) {
   } catch (e) {}
 
   const seen = new Set();
-  const rows = [...serverOrders, ...localOrders].filter((order) => {
+  let allOrders = [...serverOrders, ...localOrders].filter((order) => {
     if (!order || !order.id) return false;
     const idStr = String(order.id).trim();
     if (seen.has(idStr)) return false;
@@ -390,12 +416,25 @@ function renderLiveOrders(stats) {
     return true;
   });
 
-  if (!rows.length) {
-    body.innerHTML = '<tr><td colspan="6">No live orders yet. New checkout orders will appear here automatically.</td></tr>';
+  if (currentOrderSearchQuery) {
+    const q = currentOrderSearchQuery;
+    allOrders = allOrders.filter((order) => {
+      const idMatch = String(order.id || '').toLowerCase().includes(q);
+      const nameMatch = String(order.customer || order.name || '').toLowerCase().includes(q);
+      const emailMatch = String(order.email || '').toLowerCase().includes(q);
+      const phoneMatch = String(order.phone || '').toLowerCase().includes(q);
+      const addressMatch = String(order.address || '').toLowerCase().includes(q);
+      const itemsMatch = Array.isArray(order.items) && order.items.some(i => String(i.name || '').toLowerCase().includes(q));
+      return idMatch || nameMatch || emailMatch || phoneMatch || addressMatch || itemsMatch;
+    });
+  }
+
+  if (!allOrders.length) {
+    body.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">${currentOrderSearchQuery ? `No orders found matching "${currentOrderSearchQuery}".` : 'No live orders yet. New checkout orders will appear here automatically.'}</td></tr>`;
     return;
   }
 
-  body.innerHTML = rows.map((order) => {
+  body.innerHTML = allOrders.map((order) => {
     const items = Array.isArray(order.items) && order.items.length ? order.items : [];
     const itemCount = items.reduce((sum, i) => sum + Number(i.qty || 1), 0);
     const totalVal = typeof order.total === 'number' ? `$${order.total.toFixed(2)}` : (order.total || '$0.00');
@@ -406,40 +445,44 @@ function renderLiveOrders(stats) {
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           <img src="${imgSrc}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'" style="width:42px;height:42px;object-fit:cover;border-radius:4px;border:1px solid #ddd;flex-shrink:0;">
           <div>
-            <strong style="display:block;font-size:12px;line-height:1.2;">${item.name || 'Product'}</strong>
+            <strong style="display:block;font-size:12px;line-height:1.2;color:#050505;">${item.name || 'Product'}</strong>
             <span style="font-size:11px;color:#666;">Qty ${item.qty || 1} • ${item.color || 'Original'} / ${item.sizes?.[0] || item.size || 'M'}</span>
           </div>
         </div>
       `;
     }).join('') : `<span style="font-size:12px;">${order.item || 'Zavora item'}</span>`;
 
+    const formattedDate = order.createdAt ? new Date(order.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }) : 'Today';
+
     return `
       <tr data-admin-order="${order.id}">
         <td>
-          <strong style="font-size:13px;display:block;">${order.id}</strong>
-          <span style="font-size:11px;color:#777;">${order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Today'}</span>
+          <strong style="font-size:13px;display:block;color:#050505;">#${String(order.id).replace(/^#/, '')}</strong>
+          <span style="font-size:11px;color:#777;">${formattedDate}</span>
         </td>
         <td>
-          <strong style="font-size:13px;display:block;">${order.customer || 'Zavora Customer'}</strong>
-          <span style="font-size:11px;color:#555;">${order.email || 'orders@zavorafashion.com'}</span>
+          <strong style="font-size:13px;display:block;color:#050505;">${order.customer || 'Zavora Customer'}</strong>
+          <div style="font-size:12px;color:#333;margin-top:2px;">✉️ ${order.email || 'N/A'}</div>
+          ${order.phone ? `<div style="font-size:11px;color:#555;margin-top:2px;">📞 ${order.phone}</div>` : ''}
+          ${order.address ? `<div style="font-size:11px;color:#666;margin-top:2px;">📍 ${order.address}</div>` : ''}
         </td>
         <td>
-          <div style="max-height:120px;overflow-y:auto;padding-right:4px;">
+          <div style="max-height:130px;overflow-y:auto;padding-right:4px;">
             ${itemThumbnails}
           </div>
-          <span style="font-size:11px;font-weight:600;background:#eee;padding:2px 6px;border-radius:10px;display:inline-block;margin-top:2px;">Total Items: ${itemCount || 1}</span>
+          <span style="font-size:11px;font-weight:600;background:#eee;padding:2px 6px;border-radius:10px;display:inline-block;margin-top:4px;">Total Items: ${itemCount || 1}</span>
         </td>
         <td>
           <strong style="font-size:14px;color:#2e7d32;display:block;">${totalVal}</strong>
           <span style="font-size:11px;color:#666;">${order.payment || order.method || 'PayPal / Direct'}</span>
         </td>
         <td>
-          <select data-order-status style="padding:4px;font-size:12px;width:100%;">
+          <select data-order-status style="padding:5px;font-size:12px;width:100%;border-radius:4px;border:1px solid #ccc;">
             ${['Paid', 'Order confirmed', 'Packing', 'Shipped', 'Delivered', 'Cancelled', 'Returned', 'Refunded'].map((status) => `<option ${String(order.status || '').toLowerCase().includes(status.toLowerCase()) ? 'selected' : ''}>${status}</option>`).join('')}
           </select>
-          <input data-order-tracking value="${order.tracking || ''}" placeholder="Tracking number" style="margin-top:4px;width:100%;font-size:11px;padding:4px;">
+          <input data-order-tracking value="${order.tracking || ''}" placeholder="Tracking number" style="margin-top:4px;width:100%;font-size:11px;padding:4px;border-radius:4px;border:1px solid #ccc;">
         </td>
-        <td><button data-save-order="${order.id}" style="padding:6px 10px;font-size:12px;">Save Update</button></td>
+        <td><button data-save-order="${order.id}" style="padding:6px 12px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">Save Update</button></td>
       </tr>
     `;
   }).join('');

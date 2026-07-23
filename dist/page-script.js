@@ -576,20 +576,58 @@ function saveSavedAddresses(addresses) {
 function createTestOrder(method = 'PayPal') {
   const cart = getSavedCart();
   if (!cart.length) return null;
-  const shippingCost = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
-  const total = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0) + shippingCost;
-  const email = document.querySelector('.checkout-form input[type="email"]')?.value.trim().toLowerCase()
+  const form = document.querySelector('.checkout-form');
+  const email = form?.querySelector('input[type="email"]')?.value.trim().toLowerCase()
     || authUser?.email
     || 'customer@zavorafashion.com';
+  const name = form?.querySelector('input[placeholder*="name"]')?.value.trim()
+    || authUser?.name
+    || 'Guest Customer';
+  const phone = form?.querySelector('input[type="tel"]')?.value.trim()
+    || form?.querySelector('input[placeholder*="phone"]')?.value.trim()
+    || '';
+  const street = form?.querySelector('input[placeholder*="Street"]')?.value.trim() || '';
+  const city = form?.querySelector('input[placeholder*="City"]')?.value.trim() || '';
+  const zip = form?.querySelector('input[placeholder*="ZIP"]')?.value.trim() || '';
+  const address = [street, city, zip].filter(Boolean).join(', ') || 'Standard Delivery Address';
+
+  const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+  const shippingCost = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
+
+  let couponDiscount = 0;
+  try {
+    const coupon = JSON.parse(localStorage.getItem('zavoraAppliedCoupon') || 'null');
+    if (coupon?.code) {
+      const code = String(coupon.code).toUpperCase();
+      if (code === 'WELCOME10') couponDiscount = subtotal >= 49 ? 10 : 0;
+      else if (code === 'SUMMER15') couponDiscount = subtotal * 0.15;
+    }
+  } catch (e) {}
+
+  let giftDiscount = 0;
+  try {
+    const gift = JSON.parse(localStorage.getItem(APPLIED_GIFT_KEY) || 'null');
+    if (gift?.code) giftDiscount = Math.min(subtotal - couponDiscount, Number(gift.balance || gift.value || 0));
+  } catch (e) {}
+
+  const totalDiscount = couponDiscount + giftDiscount;
+  const finalTotal = Math.max(0, subtotal + shippingCost - totalDiscount);
+
+  const orderId = `ZVR-${String(Date.now()).slice(-6)}`;
   const order = {
-    id: `ZAV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
-    email,
-    method,
-    total,
+    id: orderId,
+    email: email,
+    customer: name,
+    phone: phone,
+    address: address,
+    method: method,
+    status: 'Paid',
+    tracking: `ZV-${Math.floor(100000 + Math.random() * 900000)}`,
+    subtotal: subtotal,
     shipping: shippingCost,
+    discount: totalDiscount,
+    total: finalTotal,
     items: cart,
-    status: 'Payment received',
-    tracking: `ZV${String(Date.now()).slice(-8)}`,
     createdAt: new Date().toISOString()
   };
   const orders = getSavedOrders().filter((item) => item.id !== order.id);
@@ -597,9 +635,7 @@ function createTestOrder(method = 'PayPal') {
   saveSavedOrders(orders);
   localStorage.setItem('zavoraLastOrder', JSON.stringify(order));
 
-  // Deduct gift card balance, clear applied gift card and clear the cart bag
   finalizeOrderPayment(cart);
-
   return order;
 }
 
@@ -2561,8 +2597,15 @@ document.addEventListener('click', async (event) => {
     }
     
     const form = document.querySelector('.checkout-form');
-    const email = form?.querySelector('input[type="email"]')?.value.trim() || 'customer@zavorafashion.com';
+    const email = form?.querySelector('input[type="email"]')?.value.trim().toLowerCase() || 'customer@zavorafashion.com';
     const name = form?.querySelector('input[placeholder*="name"]')?.value.trim() || 'Guest Customer';
+    const phone = form?.querySelector('input[type="tel"]')?.value.trim()
+      || form?.querySelector('input[placeholder*="phone"]')?.value.trim()
+      || '';
+    const street = form?.querySelector('input[placeholder*="Street"]')?.value.trim() || '';
+    const city = form?.querySelector('input[placeholder*="City"]')?.value.trim() || '';
+    const zip = form?.querySelector('input[placeholder*="ZIP"]')?.value.trim() || '';
+    const address = [street, city, zip].filter(Boolean).join(', ') || 'Standard Shipping Address';
     
     const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
     const shipping = Number(document.querySelector('input[name="shipping"]:checked')?.value || 0);
@@ -2591,6 +2634,8 @@ document.addEventListener('click', async (event) => {
       id: orderId,
       email: email,
       customer: name,
+      phone: phone,
+      address: address,
       method: 'Direct Payment Flow',
       status: 'Paid',
       tracking: 'ZV-' + Math.floor(100000 + Math.random() * 900000),
