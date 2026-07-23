@@ -3509,7 +3509,7 @@ function initHomeBanners() {
 
   const banners = [
     {
-      image: '/assets/zavora-hero-clean-hoodie.png',
+      image: 'assets/zavora-summer-sale-banner.png',
       eyebrow: '☀️ USA Summer Sale',
       title: 'Get 15% OFF Premium Streetwear',
       copy: 'Elevate your summer wardrobe with clean oversized tees, hoodies, and vacation streetwear. Use Code: SUMMER15 at checkout. Limited Time Only.',
@@ -3517,7 +3517,7 @@ function initHomeBanners() {
       href: 'shop.html'
     },
     {
-      image: '/assets/zavora-hero-clean-stairs.png',
+      image: 'assets/zavora-welcome-banner.png',
       eyebrow: '🔥 First Order Special',
       title: '$10 OFF Your First Purchase',
       copy: 'New to Zavora Fashion? Save $10 on orders over $49 with fast USA shipping. Use Code: WELCOME10 at checkout.',
