@@ -3064,20 +3064,34 @@ function updateDynamicProductMedia() {
   }
 }
 
-function refreshSelectedProductFromUrl() {
+async function refreshSelectedProductFromUrl() {
   if (!isCurrentPage('product')) return;
   const id = new URLSearchParams(window.location.search).get('id');
-  if (!id || window.__zavoraProductRefreshId === id) return;
-  window.__zavoraProductRefreshId = id;
-  const wishlistProduct = document.querySelector('[data-wishlist-product]');
-  const wishlistId = wishlistProduct?.dataset.wishlistProduct;
-  let product = null;
-  if (wishlistId && wishlistId === id) {
-    product = (window.__zavoraCatalogProducts || []).find((item) => String(item.id) === String(wishlistId));
+  if (!id) return;
+
+  const current = getSelectedProduct();
+  if (current && (String(current.id) === String(id) || String(current.printfulId) === String(id))) {
+    initDynamicProductPage();
+    return;
   }
+
+  let product = [...(window.__zavoraCatalogProducts || []), ...(window.__zavoraSearchProducts || [])]
+    .find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
+
   if (!product) {
-    product = [...(window.__zavoraCatalogProducts || []), ...(window.__zavoraSearchProducts || [])].find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
+    try {
+      const pages = await Promise.all([
+        fetchCatalogProducts('men', 1000).catch(() => []),
+        fetchCatalogProducts('women', 1000).catch(() => [])
+      ]);
+      const all = pages.flat();
+      product = all.find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
+      if (product) {
+        window.__zavoraCatalogProducts = all;
+      }
+    } catch (error) {}
   }
+
   if (product) {
     localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(product));
     initDynamicProductPage();
@@ -3422,6 +3436,8 @@ initOrderSuccessDetails();
 initPaymentMethodUi();
 initFaqAccordions();
 initProductOptions();
+initDynamicProductPage();
+refreshSelectedProductFromUrl();
 
 function initAffiliateAttribution() {
   const params = new URLSearchParams(window.location.search);
