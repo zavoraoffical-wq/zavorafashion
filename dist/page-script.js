@@ -1975,6 +1975,13 @@ function injectLargeCatalog() {
     </aside>
     <div class="catalog-area">
       ${pageName === 'collections.html' ? collectionShowcase(activeCollection) : ''}
+      <div class="mobile-filter-bar">
+        <button type="button" class="mobile-filter-btn" id="openMobileFilterBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+          <span>FILTER & SORT</span>
+          <span class="active-filter-badge" id="activeFilterBadge" style="display:none;">0</span>
+        </button>
+      </div>
       <div class="catalog-toolbar">
         <div><h1>${pageName === 'collections.html' ? collectionLabel(activeCollection) : 'Premium streetwear catalog'}</h1></div>
         <span><strong data-catalog-count>${catalogData.length}</strong> results</span>
@@ -1985,6 +1992,9 @@ function injectLargeCatalog() {
   main.classList.add('catalog-main');
   main.innerHTML = '';
   main.appendChild(section);
+
+  initMobileFilterDrawer(genderOptions, collectionOptions, categoryOptions, pageName);
+
   const urlCategory = new URLSearchParams(window.location.search).get('category');
   const categorySelect = section.querySelector('[data-catalog-filter="category"]');
   if (urlCategory && categorySelect && [...categorySelect.options].some((option) => option.value === urlCategory)) {
@@ -2000,6 +2010,176 @@ function injectLargeCatalog() {
   if (urlCollection && collectionSelect && [...collectionSelect.options].some((option) => option.value === urlCollection)) {
     collectionSelect.value = urlCollection;
   }
+}
+
+function initMobileFilterDrawer(genderOptions, collectionOptions, categoryOptions, pageName) {
+  let overlay = document.querySelector('#mobileFilterOverlay');
+  let drawer = document.querySelector('#mobileFilterDrawer');
+
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'mobileFilterOverlay';
+    overlay.className = 'mobile-filter-drawer-overlay';
+    document.body.appendChild(overlay);
+  }
+
+  if (!drawer) {
+    drawer = document.createElement('aside');
+    drawer.id = 'mobileFilterDrawer';
+    drawer.className = 'mobile-filter-drawer';
+    drawer.setAttribute('role', 'dialog');
+    drawer.setAttribute('aria-label', 'Filter and Sort products');
+    document.body.appendChild(drawer);
+  }
+
+  drawer.innerHTML = `
+    <div class="mobile-filter-header">
+      <h2>Filter & Sort</h2>
+      <button type="button" class="mobile-filter-close-btn" id="closeMobileFilterBtn" aria-label="Close filters">&times;</button>
+    </div>
+    <div class="mobile-filter-body">
+      ${pageName === 'shop.html' || pageName === 'collections.html' ? `
+      <div class="mobile-filter-group">
+        <label>Gender</label>
+        <select data-mobile-filter="gender">${genderOptions}</select>
+      </div>` : ''}
+      <div class="mobile-filter-group">
+        <label>Collection</label>
+        <select data-mobile-filter="collection">${collectionOptions}</select>
+      </div>
+      <div class="mobile-filter-group">
+        <label>Category</label>
+        <select data-mobile-filter="category">${categoryOptions}</select>
+      </div>
+      <div class="mobile-filter-group">
+        <label>Color</label>
+        <select data-mobile-filter="color">
+          <option value="all">All</option>
+          <option>black</option>
+          <option>white</option>
+          <option>gray</option>
+          <option>blue</option>
+          <option>green</option>
+          <option>red</option>
+          <option>gold</option>
+        </select>
+      </div>
+      <div class="mobile-filter-group">
+        <label>Size</label>
+        <select data-mobile-filter="size">
+          <option value="all">All</option>
+          <option>XS</option>
+          <option>S</option>
+          <option>M</option>
+          <option>L</option>
+          <option>XL</option>
+        </select>
+      </div>
+      <div class="mobile-filter-group">
+        <label>Price</label>
+        <select data-mobile-filter="price">
+          <option value="999">All</option>
+          <option value="100">Under $100</option>
+          <option value="160">Under $160</option>
+          <option value="240">Under $240</option>
+        </select>
+      </div>
+      <div class="mobile-filter-group">
+        <label>Sort</label>
+        <select data-mobile-filter="sort">
+          <option value="featured">Featured</option>
+          <option value="low">Price low to high</option>
+          <option value="high">Price high to low</option>
+        </select>
+      </div>
+    </div>
+    <div class="mobile-filter-footer">
+      <button type="button" class="mobile-filter-reset-btn" id="resetMobileFilterBtn">Reset</button>
+      <button type="button" class="mobile-filter-apply-btn" id="applyMobileFilterBtn">Apply Filters</button>
+    </div>
+  `;
+
+  const openBtn = document.querySelector('#openMobileFilterBtn');
+  const closeBtn = drawer.querySelector('#closeMobileFilterBtn');
+  const applyBtn = drawer.querySelector('#applyMobileFilterBtn');
+  const resetBtn = drawer.querySelector('#resetMobileFilterBtn');
+  const badge = document.querySelector('#activeFilterBadge');
+
+  function openDrawer() {
+    overlay.classList.add('open');
+    drawer.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDrawer() {
+    overlay.classList.remove('open');
+    drawer.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function updateActiveBadge() {
+    const mobileFilters = drawer.querySelectorAll('[data-mobile-filter]');
+    let activeCount = 0;
+    mobileFilters.forEach(select => {
+      const val = select.value;
+      if (val && val !== 'all' && val !== 'featured' && val !== '999') {
+        activeCount++;
+      }
+    });
+    if (badge) {
+      if (activeCount > 0) {
+        badge.textContent = activeCount;
+        badge.style.display = 'inline-flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  }
+
+  drawer.querySelectorAll('[data-mobile-filter]').forEach(mSelect => {
+    mSelect.addEventListener('change', () => {
+      const filterKey = mSelect.dataset.mobileFilter;
+      const dSelect = document.querySelector(`[data-catalog-filter="${filterKey}"]`);
+      if (dSelect) dSelect.value = mSelect.value;
+      updateActiveBadge();
+    });
+  });
+
+  if (openBtn) openBtn.onclick = openDrawer;
+  if (closeBtn) closeBtn.onclick = closeDrawer;
+  if (overlay) overlay.onclick = closeDrawer;
+
+  if (applyBtn) {
+    applyBtn.onclick = () => {
+      if (typeof filterLargeCatalog === 'function') filterLargeCatalog();
+      closeDrawer();
+    };
+  }
+
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      drawer.querySelectorAll('[data-mobile-filter]').forEach(mSelect => {
+        if (mSelect.dataset.mobileFilter === 'price') mSelect.value = '999';
+        else if (mSelect.dataset.mobileFilter === 'sort') mSelect.value = 'featured';
+        else mSelect.value = 'all';
+      });
+      document.querySelectorAll('[data-catalog-filter]').forEach(dSelect => {
+        if (dSelect.dataset.catalogFilter === 'price') dSelect.value = '999';
+        else if (dSelect.dataset.catalogFilter === 'sort') dSelect.value = 'featured';
+        else dSelect.value = 'all';
+      });
+      updateActiveBadge();
+      if (typeof filterLargeCatalog === 'function') filterLargeCatalog();
+      closeDrawer();
+    };
+  }
+
+  let touchStartX = 0;
+  drawer.ontouchstart = (e) => { touchStartX = e.touches[0].clientX; };
+  drawer.ontouchend = (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    if (touchStartX - touchEndX > 50) closeDrawer();
+  };
 }
 
 function filterLargeCatalog() {
