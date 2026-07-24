@@ -276,15 +276,15 @@ body.home-page .site-header:not(.scrolled) {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   align-items: center;
-  gap: 40px;
-  padding: 34px 44px 0 44px;
+  gap: 30px;
+  padding: 24px 34px 0 34px;
   background: #ffffff !important;
   border: 1px solid var(--line, #e5e5e5);
-  box-shadow: 0 20px 48px rgba(0,0,0,0.12);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.1);
 }
-.mega-menu h2 { margin: 0 0 20px 0; font: 40px/1.08 Georgia, serif; max-width: 650px; }
+.mega-menu h2 { margin: 0 0 16px 0; font: 32px/1.1 Georgia, serif; max-width: 580px; }
 .mega-visual {
-  min-height: 460px;
+  min-height: 240px;
   overflow: visible;
   border-radius: 0;
   background: transparent !important;
@@ -297,9 +297,9 @@ body.home-page .site-header:not(.scrolled) {
 }
 .mega-visual img {
   width: 100%;
-  max-width: 520px;
+  max-width: 360px;
   height: auto;
-  max-height: 520px;
+  max-height: 310px;
   object-fit: contain;
   object-position: bottom right;
   border-radius: 0;
