@@ -847,7 +847,7 @@ const pageMegaMenuData = {
     label: '',
     title: 'Heavyweight layers, oversized fits, cargos, sweatpants, jackets, and accessories.',
     href: 'men.html',
-    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=900&q=80',
+    image: 'https://images.unsplash.com/photo-1490578474895-699bc4e2cf59?auto=format&fit=crop&w=900&q=80',
     items: [['Oversized Tees', 'oversized-tees'], ['Heavyweight Tees', 'heavyweight-tees'], ['Hoodies', 'hoodies'], ['Zip Hoodies', 'zip-hoodies'], ['Cargo Pants', 'cargo-pants'], ['Sweatpants', 'sweatpants'], ['Jackets', 'jackets'], ['Shorts', 'shorts'], ['Accessories', 'accessories']]
   }
 };
