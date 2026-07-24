@@ -682,6 +682,9 @@ function renderAdminNotifications() {
     returnRequests = JSON.parse(localStorage.getItem('zavoraReturnRequests') || '[]');
   } catch(e) {}
 
+  // Filter out hardcoded fake/guest orders from demo array
+  orders = orders.filter(o => o && o.id && o.customer !== 'Guest Customer' && !String(o.email).includes('guest'));
+
   const seen = new Set();
   orders = orders.filter(o => o && o.id && !seen.has(String(o.id)) && seen.add(String(o.id)));
 
@@ -694,13 +697,39 @@ function renderAdminNotifications() {
   const allEvents = [];
 
   returnRequests.forEach((req) => {
+    const cleanOrderId = req.orderId ? '#' + String(req.orderId).replace(/^#+/, '') : 'N/A';
+    
+    let photoHTML = '';
+    if (Array.isArray(req.photos) && req.photos.length) {
+      photoHTML = `<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">` +
+        req.photos.map((p, idx) => `<a href="${p}" target="_blank" title="Photo ${idx+1}"><img src="${p}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #ccc;"></a>`).join('') +
+        `</div>`;
+    } else if (req.photosCount) {
+      photoHTML = `<div style="font-size:11px;color:#666;margin-top:4px;">📸 ${req.photosCount} Photo(s) Attached</div>`;
+    }
+
+    let videoHTML = '';
+    if (req.video) {
+      videoHTML = `<div style="margin-top:6px;"><video src="${req.video}" controls style="max-width:200px;max-height:100px;border-radius:4px;border:1px solid #ccc;"></video></div>`;
+    } else if (req.videoName && req.videoName !== 'No video attached') {
+      videoHTML = `<div style="font-size:11px;color:#1976d2;margin-top:4px;">🎥 Video file: ${req.videoName}</div>`;
+    }
+
     allEvents.push({
       type: 'Return Request',
-      title: `Return Request #${req.id} (Order #${req.orderId})`,
+      title: `Return Request #${req.id}`,
+      subtitle: `Order ${cleanOrderId}`,
       badge: 'gold',
       customer: req.name,
       email: req.email,
-      detail: `Reason: ${req.reason} | Desc: ${req.description} | 📸 ${req.photosCount || 0} Photos | 🎥 ${req.videoName || 'No video'}`,
+      detailHTML: `
+        <div style="font-size:12px;color:#333;">
+          <strong style="color:#050505;">Order ID:</strong> ${cleanOrderId} | <strong style="color:#050505;">Reason:</strong> ${req.reason || 'General Return'}
+          <div style="margin-top:4px;background:#f8f9fa;padding:6px 10px;border-radius:4px;border:1px solid #eee;font-size:12px;color:#444;">${req.description || 'No description provided.'}</div>
+          ${photoHTML}
+          ${videoHTML}
+        </div>
+      `,
       date: req.createdAt ? new Date(req.createdAt).toLocaleString() : 'Just now',
       action: 'Approve Return Label'
     });
@@ -708,20 +737,22 @@ function renderAdminNotifications() {
 
   orders.forEach((order) => {
     const isCancelled = String(order.status || '').toLowerCase().includes('cancel');
+    const cleanOrderId = '#' + String(order.id).replace(/^#+/, '');
     allEvents.push({
       type: isCancelled ? 'Cancellation Request' : 'New Order',
-      title: isCancelled ? `Order #${order.id} Cancelled by Customer` : `Order #${order.id} Placed`,
+      title: isCancelled ? `Order ${cleanOrderId} Cancelled` : `Order ${cleanOrderId} Placed`,
+      subtitle: '',
       badge: isCancelled ? 'red' : 'green',
-      customer: order.customer || 'Customer',
+      customer: order.customer || order.name || 'Zavora Customer',
       email: order.email || '',
-      detail: `Total Amount: ${money(order.total || 0)} (${order.status || 'Paid'})`,
+      detailHTML: `<span style="font-size:12px;color:#444;">Total Amount: <strong>${money(order.total || 0)}</strong> (${order.status || 'Paid'})</span>`,
       date: order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Just now',
       action: isCancelled ? 'Process Refund' : 'Process Order'
     });
   });
 
   if (!allEvents.length) {
-    list.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:#666;">No store notifications yet. New checkout orders and return requests will log here in real-time.</td></tr>`;
+    list.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:#666;">No store notifications yet. Real customer orders and return requests will log here in real-time.</td></tr>`;
     return;
   }
 
@@ -729,16 +760,17 @@ function renderAdminNotifications() {
     <tr>
       <td>
         <strong style="font-size:13px;color:#050505;display:block;">${n.title}</strong>
+        ${n.subtitle ? `<span style="font-size:11px;color:#555;display:block;margin-bottom:2px;">${n.subtitle}</span>` : ''}
         <span class="pill ${n.badge}">${n.type}</span>
       </td>
       <td>
         <strong style="font-size:12px;color:#333;">${n.customer}</strong>
-        <br><span style="font-size:11px;color:#666;">✉️ ${n.email}</span>
+        <br><span style="font-size:11px;color:#1976d2;">✉️ ${n.email}</span>
       </td>
-      <td><span style="font-size:12px;color:#444;max-width:320px;display:inline-block;">${n.detail}</span></td>
+      <td style="vertical-align:top;padding:12px;">${n.detailHTML}</td>
       <td><span style="font-size:11px;color:#555;">${n.date}</span></td>
       <td>
-        <button type="button" data-toast="Notification resolved: ${n.type}" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">${n.action}</button>
+        <button type="button" data-toast="Notification action completed: ${n.type}" style="padding:6px 12px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">${n.action}</button>
       </td>
     </tr>
   `).join('');

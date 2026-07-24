@@ -229,20 +229,24 @@ svg { max-width: 100%; }
 }
 .mobile-menu {
   display: none;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: 0;
   background: transparent;
-  padding: 0;
+  padding: 10px 8px;
   cursor: pointer;
   box-shadow: none;
   outline: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 .mobile-menu span {
   display: block;
   width: 22px;
   height: 2px;
-  margin: 4px auto;
+  margin: 0 auto;
   background: var(--text, #050505);
   border-radius: 2px;
   transition: transform .25s ease, opacity .25s ease;

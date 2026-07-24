@@ -4171,35 +4171,50 @@ document.addEventListener('submit', (event) => {
   if (event.target && event.target.id === 'returnRequestForm') {
     event.preventDefault();
     const form = event.target;
-    const orderId = form.querySelector('[name="orderId"]')?.value || '';
+    const rawOrderId = form.querySelector('[name="orderId"]')?.value || '';
+    const cleanOrderId = '#' + rawOrderId.replace(/^#+/, '');
     const email = form.querySelector('[name="email"]')?.value || '';
     const name = form.querySelector('[name="name"]')?.value || '';
     const reason = form.querySelector('[name="reason"]')?.value || '';
     const description = form.querySelector('[name="description"]')?.value || '';
-    const photos = form.querySelector('[name="photos"]')?.files;
-    const video = form.querySelector('[name="video"]')?.files?.[0];
+    const photoFiles = form.querySelector('[name="photos"]')?.files || [];
+    const videoFile = form.querySelector('[name="video"]')?.files?.[0];
 
-    const retId = 'RET-' + Math.floor(100000 + Math.random() * 900000);
-    const newRequest = {
-      id: retId,
-      orderId,
-      email,
-      name,
-      reason,
-      description,
-      photosCount: photos ? photos.length : 0,
-      videoName: video ? video.name : 'No video attached',
-      createdAt: new Date().toISOString()
-    };
+    const readAsDataURL = (file) => new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
 
-    try {
-      let requests = JSON.parse(localStorage.getItem('zavoraReturnRequests') || '[]');
-      requests.unshift(newRequest);
-      localStorage.setItem('zavoraReturnRequests', JSON.stringify(requests));
-    } catch(e) {}
+    const photoPromises = Array.from(photoFiles).slice(0, 5).map(readAsDataURL);
+    const videoPromise = videoFile ? readAsDataURL(videoFile) : Promise.resolve(null);
 
-    alert(`Return request submitted successfully!\n\nRequest ID: #${retId}\nOrder ID: ${orderId}\n\nOur team will review your photos & video clip within 24 hours.`);
-    form.reset();
+    Promise.all([Promise.all(photoPromises), videoPromise]).then(([photoDataUrls, videoDataUrl]) => {
+      const retId = 'RET-' + Math.floor(100000 + Math.random() * 900000);
+      const newRequest = {
+        id: retId,
+        orderId: cleanOrderId,
+        email,
+        name,
+        reason,
+        description,
+        photos: photoDataUrls.filter(Boolean),
+        photosCount: photoFiles ? photoFiles.length : 0,
+        video: videoDataUrl || null,
+        videoName: videoFile ? videoFile.name : null,
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        let requests = JSON.parse(localStorage.getItem('zavoraReturnRequests') || '[]');
+        requests.unshift(newRequest);
+        localStorage.setItem('zavoraReturnRequests', JSON.stringify(requests));
+      } catch(e) {}
+
+      alert(`Return request submitted successfully!\n\nRequest ID: #${retId}\nOrder ID: ${cleanOrderId}\n\nYour details, photos & video clip have been attached for Admin review.`);
+      form.reset();
+    });
   }
 
   if (event.target && event.target.id === 'reportIssueForm') {
