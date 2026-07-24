@@ -837,17 +837,17 @@ function normalizeHeaderSelectors() {
 
 const pageMegaMenuData = {
   women: {
-    label: 'Women edit',
+    label: '',
     title: 'Oversized tees, hoodies, sweat sets, jackets, and accessories for premium everyday styling.',
     href: 'women.html',
-    image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80',
     items: [['Oversized Tees', 'oversized-tees'], ['Baby Tees', 'baby-tees'], ['Hoodies', 'hoodies'], ['Cropped Hoodies', 'cropped-hoodies'], ['Sweatpants', 'sweatpants'], ['Jackets', 'jackets'], ['Accessories', 'accessories']]
   },
   men: {
-    label: 'Men edit',
+    label: '',
     title: 'Heavyweight layers, oversized fits, cargos, sweatpants, jackets, and accessories.',
     href: 'men.html',
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80',
+    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=900&q=80',
     items: [['Oversized Tees', 'oversized-tees'], ['Heavyweight Tees', 'heavyweight-tees'], ['Hoodies', 'hoodies'], ['Zip Hoodies', 'zip-hoodies'], ['Cargo Pants', 'cargo-pants'], ['Sweatpants', 'sweatpants'], ['Jackets', 'jackets'], ['Shorts', 'shorts'], ['Accessories', 'accessories']]
   }
 };
@@ -858,7 +858,15 @@ function initPageMegaMenu() {
   menu.dataset.ready = 'true';
   function update(type) {
     const data = pageMegaMenuData[type] || pageMegaMenuData.women;
-    menu.querySelector('.eyebrow').textContent = data.label;
+    const eyebrow = menu.querySelector('.eyebrow');
+    if (eyebrow) {
+      if (data.label) {
+        eyebrow.textContent = data.label;
+        eyebrow.style.display = 'block';
+      } else {
+        eyebrow.style.display = 'none';
+      }
+    }
     menu.querySelector('h2').textContent = data.title;
     const visual = menu.querySelector('.mega-visual');
     if (visual) {
@@ -866,7 +874,7 @@ function initPageMegaMenu() {
       const img = visual.querySelector('img');
       if (img) {
         img.src = data.image;
-        img.alt = `${data.label} Zavora Fashion`;
+        img.alt = `${type} Zavora Fashion`;
       }
     }
     menu.querySelector('.mega-grid').innerHTML = data.items.map((item) => {
@@ -1882,6 +1890,7 @@ function categoryMatches(productCategory, requestedCategory) {
 }
 
 function productsForCatalogPage(products, pageName) {
+  products = deduplicateProducts(products);
   const norm = normalizePageName(pageName);
   const urlCategory = new URLSearchParams(window.location.search).get('category');
   if (urlCategory) {
@@ -1901,6 +1910,23 @@ function productsForCatalogPage(products, pageName) {
   return products;
 }
 
+function deduplicateProducts(products) {
+  if (!Array.isArray(products)) return [];
+  const seenIds = new Set();
+  const seenTitles = new Set();
+  return products.filter((p) => {
+    if (!p || !p.id) return false;
+    const idKey = String(p.id);
+    const titleKey = String(p.name || p.title || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+    if (seenIds.has(idKey) || (titleKey && seenTitles.has(titleKey))) {
+      return false;
+    }
+    seenIds.add(idKey);
+    if (titleKey) seenTitles.add(titleKey);
+    return true;
+  });
+}
+
 async function fetchCatalogProducts(gender, limit = 1000) {
   const params = new URLSearchParams({
     gender,
@@ -1915,7 +1941,7 @@ async function fetchCatalogProducts(gender, limit = 1000) {
     const data = await response.json();
     if (response.ok && data.ok && Array.isArray(data.products) && data.products.length) return data.products;
   } catch (error) {}
-  const pages = [1, 2, 3, 4, 5, 6];
+  const pages = [1, 2, 3];
   const results = await Promise.all(pages.map((page) => (
     fetch(`/api/printful-products?gender=${gender}&limit=60&page=${page}`)
       .then((response) => response.json())
@@ -1927,16 +1953,21 @@ async function fetchCatalogProducts(gender, limit = 1000) {
 
 async function loadPrintfulCatalog() {
   const grid = document.querySelector('[data-catalog-grid]');
-  if (!grid || grid.dataset.printfulLoaded) return;
-  grid.dataset.printfulLoaded = 'true';
+  if (!grid || grid.dataset.printfulLoaded === 'completed') return;
+  grid.dataset.printfulLoaded = 'in-progress';
   try {
     const pageName = normalizePageName(window.location.pathname);
     const dataProducts = pageName === 'shop' || pageName === 'collections'
       ? (await Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))).flat()
       : await fetchCatalogProducts(pageName === 'women' ? 'women' : 'men', 1000);
     if (!dataProducts.length) return;
-    const products = productsForCatalogPage(dataProducts, pageName);
+    
+    const existing = window.__zavoraCatalogProducts || [];
+    const merged = deduplicateProducts([...existing, ...dataProducts]);
+    const products = productsForCatalogPage(merged, pageName);
+    
     window.__zavoraCatalogProducts = products;
+    grid.dataset.printfulLoaded = 'completed';
     grid.innerHTML = products.map(catalogCard).join('');
     filterLargeCatalog();
     refreshWishlistButtons();
