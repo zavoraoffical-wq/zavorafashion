@@ -113,94 +113,69 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
         <section class="admin-section" data-panel="products">
           <div class="admin-grid two">
             <article class="admin-card">
-              <div class="card-head"><h2>Add Product</h2><button data-toast="Draft product saved">Save draft</button></div>
+              <div class="card-head"><h2>Add Product</h2><button type="button" data-toast="Draft product saved">Save draft</button></div>
               <form class="admin-form" data-admin-product-form>
-                <input name="name" placeholder="Product name">
-                <div class="form-row"><input name="sku" placeholder="SKU" value="ZAV-2026-001"><button type="button" data-generate-sku>Generate SKU</button></div>
-                <div class="form-row"><input name="price" placeholder="Price"><input name="salePrice" placeholder="Sale price"></div>
-                <div class="form-row"><select name="category"><option value="women">Women</option><option value="men">Men</option><option value="limited">Limited Edition</option></select><select name="collection"><option value="new">New Arrivals</option><option value="best">Best Sellers</option><option value="essentials">Essentials</option></select></div>
-                <textarea name="description" placeholder="Product description"></textarea>
+                <input name="name" placeholder="Product Title (e.g. Zavora Oversized Tee)" required>
+                <div class="form-row"><input name="sku" placeholder="SKU" value="PF-901"><button type="button" data-generate-sku>Generate SKU</button></div>
+                <div class="form-row"><input name="price" placeholder="Price ($94.89)" required><input name="salePrice" placeholder="Original price ($120.00)"></div>
+                <div class="form-row">
+                  <select name="category">
+                    <option value="tees">Tees / T-Shirts</option>
+                    <option value="hoodies">Hoodies</option>
+                    <option value="pants">Pants & Sweatpants</option>
+                    <option value="accessories">Accessories & Hats</option>
+                    <option value="sweatshirts">Sweatshirts</option>
+                    <option value="limited">Limited Edition</option>
+                  </select>
+                  <select name="collection">
+                    <option value="shop">Shop All</option>
+                    <option value="women">Women Collection</option>
+                    <option value="men">Men Collection</option>
+                    <option value="new">New Arrivals</option>
+                    <option value="best">Best Sellers</option>
+                  </select>
+                </div>
+                <input name="img" placeholder="Product Image URL (https://...)" value="assets/studio-wide-trouser.png">
+                <textarea name="description" placeholder="Product description & fabric details..."></textarea>
                 <button type="submit" class="primary-admin">Add Product</button>
               </form>
             </article>
             <article class="admin-card">
-              <div class="card-head"><h2>Inventory Controls</h2><button data-toast="Bulk editor opened">Bulk edit</button></div>
+              <div class="card-head"><h2>Inventory & Catalog Tools</h2><button data-section-jump="categories">Categories</button></div>
               <div class="control-grid">
-                <button data-toast="Bulk upload ready">Bulk Upload</button>
+                <button data-section-jump="categories">Manage Categories</button>
                 <button data-section-jump="importer">Open Product Importer</button>
-                <button data-toast="Images manager opened">Product Images</button>
-                <button data-toast="Videos manager opened">Product Videos</button>
-                <button data-toast="SEO settings opened">SEO Settings</button>
-                <button data-toast="Stock synced">Stock Management</button>
-                <button data-toast="Color and size matrix opened">Colors and Sizes</button>
+                <button data-toast="Stock count synced across all channels">Sync Inventory</button>
+                <button data-toast="Size chart updated">Size & Fit Guide</button>
+                <button data-toast="SEO metadata generated">SEO Settings</button>
+                <button data-toast="Printful catalog sync active">Printful Integration</button>
               </div>
             </article>
           </div>
-          <article class="admin-card">
-            <div class="card-head"><h2>All Products</h2><button data-toast="Selected products deleted">Delete selected</button></div>
-            <table class="admin-table">
-              <thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody data-admin-product-list>
-                <tr><td>Noir Oversized Hoodie</td><td>Hoodies</td><td>42</td><td><span class="pill green">Active</span></td><td><button data-toast="Product editor opened">Edit</button></td></tr>
-                <tr><td>Gold Label Tee</td><td>T-Shirts</td><td>9</td><td><span class="pill gold">Low Stock</span></td><td><button data-toast="Product editor opened">Edit</button></td></tr>
-                <tr><td>Zavora Cropped Jacket</td><td>Limited</td><td>0</td><td><span class="pill">Draft</span></td><td><button data-toast="Product editor opened">Edit</button></td></tr>
-              </tbody>
-            </table>
-          </article>
-        </section>
-
-        <section class="admin-section" data-panel="importer">
-          <div class="admin-grid two">
-            <article class="admin-card">
-              <div class="card-head"><h2>Product Importer</h2><button data-import-printful>Bulk Import</button></div>
-              <form class="admin-form" data-printful-url-import>
-                <label>Printful URL
-                  <input name="url" type="url" placeholder="Paste Printful store, collection, category, or product URL">
-                </label>
-                <div class="form-row">
-                  <select name="gender">
-                    <option value="all">Auto gender</option>
-                    <option value="men">Men</option>
-                    <option value="women">Women</option>
-                  </select>
-                  <select name="mode">
-                    <option value="auto">Auto detect URL type</option>
-                    <option value="collection">Collection URL</option>
-                    <option value="category">Category URL</option>
-                    <option value="product">Product URL</option>
-                    <option value="store">Store URL</option>
-                  </select>
-                </div>
-                <div class="form-row">
-                  <input name="pages" type="number" min="1" max="10" value="6" placeholder="Pages">
-                  <input name="limit" type="number" min="12" max="60" value="60" placeholder="Products per page">
-                </div>
-                <button type="submit" class="primary-admin">Import Products</button>
-              </form>
-            </article>
-            <article class="admin-card">
-              <h2>Import Rules</h2>
-              <p>Paste any Printful catalog URL. Zavora detects collection/category/product intent, imports all variants, colors, sizes, mockups, gallery images, pricing, availability, and saves unique products only.</p>
-              <div class="metric-list" data-import-status>
-                <p><span>Status</span><strong>Ready</strong></p>
-                <p><span>Duplicates</span><strong>Skipped by Product ID</strong></p>
-                <p><span>Storage</span><strong>MongoDB + Supabase</strong></p>
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <div>
+                <h2>All Products List</h2>
+                <p style="font-size:12px;color:#666;margin-top:2px;">Manage live products, prices, website pages, and remove products.</p>
               </div>
-            </article>
-          </div>
-        </section>
-
-        <section class="admin-section" data-panel="orders">
-          <article class="admin-card">
-            <div class="card-head"><h2>Order Management</h2><button data-toast="Shipping labels queued">Print labels</button></div>
-            <div class="status-tabs">
-              <button class="active" data-status-filter="all">All Orders</button><button data-status-filter="pending">Pending</button><button data-status-filter="processing">Processing</button><button data-status-filter="packed">Packed</button><button data-status-filter="shipped">Shipped</button><button data-status-filter="delivered">Delivered</button><button data-status-filter="cancelled">Cancelled</button><button data-status-filter="returned">Returned</button><button data-status-filter="refunded">Refunded</button>
+              <span class="pill gold" data-admin-product-count>24 Products Live</span>
+            </div>
+            <div style="margin:12px 0;">
+              <input id="adminProductSearchInput" type="search" placeholder="🔍 Search products by title, SKU, or category..." style="width:100%;padding:10px 14px;border-radius:6px;border:1px solid #ccc;font-size:14px;">
             </div>
             <table class="admin-table">
-              <thead><tr><th>Order ID</th><th>Customer Details</th><th>Payment</th><th>Tracking</th><th>Documents</th></tr></thead>
-              <tbody>
-                <tr><td>#ZAV-1048</td><td>Mia Carter<br><span>mia@example.com</span></td><td>PayPal Paid</td><td>UPS 1Z9408</td><td><button data-toast="Invoice PDF generated">Invoice PDF</button></td></tr>
-                <tr><td>#ZAV-1047</td><td>Ethan Reed<br><span>ethan@example.com</span></td><td>PayPal Paid</td><td>USPS 9400</td><td><button data-toast="Shipping label printed">Print Label</button></td></tr>
+              <thead>
+                <tr>
+                  <th>Product (Image & ID)</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Website Page</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody data-admin-product-list>
+                <!-- Rendered dynamically by renderAdminProducts() -->
               </tbody>
             </table>
           </article>
@@ -208,16 +183,30 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
 
         <section class="admin-section" data-panel="customers">
           <div class="admin-grid three">
-            <article class="admin-card"><h2>Customer List</h2><p class="large-number">8,942</p><button data-toast="Customer export started">Export customers</button></article>
-            <article class="admin-card"><h2>Lifetime Value</h2><p class="large-number">$184</p><button data-toast="Segment builder opened">Create segment</button></article>
-            <article class="admin-card"><h2>Reward Points</h2><p class="large-number">2.4M</p><button data-toast="Rewards settings opened">Manage rewards</button></article>
+            <article class="admin-card"><h2>Customer List</h2><p class="large-number" data-admin-total-customers>8,942</p><button data-toast="Customer export started">Export customers</button></article>
+            <article class="admin-card"><h2>Active Orders</h2><p class="large-number" data-admin-total-customer-orders>0 Orders</p><button data-section-jump="orders">View orders</button></article>
+            <article class="admin-card"><h2>Wishlist Items</h2><p class="large-number" data-admin-total-customer-wishlist>14 Items</p><button data-toast="Wishlist analytics refreshed">Wishlist activity</button></article>
           </div>
-          <article class="admin-card">
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <h2>Customer Directory & Order History</h2>
+              <button data-toast="Refreshing customer records...">Refresh Directory</button>
+            </div>
+            <div style="margin:12px 0;">
+              <input id="adminCustomerSearchInput" type="search" placeholder="🔍 Search customers by name, email, phone, or address..." style="width:100%;padding:10px 14px;border-radius:6px;border:1px solid #ccc;font-size:14px;">
+            </div>
             <table class="admin-table">
-              <thead><tr><th>Customer</th><th>Orders</th><th>Wishlist</th><th>Address</th><th>Control</th></tr></thead>
-              <tbody>
-                <tr><td>Ava Brooks</td><td>12</td><td>6 items</td><td>Los Angeles, CA</td><td><button data-toast="Customer blocked">Block</button></td></tr>
-                <tr><td>Noah Stone</td><td>4</td><td>2 items</td><td>Brooklyn, NY</td><td><button data-toast="Order history opened">History</button></td></tr>
+              <thead>
+                <tr>
+                  <th>Customer Details</th>
+                  <th>Orders & Spent</th>
+                  <th>Saved Wishlist</th>
+                  <th>Shipping Address</th>
+                  <th>Control</th>
+                </tr>
+              </thead>
+              <tbody data-admin-customer-list>
+                <!-- Rendered dynamically by renderAdminCustomers() -->
               </tbody>
             </table>
           </article>
@@ -322,9 +311,139 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
           </div>
         </section>
 
-        <section class="admin-section" data-panel="categories"></section>
-        <section class="admin-section" data-panel="payments"></section>
-        <section class="admin-section" data-panel="shipping"></section>
+        <section class="admin-section" data-panel="categories">
+          <div class="admin-grid two">
+            <article class="admin-card">
+              <div class="card-head"><h2>Add Category</h2></div>
+              <form class="admin-form" data-admin-category-form>
+                <input name="name" placeholder="Category Name (e.g. Summer Streetwear)" required>
+                <input name="slug" placeholder="Slug (e.g. summer-streetwear)">
+                <select name="page">
+                  <option value="shop.html">Shop All Page (/shop.html)</option>
+                  <option value="shop.html?category=women">Women Collection (/shop.html?category=women)</option>
+                  <option value="shop.html?category=men">Men Collection (/shop.html?category=men)</option>
+                  <option value="index.html#new">Home New Arrivals (index.html#new)</option>
+                  <option value="index.html#best">Home Best Sellers (index.html#best)</option>
+                </select>
+                <textarea name="description" placeholder="Category description for SEO..."></textarea>
+                <button type="submit" class="primary-admin">Create Category</button>
+              </form>
+            </article>
+
+            <article class="admin-card">
+              <h2>Category Navigation & Store Info</h2>
+              <p style="font-size:13px;color:#666;line-height:1.55;">Manage product categories and store tags. Categories map directly to storefront filters, navigation menu links, and search queries.</p>
+              <div class="control-grid" style="margin-top:16px;">
+                <button data-toast="Store menu synced">Sync Navigation Menu</button>
+                <button data-toast="Category banners updated">Category Banners</button>
+              </div>
+            </article>
+          </div>
+
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <h2>Category Manager</h2>
+              <span class="pill green" data-admin-category-count>9 Categories</span>
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Category Name</th>
+                  <th>Products Count</th>
+                  <th>Website Page Link</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody data-admin-category-list>
+                <!-- Rendered dynamically by renderAdminCategories() -->
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section class="admin-section" data-panel="payments">
+          <div class="admin-grid two">
+            <article class="admin-card">
+              <div class="card-head"><h2>Active Payment Gateways</h2></div>
+              <div class="control-grid">
+                <button style="border-left:4px solid #2e7d32;"><strong>PayPal Gateway</strong><br><small>Active & Connected</small></button>
+                <button style="opacity:0.85;"><strong>Credit/Debit Card</strong><br><small>Integrated via PayPal</small></button>
+                <button style="opacity:0.75;"><strong>Apple Pay</strong><br><small>Coming Soon</small></button>
+                <button style="opacity:0.75;"><strong>Google Pay</strong><br><small>Coming Soon</small></button>
+              </div>
+            </article>
+
+            <article class="admin-card">
+              <h2>Payment Metrics</h2>
+              <div class="metric-list">
+                <p><span>Live Orders Processed</span><strong data-admin-payments-count>0 Orders</strong></p>
+                <p><span>Total Captured Volume</span><strong data-admin-payments-revenue>$0.00</strong></p>
+                <p><span>Primary Currency</span><strong>USD ($)</strong></p>
+              </div>
+            </article>
+          </div>
+
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <h2>Payment Transaction Logs</h2>
+              <button data-toast="Payment report exported">Export Report</button>
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Transaction ID</th>
+                  <th>Customer Details</th>
+                  <th>Purchased Product Items</th>
+                  <th>Amount Paid & Method</th>
+                  <th>Date & Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody data-admin-payment-list>
+                <!-- Rendered dynamically by renderAdminPayments() -->
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section class="admin-section" data-panel="shipping">
+          <div class="admin-grid two">
+            <article class="admin-card">
+              <div class="card-head"><h2>Shipping Rates & Delivery Manager</h2><button type="button" data-toast="Default shipping restored">Reset Defaults</button></div>
+              <form class="admin-form" data-admin-shipping-form>
+                <label>Free Shipping Minimum Order ($)
+                  <input name="freeShippingMin" type="number" value="75" step="1">
+                </label>
+                <div class="form-row">
+                  <label>Standard USA Shipping Rate ($)
+                    <input name="standardRate" type="number" value="9.99" step="0.01">
+                  </label>
+                  <label>Express 2-Day Shipping Rate ($)
+                    <input name="expressRate" type="number" value="19.99" step="0.01">
+                  </label>
+                </div>
+                <label>Estimated Delivery Time Note
+                  <input name="deliveryEstimate" value="2-4 Business Days (USA)">
+                </label>
+                <label>Courier Partners
+                  <input name="couriers" value="USPS Priority Mail, UPS Ground, FedEx Express">
+                </label>
+                <button type="submit" class="primary-admin">Save Shipping Rules</button>
+              </form>
+            </article>
+
+            <article class="admin-card">
+              <h2>Fulfillment & Carrier Setup</h2>
+              <p style="font-size:13px;color:#666;line-height:1.55;">Configure store shipping rules, free shipping thresholds, and estimated delivery commitments. These settings sync with the Checkout page shipping options.</p>
+              <div class="metric-list" style="margin-top:16px;">
+                <p><span>Primary Shipping Zone</span><strong>United States (USA)</strong></p>
+                <p><span>Free Shipping Coupon</span><strong>FREESHIP (Min $75)</strong></p>
+                <p><span>Fulfillment Partner</span><strong>Printful USA Warehouse</strong></p>
+              </div>
+            </article>
+          </div>
+        </section>
         <section class="admin-section" data-panel="coupons"></section>
         <section class="admin-section" data-panel="wishlist"></section>
         <section class="admin-section" data-panel="affiliates">

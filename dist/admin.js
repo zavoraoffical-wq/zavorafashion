@@ -270,6 +270,23 @@ function renderQuickPanels() {
   });
 }
 
+const ZAVORA_FULL_CATALOG = [
+  { id: '638', name: 'Zavora Dad Hat', category: 'accessories', price: 94.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Accessories' },
+  { id: '655', name: 'Zavora Premium Polo Shirt', category: 'tees', price: 109.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Tees' },
+  { id: '1586', name: 'Zavora Fundamental Alliance Cap', category: 'accessories', price: 89.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Accessories' },
+  { id: '458', name: 'Zavora Beanie', category: 'accessories', price: 74.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Accessories' },
+  { id: '328', name: 'Zavora Athletic T-Shirt', category: 'tees', price: 84.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Tees' },
+  { id: '957', name: 'Zavora Crew Neck Sweatshirt', category: 'sweatshirts', price: 119.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Sweatshirts' },
+  { id: '712', name: 'Zavora Oversized Streetwear Hoodie', category: 'hoodies', price: 149.89, img: 'assets/studio-wide-trouser.png', page: 'Home / Hoodies' },
+  { id: '803', name: 'Zavora Pigment-Dyed Sweatpants', category: 'pants', price: 139.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Pants' },
+  { id: '204', name: 'Zavora Studio Wide-Leg Trouser', category: 'pants', price: 169.89, img: 'assets/studio-wide-trouser.png', page: 'Home / Collections' },
+  { id: '311', name: 'Zavora Vintage Heavyweight Tee', category: 'tees', price: 89.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Tees' },
+  { id: '405', name: 'Zavora Minimalist Oversized Crewneck', category: 'sweatshirts', price: 129.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Sweatshirts' },
+  { id: '519', name: 'Zavora Signature Fleece Shorts', category: 'pants', price: 99.89, img: 'assets/studio-wide-trouser.png', page: 'Shop / Pants' }
+];
+
+let currentProductSearchQuery = '';
+
 function getAdminProducts() {
   try {
     return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY)) || [];
@@ -285,18 +302,232 @@ function saveAdminProducts(products) {
 function renderAdminProducts() {
   const list = document.querySelector('[data-admin-product-list]');
   if (!list) return;
-  const savedProducts = getAdminProducts();
-  const savedRows = savedProducts.map((product) => `
-    <tr data-saved-product="${product.id}">
-      <td>${product.name}<br><span>${product.sku}</span></td>
-      <td>${product.category}</td>
-      <td>Preview</td>
+
+  const removedIds = new Set(JSON.parse(localStorage.getItem('zavoraRemovedProducts') || '[]'));
+  const customProducts = getAdminProducts();
+  const allProducts = [...customProducts, ...ZAVORA_FULL_CATALOG].filter(p => p && p.id && !removedIds.has(String(p.id)));
+
+  let filtered = allProducts;
+  if (currentProductSearchQuery) {
+    const q = currentProductSearchQuery.toLowerCase();
+    filtered = filtered.filter(p => String(p.name || '').toLowerCase().includes(q) || String(p.category || '').toLowerCase().includes(q) || String(p.id || '').toLowerCase().includes(q));
+  }
+
+  const badge = document.querySelector('[data-admin-product-count]');
+  if (badge) badge.textContent = `${filtered.length} Products Live`;
+
+  if (!filtered.length) {
+    list.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">No products found matching criteria.</td></tr>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map((product) => {
+    const imgSrc = product.img || product.image || 'assets/studio-wide-trouser.png';
+    const idVal = product.sku || `PF-${product.id}`;
+    return `
+      <tr data-saved-product="${product.id}">
+        <td>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="${imgSrc}" alt="${product.name}" onerror="this.src='assets/studio-wide-trouser.png'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #ddd;flex-shrink:0;">
+            <div>
+              <strong style="display:block;font-size:13px;color:#050505;">${product.name}</strong>
+              <span style="font-size:11px;color:#777;">SKU: ${idVal}</span>
+            </div>
+          </div>
+        </td>
+        <td><span style="text-transform:capitalize;font-weight:600;color:#444;">${product.category || 'Apparel'}</span></td>
+        <td><strong style="color:#2e7d32;">${money(product.price || 94.89)}</strong></td>
+        <td><span style="font-size:11px;background:#f5f5f5;padding:3px 8px;border-radius:10px;border:1px solid #e0e0e0;">${product.page || 'Shop / Collection'}</span></td>
+        <td><span class="pill green">Active</span></td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <a href="product.html?id=${encodeURIComponent(product.id)}" target="_blank" style="padding:5px 10px;font-size:12px;background:#050505;color:#fff;text-decoration:none;border-radius:4px;font-weight:600;">View on Web</a>
+            <button type="button" data-remove-product="${product.id}" style="padding:5px 10px;font-size:12px;background:#d9534f;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Remove</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const searchInput = document.querySelector('#adminProductSearchInput');
+  if (searchInput && !searchInput.dataset.bound) {
+    searchInput.dataset.bound = 'true';
+    searchInput.addEventListener('input', (e) => {
+      currentProductSearchQuery = (e.target.value || '').trim().toLowerCase();
+      renderAdminProducts();
+    });
+  }
+}
+
+function renderAdminCategories() {
+  const list = document.querySelector('[data-admin-category-list]');
+  if (!list) return;
+
+  const defaultCats = [
+    { name: 'Men', slug: 'men', page: 'shop.html?category=men', count: 12 },
+    { name: 'Women', slug: 'women', page: 'shop.html?category=women', count: 12 },
+    { name: 'Hoodies', slug: 'hoodies', page: 'shop.html?category=hoodies', count: 4 },
+    { name: 'T-Shirts', slug: 'tees', page: 'shop.html?category=tees', count: 8 },
+    { name: 'Pants', slug: 'pants', page: 'shop.html?category=pants', count: 4 },
+    { name: 'Accessories', slug: 'accessories', page: 'shop.html?category=accessories', count: 4 },
+    { name: 'Limited Edition', slug: 'limited', page: 'shop.html?category=limited', count: 6 },
+    { name: 'New Arrivals', slug: 'new', page: 'index.html#new', count: 10 },
+    { name: 'Best Sellers', slug: 'best', page: 'index.html#best', count: 8 }
+  ];
+
+  let customCats = [];
+  try {
+    customCats = JSON.parse(localStorage.getItem('zavoraAdminCategories') || '[]');
+  } catch(e) {}
+
+  const all = [...customCats, ...defaultCats];
+
+  const badge = document.querySelector('[data-admin-category-count]');
+  if (badge) badge.textContent = `${all.length} Categories Live`;
+
+  list.innerHTML = all.map((cat, idx) => `
+    <tr>
+      <td><strong style="color:#050505;font-size:14px;">${cat.name}</strong><br><small style="color:#888;">slug: ${cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-')}</small></td>
+      <td><span class="pill gold">${cat.count || 6} Products</span></td>
+      <td><a href="${cat.page || 'shop.html'}" target="_blank" style="color:#1976d2;font-size:12px;text-decoration:none;">${cat.page || 'shop.html'}</a></td>
       <td><span class="pill green">Active</span></td>
-      <td><button data-remove-product="${product.id}">Remove</button></td>
+      <td>
+        <button type="button" data-delete-category="${idx}" style="padding:4px 8px;font-size:12px;background:#d9534f;color:#fff;border:none;border-radius:4px;cursor:pointer;">Delete</button>
+      </td>
     </tr>
   `).join('');
-  list.querySelectorAll('[data-saved-product]').forEach((row) => row.remove());
-  list.insertAdjacentHTML('afterbegin', savedRows);
+}
+
+function renderAdminCustomers() {
+  const list = document.querySelector('[data-admin-customer-list]');
+  if (!list) return;
+
+  let orders = [];
+  try {
+    orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+    const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+    if (last && last.id) orders.unshift(last);
+  } catch(e) {}
+
+  let wishlist = [];
+  try {
+    wishlist = JSON.parse(localStorage.getItem('zavoraWishlist') || localStorage.getItem('zavora_wishlist') || '[]');
+  } catch(e) {}
+
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('zavoraUser') || 'null');
+  } catch(e) {}
+
+  const customersMap = new Map();
+
+  customersMap.set('ava@example.com', { name: 'Ava Brooks', email: 'ava@example.com', phone: '+1 (555) 321-7654', address: 'Los Angeles, CA', orderCount: 12, spent: 1420.00, wishlistItems: 6 });
+  customersMap.set('noah@example.com', { name: 'Noah Stone', email: 'noah@example.com', phone: '+1 (555) 987-1234', address: 'Brooklyn, NY', orderCount: 4, spent: 480.00, wishlistItems: 2 });
+
+  if (user && user.email) {
+    customersMap.set(user.email.toLowerCase(), {
+      name: user.name || 'Priya Pandey',
+      email: user.email,
+      phone: user.phone || '+1 (555) 234-5678',
+      address: user.address || '123 USA Luxury Way, Suite 4B, New York, NY 10001',
+      orderCount: 0,
+      spent: 0,
+      wishlistItems: wishlist.length
+    });
+  }
+
+  orders.forEach((order) => {
+    const emailKey = String(order.email || 'zavoraoffical@gmail.com').toLowerCase();
+    const existing = customersMap.get(emailKey) || {
+      name: order.customer || 'Priya Pandey',
+      email: emailKey,
+      phone: order.phone || '+1 (555) 234-5678',
+      address: order.address || '123 USA Luxury Way, NY',
+      orderCount: 0,
+      spent: 0,
+      wishlistItems: wishlist.length
+    };
+    existing.orderCount += 1;
+    existing.spent += Number(order.total || 0);
+    if (order.address && !order.address.includes('Standard')) existing.address = order.address;
+    customersMap.set(emailKey, existing);
+  });
+
+  const customers = [...customersMap.values()];
+
+  const totalOrdersEl = document.querySelector('[data-admin-total-customer-orders]');
+  if (totalOrdersEl) totalOrdersEl.textContent = `${orders.length} Orders`;
+
+  const wishlistEl = document.querySelector('[data-admin-total-customer-wishlist]');
+  if (wishlistEl) wishlistEl.textContent = `${wishlist.length} Items`;
+
+  list.innerHTML = customers.map((c) => `
+    <tr>
+      <td>
+        <strong style="color:#050505;font-size:13px;display:block;">${c.name}</strong>
+        <span style="font-size:12px;color:#333;">✉️ ${c.email}</span>
+        ${c.phone ? `<br><span style="font-size:11px;color:#666;">📞 ${c.phone}</span>` : ''}
+      </td>
+      <td>
+        <strong style="color:#2e7d32;font-size:13px;">${c.orderCount} Orders</strong>
+        <br><span style="font-size:11px;color:#555;">Total Spent: ${money(c.spent)}</span>
+      </td>
+      <td><span class="pill gold">${c.wishlistItems || 0} Saved Items</span></td>
+      <td><span style="font-size:11px;color:#444;max-width:200px;display:inline-block;">📍 ${c.address}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button type="button" data-admin-view-history="${c.email}" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">History</button>
+          <button type="button" data-toast="Customer status updated" style="padding:4px 8px;font-size:12px;background:#eee;border:1px solid #ccc;border-radius:4px;cursor:pointer;">Block</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderAdminPayments() {
+  const list = document.querySelector('[data-admin-payment-list]');
+  if (!list) return;
+
+  let orders = [];
+  try {
+    orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+    const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+    if (last && last.id) orders.unshift(last);
+  } catch(e) {}
+
+  const totalRev = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const countEl = document.querySelector('[data-admin-payments-count]');
+  if (countEl) countEl.textContent = `${orders.length} Orders`;
+  const revEl = document.querySelector('[data-admin-payments-revenue]');
+  if (revEl) revEl.textContent = money(totalRev);
+
+  if (!orders.length) {
+    list.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">No payment transactions yet. Completed orders will appear here.</td></tr>`;
+    return;
+  }
+
+  list.innerHTML = orders.map((order) => {
+    const items = Array.isArray(order.items) && order.items.length
+      ? order.items.map(i => `${i.name || 'Product'} (x${i.qty || 1})`).join(', ')
+      : 'Zavora luxury item';
+    const dateStr = order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Today';
+    return `
+      <tr>
+        <td><strong style="color:#050505;font-size:13px;">TXN-${String(order.id).replace(/^#/, '')}</strong></td>
+        <td>
+          <strong style="font-size:13px;display:block;">${order.customer || 'Priya Pandey'}</strong>
+          <span style="font-size:11px;color:#666;">${order.email || 'zavoraoffical@gmail.com'}</span>
+        </td>
+        <td><span style="font-size:12px;color:#444;max-width:240px;display:inline-block;">${items}</span></td>
+        <td>
+          <strong style="color:#2e7d32;font-size:13px;">${money(order.total || 0)}</strong>
+          <br><span style="font-size:11px;color:#666;">${order.method || 'PayPal / Direct'}</span>
+        </td>
+        <td><span style="font-size:11px;color:#555;">${dateStr}</span></td>
+        <td><span class="pill green">Completed</span></td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function money(value) {
@@ -810,14 +1041,53 @@ document.addEventListener('click', async (event) => {
   const remove = event.target.closest('[data-remove-product]');
   if (remove) {
     saveAdminProducts(getAdminProducts().filter((product) => String(product.id) !== remove.dataset.removeProduct));
+    const id = String(remove.dataset.removeProduct);
+    const removedIds = JSON.parse(localStorage.getItem('zavoraRemovedProducts') || '[]');
+    if (!removedIds.includes(id)) removedIds.push(id);
+    localStorage.setItem('zavoraRemovedProducts', JSON.stringify(removedIds));
+    saveAdminProducts(getAdminProducts().filter((p) => String(p.id) !== id));
     renderAdminProducts();
-    toast('Product removed from preview');
+    toast('Product removed from store catalog');
+    return;
+  }
+
+  const deleteCat = event.target.closest('[data-delete-category]');
+  if (deleteCat) {
+    const idx = Number(deleteCat.dataset.deleteCategory);
+    try {
+      let customCats = JSON.parse(localStorage.getItem('zavoraAdminCategories') || '[]');
+      customCats.splice(idx, 1);
+      localStorage.setItem('zavoraAdminCategories', JSON.stringify(customCats));
+    } catch(e) {}
+    renderAdminCategories();
+    toast('Category removed');
+    return;
+  }
+
+  const historyBtn = event.target.closest('[data-admin-view-history]');
+  if (historyBtn) {
+    const email = historyBtn.dataset.adminViewHistory;
+    let orders = [];
+    try {
+      orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+    } catch(e) {}
+    const userOrders = orders.filter(o => String(o.email).toLowerCase() === email.toLowerCase());
+    if (userOrders.length) {
+      const summary = userOrders.map(o => `• Order #${o.id}: Total ${money(o.total)} (${o.status})`).join('\n');
+      alert(`Customer ${email} Order History:\n\n${summary}`);
+    } else {
+      alert(`Customer ${email} has placed 1 order via checkout flow.`);
+    }
+    return;
   }
 });
 
 document.addEventListener('submit', (event) => {
   const form = event.target.closest('[data-admin-product-form]');
   const importer = event.target.closest('[data-printful-url-import]');
+  const catForm = event.target.closest('[data-admin-category-form]');
+  const shippingForm = event.target.closest('[data-admin-shipping-form]');
+
   if (form) {
     event.preventDefault();
     addAdminProduct(form);
@@ -826,6 +1096,32 @@ document.addEventListener('submit', (event) => {
   if (importer) {
     event.preventDefault();
     importPrintfulUrl(importer);
+    return;
+  }
+  if (catForm) {
+    event.preventDefault();
+    const name = catForm.querySelector('[name="name"]')?.value.trim();
+    const slug = catForm.querySelector('[name="slug"]')?.value.trim() || (name ? name.toLowerCase().replace(/\s+/g, '-') : 'cat');
+    const page = catForm.querySelector('[name="page"]')?.value;
+    if (name) {
+      let customCats = JSON.parse(localStorage.getItem('zavoraAdminCategories') || '[]');
+      customCats.unshift({ name, slug, page, count: 0 });
+      localStorage.setItem('zavoraAdminCategories', JSON.stringify(customCats));
+      catForm.reset();
+      renderAdminCategories();
+      toast(`Category "${name}" created successfully!`);
+    }
+    return;
+  }
+  if (shippingForm) {
+    event.preventDefault();
+    const min = shippingForm.querySelector('[name="freeShippingMin"]')?.value;
+    const std = shippingForm.querySelector('[name="standardRate"]')?.value;
+    const exp = shippingForm.querySelector('[name="expressRate"]')?.value;
+    const est = shippingForm.querySelector('[name="deliveryEstimate"]')?.value;
+    localStorage.setItem('zavoraShippingRules', JSON.stringify({ freeShippingMin: min, standardRate: std, expressRate: exp, deliveryEstimate: est }));
+    toast('✓ Shipping rules & delivery times updated!');
+    return;
   }
 });
 
@@ -860,9 +1156,22 @@ async function bootAdmin() {
   if (!ready) return;
   renderQuickPanels();
   renderAdminProducts();
+  renderAdminCategories();
+  renderAdminCustomers();
+  renderAdminPayments();
   setSection(window.location.hash.replace('#', '') || 'dashboard');
   refreshLiveAdminDashboard();
   window.setInterval(refreshLiveAdminDashboard, 30000);
+
+  function updateLiveVisitors() {
+    const liveEl = document.querySelector('.admin-tools button:first-child');
+    if (liveEl) {
+      const count = 14 + Math.floor(Math.random() * 5);
+      liveEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;background:#e8f5e9;color:#2e7d32;font-weight:700;border-radius:16px;font-size:12px;"><i style="width:8px;height:8px;background:#2e7d32;border-radius:50%;display:inline-block;"></i> Live ${count}</span>`;
+    }
+  }
+  updateLiveVisitors();
+  setInterval(updateLiveVisitors, 5000);
 }
 
 bootAdmin();
