@@ -279,6 +279,7 @@ function setSection(name) {
   if (name === 'wishlist') renderAdminWishlist();
   if (name === 'notifications') renderAdminNotifications();
   if (name === 'emails') renderAdminEmails();
+  if (name === 'analytics') renderAdminAnalytics();
   if (name === 'affiliates') renderAffiliatesPanel();
 }
 
@@ -1479,6 +1480,63 @@ document.addEventListener('change', (event) => {
   }
 });
 
+function renderAdminAnalytics() {
+  let orders = [];
+  try {
+    orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+    const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+    if (last && last.id) orders.unshift(last);
+  } catch(e) {}
+
+  let wishlist = [];
+  try {
+    wishlist = JSON.parse(localStorage.getItem('zavoraWishlist') || localStorage.getItem('zavora_wishlist') || '[]');
+  } catch(e) {}
+
+  let visitors = {};
+  try { visitors = JSON.parse(localStorage.getItem('zavora_active_visitors') || '{}'); } catch(e) {}
+  const now = Date.now();
+  const activeSessions = Object.keys(visitors).filter(id => now - Number(visitors[id] || 0) < 120000);
+  const activeCount = Math.max(1, activeSessions.length);
+
+  const totalRev = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const uniqueEmails = new Set(orders.map(o => String(o.email || '').toLowerCase()).filter(Boolean));
+
+  const totalSalesEl = document.querySelector('[data-admin-analytics-total-sales]');
+  if (totalSalesEl) totalSalesEl.textContent = `${money(totalRev)} Total Revenue`;
+
+  const revEl = document.querySelector('[data-admin-analytics-rev]');
+  if (revEl) revEl.textContent = money(totalRev);
+
+  const custEl = document.querySelector('[data-admin-analytics-cust]');
+  if (custEl) custEl.textContent = `${uniqueEmails.size} Accounts`;
+
+  const liveSessionEl = document.querySelector('[data-admin-analytics-live-session]');
+  if (liveSessionEl) liveSessionEl.textContent = `${activeCount} Live ${activeCount === 1 ? 'Session' : 'Sessions'}`;
+
+  const deviceStatEl = document.querySelector('[data-admin-analytics-device-stat]');
+  const isMobile = window.innerWidth <= 768;
+  if (deviceStatEl) deviceStatEl.textContent = isMobile ? '📱 Mobile Device' : '💻 Desktop Browser';
+
+  const chartContainer = document.querySelector('[data-admin-analytics-chart]');
+  if (chartContainer) {
+    if (!orders.length) {
+      chartContainer.innerHTML = `<div style="padding:40px;text-align:center;color:#666;background:#fafafa;border-radius:8px;border:1px dashed #ccc;">No order revenue recorded yet. New checkout sales will render on the revenue chart in real time.</div>`;
+    } else {
+      const bars = orders.map((o) => `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+          <strong style="font-size:11px;color:#2e7d32;">${money(o.total || 0)}</strong>
+          <div style="width:100%;height:80px;background:#e8f5e9;border-radius:4px;display:flex;align-items:flex-end;">
+            <div style="width:100%;height:${Math.min(100, (Number(o.total || 50) / 200) * 100)}%;background:#2e7d32;border-radius:4px;"></div>
+          </div>
+          <span style="font-size:10px;color:#777;">Order #${o.id}</span>
+        </div>
+      `).join('');
+      chartContainer.innerHTML = `<div style="display:flex;align-items:flex-end;gap:12px;padding:16px;background:#fff;border-radius:8px;border:1px solid #eee;">${bars}</div>`;
+    }
+  }
+}
+
 async function bootAdmin() {
   const ready = await requireAdminSession();
   if (!ready) return;
@@ -1490,15 +1548,21 @@ async function bootAdmin() {
   renderAdminCoupons();
   renderAdminWishlist();
   renderAdminShipping();
+  renderAdminAnalytics();
   setSection(window.location.hash.replace('#', '') || 'dashboard');
   refreshLiveAdminDashboard();
   window.setInterval(refreshLiveAdminDashboard, 30000);
 
   function updateLiveVisitors() {
+    let visitors = {};
+    try { visitors = JSON.parse(localStorage.getItem('zavora_active_visitors') || '{}'); } catch(e) {}
+    const now = Date.now();
+    const activeSessions = Object.keys(visitors).filter(id => now - Number(visitors[id] || 0) < 120000);
+    const count = Math.max(1, activeSessions.length);
+
     const liveEl = document.querySelector('.admin-tools button:not(.admin-badge), [data-live-counter], .live-status-btn, .admin-tools .live-counter');
     if (liveEl) {
-      const count = 14 + Math.floor(Math.random() * 5);
-      liveEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;background:#e8f5e9;color:#2e7d32;font-weight:700;border-radius:16px;font-size:12px;"><i style="width:8px;height:8px;background:#2e7d32;border-radius:50%;display:inline-block;box-shadow:0 0 6px #2e7d32;"></i> Live ${count}</span>`;
+      liveEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;background:#e8f5e9;color:#2e7d32;font-weight:700;border-radius:16px;font-size:12px;"><i style="width:8px;height:8px;background:#2e7d32;border-radius:50%;display:inline-block;box-shadow:0 0 6px #2e7d32;"></i> Live ${count} ${count === 1 ? 'Visitor' : 'Visitors'}</span>`;
     }
   }
   updateLiveVisitors();

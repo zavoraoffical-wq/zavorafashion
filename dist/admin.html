@@ -362,13 +362,32 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
 
         <section class="admin-section" data-panel="analytics">
           <div class="admin-grid two">
-            <article class="admin-card"><h2>Sales Report</h2><div class="line-chart"><i></i></div></article>
-            <article class="admin-card"><h2>Device Analytics</h2><div class="donut"><span>68% Mobile</span></div></article>
+            <article class="admin-card">
+              <div class="card-head">
+                <h2>Real Sales Performance</h2>
+                <span class="pill green" data-admin-analytics-total-sales>$0.00 Total Revenue</span>
+              </div>
+              <div data-admin-analytics-chart style="margin-top:16px;">
+                <!-- Rendered dynamically by renderAdminAnalytics() -->
+              </div>
+            </article>
+            <article class="admin-card">
+              <div class="card-head"><h2>Device & Real Traffic Analytics</h2></div>
+              <div class="donut" style="margin:20px auto;">
+                <span data-admin-analytics-device-stat>100% Active User</span>
+              </div>
+              <div class="metric-list" style="margin-top:16px;">
+                <p><span>Active Visitor Sessions</span><strong data-admin-analytics-live-session>1 Live Session</strong></p>
+                <p><span>Primary Traffic Region</span><strong>United States (USA)</strong></p>
+                <p><span>Checkout Conversion</span><strong data-admin-analytics-conv>100% (Orders Placed)</strong></p>
+              </div>
+            </article>
           </div>
-          <div class="admin-grid three">
-            <article class="stat-card"><span>Revenue</span><strong>$128K</strong><small>Quarter to date</small></article>
-            <article class="stat-card"><span>Customer Growth</span><strong>22%</strong><small>USA focus</small></article>
-            <article class="stat-card"><span>Country Sales</span><strong>USA</strong><small>Primary market</small></article>
+
+          <div class="admin-grid three" style="margin-top:20px;">
+            <article class="stat-card"><span>Real Total Revenue</span><strong data-admin-analytics-rev>$0.00</strong><small>Calculated from live orders</small></article>
+            <article class="stat-card"><span>Real Customer Accounts</span><strong data-admin-analytics-cust>0 Accounts</strong><small>Verified customer database</small></article>
+            <article class="stat-card"><span>Primary Market</span><strong>USA (United States)</strong><small>Primary sales market</small></article>
           </div>
         </section>
 

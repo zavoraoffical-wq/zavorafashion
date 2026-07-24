@@ -3855,3 +3855,23 @@ function initHomeBanners() {
 
 initHomeBanners();
 }
+
+function trackLiveVisitorSession() {
+  try {
+    const sid = sessionStorage.getItem('zavora_session_id') || `sess_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    sessionStorage.setItem('zavora_session_id', sid);
+
+    let visitors = {};
+    try { visitors = JSON.parse(localStorage.getItem('zavora_active_visitors') || '{}'); } catch(e) {}
+
+    const now = Date.now();
+    Object.keys(visitors).forEach(id => {
+      if (now - Number(visitors[id] || 0) > 120000) delete visitors[id];
+    });
+
+    visitors[sid] = now;
+    localStorage.setItem('zavora_active_visitors', JSON.stringify(visitors));
+  } catch(e) {}
+}
+trackLiveVisitorSession();
+setInterval(trackLiveVisitorSession, 4000);
