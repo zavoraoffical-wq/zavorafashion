@@ -191,13 +191,11 @@ async function renderAffiliatesPanel() {
         ${apps.map((app) => {
           const refCode = (app.affiliateId || app.coupon || ('ZAF' + (app.fullName || '').replace(/\s+/g, '').toUpperCase())).toUpperCase();
           const referredOrders = orders.filter(o => o.refCode === refCode || (o.coupon && o.coupon.toUpperCase() === refCode));
-          const salesCount = referredOrders.length > 0 ? referredOrders.length : (app.email.includes('vp538028') ? 3 : 2);
-          const totalRevenue = referredOrders.reduce((sum, o) => sum + Number(o.total || 0), 0) || (app.email.includes('vp538028') ? 489.65 : 329.80);
+          const salesCount = referredOrders.length;
+          const totalRevenue = referredOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
           const commissionRate = app.commission || 10;
           const totalEarnings = (totalRevenue * (commissionRate / 100)).toFixed(2);
-          const customerEmails = referredOrders.length > 0
-            ? referredOrders.map(o => o.email).join(', ')
-            : (app.email.includes('vp538028') ? 'zavoraoffical@gmail.com, ava@example.com' : 'priya@example.com, sam@example.com');
+          const customerEmails = referredOrders.length > 0 ? referredOrders.map(o => o.email).join(', ') : 'No referral sales yet';
 
           return `
           <tr data-affiliate-id="${app.id}">
@@ -570,13 +568,20 @@ function renderAdminCoupons() {
   const list = document.querySelector('[data-admin-coupon-list]');
   if (!list) return;
 
+  let orders = [];
+  try {
+    orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+    const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+    if (last && last.id) orders.unshift(last);
+  } catch(e) {}
+
   const defaultCoupons = [
-    { code: 'SUMMER15', type: '15% OFF', details: 'Valid on all Summer Collection', usage: 28, users: 'customer@zavorafashion.com, ava@example.com', totalDiscount: 412.50, status: 'Active' },
-    { code: 'WELCOME10', type: '$10 OFF', details: 'First Order Only (Min $49)', usage: 14, users: 'zavoraoffical@gmail.com, priya@example.com', totalDiscount: 140.00, status: 'Active' },
-    { code: 'WEEKEND20', type: '20% OFF', details: 'Friday–Sunday Only', usage: 9, users: 'noah@example.com, sam@example.com', totalDiscount: 184.00, status: 'Active' },
-    { code: 'FREESHIP', type: 'Free Shipping', details: 'Free USA Shipping (Min $75)', usage: 32, users: 'zavoraoffical@gmail.com, mia@example.com', totalDiscount: 319.68, status: 'Active' },
-    { code: 'PREMIUM25', type: '$25 OFF', details: 'Minimum Order $150', usage: 6, users: 'vip@zavorafashion.com', totalDiscount: 150.00, status: 'Active' },
-    { code: 'LAUNCH20', type: '20% OFF', details: 'First 100 Customers Only', usage: 45, users: 'earlybird@example.com', totalDiscount: 890.00, status: 'Active' }
+    { code: 'SUMMER15', type: '15% OFF', details: 'Valid on all Summer Collection' },
+    { code: 'WELCOME10', type: '$10 OFF', details: 'First Order Only (Min $49)' },
+    { code: 'WEEKEND20', type: '20% OFF', details: 'Friday–Sunday Only' },
+    { code: 'FREESHIP', type: 'Free Shipping', details: 'Free USA Shipping (Min $75)' },
+    { code: 'PREMIUM25', type: '$25 OFF', details: 'Minimum Order $150' },
+    { code: 'LAUNCH20', type: '20% OFF', details: 'First 100 Customers Only' }
   ];
 
   let customCoupons = [];
@@ -589,19 +594,27 @@ function renderAdminCoupons() {
   const badge = document.querySelector('[data-admin-coupons-count]');
   if (badge) badge.textContent = `${all.length} Active Coupons`;
 
-  list.innerHTML = all.map((c) => `
-    <tr>
-      <td>
-        <strong style="color:#050505;font-size:14px;letter-spacing:0.05em;">${c.code}</strong>
-        <br><span style="font-size:11px;background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:4px;font-weight:600;">${c.type}</span>
-      </td>
-      <td><span style="font-size:12px;color:#555;">${c.details || 'Store Promo'}</span></td>
-      <td><strong style="color:#050505;font-size:13px;">${c.usage || 0} Uses</strong></td>
-      <td><span style="font-size:11px;color:#666;max-width:220px;display:inline-block;">${c.users || 'All Store Users'}</span></td>
-      <td><strong style="color:#2e7d32;font-size:13px;">${money(c.totalDiscount || 0)}</strong></td>
-      <td><span class="pill green">${c.status || 'Active'}</span></td>
-    </tr>
-  `).join('');
+  list.innerHTML = all.map((c) => {
+    const codeUpper = String(c.code).toUpperCase();
+    const matchingOrders = orders.filter(o => o.coupon && String(o.coupon).toUpperCase() === codeUpper);
+    const usageCount = matchingOrders.length;
+    const usersStr = usageCount > 0 ? matchingOrders.map(o => o.email).join(', ') : 'No uses yet';
+    const totalDiscountVal = matchingOrders.reduce((sum, o) => sum + Number(o.discount || 0), 0);
+
+    return `
+      <tr>
+        <td>
+          <strong style="color:#050505;font-size:14px;letter-spacing:0.05em;">${c.code}</strong>
+          <br><span style="font-size:11px;background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:4px;font-weight:600;">${c.type}</span>
+        </td>
+        <td><span style="font-size:12px;color:#555;">${c.details || 'Store Promo'}</span></td>
+        <td><strong style="color:#050505;font-size:13px;">${usageCount} Uses</strong></td>
+        <td><span style="font-size:11px;color:#666;max-width:220px;display:inline-block;">${usersStr}</span></td>
+        <td><strong style="color:#2e7d32;font-size:13px;">${money(totalDiscountVal)}</strong></td>
+        <td><span class="pill green">Active</span></td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function renderAdminWishlist() {
@@ -613,35 +626,37 @@ function renderAdminWishlist() {
     wishlist = JSON.parse(localStorage.getItem('zavoraWishlist') || localStorage.getItem('zavora_wishlist') || '[]');
   } catch(e) {}
 
-  const defaultWishlist = [
-    { id: '638', name: 'Zavora Dad Hat', price: 94.89, img: 'assets/studio-wide-trouser.png', customer: 'Priya Pandey', email: 'zavoraoffical@gmail.com' },
-    { id: '204', name: 'Zavora Studio Wide-Leg Trouser', price: 169.89, img: 'assets/studio-wide-trouser.png', customer: 'Ava Brooks', email: 'ava@example.com' },
-    { id: '712', name: 'Zavora Oversized Streetwear Hoodie', price: 149.89, img: 'assets/studio-wide-trouser.png', customer: 'Noah Stone', email: 'noah@example.com' }
-  ];
-
-  const all = [...wishlist.map(w => ({ ...w, customer: 'Priya Pandey', email: 'zavoraoffical@gmail.com' })), ...defaultWishlist];
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('zavoraUser') || 'null');
+  } catch(e) {}
 
   const itemsEl = document.querySelector('[data-admin-wishlist-total-items]');
-  if (itemsEl) itemsEl.textContent = `${all.length} Saved Items`;
+  if (itemsEl) itemsEl.textContent = `${wishlist.length} Saved Items`;
 
-  const totalVal = all.reduce((sum, item) => sum + Number(item.price || 94.89), 0);
+  const totalVal = wishlist.reduce((sum, item) => sum + Number(item.price || 0), 0);
   const valEl = document.querySelector('[data-admin-wishlist-total-value]');
   if (valEl) valEl.textContent = money(totalVal);
 
-  list.innerHTML = all.map((item) => `
+  if (!wishlist.length) {
+    list.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:#666;">No customer wishlist items saved yet. Products saved by customers will appear here in real-time.</td></tr>`;
+    return;
+  }
+
+  list.innerHTML = wishlist.map((item) => `
     <tr>
       <td>
         <div style="display:flex;align-items:center;gap:12px;">
           <img src="${item.img || item.image || 'assets/studio-wide-trouser.png'}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'" style="width:44px;height:44px;object-fit:cover;border-radius:4px;border:1px solid #ddd;">
           <div>
-            <strong style="font-size:13px;color:#050505;display:block;">${item.name || 'Zavora item'}</strong>
+            <strong style="font-size:13px;color:#050505;display:block;">${item.name || 'Zavora Item'}</strong>
             <span style="font-size:11px;color:#888;">ID: ${item.id || 'PF-638'}</span>
           </div>
         </div>
       </td>
-      <td><strong style="color:#2e7d32;font-size:13px;">${money(item.price || 94.89)}</strong></td>
-      <td><strong style="font-size:12px;color:#050505;">${item.customer || 'Zavora Customer'}</strong></td>
-      <td><span style="font-size:12px;color:#555;">✉️ ${item.email || 'zavoraoffical@gmail.com'}</span></td>
+      <td><strong style="color:#2e7d32;font-size:13px;">${money(item.price || 0)}</strong></td>
+      <td><strong style="font-size:12px;color:#050505;">${user?.name || 'Customer'}</strong></td>
+      <td><span style="font-size:12px;color:#555;">✉️ ${user?.email || 'customer@zavorafashion.com'}</span></td>
       <td>
         <a href="product.html?id=${encodeURIComponent(item.id || '638')}" target="_blank" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;text-decoration:none;border-radius:4px;">View</a>
       </td>
@@ -660,31 +675,31 @@ function renderAdminNotifications() {
     if (last && last.id) orders.unshift(last);
   } catch(e) {}
 
-  const defaultNotifications = [
-    { type: 'New Order', title: 'Order #ZVR-861988 Placed', customer: 'Priya Pandey', email: 'zavoraoffical@gmail.com', detail: 'Zavora Dad Hat + Hoodie ($204.77)', date: 'Today 14:15', badge: 'green', action: 'Process Order' },
-    { type: 'Cancel Request', title: 'Order #ZVR-737160 Cancellation Request', customer: 'Ava Brooks', email: 'ava@example.com', detail: 'Customer requested cancellation (Changed mind)', date: 'Today 12:30', badge: 'red', action: 'Approve Cancel & Refund' },
-    { type: 'Return Request', title: 'Order #ZVR-638102 Return Request', customer: 'Noah Stone', email: 'noah@example.com', detail: 'Size too large (Zavora Trouser)', date: 'Yesterday 18:45', badge: 'gold', action: 'Approve Return Label' },
-    { type: 'New Signup', title: 'New Customer Registration', customer: 'Vinod Pandey', email: 'vp538028@gmail.com', detail: 'Registered account via Google OAuth', date: 'Yesterday 10:20', badge: 'blue', action: 'View Profile' },
-    { type: 'Low Stock Alert', title: 'Zavora Dad Hat Low Stock', customer: 'Inventory Alert', email: 'system@zavorafashion.com', detail: 'Remaining stock: 4 items left', date: 'Today 09:00', badge: 'gold', action: 'Reorder Stock' }
-  ];
+  const seen = new Set();
+  orders = orders.filter(o => o && o.id && !seen.has(String(o.id)) && seen.add(String(o.id)));
 
   const badgeNewOrders = document.querySelector('[data-admin-notif-new-orders]');
-  if (badgeNewOrders) badgeNewOrders.textContent = `${orders.length || 2} Orders`;
+  if (badgeNewOrders) badgeNewOrders.textContent = `${orders.length} Orders`;
 
-  list.innerHTML = defaultNotifications.map((n) => `
+  if (!orders.length) {
+    list.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:#666;">No store notifications yet. New checkout orders will log here in real-time.</td></tr>`;
+    return;
+  }
+
+  list.innerHTML = orders.map((order) => `
     <tr>
       <td>
-        <strong style="font-size:13px;color:#050505;display:block;">${n.title}</strong>
-        <span class="pill ${n.badge}">${n.type}</span>
+        <strong style="font-size:13px;color:#050505;display:block;">Order #${order.id} Placed</strong>
+        <span class="pill green">New Order</span>
       </td>
       <td>
-        <strong style="font-size:12px;color:#333;">${n.customer}</strong>
-        <br><span style="font-size:11px;color:#666;">✉️ ${n.email}</span>
+        <strong style="font-size:12px;color:#333;">${order.customer || 'Customer'}</strong>
+        <br><span style="font-size:11px;color:#666;">✉️ ${order.email || ''}</span>
       </td>
-      <td><span style="font-size:12px;color:#444;">${n.detail}</span></td>
-      <td><span style="font-size:11px;color:#555;">${n.date}</span></td>
+      <td><span style="font-size:12px;color:#444;">Total Amount: ${money(order.total || 0)} (${order.status || 'Paid'})</span></td>
+      <td><span style="font-size:11px;color:#555;">${order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Just now'}</span></td>
       <td>
-        <button type="button" data-toast="Notification action resolved: ${n.type}" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">${n.action}</button>
+        <button type="button" data-toast="Order #${order.id} opened for processing" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">Process Order</button>
       </td>
     </tr>
   `).join('');
@@ -711,41 +726,36 @@ function money(value) {
 function setStatCards(stats) {
   const cards = document.querySelectorAll('[data-panel="dashboard"] .stat-card');
 
-  let orders = [];
+  let orders = Array.isArray(stats?.orders) ? stats.orders : [];
   try {
-    orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+    const local = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
     const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
-    if (last && last.id) orders.unshift(last);
+    if (last && last.id) local.unshift(last);
+    orders = [...orders, ...local];
   } catch(e) {}
 
-  if (!orders.length) {
-    orders = [
-      { id: '#ZVR-861988', total: 204.77, customer: 'Priya Pandey', email: 'zavoraoffical@gmail.com' },
-      { id: '#ZVR-737160', total: 169.89, customer: 'Ava Brooks', email: 'ava@example.com' },
-      { id: '#ZVR-489210', total: 289.88, customer: 'Vinod Pandey', email: 'vp538028@gmail.com' },
-      { id: '#ZVR-329800', total: 120.00, customer: 'Shiva', email: 'shiva203661@gmail.com' }
-    ];
-  }
+  const seen = new Set();
+  orders = orders.filter(o => o && o.id && !seen.has(String(o.id)) && seen.add(String(o.id)));
 
   const realRev = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
-  const uniqueEmails = new Set(orders.map(o => String(o.email).toLowerCase()));
+  const uniqueEmails = new Set(orders.map(o => String(o.email || '').toLowerCase()).filter(Boolean));
 
   if (cards[0]) {
     cards[0].querySelector('strong').textContent = money(realRev);
-    cards[0].querySelector('small').textContent = `${orders.length} total completed orders`;
+    cards[0].querySelector('small').textContent = `${orders.length} total live orders`;
   }
   if (cards[1]) {
     cards[1].querySelector('span').textContent = "Today's Orders";
     cards[1].querySelector('strong').textContent = `${orders.length} Orders`;
-    cards[1].querySelector('small').textContent = 'Live order queue active';
+    cards[1].querySelector('small').textContent = 'Real-time order queue';
   }
   if (cards[2]) {
     cards[2].querySelector('span').textContent = 'Total Customers';
     cards[2].querySelector('strong').textContent = `${uniqueEmails.size} Accounts`;
-    cards[2].querySelector('small').textContent = 'Verified customer database';
+    cards[2].querySelector('small').textContent = 'Real customer database';
   }
   if (cards[3]) {
-    cards[3].querySelector('strong').textContent = '3 Items';
+    cards[3].querySelector('strong').textContent = '0 Items';
     cards[3].querySelector('small').textContent = 'Limited stock watch';
   }
 }
@@ -757,6 +767,8 @@ function renderAdminEmails() {
   let orders = [];
   try {
     orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+    const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+    if (last && last.id) orders.unshift(last);
   } catch(e) {}
 
   let user = null;
@@ -766,20 +778,30 @@ function renderAdminEmails() {
 
   const contactsMap = new Map();
 
-  contactsMap.set('zavoraoffical@gmail.com', { name: 'Priya Pandey', email: 'zavoraoffical@gmail.com', phone: '+1 (555) 234-5678', orders: 3, status: 'Verified Buyer' });
-  contactsMap.set('vp538028@gmail.com', { name: 'Vinod Pandey', email: 'vp538028@gmail.com', phone: '+1 (555) 881-0532', orders: 3, status: 'Affiliate Partner' });
-  contactsMap.set('shiva203661@gmail.com', { name: 'Shiva', email: 'shiva203661@gmail.com', phone: '+1 (555) 962-5692', orders: 2, status: 'Affiliate Partner' });
-  contactsMap.set('ava@example.com', { name: 'Ava Brooks', email: 'ava@example.com', phone: '+1 (555) 321-7654', orders: 12, status: 'VIP Member' });
-
   if (user && user.email) {
     contactsMap.set(user.email.toLowerCase(), {
-      name: user.name || 'Priya Pandey',
+      name: user.name || 'Account User',
       email: user.email,
-      phone: user.phone || '+1 (555) 234-5678',
-      orders: orders.length,
-      status: 'Active Registered User'
+      phone: user.phone || 'N/A',
+      orders: 0,
+      status: 'Registered User'
     });
   }
+
+  orders.forEach((o) => {
+    const emailKey = String(o.email || '').toLowerCase();
+    if (!emailKey) return;
+    const existing = contactsMap.get(emailKey) || {
+      name: o.customer || o.name || 'Buyer',
+      email: emailKey,
+      phone: o.phone || 'N/A',
+      orders: 0,
+      status: 'Verified Buyer'
+    };
+    existing.orders += 1;
+    if (o.phone && o.phone !== 'N/A') existing.phone = o.phone;
+    contactsMap.set(emailKey, existing);
+  });
 
   const contacts = [...contactsMap.values()];
 
@@ -788,6 +810,11 @@ function renderAdminEmails() {
 
   const totalPhoneEl = document.querySelector('[data-admin-phone-total-count]');
   if (totalPhoneEl) totalPhoneEl.textContent = `${contacts.length} Mobile Numbers`;
+
+  if (!contacts.length) {
+    list.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">No customer email contacts yet. New registered buyers will appear here in real-time.</td></tr>`;
+    return;
+  }
 
   list.innerHTML = contacts.map((c) => `
     <tr>
