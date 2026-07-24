@@ -2018,24 +2018,27 @@ async function fetchCatalogProducts(gender, limit = 1000) {
 
 async function loadPrintfulCatalog() {
   const grid = document.querySelector('[data-catalog-grid]');
-  if (!grid || grid.dataset.printfulLoaded === 'completed') return;
+  if (!grid) return;
   grid.dataset.printfulLoaded = 'in-progress';
   try {
     const pageName = normalizePageName(window.location.pathname);
     const dataProducts = pageName === 'shop' || pageName === 'collections'
       ? (await Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))).flat()
       : await fetchCatalogProducts(pageName === 'women' ? 'women' : 'men', 1000);
-    if (!dataProducts.length) return;
     
+    const adminProducts = JSON.parse(localStorage.getItem('zavoraAdminProducts') || '[]');
     const existing = window.__zavoraCatalogProducts || [];
-    const merged = deduplicateProducts([...existing, ...dataProducts]);
-    const products = productsForCatalogPage(merged, pageName);
     
-    window.__zavoraCatalogProducts = products;
-    grid.dataset.printfulLoaded = 'completed';
-    grid.innerHTML = products.map(catalogCard).join('');
-    filterLargeCatalog();
-    refreshWishlistButtons();
+    if (dataProducts.length || adminProducts.length) {
+      const merged = deduplicateProducts([...dataProducts, ...adminProducts, ...existing]);
+      const products = productsForCatalogPage(merged, pageName);
+      
+      window.__zavoraCatalogProducts = products;
+      grid.dataset.printfulLoaded = 'completed';
+      grid.innerHTML = products.map(catalogCard).join('');
+      filterLargeCatalog();
+      refreshWishlistButtons();
+    }
   } catch (error) {
     grid.dataset.printfulLoaded = 'failed';
   }
