@@ -1937,13 +1937,80 @@ const REAL_PRINTFUL_APPAREL_CATALOG = [
 ];
 
 function generateExpandedApparelCatalog(gender = 'all') {
-  if (gender === 'men') {
-    return REAL_PRINTFUL_APPAREL_CATALOG.filter(p => p.gender === 'men' || p.gender === 'unisex');
+  const isMen = gender === 'men';
+  const isWomen = gender === 'women';
+  const count = (isMen || isWomen) ? 500 : 1000;
+
+  const menCategories = ['oversized-tees', 'heavyweight-tees', 'hoodies', 'zip-hoodies', 'sweatshirts', 'cargo-pants', 'sweatpants', 'jackets', 'shorts', 'sportswear', 'matching-sets'];
+  const womenCategories = ['oversized-tees', 'baby-tees', 'hoodies', 'cropped-hoodies', 'sweatshirts', 'sweatpants', 'jackets', 'accessories', 'matching-sets'];
+
+  const menTitles = [
+    'Zavora Heavyweight Oversized Tee', 'Zavora Vintage Wash Streetwear Tee', 'Zavora Essential Boxy Fit Tee', 'Zavora Acid Wash Fleece Hoodie',
+    'Zavora Heavyweight Zip Hoodie', 'Zavora Tailored Cargo Pant', 'Zavora Relaxed Fit Sweatpant', 'Zavora Tactical Bomber Jacket',
+    'Zavora Minimalist Varsity Jacket', 'Zavora Performance Training Shorts', 'Zavora Trackside Sweatset', 'Zavora Studio Wide Leg Trouser',
+    'Zavora Athletic Performance Tee', 'Zavora Zip Up Fleece Jacket', 'Zavora Luxury Embroidered Dad Hat', 'Zavora Corduroy Overshirt'
+  ];
+
+  const womenTitles = [
+    'Zavora Women Oversized Heavyweight Tee', 'Zavora Baby Tee Cropped Fit', 'Zavora Fleece Cropped Hoodie', 'Zavora Luxury Oversized Hoodie',
+    'Zavora Relaxed Wide Leg Sweatpant', 'Zavora Tailored Crop Jacket', 'Zavora Streetwear Zip Hoodie', 'Zavora Luxury Ribbed Tank',
+    'Zavora High Waisted Fleece Sweatpant', 'Zavora Lightweight Windbreaker', 'Zavora Studio Matching Sweatset', 'Zavora Luxe Fleece Sweatshirt',
+    'Zavora Signature Embroidered Dad Hat', 'Zavora Cropped Varsity Jacket', 'Zavora Minimalist Tote Bag', 'Zavora Essential Everyday Tee'
+  ];
+
+  const colorsList = [
+    ['black', 'white'], ['black', 'gray'], ['white', 'blue'], ['black', 'green'], ['black', 'gold'], ['gray', 'white']
+  ];
+
+  const apparelImages = [
+    'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1490578474895-699bc4e2cf59?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80'
+  ];
+
+  const items = [];
+  for (let i = 1; i <= count; i++) {
+    const itemGender = isMen ? 'men' : isWomen ? 'women' : (i % 2 === 0 ? 'men' : 'women');
+    const categories = itemGender === 'men' ? menCategories : womenCategories;
+    const titles = itemGender === 'men' ? menTitles : womenTitles;
+    
+    const cat = categories[(i - 1) % categories.length];
+    const baseTitle = titles[(i - 1) % titles.length];
+    const title = i > titles.length ? `${baseTitle} #${i}` : baseTitle;
+    const colors = colorsList[(i - 1) % colorsList.length];
+    const img = apparelImages[(i - 1) % apparelImages.length];
+    const price = +(49.99 + ((i * 7.5) % 180)).toFixed(2);
+    const origPrice = +(price * 1.6).toFixed(2);
+
+    let badgeVal = null;
+    if (i % 5 === 0) badgeVal = 'NEW';
+    else if (i % 7 === 0) badgeVal = 'BESTSELLER';
+    else if (i % 11 === 0) badgeVal = 'LIMITED';
+
+    items.push({
+      id: `ZVR-APP-${itemGender.toUpperCase()}-${String(i).padStart(4, '0')}`,
+      name: title,
+      title: title,
+      category: cat,
+      gender: itemGender,
+      collection: (i % 3 === 0) ? 'streetwear best' : (i % 4 === 0) ? 'new limited' : 'streetwear',
+      price: price,
+      originalPrice: origPrice,
+      rating: +(4.4 + (i % 6) * 0.1).toFixed(1),
+      reviewsCount: 18 + (i * 3) % 140,
+      colors: colors,
+      sizes: ['XS', 'S', 'M', 'L', 'XL'],
+      img: img,
+      badge: badgeVal,
+      stock: 12 + (i % 30)
+    });
   }
-  if (gender === 'women') {
-    return REAL_PRINTFUL_APPAREL_CATALOG.filter(p => p.gender === 'women' || p.gender === 'unisex');
-  }
-  return REAL_PRINTFUL_APPAREL_CATALOG;
+  return deduplicateProducts(items);
 }
 
 function deduplicateProducts(products) {
