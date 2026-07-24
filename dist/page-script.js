@@ -1962,16 +1962,31 @@ function generateExpandedApparelCatalog(gender = 'all') {
     ['black', 'white'], ['black', 'gray'], ['white', 'blue'], ['black', 'green'], ['black', 'gold'], ['gray', 'white']
   ];
 
-  const apparelImages = [
-    'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1490578474895-699bc4e2cf59?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80'
-  ];
+  const womenCategoryImages = {
+    'oversized-tees': ['https://files.cdn.printful.com/products/288/product_1578393510.jpg', 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80'],
+    'baby-tees': ['https://files.cdn.printful.com/products/512/product_1615801509.jpg', 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80'],
+    'hoodies': ['https://files.cdn.printful.com/products/416/product_1578393710.jpg', 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80'],
+    'cropped-hoodies': ['https://files.cdn.printful.com/products/456/product_1598285510.jpg', 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80'],
+    'sweatshirts': ['https://files.cdn.printful.com/products/382/product_1568285900.jpg'],
+    'sweatpants': ['https://files.cdn.printful.com/products/490/product_1615801209.jpg', 'assets/studio-wide-trouser.png'],
+    'jackets': ['https://files.cdn.printful.com/products/472/product_1603975810.jpg', 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80'],
+    'accessories': ['assets/zavora-dad-hat.png', 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80'],
+    'matching-sets': ['https://files.cdn.printful.com/products/456/product_1598285510.jpg', 'assets/zavora-women-cutout.png']
+  };
+
+  const menCategoryImages = {
+    'oversized-tees': ['https://files.cdn.printful.com/products/262/product_1578393527.jpg', 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'],
+    'heavyweight-tees': ['https://files.cdn.printful.com/products/480/product_1603975510.jpg', 'https://images.unsplash.com/photo-1490578474895-699bc4e2cf59?auto=format&fit=crop&w=800&q=80'],
+    'hoodies': ['https://files.cdn.printful.com/products/384/product_1568897510.jpg', 'https://files.cdn.printful.com/products/444/product_1589973809.jpg'],
+    'zip-hoodies': ['https://files.cdn.printful.com/products/312/product_1568285510.jpg'],
+    'sweatshirts': ['https://files.cdn.printful.com/products/382/product_1568285900.jpg'],
+    'cargo-pants': ['https://files.cdn.printful.com/products/422/product_1578393809.jpg', 'assets/studio-wide-trouser.png'],
+    'sweatpants': ['https://files.cdn.printful.com/products/490/product_1615801209.jpg'],
+    'jackets': ['https://files.cdn.printful.com/products/468/product_1601285510.jpg'],
+    'shorts': ['https://files.cdn.printful.com/products/430/product_1578393900.jpg'],
+    'sportswear': ['https://files.cdn.printful.com/products/430/product_1578393900.jpg'],
+    'matching-sets': ['https://files.cdn.printful.com/products/384/product_1568897510.jpg', 'assets/zavora-men-cutout.png']
+  };
 
   const items = [];
   for (let i = 1; i <= count; i++) {
@@ -1983,7 +1998,10 @@ function generateExpandedApparelCatalog(gender = 'all') {
     const baseTitle = titles[(i - 1) % titles.length];
     const title = i > titles.length ? `${baseTitle} #${i}` : baseTitle;
     const colors = colorsList[(i - 1) % colorsList.length];
-    const img = apparelImages[(i - 1) % apparelImages.length];
+    
+    const imgList = itemGender === 'women' ? (womenCategoryImages[cat] || womenCategoryImages['oversized-tees']) : (menCategoryImages[cat] || menCategoryImages['oversized-tees']);
+    const img = imgList[(i - 1) % imgList.length];
+    
     const price = +(49.99 + ((i * 7.5) % 180)).toFixed(2);
     const origPrice = +(price * 1.6).toFixed(2);
 
