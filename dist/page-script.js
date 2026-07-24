@@ -1977,10 +1977,15 @@ function injectLargeCatalog() {
       ${pageName === 'collections.html' ? collectionShowcase(activeCollection) : ''}
       <div class="mobile-filter-bar">
         <button type="button" class="mobile-filter-btn" id="openMobileFilterBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-          <span>FILTER & SORT</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>FILTER</span>
           <span class="active-filter-badge" id="activeFilterBadge" style="display:none;">0</span>
         </button>
+        <select class="mobile-sort-select" id="mobileQuickSortSelect" aria-label="Sort products">
+          <option value="featured">Sort: Featured</option>
+          <option value="low">Price: Low to High</option>
+          <option value="high">Price: High to Low</option>
+        </select>
       </div>
       <div class="catalog-toolbar">
         <div><h1>${pageName === 'collections.html' ? collectionLabel(activeCollection) : 'Premium streetwear catalog'}</h1></div>
@@ -2144,6 +2149,18 @@ function initMobileFilterDrawer(genderOptions, collectionOptions, categoryOption
       updateActiveBadge();
     });
   });
+
+  const quickSort = document.querySelector('#mobileQuickSortSelect');
+  if (quickSort) {
+    quickSort.addEventListener('change', (e) => {
+      const val = e.target.value;
+      const desktopSort = document.querySelector('[data-catalog-filter="sort"]');
+      if (desktopSort) desktopSort.value = val;
+      const drawerSort = drawer.querySelector('[data-mobile-filter="sort"]');
+      if (drawerSort) drawerSort.value = val;
+      if (typeof filterLargeCatalog === 'function') filterLargeCatalog();
+    });
+  }
 
   if (openBtn) openBtn.onclick = openDrawer;
   if (closeBtn) closeBtn.onclick = closeDrawer;
