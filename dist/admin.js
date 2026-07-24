@@ -366,10 +366,25 @@ function renderLiveProductRows(products = []) {
 }
 
 let currentOrderSearchQuery = '';
+let currentOrderStatusFilter = 'all';
 
 function renderLiveOrders(stats) {
   const body = document.querySelector('[data-panel="orders"] tbody');
   if (!body) return;
+
+  const statusTabs = document.querySelector('[data-panel="orders"] .status-tabs');
+  if (statusTabs && !statusTabs.dataset.bound) {
+    statusTabs.dataset.bound = 'true';
+    statusTabs.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      statusTabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const val = (btn.dataset.statusFilter || btn.textContent).trim().toLowerCase();
+      currentOrderStatusFilter = val === 'all orders' ? 'all' : val;
+      renderLiveOrders(stats);
+    });
+  }
 
   let searchInput = document.querySelector('#adminOrderSearchInput');
   if (!searchInput) {
@@ -416,6 +431,26 @@ function renderLiveOrders(stats) {
     return true;
   });
 
+  // 1. Filter by Status Tab selection
+  if (currentOrderStatusFilter && currentOrderStatusFilter !== 'all') {
+    const f = currentOrderStatusFilter.toLowerCase();
+    allOrders = allOrders.filter((order) => {
+      const st = String(order.status || 'Paid').toLowerCase();
+      if (f === 'pending' || f === 'paid') {
+        return st.includes('paid') || st.includes('pending') || st.includes('confirm');
+      }
+      if (f === 'processing') return st.includes('process');
+      if (f === 'packed') return st.includes('pack');
+      if (f === 'shipped') return st.includes('ship');
+      if (f === 'delivered') return st.includes('deliver');
+      if (f === 'cancelled') return st.includes('cancel');
+      if (f === 'returned') return st.includes('return');
+      if (f === 'refunded') return st.includes('refund');
+      return st === f;
+    });
+  }
+
+  // 2. Filter by Search input query
   if (currentOrderSearchQuery) {
     const q = currentOrderSearchQuery;
     allOrders = allOrders.filter((order) => {
@@ -424,13 +459,17 @@ function renderLiveOrders(stats) {
       const emailMatch = String(order.email || '').toLowerCase().includes(q);
       const phoneMatch = String(order.phone || '').toLowerCase().includes(q);
       const addressMatch = String(order.address || '').toLowerCase().includes(q);
+      const trackingMatch = String(order.tracking || '').toLowerCase().includes(q);
       const itemsMatch = Array.isArray(order.items) && order.items.some(i => String(i.name || '').toLowerCase().includes(q));
-      return idMatch || nameMatch || emailMatch || phoneMatch || addressMatch || itemsMatch;
+      return idMatch || nameMatch || emailMatch || phoneMatch || addressMatch || trackingMatch || itemsMatch;
     });
   }
 
   if (!allOrders.length) {
-    body.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">${currentOrderSearchQuery ? `No orders found matching "${currentOrderSearchQuery}".` : 'No live orders yet. New checkout orders will appear here automatically.'}</td></tr>`;
+    const msg = currentOrderSearchQuery
+      ? `No orders found matching "${currentOrderSearchQuery}".`
+      : (currentOrderStatusFilter !== 'all' ? `No orders found with status "${currentOrderStatusFilter}".` : 'No live orders yet. New checkout orders will appear here automatically.');
+    body.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">${msg}</td></tr>`;
     return;
   }
 
