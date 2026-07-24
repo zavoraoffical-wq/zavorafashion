@@ -1140,6 +1140,8 @@ function renderLiveOrders(stats) {
 
     const formattedDate = order.createdAt ? new Date(order.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }) : 'Today';
 
+    const isCancelled = String(order.status || '').toLowerCase().includes('cancel');
+
     return `
       <tr data-admin-order="${order.id}">
         <td>
@@ -1159,16 +1161,26 @@ function renderLiveOrders(stats) {
           <span style="font-size:11px;font-weight:600;background:#eee;padding:2px 6px;border-radius:10px;display:inline-block;margin-top:4px;">Total Items: ${itemCount || 1}</span>
         </td>
         <td>
-          <strong style="font-size:14px;color:#2e7d32;display:block;">${totalVal}</strong>
+          <strong style="font-size:14px;color:${isCancelled ? '#c62828' : '#2e7d32'};display:block;">${totalVal}</strong>
           <span style="font-size:11px;color:#666;">${order.payment || order.method || 'PayPal / Direct'}</span>
         </td>
         <td>
-          <select data-order-status style="padding:5px;font-size:12px;width:100%;border-radius:4px;border:1px solid #ccc;">
-            ${['Paid', 'Order confirmed', 'Packing', 'Shipped', 'Delivered', 'Cancelled', 'Returned', 'Refunded'].map((status) => `<option ${String(order.status || '').toLowerCase().includes(status.toLowerCase()) ? 'selected' : ''}>${status}</option>`).join('')}
-          </select>
-          <input data-order-tracking value="${order.tracking || ''}" placeholder="Tracking number" style="margin-top:4px;width:100%;font-size:11px;padding:4px;border-radius:4px;border:1px solid #ccc;">
+          ${isCancelled ? `
+            <span class="pill red" style="display:inline-block;padding:6px 12px;background:#ffebee;color:#c62828;font-weight:700;border-radius:4px;font-size:12px;">Cancelled by Customer</span>
+          ` : `
+            <select data-order-status style="padding:5px;font-size:12px;width:100%;border-radius:4px;border:1px solid #ccc;">
+              ${['Paid', 'Order confirmed', 'Packing', 'Shipped', 'Delivered', 'Cancelled', 'Returned', 'Refunded'].map((status) => `<option ${String(order.status || '').toLowerCase().includes(status.toLowerCase()) ? 'selected' : ''}>${status}</option>`).join('')}
+            </select>
+            <input data-order-tracking value="${order.tracking || ''}" placeholder="Tracking number" style="margin-top:4px;width:100%;font-size:11px;padding:4px;border-radius:4px;border:1px solid #ccc;">
+          `}
         </td>
-        <td><button data-save-order="${order.id}" style="padding:6px 12px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">Save Update</button></td>
+        <td>
+          ${isCancelled ? `
+            <button disabled style="padding:6px 12px;font-size:12px;background:#eee;color:#888;border:1px solid #ddd;border-radius:4px;cursor:not-allowed;">Order Cancelled</button>
+          ` : `
+            <button data-save-order="${order.id}" style="padding:6px 12px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">Save Update</button>
+          `}
+        </td>
       </tr>
     `;
   }).join('');

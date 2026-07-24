@@ -73,5 +73,33 @@
       </section>
     </footer>
     <script src="page-script.js" defer></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const returnForm = document.querySelector('#returnRequestForm');
+        if (!returnForm) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderIdParam = urlParams.get('orderId') || urlParams.get('order');
+        if (orderIdParam) {
+          const orderInput = returnForm.querySelector('#returnOrderId') || returnForm.querySelector('[name="orderId"]');
+          if (orderInput) {
+            orderInput.value = '#' + String(orderIdParam).replace(/^#/, '');
+          }
+        }
+
+        try {
+          const userRaw = localStorage.getItem('zavora_auth_user') || localStorage.getItem('zavoraUser');
+          if (userRaw) {
+            const user = JSON.parse(userRaw);
+            if (user.email && returnForm.querySelector('[name="email"]')) {
+              returnForm.querySelector('[name="email"]').value = user.email;
+            }
+            if ((user.name || user.fullName) && returnForm.querySelector('[name="name"]')) {
+              returnForm.querySelector('[name="name"]').value = user.name || user.fullName;
+            }
+          }
+        } catch(e) {}
+      });
+    </script>
   </body>
 </html>
