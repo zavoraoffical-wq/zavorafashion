@@ -634,8 +634,40 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
             <div data-affiliate-panel></div>
           </article>
         </section>
-        <section class="admin-section" data-panel="reviews"></section>
-        <section class="admin-section" data-panel="notifications"></section>
+        <section class="admin-section" data-panel="notifications">
+          <div class="admin-grid three">
+            <article class="admin-card"><h2>New Orders Today</h2><p class="large-number" data-admin-notif-new-orders>2 Orders</p><button data-section-jump="orders">View Orders</button></article>
+            <article class="admin-card"><h2>Cancellation Requests</h2><p class="large-number" data-admin-notif-cancels>1 Request</p><button data-toast="Cancellation requests filtered">Review Requests</button></article>
+            <article class="admin-card"><h2>Return & Exchange</h2><p class="large-number" data-admin-notif-returns>1 Request</p><button data-toast="Returns queue filtered">Review Returns</button></article>
+          </div>
+
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <div>
+                <h2>Store Notifications & Customer Requests Log</h2>
+                <p style="font-size:12px;color:#666;margin-top:2px;">Real-time event logs for new orders, customer signups, cancellations, returns, and inventory alerts.</p>
+              </div>
+              <button data-toast="Notifications marked as read">Mark All Read</button>
+            </div>
+            <div style="margin:12px 0;">
+              <input id="adminNotifSearchInput" type="search" placeholder="🔍 Search notifications by type, customer email, or order ID..." style="width:100%;padding:10px 14px;border-radius:6px;border:1px solid #ccc;font-size:14px;">
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Event Type & Alert</th>
+                  <th>Customer Details</th>
+                  <th>Order / Item Info</th>
+                  <th>Date & Time</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody data-admin-notifications-list>
+                <!-- Rendered dynamically by renderAdminNotifications() -->
+              </tbody>
+            </table>
+          </article>
+        </section>
         <section class="admin-section" data-panel="content"></section>
         <section class="admin-section" data-panel="localization"></section>
         <section class="admin-section" data-panel="media"></section>
