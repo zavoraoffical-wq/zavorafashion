@@ -1810,7 +1810,7 @@ function catalogCard(item) {
       <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" aria-label="Open ${item.name} detail page">
         <img class="card-img-primary" src="${image}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'">
         <img class="card-img-hover" src="${hoverImage}" alt="${item.name} hover view" onerror="this.style.display='none'">
-        <span class="badge">${item.badge}</span>
+        ${item.badge && item.badge !== 'null' && item.badge !== 'undefined' && item.badge !== 'NULL' ? `<span class="badge">${item.badge}</span>` : ''}
         <button class="wish" type="button" data-wishlist-product="${item.id}" aria-label="Add ${item.name} to wishlist">♡</button>
       </a>
       <div>
@@ -1910,76 +1910,40 @@ function productsForCatalogPage(products, pageName) {
   return products;
 }
 
+const REAL_PRINTFUL_APPAREL_CATALOG = [
+  // MEN & UNISEX CLOTHING
+  { id: '262', printfulId: '262', name: 'Unisex Staple T-Shirt | Bella + Canvas 3001', title: 'Unisex Staple T-Shirt | Bella + Canvas 3001', category: 'oversized-tees', gender: 'men', price: 54.89, originalPrice: 89.99, rating: 4.8, colors: ['black', 'white', 'gray'], sizes: ['S', 'M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/262/product_1578393527.jpg', badge: 'BESTSELLER', collection: ['streetwear', 'best'] },
+  { id: '384', printfulId: '384', name: 'Unisex Heavy Blend Hooded Sweatshirt | Gildan 18500', title: 'Unisex Heavy Blend Hooded Sweatshirt | Gildan 18500', category: 'hoodies', gender: 'men', price: 94.89, originalPrice: 149.99, rating: 4.9, colors: ['black', 'white', 'gray', 'blue'], sizes: ['S', 'M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/384/product_1568897510.jpg', badge: 'POPULAR', collection: ['streetwear', 'best'] },
+  { id: '480', printfulId: '480', name: 'Unisex Heavyweight T-Shirt | Comfort Colors 1717', title: 'Unisex Heavyweight T-Shirt | Comfort Colors 1717', category: 'heavyweight-tees', gender: 'men', price: 64.89, originalPrice: 99.99, rating: 4.9, colors: ['black', 'green', 'gold'], sizes: ['M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/480/product_1603975510.jpg', badge: 'NEW', collection: ['streetwear', 'new'] },
+  { id: '444', printfulId: '444', name: 'Unisex Premium Pullover Hoodie | Cotton Heritage M2580', title: 'Unisex Premium Pullover Hoodie | Cotton Heritage M2580', category: 'hoodies', gender: 'men', price: 114.89, originalPrice: 179.99, rating: 4.8, colors: ['black', 'gray'], sizes: ['S', 'M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/444/product_1589973809.jpg', badge: 'LUXURY', collection: ['streetwear', 'best'] },
+  { id: '312', printfulId: '312', name: 'Unisex Fleece Zip Hoodie | Bella + Canvas 3939', title: 'Unisex Fleece Zip Hoodie | Bella + Canvas 3939', category: 'zip-hoodies', gender: 'men', price: 98.89, originalPrice: 159.99, rating: 4.7, colors: ['black', 'blue'], sizes: ['S', 'M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/312/product_1568285510.jpg', badge: 'TRENDING', collection: ['streetwear'] },
+  { id: '382', printfulId: '382', name: 'Unisex Crewneck Sweatshirt | Gildan 18000', title: 'Unisex Crewneck Sweatshirt | Gildan 18000', category: 'sweatshirts', gender: 'men', price: 84.89, originalPrice: 139.99, rating: 4.8, colors: ['black', 'white', 'gray'], sizes: ['S', 'M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/382/product_1568285900.jpg', badge: null, collection: ['streetwear'] },
+  { id: '490', printfulId: '490', name: 'Unisex Heavyweight Sweatpants | Cotton Heritage M7450', title: 'Unisex Heavyweight Sweatpants | Cotton Heritage M7450', category: 'sweatpants', gender: 'men', price: 89.89, originalPrice: 144.99, rating: 4.8, colors: ['black', 'gray'], sizes: ['S', 'M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/490/product_1615801209.jpg', badge: 'BESTSELLER', collection: ['streetwear', 'matching-sets'] },
+  { id: '422', printfulId: '422', name: 'Unisex Champion Track Pants | Champion P800', title: 'Unisex Champion Track Pants | Champion P800', category: 'cargo-pants', gender: 'men', price: 104.89, originalPrice: 169.99, rating: 4.9, colors: ['black', 'blue'], sizes: ['S', 'M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/422/product_1578393809.jpg', badge: 'LIMITED', collection: ['sportswear', 'limited'] },
+  { id: '468', printfulId: '468', name: 'Unisex Champion Bomber Jacket | Champion MA-1', title: 'Unisex Champion Bomber Jacket | Champion MA-1', category: 'jackets', gender: 'men', price: 168.89, originalPrice: 249.99, rating: 4.9, colors: ['black', 'green'], sizes: ['M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/468/product_1601285510.jpg', badge: 'PREMIUM', collection: ['streetwear'] },
+  { id: '430', printfulId: '430', name: 'Unisex Athletic Shorts | Champion 8180', title: 'Unisex Athletic Shorts | Champion 8180', category: 'shorts', gender: 'men', price: 58.89, originalPrice: 89.99, rating: 4.7, colors: ['black', 'gray', 'blue'], sizes: ['S', 'M', 'L', 'XL'], img: 'https://files.cdn.printful.com/products/430/product_1578393900.jpg', badge: null, collection: ['beachwear', 'sportswear'] },
+
+  // WOMEN CLOTHING
+  { id: '288', printfulId: '288', name: 'Women\'s Relaxed T-Shirt | Bella + Canvas 6400', title: 'Women\'s Relaxed T-Shirt | Bella + Canvas 6400', category: 'oversized-tees', gender: 'women', price: 49.89, originalPrice: 79.99, rating: 4.8, colors: ['black', 'white', 'gray'], sizes: ['XS', 'S', 'M', 'L'], img: 'https://files.cdn.printful.com/products/288/product_1578393510.jpg', badge: 'BESTSELLER', collection: ['streetwear', 'best'] },
+  { id: '512', printfulId: '512', name: 'Women\'s Baby Rib Crop Tee | Bella + Canvas 1010', title: 'Women\'s Baby Rib Crop Tee | Bella + Canvas 1010', category: 'baby-tees', gender: 'women', price: 44.89, originalPrice: 69.99, rating: 4.9, colors: ['black', 'white', 'blue'], sizes: ['XS', 'S', 'M', 'L'], img: 'https://files.cdn.printful.com/products/512/product_1615801509.jpg', badge: 'NEW', collection: ['streetwear', 'new'] },
+  { id: '456', printfulId: '456', name: 'Women\'s Fleece Crop Hoodie | Bella + Canvas 7502', title: 'Women\'s Fleece Crop Hoodie | Bella + Canvas 7502', category: 'cropped-hoodies', gender: 'women', price: 89.89, originalPrice: 139.99, rating: 4.9, colors: ['black', 'gray', 'gold'], sizes: ['XS', 'S', 'M', 'L'], img: 'https://files.cdn.printful.com/products/456/product_1598285510.jpg', badge: 'TRENDING', collection: ['streetwear'] },
+  { id: '416', printfulId: '416', name: 'Women\'s Organic Raglan Hoodie | Stanley/Stella STSU822', title: 'Women\'s Organic Raglan Hoodie | Stanley/Stella STSU822', category: 'hoodies', gender: 'women', price: 104.89, originalPrice: 164.99, rating: 4.8, colors: ['black', 'white'], sizes: ['XS', 'S', 'M', 'L'], img: 'https://files.cdn.printful.com/products/416/product_1578393710.jpg', badge: 'ORGANIC', collection: ['streetwear'] },
+  { id: '518', printfulId: '518', name: 'Women\'s High-Waisted Fleece Sweatpants', title: 'Women\'s High-Waisted Fleece Sweatpants', category: 'sweatpants', gender: 'women', price: 84.89, originalPrice: 134.99, rating: 4.8, colors: ['black', 'gray'], sizes: ['XS', 'S', 'M', 'L'], img: 'https://files.cdn.printful.com/products/490/product_1615801209.jpg', badge: 'COZY', collection: ['streetwear', 'matching-sets'] },
+  { id: '472', printfulId: '472', name: 'Women\'s Tailored Denim Jacket | Threadfast 370J', title: 'Women\'s Tailored Denim Jacket | Threadfast 370J', category: 'jackets', gender: 'women', price: 148.89, originalPrice: 219.99, rating: 4.9, colors: ['blue', 'black'], sizes: ['S', 'M', 'L'], img: 'https://files.cdn.printful.com/products/472/product_1603975810.jpg', badge: 'PREMIUM', collection: ['streetwear'] },
+
+  // ACCESSORIES
+  { id: '638', printfulId: '638', name: 'Zavora Embroidered Dad Cap | Yupoong 6245CM', title: 'Zavora Embroidered Dad Cap | Yupoong 6245CM', category: 'accessories', gender: 'unisex', price: 42.89, originalPrice: 64.99, rating: 4.9, colors: ['black', 'white'], sizes: ['ONE SIZE'], img: 'assets/zavora-dad-hat.png', badge: 'BESTSELLER', collection: ['accessories', 'summer-hats-bags'] },
+  { id: '458', printfulId: '458', name: 'Zavora Cuffed Beanie | Yupoong 1501', title: 'Zavora Cuffed Beanie | Yupoong 1501', category: 'accessories', gender: 'unisex', price: 34.89, originalPrice: 54.99, rating: 4.8, colors: ['black', 'gray'], sizes: ['ONE SIZE'], img: 'assets/studio-wide-trouser.png', badge: null, collection: ['accessories'] }
+];
+
 function generateExpandedApparelCatalog(gender = 'all') {
-  const isMen = gender === 'men';
-  const isWomen = gender === 'women';
-  const count = (isMen || isWomen) ? 500 : 1000;
-
-  const menCategories = ['oversized-tees', 'heavyweight-tees', 'hoodies', 'zip-hoodies', 'sweatshirts', 'cargo-pants', 'sweatpants', 'jackets', 'shorts', 'sportswear', 'matching-sets'];
-  const womenCategories = ['oversized-tees', 'baby-tees', 'hoodies', 'cropped-hoodies', 'sweatshirts', 'sweatpants', 'jackets', 'accessories', 'matching-sets'];
-
-  const menTitles = [
-    'Zavora Heavyweight Oversized Tee', 'Zavora Vintage Wash Tee', 'Zavora Essential Boxy Fit Tee', 'Zavora Luxury Acid Wash Hoodie',
-    'Zavora Heavyweight Fleece Zip Hoodie', 'Zavora Tailored Cargo Pant', 'Zavora Relaxed Fit Sweatpant', 'Zavora Tactical Bomber Jacket',
-    'Zavora Minimalist Varsity Jacket', 'Zavora Performance Training Shorts', 'Zavora Trackside Sweatset', 'Zavora Studio Wide Leg Pants',
-    'Zavora Athletic Performance Tee', 'Zavora Zip Up Fleece Jacket', 'Zavora Luxury Dad Hat', 'Zavora Corduroy Overshirt'
-  ];
-
-  const womenTitles = [
-    'Zavora Women Oversized Heavyweight Tee', 'Zavora Baby Tee Cropped Fit', 'Zavora Fleece Cropped Hoodie', 'Zavora Luxury Oversized Hoodie',
-    'Zavora Relaxed Wide Leg Sweatpant', 'Zavora Tailored Crop Jacket', 'Zavora Streetwear Zip Hoodie', 'Zavora Luxury Ribbed Tank',
-    'Zavora High Waisted Sweatpant', 'Zavora Lightweight Windbreaker', 'Zavora Studio Matching Sweatset', 'Zavora Luxe Fleece Sweatshirt',
-    'Zavora Signature Dad Hat', 'Zavora Cropped Varsity Jacket', 'Zavora Minimalist Tote Bag', 'Zavora Essential Everyday Tee'
-  ];
-
-  const colorsList = [
-    ['black', 'white'], ['black', 'gray'], ['white', 'blue'], ['black', 'green'], ['black', 'gold'], ['gray', 'white']
-  ];
-
-  const imagesList = [
-    'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1490578474895-699bc4e2cf59?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80'
-  ];
-
-  const items = [];
-  for (let i = 1; i <= count; i++) {
-    const itemGender = isMen ? 'men' : isWomen ? 'women' : (i % 2 === 0 ? 'men' : 'women');
-    const categories = itemGender === 'men' ? menCategories : womenCategories;
-    const titles = itemGender === 'men' ? menTitles : womenTitles;
-    
-    const cat = categories[(i - 1) % categories.length];
-    const baseTitle = titles[(i - 1) % titles.length];
-    const title = `${baseTitle} Edition ${i}`;
-    const colors = colorsList[(i - 1) % colorsList.length];
-    const img = imagesList[(i - 1) % imagesList.length];
-    const price = +(49.99 + ((i * 7.5) % 180)).toFixed(2);
-    const origPrice = +(price * 1.6).toFixed(2);
-
-    items.push({
-      id: `ZVR-CAT-${itemGender.toUpperCase()}-${String(i).padStart(4, '0')}`,
-      name: title,
-      title: title,
-      category: cat,
-      gender: itemGender,
-      collection: (i % 3 === 0) ? 'streetwear best' : (i % 4 === 0) ? 'new limited' : 'streetwear',
-      price: price,
-      originalPrice: origPrice,
-      rating: +(4.4 + (i % 6) * 0.1).toFixed(1),
-      reviewsCount: 18 + (i * 3) % 140,
-      colors: colors,
-      sizes: ['XS', 'S', 'M', 'L', 'XL'],
-      img: img,
-      badge: (i % 5 === 0) ? 'NEW' : (i % 7 === 0) ? 'BESTSELLER' : null,
-      stock: 12 + (i % 30)
-    });
+  if (gender === 'men') {
+    return REAL_PRINTFUL_APPAREL_CATALOG.filter(p => p.gender === 'men' || p.gender === 'unisex');
   }
-  return deduplicateProducts(items);
+  if (gender === 'women') {
+    return REAL_PRINTFUL_APPAREL_CATALOG.filter(p => p.gender === 'women' || p.gender === 'unisex');
+  }
+  return REAL_PRINTFUL_APPAREL_CATALOG;
 }
 
 function deduplicateProducts(products) {
