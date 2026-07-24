@@ -181,6 +181,87 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
           </article>
         </section>
 
+        <section class="admin-section" data-panel="importer">
+          <div class="admin-grid two">
+            <article class="admin-card">
+              <div class="card-head"><h2>Product Importer</h2><button data-import-printful>Bulk Import</button></div>
+              <form class="admin-form" data-printful-url-import>
+                <label>Printful URL
+                  <input name="url" type="url" placeholder="Paste Printful store, collection, category, or product URL">
+                </label>
+                <div class="form-row">
+                  <select name="gender">
+                    <option value="all">Auto gender</option>
+                    <option value="men">Men</option>
+                    <option value="women">Women</option>
+                  </select>
+                  <select name="mode">
+                    <option value="auto">Auto detect URL type</option>
+                    <option value="collection">Collection URL</option>
+                    <option value="category">Category URL</option>
+                    <option value="product">Product URL</option>
+                    <option value="store">Store URL</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <input name="pages" type="number" min="1" max="10" value="6" placeholder="Pages">
+                  <input name="limit" type="number" min="12" max="60" value="60" placeholder="Products per page">
+                </div>
+                <button type="submit" class="primary-admin">Import Products</button>
+              </form>
+            </article>
+            <article class="admin-card">
+              <h2>Import Rules</h2>
+              <p style="font-size:13px;color:#666;line-height:1.55;">Paste any Printful catalog URL. Zavora detects collection/category/product intent, imports all variants, colors, sizes, mockups, gallery images, pricing, availability, and saves unique products only.</p>
+              <div class="metric-list" data-import-status style="margin-top:16px;">
+                <p><span>Status</span><strong>Ready</strong></p>
+                <p><span>Duplicates</span><strong>Skipped by Product ID</strong></p>
+                <p><span>Storage</span><strong>Local & Supabase DB</strong></p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-section" data-panel="orders">
+          <article class="admin-card">
+            <div class="card-head">
+              <div>
+                <h2>Order Management & Customer Fulfillment</h2>
+                <p style="font-size:12px;color:#666;margin-top:2px;">Filter, track, update packing/shipping statuses, and manage customer orders.</p>
+              </div>
+              <button data-toast="Shipping labels queued">Print labels</button>
+            </div>
+            <div class="status-tabs" style="margin:16px 0;">
+              <button class="active" data-status-filter="all">All Orders</button>
+              <button data-status-filter="pending">Pending</button>
+              <button data-status-filter="processing">Processing</button>
+              <button data-status-filter="packed">Packed</button>
+              <button data-status-filter="shipped">Shipped</button>
+              <button data-status-filter="delivered">Delivered</button>
+              <button data-status-filter="cancelled">Cancelled</button>
+              <button data-status-filter="returned">Returned</button>
+              <button data-status-filter="refunded">Refunded</button>
+            </div>
+            <div style="margin:12px 0;">
+              <input id="adminOrderSearchInput" type="search" placeholder="🔍 Search orders by Order ID, customer name, email, phone, or tracking..." style="width:100%;padding:10px 14px;border-radius:6px;border:1px solid #ccc;font-size:14px;">
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer Details & Address</th>
+                  <th>Payment</th>
+                  <th>Tracking & Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody data-live-orders-list>
+                <!-- Rendered dynamically by renderLiveOrders() -->
+              </tbody>
+            </table>
+          </article>
+        </section>
+
         <section class="admin-section" data-panel="customers">
           <div class="admin-grid three">
             <article class="admin-card"><h2>Customer List</h2><p class="large-number" data-admin-total-customers>8,942</p><button data-toast="Customer export started">Export customers</button></article>
@@ -444,8 +525,93 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
             </article>
           </div>
         </section>
-        <section class="admin-section" data-panel="coupons"></section>
-        <section class="admin-section" data-panel="wishlist"></section>
+        <section class="admin-section" data-panel="coupons">
+          <div class="admin-grid two">
+            <article class="admin-card">
+              <div class="card-head"><h2>Create Promo Coupon</h2></div>
+              <form class="admin-form" data-admin-coupon-form>
+                <input name="code" placeholder="Coupon Code (e.g. SUMMER15)" required style="text-transform:uppercase;">
+                <div class="form-row">
+                  <select name="type">
+                    <option value="percent">Percentage Discount (%)</option>
+                    <option value="fixed">Fixed Amount Discount ($)</option>
+                    <option value="shipping">Free Shipping</option>
+                  </select>
+                  <input name="value" placeholder="Offer Value (e.g. 15 or 10)" required>
+                </div>
+                <input name="minOrder" placeholder="Minimum Order Amount ($49)" value="0">
+                <button type="submit" class="primary-admin">Create & Activate Coupon</button>
+              </form>
+            </article>
+
+            <article class="admin-card">
+              <h2>Active Promotion Summary</h2>
+              <div class="metric-list">
+                <p><span>Active Summer Promo</span><strong>SUMMER15 (15% OFF)</strong></p>
+                <p><span>First Order Welcome</span><strong>WELCOME10 ($10 OFF Min $49)</strong></p>
+                <p><span>Free Shipping Offer</span><strong>FREESHIP (Min $75)</strong></p>
+                <p><span>Total Coupons Claimed</span><strong data-admin-coupons-total-claimed">134 Uses ($2,096.18 Saved)</strong></p>
+              </div>
+            </article>
+          </div>
+
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <div>
+                <h2>Coupons Usage & Customer Analytics</h2>
+                <p style="font-size:12px;color:#666;margin-top:2px;">Track active codes, total usage count, customers who redeemed coupons, and total discount value granted.</p>
+              </div>
+              <span class="pill gold" data-admin-coupons-count>6 Active Coupons</span>
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Coupon Code & Type</th>
+                  <th>Offer Details</th>
+                  <th>Usage Count</th>
+                  <th>Customers Who Used It</th>
+                  <th>Total Discount Granted</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody data-admin-coupon-list>
+                <!-- Rendered dynamically by renderAdminCoupons() -->
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section class="admin-section" data-panel="wishlist">
+          <div class="admin-grid three">
+            <article class="admin-card"><h2>Total Wishlist Items</h2><p class="large-number" data-admin-wishlist-total-items>14 Saved Items</p><button data-toast="Wishlist items exported">Export Wishlist</button></article>
+            <article class="admin-card"><h2>Total Wishlist Value</h2><p class="large-number" data-admin-wishlist-total-value>$1,489.50</p><button data-toast="Wishlist value synced">Sync Catalog</button></article>
+            <article class="admin-card"><h2>Top Wishlisted Item</h2><p class="large-number" style="font-size:20px;">Zavora Dad Hat</p><button data-section-jump="products">Manage Stock</button></article>
+          </div>
+
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <div>
+                <h2>Saved Customer Wishlist Directory</h2>
+                <p style="font-size:12px;color:#666;margin-top:2px;">View all luxury apparel items saved in customer wishlists with customer contact info.</p>
+              </div>
+              <button data-toast="Refreshing customer wishlists...">Refresh Wishlists</button>
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Product (Image & Title)</th>
+                  <th>Item Price</th>
+                  <th>Saved By Customer</th>
+                  <th>Customer Email</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody data-admin-wishlist-list>
+                <!-- Rendered dynamically by renderAdminWishlist() -->
+              </tbody>
+            </table>
+          </article>
+        </section>
         <section class="admin-section" data-panel="affiliates">
           <article class="admin-card affiliate-admin-card">
             <div class="card-head">

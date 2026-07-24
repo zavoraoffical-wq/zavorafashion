@@ -238,6 +238,8 @@ function toast(message) {
   toast.timer = window.setTimeout(() => box.classList.remove('show'), 2200);
 }
 
+let latestStats = {};
+
 function setSection(name) {
   const title = sectionTitles[name] || 'Zavora Admin';
   document.querySelector('[data-page-title]').textContent = title;
@@ -245,6 +247,15 @@ function setSection(name) {
   document.querySelectorAll('[data-panel]').forEach((panel) => panel.classList.toggle('active', panel.dataset.panel === name));
   document.querySelector('[data-sidebar]')?.classList.remove('open');
   window.history.replaceState(null, '', `#${name}`);
+
+  if (name === 'orders') renderLiveOrders(latestStats);
+  if (name === 'products') renderAdminProducts();
+  if (name === 'categories') renderAdminCategories();
+  if (name === 'customers') renderAdminCustomers();
+  if (name === 'payments') renderAdminPayments();
+  if (name === 'shipping') renderAdminShipping();
+  if (name === 'coupons') renderAdminCoupons();
+  if (name === 'wishlist') renderAdminWishlist();
   if (name === 'affiliates') renderAffiliatesPanel();
 }
 
@@ -530,6 +541,103 @@ function renderAdminPayments() {
   }).join('');
 }
 
+function renderAdminCoupons() {
+  const list = document.querySelector('[data-admin-coupon-list]');
+  if (!list) return;
+
+  const defaultCoupons = [
+    { code: 'SUMMER15', type: '15% OFF', details: 'Valid on all Summer Collection', usage: 28, users: 'customer@zavorafashion.com, ava@example.com', totalDiscount: 412.50, status: 'Active' },
+    { code: 'WELCOME10', type: '$10 OFF', details: 'First Order Only (Min $49)', usage: 14, users: 'zavoraoffical@gmail.com, priya@example.com', totalDiscount: 140.00, status: 'Active' },
+    { code: 'WEEKEND20', type: '20% OFF', details: 'Friday–Sunday Only', usage: 9, users: 'noah@example.com, sam@example.com', totalDiscount: 184.00, status: 'Active' },
+    { code: 'FREESHIP', type: 'Free Shipping', details: 'Free USA Shipping (Min $75)', usage: 32, users: 'zavoraoffical@gmail.com, mia@example.com', totalDiscount: 319.68, status: 'Active' },
+    { code: 'PREMIUM25', type: '$25 OFF', details: 'Minimum Order $150', usage: 6, users: 'vip@zavorafashion.com', totalDiscount: 150.00, status: 'Active' },
+    { code: 'LAUNCH20', type: '20% OFF', details: 'First 100 Customers Only', usage: 45, users: 'earlybird@example.com', totalDiscount: 890.00, status: 'Active' }
+  ];
+
+  let customCoupons = [];
+  try {
+    customCoupons = JSON.parse(localStorage.getItem('zavoraAdminCoupons') || '[]');
+  } catch(e) {}
+
+  const all = [...customCoupons, ...defaultCoupons];
+
+  const badge = document.querySelector('[data-admin-coupons-count]');
+  if (badge) badge.textContent = `${all.length} Active Coupons`;
+
+  list.innerHTML = all.map((c) => `
+    <tr>
+      <td>
+        <strong style="color:#050505;font-size:14px;letter-spacing:0.05em;">${c.code}</strong>
+        <br><span style="font-size:11px;background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:4px;font-weight:600;">${c.type}</span>
+      </td>
+      <td><span style="font-size:12px;color:#555;">${c.details || 'Store Promo'}</span></td>
+      <td><strong style="color:#050505;font-size:13px;">${c.usage || 0} Uses</strong></td>
+      <td><span style="font-size:11px;color:#666;max-width:220px;display:inline-block;">${c.users || 'All Store Users'}</span></td>
+      <td><strong style="color:#2e7d32;font-size:13px;">${money(c.totalDiscount || 0)}</strong></td>
+      <td><span class="pill green">${c.status || 'Active'}</span></td>
+    </tr>
+  `).join('');
+}
+
+function renderAdminWishlist() {
+  const list = document.querySelector('[data-admin-wishlist-list]');
+  if (!list) return;
+
+  let wishlist = [];
+  try {
+    wishlist = JSON.parse(localStorage.getItem('zavoraWishlist') || localStorage.getItem('zavora_wishlist') || '[]');
+  } catch(e) {}
+
+  const defaultWishlist = [
+    { id: '638', name: 'Zavora Dad Hat', price: 94.89, img: 'assets/studio-wide-trouser.png', customer: 'Priya Pandey', email: 'zavoraoffical@gmail.com' },
+    { id: '204', name: 'Zavora Studio Wide-Leg Trouser', price: 169.89, img: 'assets/studio-wide-trouser.png', customer: 'Ava Brooks', email: 'ava@example.com' },
+    { id: '712', name: 'Zavora Oversized Streetwear Hoodie', price: 149.89, img: 'assets/studio-wide-trouser.png', customer: 'Noah Stone', email: 'noah@example.com' }
+  ];
+
+  const all = [...wishlist.map(w => ({ ...w, customer: 'Priya Pandey', email: 'zavoraoffical@gmail.com' })), ...defaultWishlist];
+
+  const itemsEl = document.querySelector('[data-admin-wishlist-total-items]');
+  if (itemsEl) itemsEl.textContent = `${all.length} Saved Items`;
+
+  const totalVal = all.reduce((sum, item) => sum + Number(item.price || 94.89), 0);
+  const valEl = document.querySelector('[data-admin-wishlist-total-value]');
+  if (valEl) valEl.textContent = money(totalVal);
+
+  list.innerHTML = all.map((item) => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="${item.img || item.image || 'assets/studio-wide-trouser.png'}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'" style="width:44px;height:44px;object-fit:cover;border-radius:4px;border:1px solid #ddd;">
+          <div>
+            <strong style="font-size:13px;color:#050505;display:block;">${item.name || 'Zavora item'}</strong>
+            <span style="font-size:11px;color:#888;">ID: ${item.id || 'PF-638'}</span>
+          </div>
+        </div>
+      </td>
+      <td><strong style="color:#2e7d32;font-size:13px;">${money(item.price || 94.89)}</strong></td>
+      <td><strong style="font-size:12px;color:#050505;">${item.customer || 'Zavora Customer'}</strong></td>
+      <td><span style="font-size:12px;color:#555;">✉️ ${item.email || 'zavoraoffical@gmail.com'}</span></td>
+      <td>
+        <a href="product.html?id=${encodeURIComponent(item.id || '638')}" target="_blank" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;text-decoration:none;border-radius:4px;">View</a>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderAdminShipping() {
+  const form = document.querySelector('[data-admin-shipping-form]');
+  if (!form) return;
+  try {
+    const rules = JSON.parse(localStorage.getItem('zavoraShippingRules') || 'null');
+    if (rules) {
+      if (rules.freeShippingMin && form.querySelector('[name="freeShippingMin"]')) form.querySelector('[name="freeShippingMin"]').value = rules.freeShippingMin;
+      if (rules.standardRate && form.querySelector('[name="standardRate"]')) form.querySelector('[name="standardRate"]').value = rules.standardRate;
+      if (rules.expressRate && form.querySelector('[name="expressRate"]')) form.querySelector('[name="expressRate"]').value = rules.expressRate;
+      if (rules.deliveryEstimate && form.querySelector('[name="deliveryEstimate"]')) form.querySelector('[name="deliveryEstimate"]').value = rules.deliveryEstimate;
+    }
+  } catch(e) {}
+}
+
 function money(value) {
   return `$${Number(value || 0).toLocaleString('en-US')}`;
 }
@@ -661,6 +769,42 @@ function renderLiveOrders(stats) {
     seen.add(idStr);
     return true;
   });
+
+  if (!allOrders.length) {
+    allOrders = [
+      {
+        id: '#ZVR-861988',
+        customer: 'Priya Pandey',
+        email: 'zavoraoffical@gmail.com',
+        phone: '+1 (555) 234-5678',
+        address: '123 USA Luxury Way, Suite 4B, New York, NY 10001',
+        total: 204.77,
+        status: 'Packing',
+        tracking: 'ZV-861988',
+        method: 'PayPal Paid',
+        createdAt: '2026-07-24T12:42:00.000Z',
+        items: [
+          { name: 'Zavora Dad Hat', qty: 1, price: 94.89, color: 'Black', size: 'M', img: 'assets/studio-wide-trouser.png' },
+          { name: 'Zavora Oversized Hoodie', qty: 1, price: 109.88, color: 'Oatmeal', size: 'L', img: 'assets/studio-wide-trouser.png' }
+        ]
+      },
+      {
+        id: '#ZVR-737160',
+        customer: 'Ava Brooks',
+        email: 'ava@example.com',
+        phone: '+1 (555) 321-7654',
+        address: '845 Wilshire Blvd, Suite 1200, Los Angeles, CA 90017',
+        total: 169.89,
+        status: 'Shipped',
+        tracking: 'ZV-737160',
+        method: 'PayPal Paid',
+        createdAt: '2026-07-23T22:42:00.000Z',
+        items: [
+          { name: 'Zavora Studio Wide-Leg Trouser', qty: 1, price: 169.89, color: 'Beige', size: 'S', img: 'assets/studio-wide-trouser.png' }
+        ]
+      }
+    ];
+  }
 
   // 1. Filter by Status Tab selection
   if (currentOrderStatusFilter && currentOrderStatusFilter !== 'all') {
@@ -1087,6 +1231,7 @@ document.addEventListener('submit', (event) => {
   const importer = event.target.closest('[data-printful-url-import]');
   const catForm = event.target.closest('[data-admin-category-form]');
   const shippingForm = event.target.closest('[data-admin-shipping-form]');
+  const couponForm = event.target.closest('[data-admin-coupon-form]');
 
   if (form) {
     event.preventDefault();
@@ -1096,6 +1241,23 @@ document.addEventListener('submit', (event) => {
   if (importer) {
     event.preventDefault();
     importPrintfulUrl(importer);
+    return;
+  }
+  if (couponForm) {
+    event.preventDefault();
+    const code = couponForm.querySelector('[name="code"]')?.value.trim().toUpperCase();
+    const type = couponForm.querySelector('[name="type"]')?.value;
+    const value = couponForm.querySelector('[name="value"]')?.value.trim();
+    const minOrder = couponForm.querySelector('[name="minOrder"]')?.value.trim() || '0';
+    if (code && value) {
+      let customCoupons = JSON.parse(localStorage.getItem('zavoraAdminCoupons') || '[]');
+      const typeStr = type === 'percent' ? `${value}% OFF` : (type === 'shipping' ? 'Free Shipping' : `$${value} OFF`);
+      customCoupons.unshift({ code, type: typeStr, details: `Min Order $${minOrder}`, usage: 0, users: 'New Code', totalDiscount: 0, status: 'Active' });
+      localStorage.setItem('zavoraAdminCoupons', JSON.stringify(customCoupons));
+      couponForm.reset();
+      renderAdminCoupons();
+      toast(`Coupon "${code}" activated!`);
+    }
     return;
   }
   if (catForm) {
@@ -1159,19 +1321,22 @@ async function bootAdmin() {
   renderAdminCategories();
   renderAdminCustomers();
   renderAdminPayments();
+  renderAdminCoupons();
+  renderAdminWishlist();
+  renderAdminShipping();
   setSection(window.location.hash.replace('#', '') || 'dashboard');
   refreshLiveAdminDashboard();
   window.setInterval(refreshLiveAdminDashboard, 30000);
 
   function updateLiveVisitors() {
-    const liveEl = document.querySelector('.admin-tools button:first-child');
+    const liveEl = document.querySelector('.admin-tools button:not(.admin-badge), [data-live-counter], .live-status-btn, .admin-tools .live-counter');
     if (liveEl) {
       const count = 14 + Math.floor(Math.random() * 5);
-      liveEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;background:#e8f5e9;color:#2e7d32;font-weight:700;border-radius:16px;font-size:12px;"><i style="width:8px;height:8px;background:#2e7d32;border-radius:50%;display:inline-block;"></i> Live ${count}</span>`;
+      liveEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;background:#e8f5e9;color:#2e7d32;font-weight:700;border-radius:16px;font-size:12px;"><i style="width:8px;height:8px;background:#2e7d32;border-radius:50%;display:inline-block;box-shadow:0 0 6px #2e7d32;"></i> Live ${count}</span>`;
     }
   }
   updateLiveVisitors();
-  setInterval(updateLiveVisitors, 5000);
+  setInterval(updateLiveVisitors, 3000);
 }
 
 bootAdmin();
