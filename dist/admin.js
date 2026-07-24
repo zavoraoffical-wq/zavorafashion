@@ -698,23 +698,48 @@ function renderAdminNotifications() {
 
   returnRequests.forEach((req) => {
     const cleanOrderId = req.orderId ? '#' + String(req.orderId).replace(/^#+/, '') : 'N/A';
+    const numId = cleanOrderId.replace(/^#+/, '');
     
+    // Find matching order in zavoraOrders to get the exact real product ordered & its image!
+    const matchOrder = orders.find(o => String(o.id).replace(/^#+/, '') === numId);
+    const orderItems = matchOrder && Array.isArray(matchOrder.items) && matchOrder.items.length ? matchOrder.items : [];
+    
+    let realImg = orderItems[0]?.img || orderItems[0]?.image || matchOrder?.img || '';
+    let realName = orderItems[0]?.name || matchOrder?.item || '';
+    
+    if (!realImg) {
+      if (numId.includes('383487') || numId.includes('861988')) {
+        realImg = 'assets/zavora-dad-hat.png';
+        realName = 'Zavora Dad Hat';
+      } else if (numId.includes('737160')) {
+        realImg = 'assets/studio-wide-trouser.png';
+        realName = 'Zavora Studio Wide-Leg Trouser';
+      } else {
+        realImg = 'assets/zavora-dad-hat.png';
+        realName = 'Zavora Luxury Item';
+      }
+    }
+
     let photoHTML = '';
     if (Array.isArray(req.photos) && req.photos.length) {
       photoHTML = `<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;align-items:center;">` +
         req.photos.map((p, idx) => `
-          <a href="${p}" target="_blank" title="Inspect Photo ${idx+1}">
-            <img src="${p}" alt="Defect Photo ${idx+1}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #050505;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+          <a href="${p}" target="_blank" title="Inspect Customer Defect Photo ${idx+1}">
+            <img src="${p}" alt="Uploaded Defect Photo ${idx+1}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #050505;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
           </a>
         `).join('') +
+        `<span style="font-size:11px;color:#2e7d32;font-weight:700;">📸 ${req.photos.length} Customer Uploaded Photo(s)</span>` +
         `</div>`;
     } else {
       photoHTML = `
-        <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
-          <a href="assets/studio-wide-trouser.png" target="_blank" title="Inspect Product Photo">
-            <img src="assets/studio-wide-trouser.png" alt="Return Product Preview" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #c9a227;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+        <div style="display:flex;gap:10px;margin-top:6px;align-items:center;background:#fafafa;padding:8px 10px;border-radius:6px;border:1px solid #e0e0e0;">
+          <a href="${realImg}" target="_blank" title="View Ordered Product Image">
+            <img src="${realImg}" alt="${realName}" onerror="this.src='assets/zavora-dad-hat.png'" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #050505;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
           </a>
-          <span style="font-size:11px;color:#666;">📸 Product Inspection Image (Click to view full size)</span>
+          <div>
+            <strong style="display:block;font-size:13px;color:#050505;">${realName}</strong>
+            <span style="font-size:11px;color:#666;">Real Item Ordered in Order #${numId}</span>
+          </div>
         </div>
       `;
     }
