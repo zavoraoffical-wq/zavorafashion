@@ -567,30 +567,42 @@ function renderProducts() {
 }
 
 function productCard(product) {
-  const colors = product.colors || [product.color || 'default'];
+  const rawColors = (product.colors || [product.color || 'default']).filter(c => c && c !== 'default' && c !== 'original');
+  const colors = rawColors.length ? rawColors : ['black'];
+  const visibleColors = colors.slice(0, 5);
+  const extraColors = colors.length - 5;
+
+  const sizes = (product.sizes || ['S', 'M', 'L', 'XL']).filter(Boolean);
+  const visibleSizes = sizes.slice(0, 5);
+  const extraSizes = sizes.length - 5;
+
   return `
     <article class="product-card" data-product-id="${product.id}">
       <div class="product-media">
         <img src="${product.img}" alt="${product.name}">
-        <img class="alt" src="${product.alt}" alt="${product.name} alternate view">
-        <span class="badge">${product.badge}</span>
+        <img class="alt" src="${product.alt || product.img}" alt="${product.name} alternate view">
+        <span class="badge">${product.badge || 'NEW'}</span>
         <button class="wish ${homeWishlistHas(product) ? 'active' : ''}" data-home-wishlist="${product.id}" aria-label="Add ${product.name} to wishlist">♡</button>
       </div>
       <div class="product-info">
-        <h3>${product.name}</h3>
-        <div class="meta">
-          <span>${product.category}</span>
-          <strong class="${product.sale ? 'sale' : ''}">${product.compareAt ? `<s>${money(product.compareAt)}</s> ` : ''}${money(product.price)}</strong>
-        </div>
-        <div class="swatches" aria-label="Color variants">
-          ${colors.map(color => `<span class="swatch" title="${color === 'default' ? 'original' : color}" style="background:${swatch(color)}"></span>`).join('')}
-        </div>
-        <div class="sizes" aria-label="Size selector">
-          ${product.sizes.map(size => `<button class="size">${size}</button>`).join('')}
+        <div class="product-info-top">
+          <h3>${product.name}</h3>
+          <div class="meta">
+            <span style="font-size:12px;color:var(--muted);text-transform:capitalize;">${product.category || 'luxury'}</span>
+            <strong class="${product.sale ? 'sale' : ''}">${product.compareAt ? `<s>${money(product.compareAt)}</s> ` : ''}${money(product.price)}</strong>
+          </div>
+          <div class="swatches" aria-label="Color variants">
+            ${visibleColors.map(color => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}
+            ${extraColors > 0 ? `<span style="font-size:10px;color:#666;font-weight:600;">+${extraColors}</span>` : ''}
+          </div>
+          <div class="sizes" aria-label="Size selector">
+            ${visibleSizes.map(size => `<button class="size" type="button">${size}</button>`).join('')}
+            ${extraSizes > 0 ? `<span style="font-size:10px;color:#666;font-weight:600;">+${extraSizes}</span>` : ''}
+          </div>
         </div>
         <div class="card-actions">
-          <button data-add="${product.id}">Quick add</button>
-          <button data-view="${product.id}">Quick view</button>
+          <button type="button" data-add="${product.id}">Quick add</button>
+          <button type="button" data-view="${product.id}">Quick view</button>
         </div>
       </div>
     </article>
