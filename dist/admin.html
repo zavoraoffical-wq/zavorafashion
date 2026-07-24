@@ -41,6 +41,7 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
           <button data-section="reviews">Reviews</button>
           <button data-section="emails">Email Center</button>
           <button data-section="notifications">Notifications</button>
+          <button data-section="reports">Reported Issues</button>
           <button data-section="analytics">Analytics</button>
           <button data-section="homepage">Homepage Builder</button>
           <button data-section="content">Content</button>
@@ -355,6 +356,60 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
               </thead>
               <tbody data-admin-email-list>
                 <!-- Rendered dynamically by renderAdminEmails() -->
+              </tbody>
+            </table>
+          </article>
+        <section class="admin-section" data-panel="reports">
+          <div class="admin-grid three">
+            <article class="admin-card"><h2>Reported Issues</h2><p class="large-number" data-admin-reports-total-count>0 Reports</p><button data-toast="CSV export started">Export Reports</button></article>
+            <article class="admin-card"><h2>Support Inbox Messages</h2><p class="large-number" data-admin-support-total-count>0 Messages</p><button data-toast="Support queue refreshed">Refresh Inbox</button></article>
+            <article class="admin-card"><h2>Average Response Time</h2><p class="large-number" style="font-size:22px;color:#2e7d32;">Under 2 Hours</p><button data-toast="Status ok">System Active</button></article>
+          </div>
+
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <div>
+                <h2>Customer Issue Reports & Bug Log</h2>
+                <p style="font-size:12px;color:#666;margin-top:2px;">Real-time website, payment, order, and accessibility issue reports submitted by visitors via /report-issue.</p>
+              </div>
+              <button data-toast="Issue log updated">Mark All Resolved</button>
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Report ID & Category</th>
+                  <th>Customer Email</th>
+                  <th>Order ID</th>
+                  <th>Issue Details</th>
+                  <th>Date & Time</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody data-admin-reports-list>
+                <!-- Rendered dynamically by renderAdminReports() -->
+              </tbody>
+            </table>
+          </article>
+
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <div>
+                <h2>Customer Support Contact Inbox</h2>
+                <p style="font-size:12px;color:#666;margin-top:2px;">Messages sent by customers via /contact support form.</p>
+              </div>
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Sender Info</th>
+                  <th>Topic</th>
+                  <th>Customer Message</th>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody data-admin-support-list>
+                <!-- Rendered dynamically by renderAdminReports() -->
               </tbody>
             </table>
           </article>

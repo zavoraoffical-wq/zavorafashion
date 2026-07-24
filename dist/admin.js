@@ -278,6 +278,7 @@ function setSection(name) {
   if (name === 'coupons') renderAdminCoupons();
   if (name === 'wishlist') renderAdminWishlist();
   if (name === 'notifications') renderAdminNotifications();
+  if (name === 'reports') renderAdminReports();
   if (name === 'emails') renderAdminEmails();
   if (name === 'analytics') renderAdminAnalytics();
   if (name === 'affiliates') renderAffiliatesPanel();
@@ -676,34 +677,138 @@ function renderAdminNotifications() {
     if (last && last.id) orders.unshift(last);
   } catch(e) {}
 
+  let returnRequests = [];
+  try {
+    returnRequests = JSON.parse(localStorage.getItem('zavoraReturnRequests') || '[]');
+  } catch(e) {}
+
   const seen = new Set();
   orders = orders.filter(o => o && o.id && !seen.has(String(o.id)) && seen.add(String(o.id)));
 
   const badgeNewOrders = document.querySelector('[data-admin-notif-new-orders]');
   if (badgeNewOrders) badgeNewOrders.textContent = `${orders.length} Orders`;
 
-  if (!orders.length) {
-    list.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:#666;">No store notifications yet. New checkout orders will log here in real-time.</td></tr>`;
+  const returnBadge = document.querySelector('[data-admin-notif-returns]');
+  if (returnBadge) returnBadge.textContent = `${returnRequests.length} Requests`;
+
+  const allEvents = [];
+
+  returnRequests.forEach((req) => {
+    allEvents.push({
+      type: 'Return Request',
+      title: `Return Request #${req.id} (Order #${req.orderId})`,
+      badge: 'gold',
+      customer: req.name,
+      email: req.email,
+      detail: `Reason: ${req.reason} | Desc: ${req.description} | 📸 ${req.photosCount || 0} Photos | 🎥 ${req.videoName || 'No video'}`,
+      date: req.createdAt ? new Date(req.createdAt).toLocaleString() : 'Just now',
+      action: 'Approve Return Label'
+    });
+  });
+
+  orders.forEach((order) => {
+    const isCancelled = String(order.status || '').toLowerCase().includes('cancel');
+    allEvents.push({
+      type: isCancelled ? 'Cancellation Request' : 'New Order',
+      title: isCancelled ? `Order #${order.id} Cancelled by Customer` : `Order #${order.id} Placed`,
+      badge: isCancelled ? 'red' : 'green',
+      customer: order.customer || 'Customer',
+      email: order.email || '',
+      detail: `Total Amount: ${money(order.total || 0)} (${order.status || 'Paid'})`,
+      date: order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Just now',
+      action: isCancelled ? 'Process Refund' : 'Process Order'
+    });
+  });
+
+  if (!allEvents.length) {
+    list.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:#666;">No store notifications yet. New checkout orders and return requests will log here in real-time.</td></tr>`;
     return;
   }
 
-  list.innerHTML = orders.map((order) => `
+  list.innerHTML = allEvents.map((n) => `
     <tr>
       <td>
-        <strong style="font-size:13px;color:#050505;display:block;">Order #${order.id} Placed</strong>
-        <span class="pill green">New Order</span>
+        <strong style="font-size:13px;color:#050505;display:block;">${n.title}</strong>
+        <span class="pill ${n.badge}">${n.type}</span>
       </td>
       <td>
-        <strong style="font-size:12px;color:#333;">${order.customer || 'Customer'}</strong>
-        <br><span style="font-size:11px;color:#666;">✉️ ${order.email || ''}</span>
+        <strong style="font-size:12px;color:#333;">${n.customer}</strong>
+        <br><span style="font-size:11px;color:#666;">✉️ ${n.email}</span>
       </td>
-      <td><span style="font-size:12px;color:#444;">Total Amount: ${money(order.total || 0)} (${order.status || 'Paid'})</span></td>
-      <td><span style="font-size:11px;color:#555;">${order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Just now'}</span></td>
+      <td><span style="font-size:12px;color:#444;max-width:320px;display:inline-block;">${n.detail}</span></td>
+      <td><span style="font-size:11px;color:#555;">${n.date}</span></td>
       <td>
-        <button type="button" data-toast="Order #${order.id} opened for processing" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">Process Order</button>
+        <button type="button" data-toast="Notification resolved: ${n.type}" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">${n.action}</button>
       </td>
     </tr>
   `).join('');
+}
+
+function renderAdminReports() {
+  const reportsList = document.querySelector('[data-admin-reports-list]');
+  const supportList = document.querySelector('[data-admin-support-list]');
+
+  let reports = [];
+  try {
+    reports = JSON.parse(localStorage.getItem('zavoraIssueReports') || '[]');
+  } catch(e) {}
+
+  let support = [];
+  try {
+    support = JSON.parse(localStorage.getItem('zavoraSupportMessages') || '[]');
+  } catch(e) {}
+
+  const reportsTotalEl = document.querySelector('[data-admin-reports-total-count]');
+  if (reportsTotalEl) reportsTotalEl.textContent = `${reports.length} Reports`;
+
+  const supportTotalEl = document.querySelector('[data-admin-support-total-count]');
+  if (supportTotalEl) supportTotalEl.textContent = `${support.length} Messages`;
+
+  if (reportsList) {
+    if (!reports.length) {
+      reportsList.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">No issue reports submitted yet. User reports from /report-issue will log here in real-time.</td></tr>`;
+    } else {
+      reportsList.innerHTML = reports.map((r) => `
+        <tr>
+          <td>
+            <strong style="color:#050505;font-size:13px;display:block;">#${r.id}</strong>
+            <span class="pill gold">${r.category || 'Website issue'}</span>
+          </td>
+          <td>
+            <strong style="font-size:13px;color:#050505;">${r.name}</strong>
+            <br><span style="font-size:12px;color:#1976d2;">✉️ ${r.email}</span>
+          </td>
+          <td><strong style="color:#333;font-size:13px;">${r.orderId || 'N/A'}</strong></td>
+          <td><span style="font-size:12px;color:#444;max-width:300px;display:inline-block;">${r.description}</span></td>
+          <td><span style="font-size:11px;color:#666;">${r.createdAt ? new Date(r.createdAt).toLocaleString() : 'Just now'}</span></td>
+          <td>
+            <button type="button" data-toast="Issue #${r.id} marked resolved" style="padding:4px 8px;font-size:12px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;">Resolve</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  if (supportList) {
+    if (!support.length) {
+      supportList.innerHTML = `<tr><td colspan="5" style="padding:24px;text-align:center;color:#666;">No support contact messages in inbox. Messages from /contact will appear here in real-time.</td></tr>`;
+    } else {
+      supportList.innerHTML = support.map((m) => `
+        <tr>
+          <td>
+            <strong style="color:#050505;font-size:13px;">${m.name || 'Visitor'}</strong>
+            <br><span style="font-size:12px;color:#1976d2;">✉️ ${m.email}</span>
+          </td>
+          <td><span class="pill green">${m.topic || 'General Support'}</span></td>
+          <td><span style="font-size:12px;color:#444;max-width:300px;display:inline-block;">${m.message || m.description}</span></td>
+          <td><span style="font-size:11px;color:#666;">${m.createdAt ? new Date(m.createdAt).toLocaleString() : 'Just now'}</span></td>
+          <td>
+            <button type="button" data-toast="Reply email drafted for ${m.email}" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">Reply</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
 }
 
 function renderAdminShipping() {

@@ -1402,15 +1402,37 @@ function setDashboardView(view = 'dashboard') {
           ? order.items.map(i => `${i.name || 'Product'} (Qty ${i.qty || 1})`).join(', ')
           : (order.item || 'Zavora order');
         const emailParam = order.email || authDashboardData?.user?.email || authUser?.email || '';
+        const statusLower = String(order.status || '').toLowerCase();
+        const isShippedOrDelivered = statusLower.includes('shipp') || statusLower.includes('deliver') || statusLower.includes('transit');
+        const isCancelled = statusLower.includes('cancel');
+
+        let actionBtn = '';
+        if (isCancelled) {
+          actionBtn = `<span class="pill red" style="display:inline-block;padding:4px 10px;background:#ffebee;color:#c62828;font-weight:700;border-radius:4px;font-size:12px;margin-top:8px;">Order Cancelled</span>`;
+        } else if (!isShippedOrDelivered) {
+          actionBtn = `
+            <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+              <a class="text-link" href="track-order.html?order=${encodeURIComponent(String(order.id).replace(/^#/, ''))}&email=${encodeURIComponent(emailParam)}">Track live order</a>
+              <button type="button" data-customer-cancel-order="${order.id}" style="padding:6px 12px;background:#c62828;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;">Cancel Order</button>
+            </div>
+          `;
+        } else {
+          actionBtn = `
+            <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+              <a class="text-link" href="track-order.html?order=${encodeURIComponent(String(order.id).replace(/^#/, ''))}&email=${encodeURIComponent(emailParam)}">Track live order</a>
+              <a href="returns.html?orderId=${encodeURIComponent(String(order.id).replace(/^#/, ''))}" style="padding:6px 12px;background:#050505;color:#fff;text-decoration:none;border-radius:4px;font-size:12px;font-weight:700;">Request Return / Exchange</a>
+            </div>
+          `;
+        }
+
         return `
           <article class="dashboard-card dashboard-wide">
             <span>Order History</span>
             <h3>#${String(order.id).replace(/^#/, '')}</h3>
             <p><strong>Items:</strong> ${itemsList}</p>
-            <p style="font-size:13px;margin-top:4px;"><strong>Payment:</strong> ${order.method || 'PayPal'} | <strong>Status:</strong> ${order.status || 'Paid'} | <strong>Total:</strong> ${money(order.total || 0)}</p>
-            <p style="font-size:12px;opacity:0.75;margin-top:2px;">${order.rewardId ? `Reward ID: ${order.rewardId}` : Number(order.total || 0) >= 100 ? 'Reward ID appears after delivery and 24-hour clearance.' : 'Reward not available for orders under $100.'}</p>
+            <p style="font-size:13px;margin-top:4px;"><strong>Payment:</strong> ${order.method || 'PayPal'} | <strong>Status:</strong> ${order.status || 'Order confirmed'} | <strong>Total:</strong> ${money(order.total || 0)}</p>
             <div class="mini-status"><i style="width:${order.status === 'Delivered' ? 100 : order.status === 'Shipped' ? 78 : order.status === 'Packing' ? 50 : 25}%"></i></div>
-            <a class="text-link" href="track-order.html?order=${encodeURIComponent(String(order.id).replace(/^#/, ''))}&email=${encodeURIComponent(emailParam)}">Track live order</a>
+            ${actionBtn}
           </article>
         `;
       }).join('') : '<article class="dashboard-card dashboard-wide"><span>Orders</span><h3>No orders yet</h3><p>Your order history appears here after checkout.</p></article>'}
@@ -3947,5 +3969,86 @@ function trackLiveVisitorSession() {
     localStorage.setItem('zavora_active_visitors', JSON.stringify(visitors));
   } catch(e) {}
 }
-trackLiveVisitorSession();
-setInterval(trackLiveVisitorSession, 4000);
+document.addEventListener('click', (event) => {
+  const cancelBtn = event.target?.closest?.('[data-customer-cancel-order]');
+  if (cancelBtn) {
+    const orderId = cancelBtn.dataset.customerCancelOrder;
+    if (!confirm(`Are you sure you want to cancel order #${orderId}?`)) return;
+    try {
+      let orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+      const target = orders.find(o => String(o.id) === String(orderId));
+      if (target) {
+        target.status = 'Cancelled by Customer';
+        localStorage.setItem('zavoraOrders', JSON.stringify(orders));
+        alert(`Order #${orderId} has been successfully cancelled.`);
+        if (typeof renderDashboardView === 'function') renderDashboardView('orders');
+      }
+    } catch(e) {}
+  }
+});
+
+document.addEventListener('submit', (event) => {
+  if (event.target && event.target.id === 'returnRequestForm') {
+    event.preventDefault();
+    const form = event.target;
+    const orderId = form.querySelector('[name="orderId"]')?.value || '';
+    const email = form.querySelector('[name="email"]')?.value || '';
+    const name = form.querySelector('[name="name"]')?.value || '';
+    const reason = form.querySelector('[name="reason"]')?.value || '';
+    const description = form.querySelector('[name="description"]')?.value || '';
+    const photos = form.querySelector('[name="photos"]')?.files;
+    const video = form.querySelector('[name="video"]')?.files?.[0];
+
+    const retId = 'RET-' + Math.floor(100000 + Math.random() * 900000);
+    const newRequest = {
+      id: retId,
+      orderId,
+      email,
+      name,
+      reason,
+      description,
+      photosCount: photos ? photos.length : 0,
+      videoName: video ? video.name : 'No video attached',
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      let requests = JSON.parse(localStorage.getItem('zavoraReturnRequests') || '[]');
+      requests.unshift(newRequest);
+      localStorage.setItem('zavoraReturnRequests', JSON.stringify(requests));
+    } catch(e) {}
+
+    alert(`Return request submitted successfully!\n\nRequest ID: #${retId}\nOrder ID: ${orderId}\n\nOur team will review your photos & video clip within 24 hours.`);
+    form.reset();
+  }
+
+  if (event.target && event.target.id === 'reportIssueForm') {
+    event.preventDefault();
+    const form = event.target;
+    const name = form.querySelector('[name="name"]')?.value || '';
+    const email = form.querySelector('[name="email"]')?.value || '';
+    const category = form.querySelector('[name="category"]')?.value || 'Website issue';
+    const orderId = form.querySelector('[name="orderId"]')?.value || 'N/A';
+    const description = form.querySelector('[name="description"]')?.value || '';
+
+    const repId = 'REP-' + Math.floor(100000 + Math.random() * 900000);
+    const newReport = {
+      id: repId,
+      name,
+      email,
+      category,
+      orderId,
+      description,
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      let reports = JSON.parse(localStorage.getItem('zavoraIssueReports') || '[]');
+      reports.unshift(newReport);
+      localStorage.setItem('zavoraIssueReports', JSON.stringify(reports));
+    } catch(e) {}
+
+    alert(`Issue report submitted to Zavora Admin!\n\nReference ID: #${repId}\nCategory: ${category}\n\nThank you for helping us improve.`);
+    form.reset();
+  }
+});
