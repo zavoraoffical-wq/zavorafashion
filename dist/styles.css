@@ -299,8 +299,9 @@ body.home-page .site-header:not(.scrolled) {
   object-fit: contain;
   border-radius: 0;
   background: transparent !important;
+  border: none !important;
   box-shadow: none !important;
-  filter: drop-shadow(0 12px 28px rgba(0,0,0,0.08));
+  mix-blend-mode: multiply;
   transition: transform .45s ease;
 }
 .mega-visual:hover img {

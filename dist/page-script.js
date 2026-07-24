@@ -840,14 +840,14 @@ const pageMegaMenuData = {
     label: '',
     title: 'Oversized tees, hoodies, sweat sets, jackets, and accessories for premium everyday styling.',
     href: 'women.html',
-    image: 'assets/zavora-women-models.png',
+    image: 'assets/zavora-women-cutout.png',
     items: [['Oversized Tees', 'oversized-tees'], ['Baby Tees', 'baby-tees'], ['Hoodies', 'hoodies'], ['Cropped Hoodies', 'cropped-hoodies'], ['Sweatpants', 'sweatpants'], ['Jackets', 'jackets'], ['Accessories', 'accessories']]
   },
   men: {
     label: '',
     title: 'Heavyweight layers, oversized fits, cargos, sweatpants, jackets, and accessories.',
     href: 'men.html',
-    image: 'assets/zavora-men-models.png',
+    image: 'assets/zavora-men-cutout.png',
     items: [['Oversized Tees', 'oversized-tees'], ['Heavyweight Tees', 'heavyweight-tees'], ['Hoodies', 'hoodies'], ['Zip Hoodies', 'zip-hoodies'], ['Cargo Pants', 'cargo-pants'], ['Sweatpants', 'sweatpants'], ['Jackets', 'jackets'], ['Shorts', 'shorts'], ['Accessories', 'accessories']]
   }
 };
