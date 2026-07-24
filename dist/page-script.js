@@ -3790,10 +3790,11 @@ initAffiliateAttribution();
 
 function initHomeBanners() {
   const hero = document.querySelector('.hero');
-  const image = hero?.querySelector('img');
-  const source = hero?.querySelector('source');
-  const dots = Array.from(hero?.querySelectorAll('.hero-dots button') || []);
-  if (!hero || !image) return;
+  if (!hero) return;
+  const image = hero.querySelector('img');
+  const source = hero.querySelector('source');
+  if (!image) return;
+
   const eyebrow = hero.querySelector('.hero-content .eyebrow');
   const title = hero.querySelector('.hero-content h1');
   const copy = hero.querySelector('.hero-content p:not(.eyebrow)');
@@ -3801,22 +3802,93 @@ function initHomeBanners() {
 
   const banners = [
     {
-      image: 'assets/zavora-summer-sale-banner.png',
-      eyebrow: '☀️ USA Summer Sale',
-      title: 'Get 15% OFF Premium Streetwear',
-      copy: 'Elevate your summer wardrobe with clean oversized tees, hoodies, and vacation streetwear. Use Code: SUMMER15 at checkout. Limited Time Only.',
-      cta: 'Shop Summer Sale (Code: SUMMER15)',
-      href: 'shop.html'
+      image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=2000&q=85',
+      eyebrow: '✨ USA Luxury Collection',
+      title: 'Designed in the USA. Crafted for Everyday Luxury.',
+      copy: 'Discover the 2026 luxury streetwear lineup featuring heavyweight cottons, tailored silhouettes, and minimalist aesthetics.',
+      cta: 'Explore New Arrivals',
+      href: 'shop.html?category=new'
     },
     {
-      image: 'assets/zavora-welcome-banner.png',
+      image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=2000&q=85',
+      eyebrow: '☀️ USA Summer Edit',
+      title: 'Get 15% OFF Premium Summer Fashion',
+      copy: 'Elevate your summer wardrobe with clean oversized tees, hoodies, and vacation fits. Use Code: SUMMER15 at checkout.',
+      cta: 'Shop Summer Sale (Code: SUMMER15)',
+      href: 'shop.html?category=summer'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=2000&q=85',
       eyebrow: '🔥 First Order Special',
-      title: '$10 OFF Your First Purchase',
-      copy: 'New to Zavora Fashion? Save $10 on orders over $49 with fast USA shipping. Use Code: WELCOME10 at checkout.',
+      title: '$10 OFF Your First Luxury Purchase',
+      copy: 'New to Zavora Fashion? Save $10 on orders over $49 with fast USA express shipping. Use Code: WELCOME10 at checkout.',
       cta: 'Claim $10 OFF (Code: WELCOME10)',
-      href: 'shop.html'
+      href: 'shop.html?discount=welcome10'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?auto=format&fit=crop&w=2000&q=85',
+      eyebrow: '👑 Men’s Streetwear Edit',
+      title: 'Architectural Tailoring & Heavyweight Tees',
+      copy: 'Structured cargo trousers, drop-shoulder hoodies, and custom dad hats built for urban luxury lifestyle.',
+      cta: 'Shop Men’s Collection',
+      href: 'shop.html?category=men'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=2000&q=85',
+      eyebrow: '💃 Women’s Luxury Lineup',
+      title: 'Effortless Elegance & Contemporary Fits',
+      copy: 'Chic wide-leg trousers, oversized luxury hoodies, and minimal crop tees designed for modern women.',
+      cta: 'Shop Women’s Lineup',
+      href: 'shop.html?category=women'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=2000&q=85',
+      eyebrow: '❄️ Heavyweight Hoodies',
+      title: '480 GSM French Terry Luxury Hoodies',
+      copy: 'Crafted from 480 GSM organic french terry cotton for superior warmth and structural drape.',
+      cta: 'Shop Luxury Hoodies',
+      href: 'shop.html?category=hoodies'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=2000&q=85',
+      eyebrow: '⚡ Limited Edition Release',
+      title: 'Exclusive Drop: Zavora Studio Edition',
+      copy: 'Limited batch release of 100 individually numbered pieces worldwide. Once sold out, never re-released.',
+      cta: 'Shop Limited Drop',
+      href: 'shop.html?category=limited'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=2000&q=85',
+      eyebrow: '🚚 Free USA Express Delivery',
+      title: 'Free Shipping On All USA Orders Over $75',
+      copy: 'Enjoy complimentary 2-day express delivery across the United States. Automatic free shipping applied at checkout.',
+      cta: 'Shop Best Sellers',
+      href: 'shop.html?category=best'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&w=2000&q=85',
+      eyebrow: '🧢 Signature Accessories',
+      title: 'The Signature Zavora Dad Hat Collection',
+      copy: 'Premium cotton twill hats with high-density gold crest embroidery. Designed for subtle distinction.',
+      cta: 'Shop Accessories',
+      href: 'shop.html?category=accessories'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=2000&q=85',
+      eyebrow: '🤝 Creator Partner Program',
+      title: 'Earn Up to 15% Commission as a Partner',
+      copy: 'Join the Zavora Creator Network. Share your custom link and earn real cash payouts on every customer purchase.',
+      cta: 'Become an Affiliate',
+      href: 'affiliate.html'
     }
   ];
+
+  const dotsNav = hero.querySelector('.hero-dots');
+  if (dotsNav) {
+    dotsNav.innerHTML = banners.map((_, i) => `<button type="button" class="${i === 0 ? 'active' : ''}" aria-label="Go to banner ${i + 1}"></button>`).join('');
+  }
+  const dots = Array.from(hero.querySelectorAll('.hero-dots button'));
+
   let active = 0;
   const setBanner = (index) => {
     const next = banners[index];
@@ -3828,7 +3900,7 @@ function initHomeBanners() {
       cta.textContent = next.cta;
       cta.href = next.href;
     }
-    image.style.opacity = '0.28';
+    image.style.opacity = '0.3';
     setTimeout(() => {
       image.src = next.image;
       if (source) source.srcset = next.image;
@@ -3839,17 +3911,19 @@ function initHomeBanners() {
   image.src = banners[0].image;
   if (source) source.srcset = banners[0].image;
   setBanner(0);
+
   dots.forEach((dot, index) => {
     dot.addEventListener('click', () => {
       active = index;
       setBanner(active);
     });
   });
+
   if (banners.length > 1) {
     setInterval(() => {
       active = (active + 1) % banners.length;
       setBanner(active);
-    }, 5000);
+    }, 5500);
   }
 }
 
