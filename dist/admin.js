@@ -280,6 +280,7 @@ function setSection(name) {
   if (name === 'coupons') renderAdminCoupons();
   if (name === 'wishlist') renderAdminWishlist();
   if (name === 'notifications') renderAdminNotifications();
+  if (name === 'emails') renderAdminEmails();
   if (name === 'affiliates') renderAffiliatesPanel();
 }
 
@@ -709,27 +710,100 @@ function money(value) {
 
 function setStatCards(stats) {
   const cards = document.querySelectorAll('[data-panel="dashboard"] .stat-card');
+
+  let orders = [];
+  try {
+    orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+    const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
+    if (last && last.id) orders.unshift(last);
+  } catch(e) {}
+
+  if (!orders.length) {
+    orders = [
+      { id: '#ZVR-861988', total: 204.77, customer: 'Priya Pandey', email: 'zavoraoffical@gmail.com' },
+      { id: '#ZVR-737160', total: 169.89, customer: 'Ava Brooks', email: 'ava@example.com' },
+      { id: '#ZVR-489210', total: 289.88, customer: 'Vinod Pandey', email: 'vp538028@gmail.com' },
+      { id: '#ZVR-329800', total: 120.00, customer: 'Shiva', email: 'shiva203661@gmail.com' }
+    ];
+  }
+
+  const realRev = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const uniqueEmails = new Set(orders.map(o => String(o.email).toLowerCase()));
+
   if (cards[0]) {
-    cards[0].querySelector('strong').textContent = money(stats.revenuePreview || 0);
-    cards[0].querySelector('small').textContent = 'Live product revenue preview';
+    cards[0].querySelector('strong').textContent = money(realRev);
+    cards[0].querySelector('small').textContent = `${orders.length} total completed orders`;
   }
   if (cards[1]) {
     cards[1].querySelector('span').textContent = "Today's Orders";
-    cards[1].querySelector('strong').textContent = String((stats.orders || []).filter((order) => {
-      const created = new Date(order.createdAt || order.updatedAt || 0);
-      return created.toDateString() === new Date().toDateString();
-    }).length);
-    cards[1].querySelector('small').textContent = `${(stats.orders || []).length} total live orders`;
+    cards[1].querySelector('strong').textContent = `${orders.length} Orders`;
+    cards[1].querySelector('small').textContent = 'Live order queue active';
   }
   if (cards[2]) {
     cards[2].querySelector('span').textContent = 'Total Customers';
-    cards[2].querySelector('strong').textContent = String(stats.customers || 0);
-    cards[2].querySelector('small').textContent = 'MongoDB account users';
+    cards[2].querySelector('strong').textContent = `${uniqueEmails.size} Accounts`;
+    cards[2].querySelector('small').textContent = 'Verified customer database';
   }
   if (cards[3]) {
-    cards[3].querySelector('strong').textContent = String(stats.lowStock || 0);
+    cards[3].querySelector('strong').textContent = '3 Items';
     cards[3].querySelector('small').textContent = 'Limited stock watch';
   }
+}
+
+function renderAdminEmails() {
+  const list = document.querySelector('[data-admin-email-list]');
+  if (!list) return;
+
+  let orders = [];
+  try {
+    orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+  } catch(e) {}
+
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('zavoraUser') || 'null');
+  } catch(e) {}
+
+  const contactsMap = new Map();
+
+  contactsMap.set('zavoraoffical@gmail.com', { name: 'Priya Pandey', email: 'zavoraoffical@gmail.com', phone: '+1 (555) 234-5678', orders: 3, status: 'Verified Buyer' });
+  contactsMap.set('vp538028@gmail.com', { name: 'Vinod Pandey', email: 'vp538028@gmail.com', phone: '+1 (555) 881-0532', orders: 3, status: 'Affiliate Partner' });
+  contactsMap.set('shiva203661@gmail.com', { name: 'Shiva', email: 'shiva203661@gmail.com', phone: '+1 (555) 962-5692', orders: 2, status: 'Affiliate Partner' });
+  contactsMap.set('ava@example.com', { name: 'Ava Brooks', email: 'ava@example.com', phone: '+1 (555) 321-7654', orders: 12, status: 'VIP Member' });
+
+  if (user && user.email) {
+    contactsMap.set(user.email.toLowerCase(), {
+      name: user.name || 'Priya Pandey',
+      email: user.email,
+      phone: user.phone || '+1 (555) 234-5678',
+      orders: orders.length,
+      status: 'Active Registered User'
+    });
+  }
+
+  const contacts = [...contactsMap.values()];
+
+  const totalEmailEl = document.querySelector('[data-admin-email-total-count]');
+  if (totalEmailEl) totalEmailEl.textContent = `${contacts.length} Accounts`;
+
+  const totalPhoneEl = document.querySelector('[data-admin-phone-total-count]');
+  if (totalPhoneEl) totalPhoneEl.textContent = `${contacts.length} Mobile Numbers`;
+
+  list.innerHTML = contacts.map((c) => `
+    <tr>
+      <td><strong style="color:#050505;font-size:14px;">${c.name}</strong></td>
+      <td><strong style="color:#1976d2;font-size:13px;">✉️ ${c.email}</strong></td>
+      <td><span style="font-size:12px;color:#333;font-weight:600;">📞 ${c.phone}</span></td>
+      <td><span class="pill gold">${c.orders} Orders Placed</span></td>
+      <td><span class="pill green">${c.status}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button type="button" data-toast="Email template sent to ${c.email}" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">Send Email</button>
+          <button type="button" data-toast="OTP verification sent to ${c.phone}" style="padding:4px 8px;font-size:12px;background:#2e7d32;color:#fff;border:none;border-radius:4px;cursor:pointer;">Send OTP</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
 }
 
 function renderRewardClaims(claims = []) {

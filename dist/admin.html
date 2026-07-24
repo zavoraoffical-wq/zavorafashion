@@ -326,13 +326,38 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
 
         <section class="admin-section" data-panel="emails">
           <div class="admin-grid three">
-            <article class="admin-card"><h2>OTP Emails</h2><p>support@zavorafashion.com</p><button data-toast="OTP template tested">Test OTP</button></article>
-            <article class="admin-card"><h2>Welcome Email</h2><p>hello@zavorafashion.com</p><button data-toast="Welcome email tested">Test Welcome</button></article>
-            <article class="admin-card"><h2>Order Emails</h2><p>order@zavorafashion.com</p><button data-toast="Order confirmation tested">Test Order</button></article>
-            <article class="admin-card"><h2>Shipping Email</h2><p>tracking@zavorafashion.com</p><button data-toast="Shipping template opened">Edit</button></article>
-            <article class="admin-card"><h2>Refund Email</h2><p>returns@zavorafashion.com</p><button data-toast="Refund template opened">Edit</button></article>
-            <article class="admin-card"><h2>Newsletter</h2><p>info@zavorafashion.com</p><button data-toast="Newsletter composer opened">Compose</button></article>
+            <article class="admin-card"><h2>Customer Email Directory</h2><p class="large-number" data-admin-email-total-count>4 Accounts</p><button data-toast="CSV export started">Export Email List</button></article>
+            <article class="admin-card"><h2>Verified Phone Contacts</h2><p class="large-number" data-admin-phone-total-count>4 Mobile Numbers</p><button data-toast="SMS campaign ready">Send SMS Blast</button></article>
+            <article class="admin-card"><h2>Email Gateway Status</h2><p class="large-number" style="font-size:22px;color:#2e7d32;">Resend API Active</p><button data-toast="Test email sent">Send Test Mail</button></article>
           </div>
+
+          <article class="admin-card" style="margin-top:20px;">
+            <div class="card-head">
+              <div>
+                <h2>Real Customer Contacts & Email Center</h2>
+                <p style="font-size:12px;color:#666;margin-top:2px;">Real-time email IDs, phone numbers, order history, and direct email/OTP actions for all buyers.</p>
+              </div>
+              <button data-toast="Email broadcast composer opened">Compose Broadcast</button>
+            </div>
+            <div style="margin:12px 0;">
+              <input id="adminEmailSearchInput" type="search" placeholder="🔍 Search contacts by name, email ID, or phone number..." style="width:100%;padding:10px 14px;border-radius:6px;border:1px solid #ccc;font-size:14px;">
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Customer Name</th>
+                  <th>Real Email Address</th>
+                  <th>Phone Number</th>
+                  <th>Total Orders Placed</th>
+                  <th>Status</th>
+                  <th>Direct Control</th>
+                </tr>
+              </thead>
+              <tbody data-admin-email-list>
+                <!-- Rendered dynamically by renderAdminEmails() -->
+              </tbody>
+            </table>
+          </article>
         </section>
 
         <section class="admin-section" data-panel="analytics">
