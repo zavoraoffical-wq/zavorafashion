@@ -4516,6 +4516,12 @@ input[type="url"], input[type="date"],
     padding-top: 10px !important;
   }
 
+  .catalog-toolbar h1 {
+    display: none !important;
+  }
+  .catalog-toolbar {
+    justify-content: flex-end !important;
+  }
   .mobile-filter-bar {
     display: grid;
     grid-template-columns: 1fr 1fr;

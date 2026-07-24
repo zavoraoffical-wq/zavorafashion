@@ -1988,7 +1988,6 @@ function injectLargeCatalog() {
         </select>
       </div>
       <div class="catalog-toolbar">
-        <div><h1>${pageName === 'collections.html' ? collectionLabel(activeCollection) : 'Premium streetwear catalog'}</h1></div>
         <span><strong data-catalog-count>${catalogData.length}</strong> results</span>
       </div>
       <div class="catalog-grid" data-catalog-grid>${catalogData.length ? catalogData.map(catalogCard).join('') : '<p class="catalog-loading">Loading Printful products...</p>'}</div>
