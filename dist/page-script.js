@@ -3678,9 +3678,15 @@ function normalizedProductColor(color = '') {
 }
 
 function productVariantGroup(product, color = '') {
+  if (!color) return null;
   const key = normalizedProductColor(color === 'Original' ? 'default' : color);
   const groups = product?.variantGroups || {};
-  return groups[key] || groups[Object.keys(groups)[0]] || null;
+  if (!groups || !Object.keys(groups).length) return null;
+
+  if (groups[key]) return groups[key];
+  const matchedKey = Object.keys(groups).find(k => k.includes(key) || key.includes(k));
+  if (matchedKey && groups[matchedKey]) return groups[matchedKey];
+  return null;
 }
 
 function renderProductGallery(product, images = []) {

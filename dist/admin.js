@@ -1501,12 +1501,13 @@ function addAdminProduct(form) {
   const sizesRaw = String(data.get('sizes') || '').trim();
   const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : ['XS', 'S', 'M', 'L', 'XL'];
 
-  const img1 = String(data.get('img') || '').trim() || 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80';
+  const img1 = String(data.get('img') || '').trim();
   const img2 = String(data.get('image2') || '').trim();
   const img3 = String(data.get('image3') || '').trim();
   const img4 = String(data.get('image4') || '').trim();
   const img5 = String(data.get('image5') || '').trim();
   const images = [img1, img2, img3, img4, img5].filter(Boolean);
+  const primaryImg = images[0] || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80';
 
   const video = String(data.get('videoUrl') || '').trim();
   const stock = Number(data.get('stock') || 50);
@@ -1525,10 +1526,10 @@ function addAdminProduct(form) {
     colors: colors.length ? colors : ['black'],
     color: colors[0] || 'black',
     sizes,
-    img: img1,
-    image: img1,
-    images: images.length ? images : [img1],
-    hoverImage: img2 || img1,
+    img: primaryImg,
+    image: primaryImg,
+    images: images.length ? images : [primaryImg],
+    hoverImage: images[1] || primaryImg,
     videoUrl: video,
     badge: 'NEW',
     collection: [gender.toLowerCase(), collectionTag, 'new'],
