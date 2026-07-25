@@ -2024,15 +2024,37 @@ async function loadPrintfulCatalog() {
   grid.dataset.printfulLoaded = 'in-progress';
   try {
     const pageName = normalizePageName(window.location.pathname);
+    const genderForPage = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : null;
     const dataProducts = pageName === 'shop' || pageName === 'collections'
       ? (await Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))).flat()
-      : await fetchCatalogProducts(pageName === 'women' ? 'women' : 'men', 1000);
+      : await fetchCatalogProducts(genderForPage || 'women', 1000);
     
-    const adminProducts = JSON.parse(localStorage.getItem('zavoraAdminProducts') || '[]');
-    const existing = window.__zavoraCatalogProducts || [];
+    let adminRaw = [];
+    let importedRaw = [];
+    try { adminRaw = JSON.parse(localStorage.getItem('zavoraAdminProducts') || '[]'); } catch(e) {}
+    try { importedRaw = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]'); } catch(e) {}
     
-    if (dataProducts.length || adminProducts.length) {
-      const merged = deduplicateProducts([...dataProducts, ...adminProducts, ...existing]);
+    const allCached = deduplicateProducts([...importedRaw, ...adminRaw]).filter(p => {
+      // Remove demo bodysuit / non-apparel
+      const name = String(p.name || p.title || '').toLowerCase();
+      if (/baby.*jersey.*bodysuit|bodysuit|sportswear.*baby|baby.*body/i.test(name)) return false;
+      // Apply gender filter for gender-specific pages
+      if (genderForPage) {
+        const pg = String(p.gender || '').toLowerCase();
+        if (pg && pg !== genderForPage && pg !== 'unisex') return false;
+      }
+      return true;
+    });
+    const existing = (window.__zavoraCatalogProducts || []).filter(p => {
+      if (genderForPage) {
+        const pg = String(p.gender || '').toLowerCase();
+        if (pg && pg !== genderForPage && pg !== 'unisex') return false;
+      }
+      return true;
+    });
+    
+    if (dataProducts.length || allCached.length) {
+      const merged = deduplicateProducts([...allCached, ...dataProducts, ...existing]);
       const products = productsForCatalogPage(merged, pageName);
       
       window.__zavoraCatalogProducts = products;
@@ -2054,15 +2076,36 @@ function injectLargeCatalog() {
   const genderTarget = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : 'all';
   if (!window.__zavoraCatalogProducts || !window.__zavoraCatalogProducts.length) {
     try {
-      const cached = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || localStorage.getItem('zavoraAdminProducts') || '[]');
+      // Merge both imported and admin products
+      let importedRaw = [];
+      let adminRaw = [];
+      try { importedRaw = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]'); } catch(e) {}
+      try { adminRaw = JSON.parse(localStorage.getItem('zavoraAdminProducts') || '[]'); } catch(e) {}
+      const cached = deduplicateProducts([...importedRaw, ...adminRaw]).filter(p => {
+        // Remove known demo/non-clothing products (baby bodysuit, polo in demo context)
+        const name = String(p.name || p.title || '').toLowerCase();
+        if (/baby.*jersey.*bodysuit|bodysuit|sportswear.*baby|baby.*body/i.test(name)) return false;
+        // For women/men pages: strictly filter by gender
+        if (genderTarget !== 'all') {
+          const pg = String(p.gender || '').toLowerCase();
+          if (pg && pg !== genderTarget && pg !== 'unisex') return false;
+        }
+        return true;
+      });
       if (cached && cached.length) {
-        window.__zavoraCatalogProducts = deduplicateProducts(cached);
+        window.__zavoraCatalogProducts = cached;
       } else {
         window.__zavoraCatalogProducts = generateExpandedApparelCatalog(genderTarget);
       }
     } catch (e) {
       window.__zavoraCatalogProducts = generateExpandedApparelCatalog(genderTarget);
     }
+  } else if (genderTarget !== 'all') {
+    // Re-filter already cached products if on a gender-specific page
+    window.__zavoraCatalogProducts = window.__zavoraCatalogProducts.filter(p => {
+      const pg = String(p.gender || '').toLowerCase();
+      return !pg || pg === genderTarget || pg === 'unisex';
+    });
   }
   const catalogData = productsForCatalogPage(window.__zavoraCatalogProducts, pageName);
 
