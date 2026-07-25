@@ -3777,10 +3777,8 @@ async function refreshSelectedProductFromUrl() {
 
   const adminProducts = typeof getAdminProducts === 'function' ? getAdminProducts() : [];
   const catalogProducts = window.__zavoraCatalogProducts || [];
-  const storefrontCatalog = typeof STOREFRONT_APPAREL_CATALOG !== 'undefined' ? STOREFRONT_APPAREL_CATALOG : [];
-  const fullCatalog = typeof ZAVORA_FULL_CATALOG !== 'undefined' ? ZAVORA_FULL_CATALOG : [];
 
-  const allLocal = [...adminProducts, ...catalogProducts, ...storefrontCatalog, ...fullCatalog];
+  const allLocal = [...adminProducts, ...catalogProducts];
   let found = allLocal.find(p => p && (String(p.id) === String(id) || String(p.printfulId) === String(id) || String(p.sku) === String(id)));
 
   if (found) {
