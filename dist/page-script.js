@@ -1808,8 +1808,8 @@ function catalogCard(item) {
   return `
     <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-gender="${String(item.gender || '').toLowerCase()}" data-category="${item.category}" data-collection="${collections}" data-color="${colors.join(' ')}" data-size="${(item.sizes || [size]).join(' ')}" data-price="${item.price}">
       <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" aria-label="Open ${item.name} detail page">
-        <img class="card-img-primary" src="${image}" alt="${item.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80'">
-        <img class="card-img-hover" src="${hoverImage}" alt="${item.name} hover view" onerror="this.style.display='none'">
+        <img class="card-img-primary" src="${image}" alt="${item.name}" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80'">
+        <img class="card-img-hover" src="${hoverImage}" alt="${item.name} hover view" loading="lazy" onerror="this.style.display='none'">
         ${item.badge && item.badge !== 'null' && item.badge !== 'undefined' && item.badge !== 'NULL' ? `<span class="badge">${item.badge}</span>` : ''}
         <button class="wish" type="button" data-wishlist-product="${item.id}" aria-label="Add ${item.name} to wishlist">♡</button>
       </a>
@@ -2051,7 +2051,16 @@ function injectLargeCatalog() {
 
   const genderTarget = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : 'all';
   if (!window.__zavoraCatalogProducts || !window.__zavoraCatalogProducts.length) {
-    window.__zavoraCatalogProducts = generateExpandedApparelCatalog(genderTarget);
+    try {
+      const cached = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || localStorage.getItem('zavoraAdminProducts') || '[]');
+      if (cached && cached.length) {
+        window.__zavoraCatalogProducts = deduplicateProducts(cached);
+      } else {
+        window.__zavoraCatalogProducts = generateExpandedApparelCatalog(genderTarget);
+      }
+    } catch (e) {
+      window.__zavoraCatalogProducts = generateExpandedApparelCatalog(genderTarget);
+    }
   }
   const catalogData = productsForCatalogPage(window.__zavoraCatalogProducts, pageName);
 
