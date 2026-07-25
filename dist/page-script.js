@@ -2018,54 +2018,97 @@ async function fetchCatalogProducts(gender, limit = 1000) {
   return results.flat();
 }
 
-async function loadPrintfulCatalog() {
+// Generate professional skeleton loading cards — zero Printful/loading text
+function generateSkeletonCards(count = 8) {
+  return Array.from({ length: count }, (_, i) => `
+    <article class="catalog-card catalog-skeleton" aria-hidden="true" style="animation-delay:${i * 0.07}s">
+      <div class="skeleton-img"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-line" style="width:70%"></div>
+        <div class="skeleton-line" style="width:40%"></div>
+        <div class="skeleton-line" style="width:55%"></div>
+      </div>
+    </article>`
+  ).join('');
+}
+
+async function loadCatalogFromAPI() {
   const grid = document.querySelector('[data-catalog-grid]');
   if (!grid) return;
-  grid.dataset.printfulLoaded = 'in-progress';
+  grid.dataset.loaded = 'in-progress';
   try {
     const pageName = normalizePageName(window.location.pathname);
-    const genderForPage = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : null;
-    const dataProducts = pageName === 'shop' || pageName === 'collections'
-      ? (await Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))).flat()
-      : await fetchCatalogProducts(genderForPage || 'women', 1000);
-    
-    let adminRaw = [];
-    let importedRaw = [];
-    try { adminRaw = JSON.parse(localStorage.getItem('zavoraAdminProducts') || '[]'); } catch(e) {}
-    try { importedRaw = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]'); } catch(e) {}
-    
-    const allCached = deduplicateProducts([...importedRaw, ...adminRaw]).filter(p => {
-      // Remove demo bodysuit / non-apparel
-      const name = String(p.name || p.title || '').toLowerCase();
-      if (/baby.*jersey.*bodysuit|bodysuit|sportswear.*baby|baby.*body/i.test(name)) return false;
-      // Apply gender filter for gender-specific pages
-      if (genderForPage) {
-        const pg = String(p.gender || '').toLowerCase();
-        if (pg && pg !== genderForPage && pg !== 'unisex') return false;
+    const genderForPage = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : 'all';
+    const params = new URLSearchParams({ limit: '1000' });
+    if (genderForPage !== 'all') params.set('gender', genderForPage);
+    const urlCategory = new URLSearchParams(window.location.search).get('category');
+    const urlCollection = new URLSearchParams(window.location.search).get('collection');
+    if (urlCategory) params.set('category', urlCategory);
+    if (urlCollection) params.set('collection', urlCollection);
+
+    const response = await fetch(`/api/products?${params.toString()}`);
+    if (!response.ok) { grid.dataset.loaded = 'failed'; return; }
+    const data = await response.json();
+    if (!data.ok || !Array.isArray(data.products) || !data.products.length) {
+      grid.dataset.loaded = 'empty';
+      // If no DB products, keep what we have from cache
+      if (!window.__zavoraCatalogProducts?.length) {
+        // Show real Printful catalog as placeholder
+        const fallback = generateExpandedApparelCatalog(genderForPage).filter(p => isSafeProduct(p));
+        if (fallback.length) {
+          window.__zavoraCatalogProducts = fallback;
+          grid.innerHTML = fallback.map(catalogCard).join('');
+          filterLargeCatalog();
+          refreshWishlistButtons();
+        }
       }
-      return true;
-    });
-    const existing = (window.__zavoraCatalogProducts || []).filter(p => {
-      if (genderForPage) {
-        const pg = String(p.gender || '').toLowerCase();
-        if (pg && pg !== genderForPage && pg !== 'unisex') return false;
-      }
-      return true;
-    });
-    
-    if (dataProducts.length || allCached.length) {
-      const merged = deduplicateProducts([...allCached, ...dataProducts, ...existing]);
-      const products = productsForCatalogPage(merged, pageName);
-      
-      window.__zavoraCatalogProducts = products;
-      grid.dataset.printfulLoaded = 'completed';
+      return;
+    }
+
+    // Filter, deduplicate, apply safety checks
+    const safeProducts = data.products.filter(p => isSafeProduct(p));
+    const filtered = genderForPage !== 'all'
+      ? safeProducts.filter(p => {
+          const pg = String(p.gender || '').toLowerCase();
+          return !pg || pg === genderForPage || pg === 'unisex';
+        })
+      : safeProducts;
+
+    const products = productsForCatalogPage(deduplicateProducts(filtered), pageName);
+    if (!products.length) { grid.dataset.loaded = 'empty'; return; }
+
+    // Update sessionStorage for next instant load
+    try {
+      const cacheKey = `zavoraCatalog_${pageName}`;
+      sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), products }));
+    } catch(e) {}
+
+    window.__zavoraCatalogProducts = products;
+    grid.dataset.loaded = 'completed';
+    // Silent swap — no flash, no layout shift
+    requestAnimationFrame(() => {
       grid.innerHTML = products.map(catalogCard).join('');
       filterLargeCatalog();
       refreshWishlistButtons();
-    }
-  } catch (error) {
-    grid.dataset.printfulLoaded = 'failed';
+    });
+  } catch (e) {
+    grid.dataset.loaded = 'failed';
   }
+}
+
+// Legacy alias — keeps all existing event bindings working
+async function loadPrintfulCatalog() { return loadCatalogFromAPI(); }
+
+// Product safety guard — NEVER show blocked, demo or incorrectly typed products
+const BLOCKED_PRODUCT_NAMES = /(bodysuit|baby\s*jersey|baby\s*body|legging|underwear|boxer|brief|poster|mug|sticker|phone\s*case|pillow|blanket|apron|notebook|tumbler|cup|postcard)/i;
+
+function isSafeProduct(p) {
+  if (!p || !p.name) return false;
+  const text = `${p.name} ${p.category || ''} ${p.productType || ''}`;
+  if (BLOCKED_PRODUCT_NAMES.test(text)) return false;
+  const ALLOWED_CATS = new Set(['oversized-tees','heavyweight-tees','baby-tees','hoodies','cropped-hoodies','zip-hoodies','sweatshirts','jackets','cargo-pants','sweatpants','shorts','accessories','sportswear','matching-sets','beachwear','tees','']);
+  const cat = String(p.category || '').toLowerCase();
+  return !cat || ALLOWED_CATS.has(cat);
 }
 
 function injectLargeCatalog() {
@@ -2074,46 +2117,55 @@ function injectLargeCatalog() {
   if (!main || document.querySelector('.catalog-shop') || (!catalogOnlyPages.includes(pageName) && !catalogOnlyPages.includes(`${pageName}.html`))) return;
 
   const genderTarget = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : 'all';
-  if (!window.__zavoraCatalogProducts || !window.__zavoraCatalogProducts.length) {
+
+  // ── 1. Try sessionStorage (sub-second warm load) ─────────────────────
+  if (!window.__zavoraCatalogProducts?.length) {
     try {
-      // Merge both imported and admin products
+      const cacheKey = `zavoraCatalog_${pageName}`;
+      const hit = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+      if (hit && hit.products?.length && (Date.now() - hit.ts) < 300_000) { // 5-min TTL
+        window.__zavoraCatalogProducts = hit.products.filter(p =>
+          isSafeProduct(p) &&
+          (genderTarget === 'all' || !p.gender || String(p.gender).toLowerCase() === genderTarget || String(p.gender).toLowerCase() === 'unisex')
+        );
+      }
+    } catch(e) {}
+  }
+
+  // ── 2. Try localStorage merged catalog (fallback) ────────────────────
+  if (!window.__zavoraCatalogProducts?.length) {
+    try {
       let importedRaw = [];
       let adminRaw = [];
       try { importedRaw = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]'); } catch(e) {}
       try { adminRaw = JSON.parse(localStorage.getItem('zavoraAdminProducts') || '[]'); } catch(e) {}
       const cached = deduplicateProducts([...importedRaw, ...adminRaw]).filter(p => {
-        // Remove known demo/non-clothing products (baby bodysuit, polo in demo context)
-        const name = String(p.name || p.title || '').toLowerCase();
-        if (/baby.*jersey.*bodysuit|bodysuit|sportswear.*baby|baby.*body/i.test(name)) return false;
-        // For women/men pages: strictly filter by gender
+        if (!isSafeProduct(p)) return false;
         if (genderTarget !== 'all') {
           const pg = String(p.gender || '').toLowerCase();
           if (pg && pg !== genderTarget && pg !== 'unisex') return false;
         }
         return true;
       });
-      if (cached && cached.length) {
-        window.__zavoraCatalogProducts = cached;
-      } else {
-        window.__zavoraCatalogProducts = generateExpandedApparelCatalog(genderTarget);
-      }
-    } catch (e) {
-      window.__zavoraCatalogProducts = generateExpandedApparelCatalog(genderTarget);
-    }
-  } else if (genderTarget !== 'all') {
-    // Re-filter already cached products if on a gender-specific page
+      if (cached.length) window.__zavoraCatalogProducts = cached;
+    } catch(e) {}
+  }
+
+  // ── 3. Re-filter in-memory products for gender page ──────────────────
+  if (window.__zavoraCatalogProducts?.length && genderTarget !== 'all') {
     window.__zavoraCatalogProducts = window.__zavoraCatalogProducts.filter(p => {
       const pg = String(p.gender || '').toLowerCase();
       return !pg || pg === genderTarget || pg === 'unisex';
     });
   }
-  const catalogData = productsForCatalogPage(window.__zavoraCatalogProducts, pageName);
+
+  const catalogData = productsForCatalogPage(window.__zavoraCatalogProducts || [], pageName);
 
   const isWomenPage = pageName === 'women';
   const genderOptions = '<option value="all">All</option><option value="men">Men</option><option value="women">Women</option>';
   const categoryOptions = isWomenPage
     ? '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="baby-tees">Baby Tees</option><option value="hoodies">Hoodies</option><option value="cropped-hoodies">Cropped Hoodies</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="accessories">Accessories</option>'
-    : '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="heavyweight-tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="zip-hoodies">Zip Hoodies</option><option value="cargo-pants">Cargo Pants</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="shorts">Shorts</option><option value="shoes">Shoes</option><option value="accessories">Accessories</option>';
+    : '<option value="all">All</option><option value="oversized-tees">Oversized Tees</option><option value="heavyweight-tees">Heavyweight Tees</option><option value="hoodies">Hoodies</option><option value="zip-hoodies">Zip Hoodies</option><option value="cargo-pants">Cargo Pants</option><option value="sweatpants">Sweatpants</option><option value="jackets">Jackets</option><option value="shorts">Shorts</option><option value="accessories">Accessories</option>';
   const collectionOptions = '<option value="all">All</option><option value="sportswear">Sportswear</option><option value="streetwear">Streetwear</option><option value="beachwear">Beachwear</option><option value="gifts">Gifts</option><option value="style-trends">Style Trends</option><option value="grow-a-fashion-brand">Grow a Fashion Brand</option><option value="made-in-eu">Made in EU</option><option value="halloween">Halloween</option><option value="back-to-school">Back to School</option><option value="holiday-season">Holiday Season</option><option value="summer-hats-bags">Summer Hats & Bags</option><option value="matching-sets">Matching Sets</option><option value="summer-soccer-2026">Summer of Soccer 2026</option><option value="fourth-of-july">4th of July</option><option value="new">New</option><option value="best">Best Sellers</option><option value="limited">Limited</option>';
   const activeCollection = new URLSearchParams(window.location.search).get('collection') || '';
   const section = document.createElement('section');
@@ -2124,7 +2176,7 @@ function injectLargeCatalog() {
         <h2>Shop Zavora</h2>
         <p><span data-catalog-count>${catalogData.length}</span> products available</p>
       </div>
-      ${pageName === 'shop.html' || pageName === 'collections.html' ? `<label>Gender<select data-catalog-filter="gender">${genderOptions}</select></label>` : ''}
+      ${pageName === 'shop' || pageName === 'collections' ? `<label>Gender<select data-catalog-filter="gender">${genderOptions}</select></label>` : ''}
       <label>Collection<select data-catalog-filter="collection">${collectionOptions}</select></label>
       <label>Category<select data-catalog-filter="category">${categoryOptions}</select></label>
       <label>Color<select data-catalog-filter="color"><option value="all">All</option><option>black</option><option>white</option><option>gray</option><option>blue</option><option>green</option><option>red</option><option>gold</option></select></label>
@@ -2134,7 +2186,7 @@ function injectLargeCatalog() {
       <button type="button" data-catalog-reset>Reset</button>
     </aside>
     <div class="catalog-area">
-      ${pageName === 'collections.html' ? collectionShowcase(activeCollection) : ''}
+      ${pageName === 'collections' ? collectionShowcase(activeCollection) : ''}
       <div class="mobile-filter-bar">
         <button type="button" class="mobile-filter-btn" id="openMobileFilterBtn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -2150,7 +2202,7 @@ function injectLargeCatalog() {
       <div class="catalog-toolbar">
         <span><strong data-catalog-count>${catalogData.length}</strong> results</span>
       </div>
-      <div class="catalog-grid" data-catalog-grid>${catalogData.length ? catalogData.map(catalogCard).join('') : '<p class="catalog-loading">Loading Printful products...</p>'}</div>
+      <div class="catalog-grid" data-catalog-grid>${catalogData.length ? catalogData.map(catalogCard).join('') : generateSkeletonCards(8)}</div>
     </div>
   `;
   main.classList.add('catalog-main');
@@ -2174,7 +2226,13 @@ function injectLargeCatalog() {
   if (urlCollection && collectionSelect && [...collectionSelect.options].some((option) => option.value === urlCollection)) {
     collectionSelect.value = urlCollection;
   }
+
+  // ── 4. Background API sync — completely silent, no loading text ───────
+  // Small delay so page renders first, then silently syncs newer data
+  setTimeout(() => loadCatalogFromAPI().catch(() => {}), 200);
 }
+
+
 
 function initMobileFilterDrawer(genderOptions, collectionOptions, categoryOptions, pageName) {
   let overlay = document.querySelector('#mobileFilterOverlay');

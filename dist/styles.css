@@ -1893,6 +1893,43 @@ h2 {
   from { background-position: 220% 0; }
   to { background-position: -220% 0; }
 }
+@keyframes skeletonPulse {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.catalog-skeleton {
+  pointer-events: none;
+  background: var(--bg-surface, #ffffff);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 12px;
+}
+
+.skeleton-img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eee 8%, #ddd 18%, #eee 33%);
+  background-size: 800px 104px;
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-body {
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eee 8%, #ddd 18%, #eee 33%);
+  background-size: 800px 104px;
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
 .spec-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

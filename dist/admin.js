@@ -1646,38 +1646,59 @@ async function rebuildStorefrontCatalogCache(productsArray) {
   }
 }
 
-async function importPrintfulProducts() {
-  showImportProgressModal('Importing Printful Entire Catalog...', 'Connecting to Printful Store API & sync database...');
-  updateImportProgress(10, 'Connecting to Printful API...');
+async function importPrintfulProducts(gender = 'all', limit = 100) {
+  showImportProgressModal('Importing Catalog via Enterprise Queue...', 'Initializing background import queue & batch processor...');
+  updateImportProgress(5, 'Starting import queue job...');
 
   try {
-    let current = 15;
-    const interval = setInterval(() => {
-      current = Math.min(88, current + Math.floor(Math.random() * 8) + 4);
-      const stage = current < 40 ? 'Fetching product mockups & gallery...' : current < 70 ? 'Syncing sizes, colors, and variant SKUs...' : 'Auto-calculating prices & saving to database...';
-      updateImportProgress(current, stage);
-    }, 450);
-
-    const response = await fetch('/api/admin?action=auto-import-printful&pages=10&limit=60&collections=true&collectionPages=3');
-    const data = await response.json();
-    clearInterval(interval);
-
-    if (!response.ok && response.status !== 207) {
-      updateImportProgress(100, 'Import encountered an issue');
-      toast(data.error || 'Printful import failed');
+    const startRes = await fetch('/api/import-queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'start', gender, limit })
+    });
+    const startData = await startRes.json();
+    if (!startRes.ok || !startData.ok) {
+      updateImportProgress(100, 'Failed to start queue: ' + (startData.error || 'Unknown error'));
+      toast(startData.error || 'Import queue start failed');
       return;
     }
 
-    const imported = data.products || data.importedProducts || [];
-    if (imported.length) {
-      await rebuildStorefrontCatalogCache(imported);
-    }
+    const jobId = startData.jobId;
+    updateImportProgress(10, `Queue job ${jobId} started. Processing batches...`);
 
-    await refreshLiveAdminDashboard();
-    finishImportProgress(data.importedCount || imported.length || 24, `${data.importedCount || imported.length || 24} products imported with 100% variant, stock & mockup auto-sync!`);
+    // Poll status every 800ms
+    const pollInterval = setInterval(async () => {
+      try {
+        const pollRes = await fetch(`/api/import-queue?jobId=${encodeURIComponent(jobId)}`);
+        const statusData = await pollRes.json();
+        if (!pollRes.ok || !statusData.ok) return;
+
+        const { status, progress, imported, failed, skipped, total, log } = statusData;
+        const latestMsg = log && log.length ? log[log.length - 1].msg : 'Processing batches...';
+
+        updateImportProgress(progress || 15, `[${imported || 0}/${total || limit}] ${latestMsg}`);
+
+        if (status === 'completed') {
+          clearInterval(pollInterval);
+          // Fetch updated products list from DB
+          const prodRes = await fetch('/api/products?limit=1000');
+          const prodData = await prodRes.json().catch(() => ({}));
+          if (prodData.products && prodData.products.length) {
+            await rebuildStorefrontCatalogCache(prodData.products);
+          }
+          await refreshLiveAdminDashboard();
+          finishImportProgress(imported || total || 0, `Import Completed! ${imported || 0} products synced automatically, ${failed || 0} failed, ${skipped || 0} skipped.`);
+        } else if (status === 'failed' || status === 'cancelled') {
+          clearInterval(pollInterval);
+          updateImportProgress(100, `Job ${status}: ${latestMsg}`);
+          toast(`Import queue ${status}`);
+        }
+      } catch (e) {}
+    }, 800);
+
   } catch (error) {
     updateImportProgress(100, 'Import error: ' + error.message);
-    toast('Printful import failed: ' + error.message);
+    toast('Import failed: ' + error.message);
   }
 }
 
