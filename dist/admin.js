@@ -2675,6 +2675,8 @@ async function bulkApplyStagingEdits() {
 }
 
 function bootAdmin() {
+  document.body.classList.remove('admin-locked');
+
   const btnSyncStore = document.getElementById('btnSyncPrintfulStore');
   if (btnSyncStore && !btnSyncStore.dataset.bound) {
     btnSyncStore.dataset.bound = 'true';
