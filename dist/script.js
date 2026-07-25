@@ -184,7 +184,7 @@ const products = [
     popularity: 78,
     badge: 'Women edit',
     img: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=700&q=80'
+    alt: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=700&q=80'
   },
   {
     id: 14,
@@ -407,40 +407,44 @@ function uniqueHomeProducts(productsList = []) {
 const STOREFRONT_APPAREL_CATALOG = [
   { id: 'PF-W-01', printfulId: '288', name: "Women's Relaxed T-Shirt | Bella + Canvas 6400", category: 'oversized-tees', gender: 'women', price: 49.89, img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
   { id: 'PF-W-02', printfulId: '512', name: "Women's Baby Rib Crop Tee | Bella + Canvas 1010", category: 'baby-tees', gender: 'women', price: 44.89, img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'new'] },
-  { id: 'PF-W-03', printfulId: '456', name: "Women's Fleece Crop Hoodie | Bella + Canvas 7502", category: 'cropped-hoodies', gender: 'women', price: 89.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
-  { id: 'PF-W-04', printfulId: '416', name: "Women's Organic Raglan Hoodie | Stanley/Stella STSU822", category: 'hoodies', gender: 'women', price: 104.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
-  { id: 'PF-W-05', printfulId: '518', name: "Women's High-Waisted Fleece Sweatpants", category: 'sweatpants', gender: 'women', price: 84.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'] },
+  { id: 'PF-W-03', printfulId: '456', name: "Women's Fleece Crop Hoodie | Bella + Canvas 7502", category: 'cropped-hoodies', gender: 'women', price: 89.89, img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-04', printfulId: '416', name: "Women's Organic Raglan Hoodie | Stanley/Stella STSU822", category: 'hoodies', gender: 'women', price: 104.89, img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-05', printfulId: '518', name: "Women's High-Waisted Fleece Sweatpants", category: 'sweatpants', gender: 'women', price: 84.89, img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'] },
   { id: 'PF-W-06', printfulId: '472', name: "Women's Tailored Denim Jacket | Threadfast 370J", category: 'jackets', gender: 'women', price: 148.89, img: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
   { id: 'PF-W-07', printfulId: '288B', name: 'Zavora Women Oversized Streetwear Tee', category: 'oversized-tees', gender: 'women', price: 54.89, img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
-  { id: 'PF-W-08', printfulId: '456B', name: 'Zavora Luxury Cropped Hoodie', category: 'cropped-hoodies', gender: 'women', price: 92.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-08', printfulId: '456B', name: 'Zavora Luxury Cropped Hoodie', category: 'cropped-hoodies', gender: 'women', price: 92.89, img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
   { id: 'PF-W-09', printfulId: '512B', name: 'Zavora Cropped Baby Rib Tee', category: 'baby-tees', gender: 'women', price: 46.89, img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
-  { id: 'PF-W-10', printfulId: '490W', name: 'Zavora Studio Wide-Leg Fleece Sweatpants', category: 'sweatpants', gender: 'women', price: 88.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
-  { id: 'PF-W-11', printfulId: '354', name: 'All-Over Print Unisex Wide-Leg Pants / Leggings', category: 'sweatpants', gender: 'women', price: 94.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
-  { id: 'PF-W-12', printfulId: '490L', name: "Women's Premium High-Waisted Yoga Leggings", category: 'sweatpants', gender: 'women', price: 89.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'] },
+  { id: 'PF-W-10', printfulId: '490W', name: 'Zavora Studio Wide-Leg Fleece Sweatpants', category: 'sweatpants', gender: 'women', price: 88.89, img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-11', printfulId: '354', name: 'All-Over Print Unisex Wide-Leg Pants / Leggings', category: 'sweatpants', gender: 'women', price: 94.89, img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
+  { id: 'PF-W-12', printfulId: '490L', name: "Women's Premium High-Waisted Yoga Leggings", category: 'sweatpants', gender: 'women', price: 89.89, img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'] },
   { id: 'PF-M-01', printfulId: '262', name: 'Unisex Staple T-Shirt | Bella + Canvas 3001', category: 'oversized-tees', gender: 'men', price: 54.89, img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
-  { id: 'PF-M-02', printfulId: '384', name: 'Unisex Heavy Blend Hooded Sweatshirt | Gildan 18500', category: 'hoodies', gender: 'men', price: 94.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
+  { id: 'PF-M-02', printfulId: '384', name: 'Unisex Heavy Blend Hooded Sweatshirt | Gildan 18500', category: 'hoodies', gender: 'men', price: 94.89, img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
   { id: 'PF-M-03', printfulId: '480', name: 'Unisex Heavyweight T-Shirt | Comfort Colors 1717', category: 'heavyweight-tees', gender: 'men', price: 64.89, img: 'https://images.unsplash.com/photo-1490578474895-699bc4e2cf59?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'new'] },
-  { id: 'PF-M-04', printfulId: '444', name: 'Unisex Premium Pullover Hoodie | Cotton Heritage M2580', category: 'hoodies', gender: 'men', price: 114.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
-  { id: 'PF-M-05', printfulId: '312', name: 'Unisex Fleece Zip Hoodie | Bella + Canvas 3939', category: 'zip-hoodies', gender: 'men', price: 98.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
-  { id: 'PF-M-06', printfulId: '382', name: 'Unisex Crewneck Sweatshirt | Gildan 18000', category: 'sweatshirts', gender: 'men', price: 84.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
-  { id: 'PF-M-07', printfulId: '490', name: 'Unisex Heavyweight Sweatpants | Cotton Heritage M7450', category: 'sweatpants', gender: 'men', price: 89.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'] },
-  { id: 'PF-M-08', printfulId: '422', name: 'Unisex Champion Track Pants | Champion P800', category: 'cargo-pants', gender: 'men', price: 104.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['sportswear', 'limited'] },
+  { id: 'PF-M-04', printfulId: '444', name: 'Unisex Premium Pullover Hoodie | Cotton Heritage M2580', category: 'hoodies', gender: 'men', price: 114.89, img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
+  { id: 'PF-M-05', printfulId: '312', name: 'Unisex Fleece Zip Hoodie | Bella + Canvas 3939', category: 'zip-hoodies', gender: 'men', price: 98.89, img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-M-06', printfulId: '382', name: 'Unisex Crewneck Sweatshirt | Gildan 18000', category: 'sweatshirts', gender: 'men', price: 84.89, img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-M-07', printfulId: '490', name: 'Unisex Heavyweight Sweatpants | Cotton Heritage M7450', category: 'sweatpants', gender: 'men', price: 89.89, img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'] },
+  { id: 'PF-M-08', printfulId: '422', name: 'Unisex Champion Track Pants | Champion P800', category: 'cargo-pants', gender: 'men', price: 104.89, img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80', collection: ['sportswear', 'limited'] },
   { id: 'PF-M-09', printfulId: '468', name: 'Unisex Champion Bomber Jacket | Champion MA-1', category: 'jackets', gender: 'men', price: 168.89, img: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
-  { id: 'PF-M-10', printfulId: '430', name: 'Unisex Athletic Shorts | Champion 8180', category: 'shorts', gender: 'men', price: 58.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['beachwear', 'sportswear'] },
+  { id: 'PF-M-10', printfulId: '430', name: 'Unisex Athletic Shorts | Champion 8180', category: 'shorts', gender: 'men', price: 58.89, img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80', collection: ['beachwear', 'sportswear'] },
   { id: 'PF-A-01', printfulId: '638', name: 'Zavora Embroidered Dad Cap | Yupoong 6245CM', category: 'accessories', gender: 'unisex', price: 42.89, img: 'assets/zavora-dad-hat.png', collection: ['accessories', 'summer-hats-bags'] },
   { id: 'PF-A-02', printfulId: '458', name: 'Zavora Cuffed Beanie | Yupoong 1501', category: 'accessories', gender: 'unisex', price: 34.89, img: 'assets/studio-wide-trouser.png', collection: ['accessories'] }
 ];
 
 function getHomeProducts() {
+  const removedIds = new Set(JSON.parse(localStorage.getItem('zavoraRemovedProducts') || '[]'));
   const adminProducts = getAdminProducts().map(normalizeAdminProduct);
-  return uniqueHomeProducts([...adminProducts, ...STOREFRONT_APPAREL_CATALOG, ...state.printfulProducts]).map((product) => ({
-    ...product,
-    img: product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png',
-    alt: product.alt || product.images?.[1] || product.image || product.img || product.images?.[0] || 'assets/studio-wide-trouser.png',
-    collection: Array.isArray(product.collection) ? product.collection : [product.collection || 'new'],
-    colors: Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'default'],
-    sizes: Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL']
-  }));
+  const rawList = uniqueHomeProducts([...adminProducts, ...STOREFRONT_APPAREL_CATALOG, ...state.printfulProducts]);
+  return rawList
+    .filter(p => p && p.id && !removedIds.has(String(p.id)) && !removedIds.has(String(p.printfulId)))
+    .map((product) => ({
+      ...product,
+      img: product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png',
+      alt: product.alt || product.images?.[1] || product.image || product.img || product.images?.[0] || 'assets/studio-wide-trouser.png',
+      collection: Array.isArray(product.collection) ? product.collection : [product.collection || 'new'],
+      colors: Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'default'],
+      sizes: Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL']
+    }));
 }
 
 async function loadPrintfulProducts() {
