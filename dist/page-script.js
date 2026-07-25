@@ -3883,6 +3883,7 @@ function initDynamicProductPage() {
     node.textContent = product.description || node.textContent;
   });
   updateProductStockNote(product);
+  updateDynamicProductMedia();
   refreshSelectedProductFromUrl();
 }
 
