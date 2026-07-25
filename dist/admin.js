@@ -2674,8 +2674,65 @@ async function bulkApplyStagingEdits() {
   toast(`Bulk Edits Applied! ${updatedCount} updated, ${publishedCount} live on website.`);
 }
 
+function switchAdminSection(sectionName) {
+  if (!sectionName) sectionName = 'dashboard';
+
+  const navBtns = document.querySelectorAll('.admin-nav button[data-section]');
+  navBtns.forEach(btn => {
+    if (btn.getAttribute('data-section') === sectionName) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const panels = document.querySelectorAll('.admin-section[data-panel]');
+  panels.forEach(panel => {
+    if (panel.getAttribute('data-panel') === sectionName) {
+      panel.classList.add('active');
+      panel.style.display = 'block';
+    } else {
+      panel.classList.remove('active');
+      panel.style.display = 'none';
+    }
+  });
+
+  const pageTitle = document.querySelector('[data-page-title]');
+  if (pageTitle && sectionTitles[sectionName]) {
+    pageTitle.textContent = sectionTitles[sectionName];
+  }
+
+  if (sectionName === 'products') {
+    renderAdminProducts();
+  } else if (sectionName === 'importer') {
+    renderPrintfulStagingTable();
+  }
+}
+
 function bootAdmin() {
   document.body.classList.remove('admin-locked');
+
+  document.querySelectorAll('.admin-nav button[data-section]').forEach(btn => {
+    if (!btn.dataset.navBound) {
+      btn.dataset.navBound = 'true';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const sec = btn.getAttribute('data-section');
+        switchAdminSection(sec);
+      });
+    }
+  });
+
+  document.querySelectorAll('[data-section-jump]').forEach(btn => {
+    if (!btn.dataset.jumpBound) {
+      btn.dataset.jumpBound = 'true';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const sec = btn.getAttribute('data-section-jump');
+        switchAdminSection(sec);
+      });
+    }
+  });
 
   const btnSyncStore = document.getElementById('btnSyncPrintfulStore');
   if (btnSyncStore && !btnSyncStore.dataset.bound) {
@@ -2716,6 +2773,20 @@ function bootAdmin() {
     editForm.dataset.bound = 'true';
     editForm.addEventListener('submit', saveEditProductForm);
   }
+
+  const initialHash = window.location.hash.replace('#', '').trim();
+  if (initialHash && sectionTitles[initialHash]) {
+    switchAdminSection(initialHash);
+  } else {
+    switchAdminSection('dashboard');
+  }
+
+  window.addEventListener('hashchange', () => {
+    const newHash = window.location.hash.replace('#', '').trim();
+    if (newHash && sectionTitles[newHash]) {
+      switchAdminSection(newHash);
+    }
+  });
 
   function updateLiveVisitors() {
     let visitors = {};
