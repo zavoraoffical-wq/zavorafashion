@@ -381,13 +381,40 @@ function getProductStorefrontPages(product) {
   return Array.from(new Set(pages));
 }
 
+const STOREFRONT_APPAREL_CATALOG = [
+  { id: 'PF-W-01', printfulId: '288', name: "Women's Relaxed T-Shirt | Bella + Canvas 6400", category: 'oversized-tees', gender: 'women', price: 49.89, img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
+  { id: 'PF-W-02', printfulId: '512', name: "Women's Baby Rib Crop Tee | Bella + Canvas 1010", category: 'baby-tees', gender: 'women', price: 44.89, img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'new'] },
+  { id: 'PF-W-03', printfulId: '456', name: "Women's Fleece Crop Hoodie | Bella + Canvas 7502", category: 'cropped-hoodies', gender: 'women', price: 89.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-04', printfulId: '416', name: "Women's Organic Raglan Hoodie | Stanley/Stella STSU822", category: 'hoodies', gender: 'women', price: 104.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-05', printfulId: '518', name: "Women's High-Waisted Fleece Sweatpants", category: 'sweatpants', gender: 'women', price: 84.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'] },
+  { id: 'PF-W-06', printfulId: '472', name: "Women's Tailored Denim Jacket | Threadfast 370J", category: 'jackets', gender: 'women', price: 148.89, img: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-07', printfulId: '288B', name: 'Zavora Women Oversized Streetwear Tee', category: 'oversized-tees', gender: 'women', price: 54.89, img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-08', printfulId: '456B', name: 'Zavora Luxury Cropped Hoodie', category: 'cropped-hoodies', gender: 'women', price: 92.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-09', printfulId: '512B', name: 'Zavora Cropped Baby Rib Tee', category: 'baby-tees', gender: 'women', price: 46.89, img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-10', printfulId: '490W', name: 'Zavora Studio Wide-Leg Fleece Sweatpants', category: 'sweatpants', gender: 'women', price: 88.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-W-11', printfulId: '354', name: 'All-Over Print Unisex Wide-Leg Pants / Leggings', category: 'sweatpants', gender: 'women', price: 94.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
+  { id: 'PF-W-12', printfulId: '490L', name: "Women's Premium High-Waisted Yoga Leggings", category: 'sweatpants', gender: 'women', price: 89.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'] },
+  { id: 'PF-M-01', printfulId: '262', name: 'Unisex Staple T-Shirt | Bella + Canvas 3001', category: 'oversized-tees', gender: 'men', price: 54.89, img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
+  { id: 'PF-M-02', printfulId: '384', name: 'Unisex Heavy Blend Hooded Sweatshirt | Gildan 18500', category: 'hoodies', gender: 'men', price: 94.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
+  { id: 'PF-M-03', printfulId: '480', name: 'Unisex Heavyweight T-Shirt | Comfort Colors 1717', category: 'heavyweight-tees', gender: 'men', price: 64.89, img: 'https://images.unsplash.com/photo-1490578474895-699bc4e2cf59?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'new'] },
+  { id: 'PF-M-04', printfulId: '444', name: 'Unisex Premium Pullover Hoodie | Cotton Heritage M2580', category: 'hoodies', gender: 'men', price: 114.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'] },
+  { id: 'PF-M-05', printfulId: '312', name: 'Unisex Fleece Zip Hoodie | Bella + Canvas 3939', category: 'zip-hoodies', gender: 'men', price: 98.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-M-06', printfulId: '382', name: 'Unisex Crewneck Sweatshirt | Gildan 18000', category: 'sweatshirts', gender: 'men', price: 84.89, img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-M-07', printfulId: '490', name: 'Unisex Heavyweight Sweatpants | Cotton Heritage M7450', category: 'sweatpants', gender: 'men', price: 89.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'] },
+  { id: 'PF-M-08', printfulId: '422', name: 'Unisex Champion Track Pants | Champion P800', category: 'cargo-pants', gender: 'men', price: 104.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['sportswear', 'limited'] },
+  { id: 'PF-M-09', printfulId: '468', name: 'Unisex Champion Bomber Jacket | Champion MA-1', category: 'jackets', gender: 'men', price: 168.89, img: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear'] },
+  { id: 'PF-M-10', printfulId: '430', name: 'Unisex Athletic Shorts | Champion 8180', category: 'shorts', gender: 'men', price: 58.89, img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80', collection: ['beachwear', 'sportswear'] },
+  { id: 'PF-A-01', printfulId: '638', name: 'Zavora Embroidered Dad Cap | Yupoong 6245CM', category: 'accessories', gender: 'unisex', price: 42.89, img: 'assets/zavora-dad-hat.png', collection: ['accessories', 'summer-hats-bags'] },
+  { id: 'PF-A-02', printfulId: '458', name: 'Zavora Cuffed Beanie | Yupoong 1501', category: 'accessories', gender: 'unisex', price: 34.89, img: 'assets/studio-wide-trouser.png', collection: ['accessories'] }
+];
+
 function renderAdminProducts() {
   const list = document.querySelector('[data-admin-product-list]');
   if (!list) return;
 
   const removedIds = new Set(JSON.parse(localStorage.getItem('zavoraRemovedProducts') || '[]'));
   const customProducts = getAdminProducts();
-  const merged = customProducts;
+  const merged = [...customProducts, ...STOREFRONT_APPAREL_CATALOG, ...ZAVORA_FULL_CATALOG];
   const seen = new Set();
   const allProducts = merged.filter(p => {
     if (!p || !p.id || removedIds.has(String(p.id))) return false;
@@ -1821,9 +1848,9 @@ async function importPrintfulUrl(form) {
       const parsed = parsePrintfulUrlClientSide(url, gender, targetCategory);
       const categoryTitle = parsed.category.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase());
       const sampleImg = parsed.category === 'sweatpants' 
-        ? 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80'
+        ? 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80'
         : parsed.category.includes('hoodie')
-        ? 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80'
+        ? 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80'
         : 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80';
 
       const fallbackProduct = {
@@ -1867,7 +1894,7 @@ async function importPrintfulUrl(form) {
       rating: 4.9,
       colors: ['black', 'white', 'gray'],
       sizes: ['S', 'M', 'L', 'XL'],
-      img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80',
+      img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
       badge: 'IMPORTED',
       collection: [parsed.gender.toLowerCase(), 'streetwear', 'new'],
       published: true,
@@ -2407,386 +2434,11 @@ async function bootAdmin() {
     });
   }
 
-// ─── PRINTFUL PRODUCT IMPORT MANAGER & BULK EDITOR ───────────────────────
-
-window.__printfulStagingProducts = [];
-
-async function fetchPrintfulStoreProducts() {
-  const btnSync = document.getElementById('btnSyncPrintfulStore');
-  const apiStatus = document.getElementById('printfulApiStatus');
-  if (btnSync) btnSync.disabled = true;
-  if (apiStatus) apiStatus.innerHTML = '🔄 Syncing Printful Store...';
-
-  toast('Connecting to Printful Store API...');
-  showImportProgress('Connecting to Printful...', 'Fetching store sync products and variants...', 15);
-
-  try {
-    const res = await fetch('/api/printful-products?action=store_products');
-    const data = await res.json();
-    let storeProducts = Array.isArray(data?.products) ? data.products : [];
-
-    if (!storeProducts.length) {
-      const fallbackRes = await fetch('/api/printful-products?limit=100');
-      const fallbackData = await fallbackRes.json();
-      storeProducts = Array.isArray(fallbackData?.products) ? fallbackData.products : [];
-    }
-
-    updateImportProgress(60, `Fetched ${storeProducts.length} items. Staging as Drafts...`);
-
-    const existingAdminProducts = getAdminProducts();
-    const existingIds = new Set(existingAdminProducts.map(p => String(p.id || p.printfulId || p.sku)));
-
-    window.__printfulStagingProducts = storeProducts.map((sp, idx) => {
-      const alreadyExists = existingIds.has(String(sp.id)) || existingIds.has(String(sp.printfulId)) || existingIds.has(String(sp.sku));
-      return {
-        ...sp,
-        id: sp.id || `PF-STG-${Date.now()}-${idx}`,
-        status: alreadyExists ? (sp.status || 'published') : 'draft',
-        published: alreadyExists ? (sp.published !== false) : false,
-        category: sp.category || 'oversized-tees',
-        gender: sp.gender || 'Unisex',
-        season: sp.season || 'All-Season',
-        featured: sp.featured || false,
-        bestSeller: sp.bestSeller || false,
-        tags: sp.tags || ['printful', 'streetwear']
-      };
-    });
-
-    updateImportProgress(100, 'Printful Store Sync Complete!');
-    setTimeout(closeImportProgress, 800);
-
-    if (apiStatus) apiStatus.innerHTML = '🟢 Connected & Synced';
-    toast(`Successfully staged ${window.__printfulStagingProducts.length} Printful store products!`);
-    renderPrintfulStagingTable();
-  } catch (error) {
-    if (apiStatus) apiStatus.innerHTML = '🔴 Connection Error';
-    toast('Error connecting to Printful API: ' + error.message, 'error');
-    closeImportProgress();
-  } finally {
-    if (btnSync) btnSync.disabled = false;
-  }
-}
-
-function renderPrintfulStagingTable() {
-  const tbody = document.getElementById('stagingProductsTbody');
-  const countItem = document.getElementById('printfulStoreItemCount');
-  const countDraft = document.getElementById('printfulDraftCount');
-  const countPub = document.getElementById('printfulPublishedCount');
-  const searchInput = document.getElementById('stagingSearchInput');
-  const query = String(searchInput?.value || '').trim().toLowerCase();
-
-  const stagingList = window.__printfulStagingProducts || [];
-  const existingProducts = getAdminProducts();
-
-  const draftsCount = stagingList.filter(p => p.status === 'draft' || !p.published).length;
-  const publishedCount = existingProducts.filter(p => p.status === 'published' || p.published).length;
-
-  if (countItem) countItem.textContent = `${stagingList.length} Items Found`;
-  if (countDraft) countDraft.textContent = `${draftsCount} Pending Review`;
-  if (countPub) countPub.textContent = `${publishedCount} Live Products`;
-
-  if (!tbody) return;
-
-  const filtered = stagingList.filter(p => {
-    if (!query) return true;
-    const text = `${p.name || ''} ${p.sku || ''} ${p.category || ''} ${p.id || ''}`.toLowerCase();
-    return text.includes(query);
-  });
-
-  if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:#888;">
-      ${stagingList.length ? 'No products match your search query.' : 'No Printful store items staged yet. Click <b>"⚡ Connect & Fetch Printful Store Products"</b> above.'}
-    </td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = filtered.map(product => {
-    const isPublished = product.status === 'published' || product.published;
-    const colors = Array.isArray(product.colors) ? product.colors.join(', ') : (product.color || 'Default');
-    const thumb = product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png';
-
-    return `
-      <tr data-staging-id="${product.id}">
-        <td><input type="checkbox" class="staging-chk" value="${product.id}"></td>
-        <td>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <img src="${thumb}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #eee;">
-            <div>
-              <strong style="font-size:13px;display:block;">${product.name}</strong>
-              <small style="color:#888;font-size:11px;">ID: ${product.id} | SKU: ${product.sku || 'N/A'}</small>
-            </div>
-          </div>
-        </td>
-        <td><span class="pill">${product.category || 'Tees'}</span></td>
-        <td>${product.gender || 'Unisex'}</td>
-        <td><span style="font-size:11px;color:#555;">${colors}</span></td>
-        <td><strong>$${Number(product.price || 0).toFixed(2)}</strong></td>
-        <td>
-          <span class="pill ${isPublished ? 'gold' : ''}" style="${isPublished ? '' : 'background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;'}">
-            ${isPublished ? 'Published (Live)' : 'Draft (Staged)'}
-          </span>
-        </td>
-        <td>
-          <div style="display:flex;gap:6px;">
-            <button type="button" class="pill" onclick="toggleSingleStagingPublish('${product.id}')">
-              ${isPublished ? 'Unpublish' : 'Publish'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  const chkAll = document.getElementById('selectAllStagingItems');
-  const hdrChkAll = document.getElementById('hdrSelectAllStaging');
-  const rowChks = tbody.querySelectorAll('.staging-chk');
-
-  [chkAll, hdrChkAll].forEach(master => {
-    if (master) {
-      master.checked = false;
-      master.onclick = () => {
-        rowChks.forEach(chk => chk.checked = master.checked);
-        updateStagingSelectedCount();
-      };
-    }
-  });
-
-  rowChks.forEach(chk => {
-    chk.addEventListener('change', updateStagingSelectedCount);
-  });
-
-  updateStagingSelectedCount();
-}
-
-function updateStagingSelectedCount() {
-  const selected = document.querySelectorAll('.staging-chk:checked');
-  const count = selected.length;
-  const countText = document.getElementById('selectedStagingCountText');
-  const btnSelected = document.getElementById('btnImportSelectedDrafts');
-
-  if (countText) countText.textContent = `${count} Products Selected`;
-  if (btnSelected) btnSelected.textContent = `📥 Import Selected (${count})`;
-}
-
-function toggleSingleStagingPublish(productId) {
-  const product = (window.__printfulStagingProducts || []).find(p => String(p.id) === String(productId));
-  if (!product) return;
-
-  const willPublish = !(product.status === 'published' || product.published);
-  product.status = willPublish ? 'published' : 'draft';
-  product.published = willPublish;
-
-  if (willPublish) {
-    const existing = getAdminProducts();
-    const index = existing.findIndex(p => String(p.id) === String(product.id));
-    if (index >= 0) existing[index] = { ...existing[index], ...product };
-    else existing.unshift(product);
-
-    saveAdminProducts(existing);
-    renderAdminProducts();
-    toast(`"${product.name}" published to storefront!`);
-  } else {
-    toast(`"${product.name}" saved as Draft.`);
-  }
-
-  renderPrintfulStagingTable();
-}
-
-async function bulkApplyStagingEdits() {
-  const selectedBoxes = [...document.querySelectorAll('.staging-chk:checked')];
-  if (!selectedBoxes.length) {
-    toast('Please select at least 1 staging product using checkboxes.', 'error');
-    return;
-  }
-
-  const selectedIds = new Set(selectedBoxes.map(b => String(b.value)));
-
-  const category = document.getElementById('bulkCategorySelect')?.value;
-  const collection = document.getElementById('bulkCollectionSelect')?.value;
-  const gender = document.getElementById('bulkGenderSelect')?.value;
-  const season = document.getElementById('bulkSeasonSelect')?.value;
-  const status = document.getElementById('bulkStatusSelect')?.value;
-  const featured = document.getElementById('bulkFeaturedSelect')?.value;
-  const bestSeller = document.getElementById('bulkBestSellerSelect')?.value;
-  const tagsRaw = document.getElementById('bulkTagsInput')?.value.trim();
-  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : null;
-
-  showImportProgress('Applying Bulk Edits...', `Updating ${selectedIds.size} products...`, 20);
-
-  const skipExisting = document.getElementById('chkSkipExisting')?.checked;
-
-  let existingProducts = getAdminProducts();
-  const existingIds = new Set(existingProducts.map(p => String(p.id || p.printfulId || p.sku)));
-
-  let updatedCount = 0;
-  let publishedCount = 0;
-
-  (window.__printfulStagingProducts || []).forEach((product) => {
-    if (!selectedIds.has(String(product.id))) return;
-
-    const isDuplicate = existingIds.has(String(product.id)) || existingIds.has(String(product.printfulId));
-    if (skipExisting && isDuplicate && status !== 'published') {
-      return;
-    }
-
-    if (category) product.category = category;
-    if (collection) {
-      const colArr = Array.isArray(product.collection) ? product.collection : [product.collection || 'new'];
-      if (!colArr.includes(collection)) colArr.push(collection);
-      product.collection = colArr;
-    }
-    if (gender) product.gender = gender;
-    if (season) product.season = season;
-    if (featured) product.featured = featured === 'yes';
-    if (bestSeller) product.bestSeller = bestSeller === 'yes';
-    if (tags) product.tags = tags;
-    if (status) {
-      product.status = status;
-      product.published = status === 'published';
-    }
-
-    updatedCount++;
-    if (product.status === 'published' || product.published) {
-      publishedCount++;
-      const matchIdx = existingProducts.findIndex(p => String(p.id) === String(product.id) || String(p.printfulId) === String(product.printfulId));
-      if (matchIdx >= 0) existingProducts[matchIdx] = { ...existingProducts[matchIdx], ...product };
-      else existingProducts.unshift(product);
-    }
-  });
-
-  updateImportProgress(75, 'Saving products to local MongoDB database...');
-
-  saveAdminProducts(existingProducts);
-
-  try {
-    await fetch('/api/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'bulk_upsert', products: existingProducts })
-    });
-  } catch (e) {}
-
-  updateImportProgress(100, `Bulk Edit Complete! Updated ${updatedCount} items, Published ${publishedCount} to live website.`);
-  setTimeout(closeImportProgress, 1200);
-
-  renderAdminProducts();
-  renderPrintfulStagingTable();
-  toast(`Bulk Edits Applied! ${updatedCount} updated, ${publishedCount} live on website.`);
-}
-
-function switchAdminSection(sectionName) {
-  if (!sectionName) sectionName = 'dashboard';
-
-  const navBtns = document.querySelectorAll('.admin-nav button[data-section]');
-  navBtns.forEach(btn => {
-    if (btn.getAttribute('data-section') === sectionName) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
-  });
-
-  const panels = document.querySelectorAll('.admin-section[data-panel]');
-  panels.forEach(panel => {
-    if (panel.getAttribute('data-panel') === sectionName) {
-      panel.classList.add('active');
-      panel.style.display = 'block';
-    } else {
-      panel.classList.remove('active');
-      panel.style.display = 'none';
-    }
-  });
-
-  const pageTitle = document.querySelector('[data-page-title]');
-  if (pageTitle && sectionTitles[sectionName]) {
-    pageTitle.textContent = sectionTitles[sectionName];
-  }
-
-  if (sectionName === 'products') {
-    renderAdminProducts();
-  } else if (sectionName === 'importer') {
-    renderPrintfulStagingTable();
-  }
-}
-
-function bootAdmin() {
-  document.body.classList.remove('admin-locked');
-
-  document.querySelectorAll('.admin-nav button[data-section]').forEach(btn => {
-    if (!btn.dataset.navBound) {
-      btn.dataset.navBound = 'true';
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const sec = btn.getAttribute('data-section');
-        switchAdminSection(sec);
-      });
-    }
-  });
-
-  document.querySelectorAll('[data-section-jump]').forEach(btn => {
-    if (!btn.dataset.jumpBound) {
-      btn.dataset.jumpBound = 'true';
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const sec = btn.getAttribute('data-section-jump');
-        switchAdminSection(sec);
-      });
-    }
-  });
-
-  const btnSyncStore = document.getElementById('btnSyncPrintfulStore');
-  if (btnSyncStore && !btnSyncStore.dataset.bound) {
-    btnSyncStore.dataset.bound = 'true';
-    btnSyncStore.addEventListener('click', fetchPrintfulStoreProducts);
-  }
-
-  const btnApplyBulk = document.getElementById('btnApplyBulkStagingEdits');
-  if (btnApplyBulk && !btnApplyBulk.dataset.bound) {
-    btnApplyBulk.dataset.bound = 'true';
-    btnApplyBulk.addEventListener('click', bulkApplyStagingEdits);
-  }
-
-  const btnImportSel = document.getElementById('btnImportSelectedDrafts');
-  if (btnImportSel && !btnImportSel.dataset.bound) {
-    btnImportSel.dataset.bound = 'true';
-    btnImportSel.addEventListener('click', bulkApplyStagingEdits);
-  }
-
-  const btnImportAll = document.getElementById('btnImportAllDrafts');
-  if (btnImportAll && !btnImportAll.dataset.bound) {
-    btnImportAll.dataset.bound = 'true';
-    btnImportAll.addEventListener('click', () => {
-      document.querySelectorAll('.staging-chk').forEach(c => c.checked = true);
-      updateStagingSelectedCount();
-      bulkApplyStagingEdits();
-    });
-  }
-
-  const searchStaging = document.getElementById('stagingSearchInput');
-  if (searchStaging && !searchStaging.dataset.bound) {
-    searchStaging.dataset.bound = 'true';
-    searchStaging.addEventListener('input', renderPrintfulStagingTable);
-  }
-
   const editForm = document.getElementById('editProductForm');
   if (editForm && !editForm.dataset.bound) {
     editForm.dataset.bound = 'true';
     editForm.addEventListener('submit', saveEditProductForm);
   }
-
-  const initialHash = window.location.hash.replace('#', '').trim();
-  if (initialHash && sectionTitles[initialHash]) {
-    switchAdminSection(initialHash);
-  } else {
-    switchAdminSection('dashboard');
-  }
-
-  window.addEventListener('hashchange', () => {
-    const newHash = window.location.hash.replace('#', '').trim();
-    if (newHash && sectionTitles[newHash]) {
-      switchAdminSection(newHash);
-    }
-  });
 
   function updateLiveVisitors() {
     let visitors = {};

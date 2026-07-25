@@ -825,45 +825,6 @@ async function fetchCatalogProducts({ gender, limit, offset, query, collection, 
       .filter((product) => allowedCatalogCategories.has(product.category))
       .filter((product) => !requestedCategory || product.category === requestedCategory || (requestedCategory === 'tees' && ['oversized-tees', 'heavyweight-tees', 'baby-tees'].includes(product.category)))
   };
-async function fetchStoreSyncProducts() {
-  try {
-    const data = await printfulCatalogFetch('/store/products');
-    const result = data?.result || [];
-    const syncProducts = Array.isArray(result) ? result : [];
-
-    const detailedProducts = await Promise.all(syncProducts.slice(0, 100).map(async (sp, index) => {
-      try {
-        const detailData = await printfulCatalogFetch(`/store/products/${sp.id}`);
-        const syncDetail = detailData?.result || {};
-        const syncProduct = syncDetail?.sync_product || sp;
-        const syncVariants = syncDetail?.sync_variants || [];
-
-        const normalized = normalizeProduct({
-          ...sp,
-          sync_product: syncProduct,
-          sync_variants: syncVariants,
-          variants: syncVariants
-        }, index);
-
-        return {
-          ...normalized,
-          status: 'draft',
-          published: false
-        };
-      } catch (err) {
-        const normalized = normalizeProduct(sp, index);
-        return {
-          ...normalized,
-          status: 'draft',
-          published: false
-        };
-      }
-    }));
-
-    return detailedProducts;
-  } catch (error) {
-    return [];
-  }
 }
 
 module.exports = async function handler(req, res) {
@@ -875,10 +836,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    if (req.query.action === 'store_products') {
-      const storeProducts = await fetchStoreSyncProducts();
-      return response(res, 200, { ok: true, source: 'printful-store-sync', total: storeProducts.length, count: storeProducts.length, products: storeProducts });
-    }
     const gender = String(req.query.gender || 'men').toLowerCase();
     const limit = Math.min(Number(req.query.limit || 23), 60);
     const page = Math.max(Number(req.query.page || 1), 1);
