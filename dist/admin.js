@@ -1495,6 +1495,12 @@ function addAdminProduct(form) {
   const gender = String(data.get('gender') || 'Women');
   const collectionTag = String(data.get('collection') || 'streetwear').toLowerCase();
 
+  const colorsRaw = String(data.get('colors') || '').trim();
+  const colors = colorsRaw ? colorsRaw.split(',').map(c => c.trim().toLowerCase()).filter(Boolean) : ['black', 'white', 'gray'];
+
+  const sizesRaw = String(data.get('sizes') || '').trim();
+  const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : ['XS', 'S', 'M', 'L', 'XL'];
+
   const img1 = String(data.get('img') || '').trim() || 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80';
   const img2 = String(data.get('image2') || '').trim();
   const img3 = String(data.get('image3') || '').trim();
@@ -1516,8 +1522,9 @@ function addAdminProduct(form) {
     compareAt: salePrice || null,
     originalPrice: salePrice || price * 1.5,
     rating: 4.9,
-    colors: ['black', 'white', 'gray'],
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    colors,
+    color: colors[0] || 'black',
+    sizes,
     img: img1,
     image: img1,
     images: images.length ? images : [img1],
@@ -1537,7 +1544,7 @@ function addAdminProduct(form) {
   saveAdminProducts(products);
   renderAdminProducts();
   form.reset();
-  toast('New product with ' + images.length + ' image(s) added successfully!');
+  toast('New product with ' + images.length + ' image(s) and ' + colors.length + ' color(s) added successfully!');
 }
 
 function openEditProductModal(productId) {
@@ -1558,6 +1565,8 @@ function openEditProductModal(productId) {
   form.elements['compareAt'].value = product.compareAt || product.originalPrice || '';
   form.elements['gender'].value = product.gender || 'Women';
   form.elements['category'].value = product.category || 'oversized-tees';
+  if (form.elements['colors']) form.elements['colors'].value = (product.colors || ['black', 'white', 'gray']).join(', ');
+  if (form.elements['sizes']) form.elements['sizes'].value = (product.sizes || ['XS', 'S', 'M', 'L', 'XL']).join(', ');
   if (form.elements['image']) form.elements['image'].value = imgs[0] || '';
   if (form.elements['image2']) form.elements['image2'].value = imgs[1] || product.hoverImage || '';
   if (form.elements['image3']) form.elements['image3'].value = imgs[2] || '';
@@ -1584,6 +1593,12 @@ function saveEditProductForm(e) {
       const gender = String(data.get('gender') || 'Women');
       const category = String(data.get('category') || 'oversized-tees');
 
+      const colorsRaw = String(data.get('colors') || '').trim();
+      const colors = colorsRaw ? colorsRaw.split(',').map(c => c.trim().toLowerCase()).filter(Boolean) : (product.colors || ['black']);
+
+      const sizesRaw = String(data.get('sizes') || '').trim();
+      const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : (product.sizes || ['S', 'M', 'L']);
+
       const img1 = String(data.get('image') || data.get('img') || '').trim() || product.img;
       const img2 = String(data.get('image2') || '').trim();
       const img3 = String(data.get('image3') || '').trim();
@@ -1603,6 +1618,9 @@ function saveEditProductForm(e) {
         compareAt,
         gender,
         category,
+        colors,
+        color: colors[0] || 'black',
+        sizes,
         img: img1,
         image: img1,
         images: images.length ? images : [img1],
