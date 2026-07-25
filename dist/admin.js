@@ -2346,6 +2346,24 @@ async function bootAdmin() {
     }
   }
 
+  const addForm = document.querySelector('form[data-admin-add-product]');
+  if (addForm && !addForm.dataset.bound) {
+    addForm.dataset.bound = 'true';
+    addForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      addAdminProduct(addForm);
+    });
+  }
+
+  const importForm = document.querySelector('form[data-import-form="url"]');
+  if (importForm && !importForm.dataset.bound) {
+    importForm.dataset.bound = 'true';
+    importForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      importPrintfulUrl(importForm);
+    });
+  }
+
   const editForm = document.getElementById('editProductForm');
   if (editForm && !editForm.dataset.bound) {
     editForm.dataset.bound = 'true';

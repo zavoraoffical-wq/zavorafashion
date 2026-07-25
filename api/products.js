@@ -35,7 +35,8 @@ function parseBody(req) {
 module.exports = async function handler(req, res) {
   if (!rateLimit(req, res, 'products-api', { windowMs: 60_000, max: 300 })) return;
 
-  const action = String(req.query.action || '').toLowerCase();
+  let action = String(req.query.action || '').toLowerCase();
+  if (req.method === 'POST' && !action) action = 'update';
 
   // ── Webhook receiver (Printful -> DB update) ─────────────────────────────
   if (action === 'webhook' && req.method === 'POST') {
