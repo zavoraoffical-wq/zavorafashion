@@ -325,7 +325,18 @@ let currentProductSearchQuery = '';
 
 function getAdminProducts() {
   try {
-    return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY)) || [];
+    const admin = JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY) || '[]');
+    const imported = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]');
+    
+    const seen = new Set();
+    const clean = [];
+    [...imported, ...admin].forEach(p => {
+      if (p && p.id && !seen.has(String(p.id))) {
+        seen.add(String(p.id));
+        clean.push(p);
+      }
+    });
+    return clean;
   } catch (error) {
     return [];
   }
@@ -333,6 +344,22 @@ function getAdminProducts() {
 
 function saveAdminProducts(products) {
   localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(products));
+  localStorage.setItem('zavoraImportedCatalog', JSON.stringify(products));
+}
+
+function getProductStorefrontPages(product) {
+  const pages = [];
+  const gender = String(product.gender || '').toLowerCase();
+  const cols = Array.isArray(product.collection) ? product.collection.map(c => String(c).toLowerCase()) : [String(product.collection || '').toLowerCase()];
+  
+  if (gender === 'women' || product.category?.includes('women') || product.name?.toLowerCase().includes('women')) pages.push('Women');
+  if (gender === 'men' || product.category?.includes('men') || product.name?.toLowerCase().includes('men')) pages.push('Men');
+  if (cols.includes('new') || cols.includes('streetwear')) pages.push('New Arrivals');
+  if (cols.includes('best') || product.popularity >= 80) pages.push('Best Sellers');
+  if (cols.includes('limited') || product.badge?.toLowerCase().includes('limited')) pages.push('Limited Drops');
+  pages.push('Shop All');
+
+  return Array.from(new Set(pages));
 }
 
 function renderAdminProducts() {
@@ -358,26 +385,39 @@ function renderAdminProducts() {
   }
 
   list.innerHTML = filtered.map((product) => {
-    const imgSrc = product.img || product.image || 'assets/studio-wide-trouser.png';
+    const imgSrc = product.img || product.image || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80';
     const idVal = product.sku || `PF-${product.id}`;
+    const isHidden = product.published === false || product.status === 'hidden';
+    const storefrontPages = getProductStorefrontPages(product);
+
     return `
-      <tr data-saved-product="${product.id}">
+      <tr data-saved-product="${product.id}" style="${isHidden ? 'opacity:0.6;background:#fafafa;' : ''}">
         <td>
           <div style="display:flex;align-items:center;gap:12px;">
-            <img src="${imgSrc}" alt="${product.name}" onerror="this.src='assets/studio-wide-trouser.png'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #ddd;flex-shrink:0;">
+            <input type="checkbox" data-product-checkbox value="${product.id}" style="cursor:pointer;width:16px;height:16px;">
+            <img src="${imgSrc}" alt="${product.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #ddd;flex-shrink:0;">
             <div>
               <strong style="display:block;font-size:13px;color:#050505;">${product.name}</strong>
-              <span style="font-size:11px;color:#777;">SKU: ${idVal}</span>
+              <span style="font-size:11px;color:#777;">SKU: ${idVal} • Gender: ${product.gender || 'Unisex'}</span>
             </div>
           </div>
         </td>
         <td><span style="text-transform:capitalize;font-weight:600;color:#444;">${product.category || 'Apparel'}</span></td>
         <td><strong style="color:#2e7d32;">${money(product.price || 94.89)}</strong></td>
-        <td><span style="font-size:11px;background:#f5f5f5;padding:3px 8px;border-radius:10px;border:1px solid #e0e0e0;">${product.page || 'Shop / Collection'}</span></td>
-        <td><span class="pill green">Active</span></td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            ${storefrontPages.map(p => `<span style="font-size:10px;background:#f0f4f8;color:#102a43;padding:2px 6px;border-radius:8px;border:1px solid #d9e2ec;font-weight:600;">${p}</span>`).join('')}
+          </div>
+        </td>
+        <td>
+          ${isHidden 
+            ? `<span class="pill red" style="background:#ffebee;color:#c62828;font-weight:700;">Hidden</span>` 
+            : `<span class="pill green" style="background:#e8f5e9;color:#2e7d32;font-weight:700;">Live on Web</span>`}
+        </td>
         <td>
           <div style="display:flex;gap:6px;">
-            <a href="product.html?id=${encodeURIComponent(product.id)}" target="_blank" style="padding:5px 10px;font-size:12px;background:#050505;color:#fff;text-decoration:none;border-radius:4px;font-weight:600;">View on Web</a>
+            <a href="product.html?id=${encodeURIComponent(product.id)}" target="_blank" style="padding:5px 10px;font-size:12px;background:#050505;color:#fff;text-decoration:none;border-radius:4px;font-weight:600;">View</a>
+            <button type="button" data-toggle-visibility="${product.id}" style="padding:5px 10px;font-size:12px;background:${isHidden ? '#2e7d32' : '#f57c00'};color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">${isHidden ? 'Show' : 'Hide'}</button>
             <button type="button" data-remove-product="${product.id}" style="padding:5px 10px;font-size:12px;background:#d9534f;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Remove</button>
           </div>
         </td>
@@ -391,6 +431,14 @@ function renderAdminProducts() {
     searchInput.addEventListener('input', (e) => {
       currentProductSearchQuery = (e.target.value || '').trim().toLowerCase();
       renderAdminProducts();
+    });
+  }
+
+  const selectAll = document.querySelector('#selectAllAdminProducts');
+  if (selectAll && !selectAll.dataset.bound) {
+    selectAll.dataset.bound = 'true';
+    selectAll.addEventListener('change', (e) => {
+      document.querySelectorAll('[data-product-checkbox]').forEach(cb => cb.checked = e.target.checked);
     });
   }
 }
@@ -2045,6 +2093,26 @@ async function bootAdmin() {
   setSection(window.location.hash.replace('#', '') || 'dashboard');
   refreshLiveAdminDashboard();
   window.setInterval(refreshLiveAdminDashboard, 30000);
+
+  // Auto-detect URL parameter for Printful Auto-Import
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetUrl = urlParams.get('url');
+  if (targetUrl) {
+    setSection('importer');
+    const form = document.querySelector('form[data-import-form="url"]');
+    if (form) {
+      const urlInput = form.querySelector('[name="url"]');
+      if (urlInput) urlInput.value = targetUrl;
+      const genderSelect = form.querySelector('[name="gender"]');
+      if (genderSelect && urlParams.get('gender')) genderSelect.value = urlParams.get('gender');
+      const catSelect = form.querySelector('[name="category"]');
+      if (catSelect && urlParams.get('category')) catSelect.value = urlParams.get('category');
+
+      setTimeout(() => {
+        importPrintfulUrl(form);
+      }, 500);
+    }
+  }
 
   function updateLiveVisitors() {
     let visitors = {};
