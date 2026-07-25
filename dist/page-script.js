@@ -3665,9 +3665,11 @@ function initFaqAccordions() {
 function selectedProductOptions() {
   const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
   const colorButton = optionRows[0]?.querySelector('button.active');
+  const sizeButton = optionRows[1]?.querySelector('button.active');
   return {
     color: colorButton?.dataset.colorOption || colorButton?.textContent.trim() || 'black',
-    size: optionRows[1]?.querySelector('button.active')?.dataset.sizeOption || optionRows[1]?.querySelector('button.active')?.textContent.trim() || 'M'
+    colorIndex: Number(colorButton?.dataset.colorIndex ?? 0),
+    size: sizeButton?.dataset.sizeOption || sizeButton?.textContent.trim() || 'M'
   };
 }
 
@@ -3685,7 +3687,7 @@ function renderProductGallery(product, images = []) {
   const gallery = document.querySelector('.product-gallery');
   if (!gallery) return;
   const cleanImages = Array.from(new Set(images.filter(Boolean)));
-  const galleryImages = (cleanImages.length ? cleanImages : [product?.img || product?.image || 'assets/studio-wide-trouser.png']).slice(0, 4);
+  const galleryImages = (cleanImages.length ? cleanImages : [product?.img || product?.image || 'assets/studio-wide-trouser.png']).slice(0, 5);
   gallery.classList.toggle('single-gallery', galleryImages.length === 1);
   gallery.innerHTML = `
     <div class="product-gallery-main zoom-frame">
@@ -3736,10 +3738,23 @@ function updateDynamicProductMedia() {
   if (!isCurrentPage('product')) return;
   const product = getSelectedProduct();
   if (!product) return;
-  const { color, size } = selectedProductOptions();
+  const { color, size, colorIndex } = selectedProductOptions();
   const variant = getVariant(product, color, size);
   const group = productVariantGroup(product, color);
-  renderProductGallery(product, group?.images?.length ? group.images : (variant?.images || product.images || [variant?.image || product.img || product.image]));
+
+  let galleryImages = [];
+  if (group?.images?.length) {
+    galleryImages = group.images;
+  } else if (variant?.images?.length) {
+    galleryImages = variant.images;
+  } else if (Array.isArray(product?.images) && product.images.length) {
+    const selectedImg = product.images[colorIndex] || product.images[0];
+    galleryImages = [selectedImg, ...product.images.filter(img => img !== selectedImg)];
+  } else {
+    galleryImages = [product.img || product.image || 'assets/studio-wide-trouser.png'];
+  }
+
+  renderProductGallery(product, galleryImages);
   const optionRows = [...document.querySelectorAll('.product-buy .option-row')];
   if (group?.sizes?.length && optionRows[1]) {
     const activeSize = size;
@@ -3814,11 +3829,28 @@ function initDynamicProductPage() {
     optionRows[0].innerHTML = colors.map((color, index) => {
       const key = normalizedProductColor(color);
       const label = groups[key]?.label || (color === 'default' ? 'Original' : `${color[0].toUpperCase()}${color.slice(1)}`);
-      return `<button type="button" class="${index === 0 ? 'active' : ''}" data-color="${key}">${label}</button>`;
+      return `<button type="button" class="${index === 0 ? 'active' : ''}" data-color-option="${key}" data-color-index="${index}">${label}</button>`;
     }).join('');
+
+    optionRows[0].querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        optionRows[0].querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateDynamicProductMedia();
+      });
+    });
   }
   if (optionRows[1]) {
-    optionRows[1].innerHTML = `${sizes.map((size, index) => `<button type="button" class="${index === 0 ? 'active' : ''}">${size}</button>`).join('')}<a href="style-guide.html">Size Guide</a>`;
+    optionRows[1].innerHTML = `${sizes.map((size, index) => `<button type="button" class="${index === 0 ? 'active' : ''}" data-size-option="${size}">${size}</button>`).join('')}<a href="style-guide.html">Size Guide</a>`;
+    optionRows[1].querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        optionRows[1].querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateDynamicProductMedia();
+      });
+    });
   }
   const actions = document.querySelector('.product-actions');
   if (actions && !document.querySelector('[data-stock-note]')) {
