@@ -584,9 +584,11 @@ function imagesFromProduct(product) {
 }
 
 function imageFromProduct(product) {
-  return productImageUrls(product)[0]
-    || variantPools(product).flatMap(variantImages)[0]
-    || 'assets/studio-wide-trouser.png';
+  const vImages = variantPools(product).flatMap(variantImages).filter(Boolean);
+  if (vImages.length) {
+    return vImages[0];
+  }
+  return productImageUrls(product)[0] || 'assets/studio-wide-trouser.png';
 }
 
 function variantImage(variant, fallback) {
@@ -598,23 +600,19 @@ function variantOptionsFromVariants(variants = [], fallbackImage = '', forceColo
   const options = [];
   variants.forEach((variant, index) => {
     const color = colorFromVariant(variant, forceColor);
-    const sizes = sizesFromVariants([variant]);
-    const size = sizes[0] || 'M';
+    const size = sizesFromVariants([variant])[0] || 'M';
     const key = `${color}-${size}`;
     if (seen.has(key)) return;
     seen.add(key);
     const images = variantImages(variant);
     options.push({
       id: variant?.id || variant?.variant_id || index,
-      name: variant?.name || variant?.variant_name || `Variant ${index + 1}`,
       color,
-      colorKey: colorKey(color),
-      colorLabel: colorLabel(color),
       size,
-      images,
-      image: images[0] || fallbackImage,
-      stock: 5,
-      sku: variant?.sku || variant?.external_id || ''
+      sku: variant?.sku || variant?.external_id || '',
+      price: Number(variant?.retail_price || variant?.price || 0) || null,
+      images: images.length ? images : (fallbackImage ? [fallbackImage] : []),
+      image: variantImage(variant, fallbackImage)
     });
   });
   return options;
@@ -650,7 +648,9 @@ function variantGroupsFromVariants(variants = [], productImages = [], forceColor
   });
   const groupKeys = Object.keys(groups);
   if (groupKeys.length === 1 && productImages.length) {
-    productImages.forEach((url) => addUnique(groups[groupKeys[0]].images, url));
+    if (!groups[groupKeys[0]].images.length) {
+      productImages.forEach((url) => addUnique(groups[groupKeys[0]].images, url));
+    }
   }
   if (!Object.keys(groups).length && productImages.length) {
     groups.default = { color: 'default', key: 'default', label: 'Original', images: productImages, sizes: [], variants: [] };
