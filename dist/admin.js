@@ -1444,7 +1444,6 @@ async function refreshLiveAdminDashboard() {
   renderLiveProductRows(stats.topProducts || []);
   renderLiveOrders(stats);
   renderRewardClaims(stats.rewardClaims || []);
-  const bell = document.querySelector('.admin-icon-btn');
   if (bell) bell.textContent = `Live ${stats.products || 0}`;
 }
 
@@ -1460,8 +1459,14 @@ function addAdminProduct(form) {
   const category = String(data.get('category') || 'oversized-tees').toLowerCase();
   const gender = String(data.get('gender') || 'Women');
   const collectionTag = String(data.get('collection') || 'streetwear').toLowerCase();
-  const mainImg = String(data.get('img') || '').trim() || 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80';
-  const hoverImg = String(data.get('hoverImage') || '').trim() || mainImg;
+
+  const img1 = String(data.get('img') || '').trim() || 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80';
+  const img2 = String(data.get('image2') || '').trim();
+  const img3 = String(data.get('image3') || '').trim();
+  const img4 = String(data.get('image4') || '').trim();
+  const img5 = String(data.get('image5') || '').trim();
+  const images = [img1, img2, img3, img4, img5].filter(Boolean);
+
   const video = String(data.get('videoUrl') || '').trim();
   const stock = Number(data.get('stock') || 50);
 
@@ -1478,10 +1483,10 @@ function addAdminProduct(form) {
     rating: 4.9,
     colors: ['black', 'white', 'gray'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    img: mainImg,
-    image: mainImg,
-    images: [mainImg, hoverImg].filter(Boolean),
-    hoverImage: hoverImg,
+    img: img1,
+    image: img1,
+    images: images.length ? images : [img1],
+    hoverImage: img2 || img1,
     videoUrl: video,
     badge: 'NEW',
     collection: [gender.toLowerCase(), collectionTag, 'new'],
@@ -1497,7 +1502,7 @@ function addAdminProduct(form) {
   saveAdminProducts(products);
   renderAdminProducts();
   form.reset();
-  toast('New product added to live catalog!');
+  toast('New product with ' + images.length + ' image(s) added successfully!');
 }
 
 function openEditProductModal(productId) {
@@ -1509,6 +1514,8 @@ function openEditProductModal(productId) {
   const form = document.getElementById('editProductForm');
   if (!modal || !form) return;
 
+  const imgs = product.images || [product.image || product.img].filter(Boolean);
+
   form.elements['id'].value = product.id;
   form.elements['name'].value = product.name || '';
   form.elements['sku'].value = product.sku || `PF-${product.id}`;
@@ -1516,11 +1523,14 @@ function openEditProductModal(productId) {
   form.elements['compareAt'].value = product.compareAt || product.originalPrice || '';
   form.elements['gender'].value = product.gender || 'Women';
   form.elements['category'].value = product.category || 'oversized-tees';
-  form.elements['image'].value = product.image || product.img || '';
-  form.elements['hoverImage'].value = product.hoverImage || product.images?.[1] || '';
-  form.elements['videoUrl'].value = product.videoUrl || '';
-  form.elements['stock'].value = product.stock || 50;
-  form.elements['description'].value = product.description || '';
+  if (form.elements['image']) form.elements['image'].value = imgs[0] || '';
+  if (form.elements['image2']) form.elements['image2'].value = imgs[1] || product.hoverImage || '';
+  if (form.elements['image3']) form.elements['image3'].value = imgs[2] || '';
+  if (form.elements['image4']) form.elements['image4'].value = imgs[3] || '';
+  if (form.elements['image5']) form.elements['image5'].value = imgs[4] || '';
+  if (form.elements['videoUrl']) form.elements['videoUrl'].value = product.videoUrl || '';
+  if (form.elements['stock']) form.elements['stock'].value = product.stock || 50;
+  if (form.elements['description']) form.elements['description'].value = product.description || '';
 
   modal.style.display = 'flex';
 }
@@ -1530,7 +1540,7 @@ function saveEditProductForm(e) {
   const form = e.target;
   const data = new FormData(form);
   const id = String(data.get('id'));
-  
+
   const products = getAdminProducts().map(product => {
     if (String(product.id) === id) {
       const name = String(data.get('name') || '').trim();
@@ -1538,8 +1548,14 @@ function saveEditProductForm(e) {
       const compareAt = Number(data.get('compareAt')) || null;
       const gender = String(data.get('gender') || 'Women');
       const category = String(data.get('category') || 'oversized-tees');
-      const mainImg = String(data.get('image') || '').trim();
-      const hoverImg = String(data.get('hoverImage') || '').trim();
+
+      const img1 = String(data.get('image') || data.get('img') || '').trim() || product.img;
+      const img2 = String(data.get('image2') || '').trim();
+      const img3 = String(data.get('image3') || '').trim();
+      const img4 = String(data.get('image4') || '').trim();
+      const img5 = String(data.get('image5') || '').trim();
+      const images = [img1, img2, img3, img4, img5].filter(Boolean);
+
       const video = String(data.get('videoUrl') || '').trim();
       const stock = Number(data.get('stock') || 50);
 
@@ -1552,10 +1568,10 @@ function saveEditProductForm(e) {
         compareAt,
         gender,
         category,
-        img: mainImg,
-        image: mainImg,
-        images: [mainImg, hoverImg].filter(Boolean),
-        hoverImage: hoverImg,
+        img: img1,
+        image: img1,
+        images: images.length ? images : [img1],
+        hoverImage: img2 || img1,
         videoUrl: video,
         stock,
         description: String(data.get('description') || '').trim()
