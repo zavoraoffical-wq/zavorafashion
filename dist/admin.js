@@ -1496,7 +1496,7 @@ function addAdminProduct(form) {
   const collectionTag = String(data.get('collection') || 'streetwear').toLowerCase();
 
   const colorsRaw = String(data.get('colors') || '').trim();
-  const colors = colorsRaw ? colorsRaw.split(',').map(c => c.trim().toLowerCase()).filter(Boolean) : ['black', 'white', 'gray'];
+  const colors = colorsRaw ? colorsRaw.split(',').map(c => c.trim().toLowerCase()).filter(Boolean) : [];
 
   const sizesRaw = String(data.get('sizes') || '').trim();
   const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : ['XS', 'S', 'M', 'L', 'XL'];
@@ -1522,7 +1522,7 @@ function addAdminProduct(form) {
     compareAt: salePrice || null,
     originalPrice: salePrice || price * 1.5,
     rating: 4.9,
-    colors,
+    colors: colors.length ? colors : ['black'],
     color: colors[0] || 'black',
     sizes,
     img: img1,
@@ -1544,7 +1544,7 @@ function addAdminProduct(form) {
   saveAdminProducts(products);
   renderAdminProducts();
   form.reset();
-  toast('New product with ' + images.length + ' image(s) and ' + colors.length + ' color(s) added successfully!');
+  toast('New product added successfully!');
 }
 
 function openEditProductModal(productId) {
@@ -1565,7 +1565,7 @@ function openEditProductModal(productId) {
   form.elements['compareAt'].value = product.compareAt || product.originalPrice || '';
   form.elements['gender'].value = product.gender || 'Women';
   form.elements['category'].value = product.category || 'oversized-tees';
-  if (form.elements['colors']) form.elements['colors'].value = (product.colors || ['black', 'white', 'gray']).join(', ');
+  if (form.elements['colors']) form.elements['colors'].value = (product.colors || [product.color || 'black']).join(', ');
   if (form.elements['sizes']) form.elements['sizes'].value = (product.sizes || ['XS', 'S', 'M', 'L', 'XL']).join(', ');
   if (form.elements['image']) form.elements['image'].value = imgs[0] || '';
   if (form.elements['image2']) form.elements['image2'].value = imgs[1] || product.hoverImage || '';
