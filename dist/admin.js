@@ -2434,6 +2434,308 @@ async function bootAdmin() {
     });
   }
 
+// ─── PRINTFUL PRODUCT IMPORT MANAGER & BULK EDITOR ───────────────────────
+
+window.__printfulStagingProducts = [];
+
+async function fetchPrintfulStoreProducts() {
+  const btnSync = document.getElementById('btnSyncPrintfulStore');
+  const apiStatus = document.getElementById('printfulApiStatus');
+  if (btnSync) btnSync.disabled = true;
+  if (apiStatus) apiStatus.innerHTML = '🔄 Syncing Printful Store...';
+
+  toast('Connecting to Printful Store API...');
+  showImportProgress('Connecting to Printful...', 'Fetching store sync products and variants...', 15);
+
+  try {
+    const res = await fetch('/api/printful-products?action=store_products');
+    const data = await res.json();
+    let storeProducts = Array.isArray(data?.products) ? data.products : [];
+
+    if (!storeProducts.length) {
+      const fallbackRes = await fetch('/api/printful-products?limit=100');
+      const fallbackData = await fallbackRes.json();
+      storeProducts = Array.isArray(fallbackData?.products) ? fallbackData.products : [];
+    }
+
+    updateImportProgress(60, `Fetched ${storeProducts.length} items. Staging as Drafts...`);
+
+    const existingAdminProducts = getAdminProducts();
+    const existingIds = new Set(existingAdminProducts.map(p => String(p.id || p.printfulId || p.sku)));
+
+    window.__printfulStagingProducts = storeProducts.map((sp, idx) => {
+      const alreadyExists = existingIds.has(String(sp.id)) || existingIds.has(String(sp.printfulId)) || existingIds.has(String(sp.sku));
+      return {
+        ...sp,
+        id: sp.id || `PF-STG-${Date.now()}-${idx}`,
+        status: alreadyExists ? (sp.status || 'published') : 'draft',
+        published: alreadyExists ? (sp.published !== false) : false,
+        category: sp.category || 'oversized-tees',
+        gender: sp.gender || 'Unisex',
+        season: sp.season || 'All-Season',
+        featured: sp.featured || false,
+        bestSeller: sp.bestSeller || false,
+        tags: sp.tags || ['printful', 'streetwear']
+      };
+    });
+
+    updateImportProgress(100, 'Printful Store Sync Complete!');
+    setTimeout(closeImportProgress, 800);
+
+    if (apiStatus) apiStatus.innerHTML = '🟢 Connected & Synced';
+    toast(`Successfully staged ${window.__printfulStagingProducts.length} Printful store products!`);
+    renderPrintfulStagingTable();
+  } catch (error) {
+    if (apiStatus) apiStatus.innerHTML = '🔴 Connection Error';
+    toast('Error connecting to Printful API: ' + error.message, 'error');
+    closeImportProgress();
+  } finally {
+    if (btnSync) btnSync.disabled = false;
+  }
+}
+
+function renderPrintfulStagingTable() {
+  const tbody = document.getElementById('stagingProductsTbody');
+  const countItem = document.getElementById('printfulStoreItemCount');
+  const countDraft = document.getElementById('printfulDraftCount');
+  const countPub = document.getElementById('printfulPublishedCount');
+  const searchInput = document.getElementById('stagingSearchInput');
+  const query = String(searchInput?.value || '').trim().toLowerCase();
+
+  const stagingList = window.__printfulStagingProducts || [];
+  const existingProducts = getAdminProducts();
+
+  const draftsCount = stagingList.filter(p => p.status === 'draft' || !p.published).length;
+  const publishedCount = existingProducts.filter(p => p.status === 'published' || p.published).length;
+
+  if (countItem) countItem.textContent = `${stagingList.length} Items Found`;
+  if (countDraft) countDraft.textContent = `${draftsCount} Pending Review`;
+  if (countPub) countPub.textContent = `${publishedCount} Live Products`;
+
+  if (!tbody) return;
+
+  const filtered = stagingList.filter(p => {
+    if (!query) return true;
+    const text = `${p.name || ''} ${p.sku || ''} ${p.category || ''} ${p.id || ''}`.toLowerCase();
+    return text.includes(query);
+  });
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:#888;">
+      ${stagingList.length ? 'No products match your search query.' : 'No Printful store items staged yet. Click <b>"⚡ Connect & Fetch Printful Store Products"</b> above.'}
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(product => {
+    const isPublished = product.status === 'published' || product.published;
+    const colors = Array.isArray(product.colors) ? product.colors.join(', ') : (product.color || 'Default');
+    const thumb = product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png';
+
+    return `
+      <tr data-staging-id="${product.id}">
+        <td><input type="checkbox" class="staging-chk" value="${product.id}"></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img src="${thumb}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #eee;">
+            <div>
+              <strong style="font-size:13px;display:block;">${product.name}</strong>
+              <small style="color:#888;font-size:11px;">ID: ${product.id} | SKU: ${product.sku || 'N/A'}</small>
+            </div>
+          </div>
+        </td>
+        <td><span class="pill">${product.category || 'Tees'}</span></td>
+        <td>${product.gender || 'Unisex'}</td>
+        <td><span style="font-size:11px;color:#555;">${colors}</span></td>
+        <td><strong>$${Number(product.price || 0).toFixed(2)}</strong></td>
+        <td>
+          <span class="pill ${isPublished ? 'gold' : ''}" style="${isPublished ? '' : 'background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;'}">
+            ${isPublished ? 'Published (Live)' : 'Draft (Staged)'}
+          </span>
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="pill" onclick="toggleSingleStagingPublish('${product.id}')">
+              ${isPublished ? 'Unpublish' : 'Publish'}
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const chkAll = document.getElementById('selectAllStagingItems');
+  const hdrChkAll = document.getElementById('hdrSelectAllStaging');
+  const rowChks = tbody.querySelectorAll('.staging-chk');
+
+  [chkAll, hdrChkAll].forEach(master => {
+    if (master) {
+      master.checked = false;
+      master.onclick = () => {
+        rowChks.forEach(chk => chk.checked = master.checked);
+        updateStagingSelectedCount();
+      };
+    }
+  });
+
+  rowChks.forEach(chk => {
+    chk.addEventListener('change', updateStagingSelectedCount);
+  });
+
+  updateStagingSelectedCount();
+}
+
+function updateStagingSelectedCount() {
+  const selected = document.querySelectorAll('.staging-chk:checked');
+  const count = selected.length;
+  const countText = document.getElementById('selectedStagingCountText');
+  const btnSelected = document.getElementById('btnImportSelectedDrafts');
+
+  if (countText) countText.textContent = `${count} Products Selected`;
+  if (btnSelected) btnSelected.textContent = `📥 Import Selected (${count})`;
+}
+
+function toggleSingleStagingPublish(productId) {
+  const product = (window.__printfulStagingProducts || []).find(p => String(p.id) === String(productId));
+  if (!product) return;
+
+  const willPublish = !(product.status === 'published' || product.published);
+  product.status = willPublish ? 'published' : 'draft';
+  product.published = willPublish;
+
+  if (willPublish) {
+    const existing = getAdminProducts();
+    const index = existing.findIndex(p => String(p.id) === String(product.id));
+    if (index >= 0) existing[index] = { ...existing[index], ...product };
+    else existing.unshift(product);
+
+    saveAdminProducts(existing);
+    renderAdminProducts();
+    toast(`"${product.name}" published to storefront!`);
+  } else {
+    toast(`"${product.name}" saved as Draft.`);
+  }
+
+  renderPrintfulStagingTable();
+}
+
+async function bulkApplyStagingEdits() {
+  const selectedBoxes = [...document.querySelectorAll('.staging-chk:checked')];
+  if (!selectedBoxes.length) {
+    toast('Please select at least 1 staging product using checkboxes.', 'error');
+    return;
+  }
+
+  const selectedIds = new Set(selectedBoxes.map(b => String(b.value)));
+
+  const category = document.getElementById('bulkCategorySelect')?.value;
+  const collection = document.getElementById('bulkCollectionSelect')?.value;
+  const gender = document.getElementById('bulkGenderSelect')?.value;
+  const season = document.getElementById('bulkSeasonSelect')?.value;
+  const status = document.getElementById('bulkStatusSelect')?.value;
+  const featured = document.getElementById('bulkFeaturedSelect')?.value;
+  const bestSeller = document.getElementById('bulkBestSellerSelect')?.value;
+  const tagsRaw = document.getElementById('bulkTagsInput')?.value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : null;
+
+  showImportProgress('Applying Bulk Edits...', `Updating ${selectedIds.size} products...`, 20);
+
+  const skipExisting = document.getElementById('chkSkipExisting')?.checked;
+
+  let existingProducts = getAdminProducts();
+  const existingIds = new Set(existingProducts.map(p => String(p.id || p.printfulId || p.sku)));
+
+  let updatedCount = 0;
+  let publishedCount = 0;
+
+  (window.__printfulStagingProducts || []).forEach((product) => {
+    if (!selectedIds.has(String(product.id))) return;
+
+    const isDuplicate = existingIds.has(String(product.id)) || existingIds.has(String(product.printfulId));
+    if (skipExisting && isDuplicate && status !== 'published') {
+      return;
+    }
+
+    if (category) product.category = category;
+    if (collection) {
+      const colArr = Array.isArray(product.collection) ? product.collection : [product.collection || 'new'];
+      if (!colArr.includes(collection)) colArr.push(collection);
+      product.collection = colArr;
+    }
+    if (gender) product.gender = gender;
+    if (season) product.season = season;
+    if (featured) product.featured = featured === 'yes';
+    if (bestSeller) product.bestSeller = bestSeller === 'yes';
+    if (tags) product.tags = tags;
+    if (status) {
+      product.status = status;
+      product.published = status === 'published';
+    }
+
+    updatedCount++;
+    if (product.status === 'published' || product.published) {
+      publishedCount++;
+      const matchIdx = existingProducts.findIndex(p => String(p.id) === String(product.id) || String(p.printfulId) === String(product.printfulId));
+      if (matchIdx >= 0) existingProducts[matchIdx] = { ...existingProducts[matchIdx], ...product };
+      else existingProducts.unshift(product);
+    }
+  });
+
+  updateImportProgress(75, 'Saving products to local MongoDB database...');
+
+  saveAdminProducts(existingProducts);
+
+  try {
+    await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'bulk_upsert', products: existingProducts })
+    });
+  } catch (e) {}
+
+  updateImportProgress(100, `Bulk Edit Complete! Updated ${updatedCount} items, Published ${publishedCount} to live website.`);
+  setTimeout(closeImportProgress, 1200);
+
+  renderAdminProducts();
+  renderPrintfulStagingTable();
+  toast(`Bulk Edits Applied! ${updatedCount} updated, ${publishedCount} live on website.`);
+}
+
+function bootAdmin() {
+  const btnSyncStore = document.getElementById('btnSyncPrintfulStore');
+  if (btnSyncStore && !btnSyncStore.dataset.bound) {
+    btnSyncStore.dataset.bound = 'true';
+    btnSyncStore.addEventListener('click', fetchPrintfulStoreProducts);
+  }
+
+  const btnApplyBulk = document.getElementById('btnApplyBulkStagingEdits');
+  if (btnApplyBulk && !btnApplyBulk.dataset.bound) {
+    btnApplyBulk.dataset.bound = 'true';
+    btnApplyBulk.addEventListener('click', bulkApplyStagingEdits);
+  }
+
+  const btnImportSel = document.getElementById('btnImportSelectedDrafts');
+  if (btnImportSel && !btnImportSel.dataset.bound) {
+    btnImportSel.dataset.bound = 'true';
+    btnImportSel.addEventListener('click', bulkApplyStagingEdits);
+  }
+
+  const btnImportAll = document.getElementById('btnImportAllDrafts');
+  if (btnImportAll && !btnImportAll.dataset.bound) {
+    btnImportAll.dataset.bound = 'true';
+    btnImportAll.addEventListener('click', () => {
+      document.querySelectorAll('.staging-chk').forEach(c => c.checked = true);
+      updateStagingSelectedCount();
+      bulkApplyStagingEdits();
+    });
+  }
+
+  const searchStaging = document.getElementById('stagingSearchInput');
+  if (searchStaging && !searchStaging.dataset.bound) {
+    searchStaging.dataset.bound = 'true';
+    searchStaging.addEventListener('input', renderPrintfulStagingTable);
+  }
+
   const editForm = document.getElementById('editProductForm');
   if (editForm && !editForm.dataset.bound) {
     editForm.dataset.bound = 'true';
