@@ -3747,21 +3747,36 @@ function updateDynamicProductMedia() {
   }
 }
 
-function refreshSelectedProductFromUrl() {
+async function refreshSelectedProductFromUrl() {
   if (!isCurrentPage('product')) return;
   const id = new URLSearchParams(window.location.search).get('id');
-  if (!id || window.__zavoraProductRefreshId === id) return;
+  if (!id) return;
+  if (window.__zavoraProductRefreshId === id) return;
   window.__zavoraProductRefreshId = id;
-  Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))
-    .then((pages) => {
-      const products = pages.flat();
-      const product = products.find((item) => String(item.id) === String(id) || String(item.printfulId) === String(id));
-      if (product) {
-        localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(product));
-        initDynamicProductPage();
-      }
-    })
-    .catch(() => {});
+
+  const adminProducts = typeof getAdminProducts === 'function' ? getAdminProducts() : [];
+  const catalogProducts = window.__zavoraCatalogProducts || [];
+  const storefrontCatalog = typeof STOREFRONT_APPAREL_CATALOG !== 'undefined' ? STOREFRONT_APPAREL_CATALOG : [];
+  const fullCatalog = typeof ZAVORA_FULL_CATALOG !== 'undefined' ? ZAVORA_FULL_CATALOG : [];
+
+  const allLocal = [...adminProducts, ...catalogProducts, ...storefrontCatalog, ...fullCatalog];
+  let found = allLocal.find(p => p && (String(p.id) === String(id) || String(p.printfulId) === String(id) || String(p.sku) === String(id)));
+
+  if (found) {
+    localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(found));
+    initDynamicProductPage();
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/products?id=${encodeURIComponent(id)}`);
+    const data = await res.json();
+    const prod = data.product || (Array.isArray(data.products) ? data.products.find(p => String(p.id) === String(id) || String(p.printfulId) === String(id)) : null);
+    if (prod) {
+      localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(prod));
+      initDynamicProductPage();
+    }
+  } catch (error) {}
 }
 
 function initDynamicProductPage() {

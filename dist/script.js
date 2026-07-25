@@ -376,9 +376,9 @@ function getAdminProducts() {
 }
 
 function normalizeAdminProduct(product, index) {
-  const image = product.image || product.img || 'assets/studio-wide-trouser.png';
+  const image = product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png';
   return {
-    id: Number(product.id || Date.now() + index),
+    id: product.id || product.printfulId || `ZVR-${Date.now() + index}`,
     name: product.name || 'Zavora Preview Product',
     category: product.category || 'new',
     collection: [product.collection || 'new', 'new'],
