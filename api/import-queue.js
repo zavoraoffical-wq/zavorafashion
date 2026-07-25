@@ -115,196 +115,22 @@ async function appendJobLog(jobId, message, level = 'info') {
   });
 }
 
-// ─── Product Transform (lightweight copy from printful-products.js) ────────
-
-const CATEGORY_RULES = [
-  { match: /zip hoodie|zip-up|full zip/i,             category: 'zip-hoodies',      gender: null  },
-  { match: /cropped hoodie|crop hoodie/i,              category: 'cropped-hoodies',  gender: 'Women' },
-  { match: /hoodie|pullover hoodie/i,                  category: 'hoodies',          gender: null  },
-  { match: /sweatshirt|crewneck|crew neck|fleece/i,   category: 'sweatshirts',      gender: null  },
-  { match: /baby tee/i,                               category: 'baby-tees',        gender: 'Women' },
-  { match: /heavyweight tee|heavyweight t-shirt/i,    category: 'heavyweight-tees', gender: null  },
-  { match: /oversized tee|oversized t-shirt/i,        category: 'oversized-tees',   gender: null  },
-  { match: /t-shirt|tee|shirt/i,                      category: 'oversized-tees',   gender: null  },
-  { match: /jacket|bomber|varsity|windbreaker|coat/i, category: 'jackets',          gender: null  },
-  { match: /cargo/i,                                  category: 'cargo-pants',      gender: null  },
-  { match: /sweatpants|jogger/i,                      category: 'sweatpants',       gender: null  },
-  { match: /short/i,                                  category: 'shorts',           gender: null  },
-  { match: /set|matching|tracksuit/i,                 category: 'matching-sets',    gender: null  },
-  { match: /sport|athletic|gym|training|active|jersey/i, category: 'sportswear',   gender: null  },
-  { match: /cap|hat|beanie/i,                         category: 'accessories',      gender: null  }
-];
-
-const ALLOWED_CATEGORIES = new Set([
-  'oversized-tees','heavyweight-tees','baby-tees','hoodies','cropped-hoodies',
-  'zip-hoodies','sweatshirts','jackets','cargo-pants','sweatpants','shorts',
-  'accessories','sportswear','matching-sets','beachwear'
-]);
-
-function detectCategory(name) {
-  const rule = CATEGORY_RULES.find(r => r.match.test(name));
-  return rule ? rule.category : 'uncategorized';
-}
-
-function detectGender(name, requestedGender) {
-  if (requestedGender && requestedGender !== 'all') {
-    return requestedGender.charAt(0).toUpperCase() + requestedGender.slice(1).toLowerCase();
-  }
-  if (/women|women's|ladies|female|crop/i.test(name)) return 'Women';
-  if (/men|men's|male/i.test(name)) return 'Men';
-  return 'Unisex';
-}
+const { NormalizationEngine, ProductRepository, BLOCKED_TERMS } = require('../lib/local-product-engine');
 
 function transformProduct(raw, index, requestedGender) {
-  const name = String(
-    raw?.name || raw?.external_name || raw?.sync_product?.name || raw?.title || `Product ${index + 1}`
-  ).replace(/\b(all-over print|unisex|printful|dtg|gildan|bella canvas|champion|hanes)\b/gi, '').trim();
-
-  const category = detectCategory(name);
-  const gender   = detectGender(name, requestedGender);
-  const text     = `${name} ${raw?.description || ''}`.toLowerCase();
-
-  if (!ALLOWED_CATEGORIES.has(category)) return null;
-  if (BLOCKED_TERMS.test(text)) return null;
-
-  const price      = Math.round(((Number(raw?.retail_price || raw?.price || 58) + 14.99) * 1.3) * 100) / 100;
-  const compareAt  = Math.round(((Number(raw?.retail_price || raw?.price || 58) + 14.99) * 2.3) * 100) / 100;
-
-  // Image — try every known field
-  const img = raw?.thumbnail_url || raw?.image || raw?.image_url
-    || raw?.catalog_product?.image || raw?.product?.image
-    || (raw?.sync_variants?.[0]?.files?.[0]?.preview_url)
-    || '';
-
-  // Sizes
-  const sizeOrder = ['XS','S','M','L','XL','2XL','3XL'];
-  const allVariants = [
-    ...(raw?.catalog_variants || []),
-    ...(raw?.sync_variants    || []),
-    ...(raw?.variants         || [])
-  ];
-  const sizes = allVariants.length
-    ? [...new Set(allVariants.map(v => {
-        const s = String(v?.size || v?.size_name || '').toUpperCase();
-        return sizeOrder.includes(s) ? s : null;
-      }).filter(Boolean))].sort((a, b) => sizeOrder.indexOf(a) - sizeOrder.indexOf(b))
-    : ['S','M','L','XL'];
-
-  // Colors
-  const colorMap = ['black','white','gray','blue','green','red','pink','purple','brown','gold'];
-  const rawColors = allVariants.map(v => {
-    const c = String(v?.color || v?.color_name || v?.name || '').toLowerCase();
-    return colorMap.find(col => c.includes(col)) || '';
-  }).filter(Boolean);
-  const colors = [...new Set(rawColors)] || ['black'];
-
-  const collections = ['streetwear'];
-  if (index < 6) collections.push('new');
-  if (/women/i.test(gender)) collections.push('streetwear');
-  if (index % 23 === 0) collections.push('limited');
-
-  return {
-    id:          Number(raw?.id || raw?.template_id || Date.now() + index),
-    printfulId:  String(raw?.id || raw?.template_id || ''),
-    name:        /^zavora/i.test(name) ? name : `Zavora ${name}`,
-    gender,
-    category,
-    categoryPath: `${gender} > ${category.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')}`,
-    productType: category,
-    collection:  collections,
-    color:       colors[0] || 'black',
-    colors:      colors.length ? colors : ['black'],
-    sizes,
-    price,
-    compareAt,
-    sale:        true,
-    popularity:  90 - (index % 10),
-    badge:       index < 4 ? 'New' : 'Zavora',
-    img,
-    images:      img ? [img] : [],
-    stock:       5,
-    published:   true,
-    status:      'active',
-    source:      'printful',
-    importedAt:  new Date().toISOString(),
-    description: `${name} — premium ${category.replace(/-/g,' ')} for Zavora's minimal streetwear wardrobe.`,
-    seoTitle:    `${name} | Zavora Fashion`,
-    seoDescription: `Shop ${name} from Zavora Fashion. Premium ${gender.toLowerCase()} streetwear.`
-  };
+  return NormalizationEngine.normalize(raw, index, requestedGender);
 }
-
-// ─── DB Save (upsert to MongoDB + Supabase) ────────────────────────────────
-
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY;
-const SUPABASE_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || 'products';
 
 async function upsertProducts(products) {
-  const results = { mongo: 0, supabase: 0, errors: [] };
-
-  // MongoDB
   try {
-    const database = await mongoDb();
-    const col = database.collection('products');
-    await col.createIndex({ printfulId: 1 }, { unique: true }).catch(() => {});
-    const ops = products.map(p => ({
-      updateOne: {
-        filter: { printfulId: p.printfulId },
-        update: { $set: { ...p, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
-        upsert: true
-      }
-    }));
-    if (typeof col.bulkWrite === 'function') {
-      const r = await col.bulkWrite(ops, { ordered: false });
-      results.mongo = (r.upsertedCount || 0) + (r.modifiedCount || 0);
-    } else {
-      for (const op of ops) {
-        await col.updateOne(op.updateOne.filter, op.updateOne.update, { upsert: true });
-        results.mongo++;
-      }
-    }
+    const res = await ProductRepository.bulkUpsert(products);
+    return { mongo: res.upserted + res.modified, supabase: products.length, errors: [] };
   } catch (e) {
-    results.errors.push(`MongoDB: ${e.message}`);
+    return { mongo: 0, supabase: 0, errors: [e.message] };
   }
-
-  // Supabase
-  if (SUPABASE_URL && SUPABASE_KEY) {
-    try {
-      const rows = products.map(p => ({
-        printful_id: p.printfulId,
-        name:        p.name,
-        gender:      p.gender,
-        category:    p.category,
-        collection:  p.collection,
-        price:       p.price,
-        compare_at:  p.compareAt,
-        image:       p.img,
-        images:      p.images,
-        sizes:       p.sizes,
-        colors:      p.colors,
-        payload:     p,
-        source:      'printful',
-        updated_at:  new Date().toISOString()
-      }));
-      const base = SUPABASE_URL.replace(/\/$/, '');
-      const r = await fetch(`${base}/rest/v1/${SUPABASE_TABLE}?on_conflict=printful_id`, {
-        method: 'POST',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          Prefer: 'resolution=merge-duplicates,return=minimal'
-        },
-        body: JSON.stringify(rows)
-      });
-      if (r.ok) results.supabase = products.length;
-      else results.errors.push(`Supabase: ${r.status} ${await r.text().catch(() => '')}`);
-    } catch (e) {
-      results.errors.push(`Supabase: ${e.message}`);
-    }
-  }
-  return results;
 }
+
+
 
 // ─── Core Import Runner (runs in background via Vercel background function) ──
 
