@@ -343,18 +343,26 @@ function getAdminProducts() {
 }
 
 function saveAdminProducts(products) {
-  // Save admin-added products to their own key
   localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(products));
-  // Also merge into zavoraImportedCatalog but DON'T overwrite imported products
   try {
     const existing = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]');
     const adminIds = new Set(products.map(p => String(p.id)));
-    // Keep imported products that are not overridden by admin edits
     const kept = existing.filter(p => !adminIds.has(String(p.id)));
     const merged = [...products, ...kept];
     localStorage.setItem('zavoraImportedCatalog', JSON.stringify(merged));
   } catch(e) {
     localStorage.setItem('zavoraImportedCatalog', JSON.stringify(products));
+  }
+
+  // Sync latest product list to MongoDB database
+  if (Array.isArray(products) && products.length) {
+    products.forEach(product => {
+      fetch('/api/products?action=update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product)
+      }).catch(() => {});
+    });
   }
 }
 

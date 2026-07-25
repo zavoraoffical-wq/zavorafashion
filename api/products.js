@@ -73,23 +73,32 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // ── Single Product Update ────────────────────────────────────────────────
-  if (action === 'update' && req.method === 'POST') {
+  // ── Single Product Add/Update/Save ─────────────────────────────────────────
+  if (['update', 'save', 'add'].includes(action) && req.method === 'POST') {
     try {
       const body = parseBody(req);
-      const id = body.id || body.printfulId;
-      if (!id) return json(res, 400, { ok: false, error: 'Product id required' });
+      const id = body.id || body.printfulId || body.printful_id || `ZVR-${Date.now()}`;
 
-      const existing = await ProductRepository.getProductById(id);
-      if (!existing) return json(res, 404, { ok: false, error: 'Product not found in DB' });
+      let productDoc = await ProductRepository.getProductById(id);
+      if (!productDoc) {
+        // Create new product in MongoDB
+        productDoc = NormalizationEngine.normalize(body, 0, body.gender) || {
+          ...body,
+          id: id,
+          printfulId: String(id),
+          updatedAt: new Date()
+        };
+        productDoc.id = id;
+        productDoc.printfulId = String(id);
+      } else {
+        const fields = ['name', 'title', 'price', 'compareAt', 'category', 'gender', 'collection', 'status', 'published', 'description', 'img', 'image', 'images', 'sizes', 'colors', 'badge', 'videoUrl', 'hoverImage', 'stock', 'sku'];
+        fields.forEach(f => {
+          if (body[f] !== undefined) productDoc[f] = body[f];
+        });
+      }
 
-      const fields = ['name', 'price', 'compareAt', 'category', 'gender', 'collection', 'status', 'published', 'description', 'img', 'images', 'sizes', 'colors', 'badge'];
-      fields.forEach(f => {
-        if (body[f] !== undefined) existing[f] = body[f];
-      });
-
-      const resCount = await ProductRepository.bulkUpsert([existing]);
-      return json(res, 200, { ok: true, updated: resCount.modified + resCount.upserted });
+      const resCount = await ProductRepository.bulkUpsert([productDoc]);
+      return json(res, 200, { ok: true, updated: resCount.modified + resCount.upserted, product: productDoc });
     } catch (e) {
       return json(res, 500, { ok: false, error: e.message });
     }
