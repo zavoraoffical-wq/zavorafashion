@@ -114,33 +114,126 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
         <section class="admin-section" data-panel="products">
           <div class="admin-grid two">
             <article class="admin-card">
-              <div class="card-head"><h2>Add Product</h2><button type="button" data-toast="Draft product saved">Save draft</button></div>
-              <form class="admin-form" data-admin-product-form>
+              <div class="card-head"><h2>Add Product</h2><button data-toast="Draft saved">Save draft</button></div>
+              <form class="admin-form" data-admin-add-product>
                 <input name="name" placeholder="Product Title (e.g. Zavora Oversized Tee)" required>
-                <div class="form-row"><input name="sku" placeholder="SKU" value="PF-901"><button type="button" data-generate-sku>Generate SKU</button></div>
-                <div class="form-row"><input name="price" placeholder="Price ($94.89)" required><input name="salePrice" placeholder="Original price ($120.00)"></div>
                 <div class="form-row">
-                  <select name="category">
-                    <option value="tees">Tees / T-Shirts</option>
-                    <option value="hoodies">Hoodies</option>
-                    <option value="pants">Pants & Sweatpants</option>
-                    <option value="accessories">Accessories & Hats</option>
-                    <option value="sweatshirts">Sweatshirts</option>
-                    <option value="limited">Limited Edition</option>
+                  <input name="sku" placeholder="SKU" value="PF-901">
+                  <button type="button" data-generate-sku>Generate SKU</button>
+                </div>
+                <div class="form-row">
+                  <input name="price" placeholder="Price ($94.89)" required>
+                  <input name="salePrice" placeholder="Original / Compare price ($120.00)">
+                </div>
+                <div class="form-row">
+                  <select name="gender">
+                    <option value="Women">Women Collection</option>
+                    <option value="Men">Men Collection</option>
+                    <option value="Unisex">Unisex Collection</option>
                   </select>
-                  <select name="collection">
-                    <option value="shop">Shop All</option>
-                    <option value="women">Women Collection</option>
-                    <option value="men">Men Collection</option>
-                    <option value="new">New Arrivals</option>
-                    <option value="best">Best Sellers</option>
+                  <select name="category">
+                    <option value="oversized-tees">Oversized Tees</option>
+                    <option value="heavyweight-tees">Heavyweight Tees</option>
+                    <option value="baby-tees">Baby Tees</option>
+                    <option value="hoodies">Hoodies</option>
+                    <option value="cropped-hoodies">Cropped Hoodies</option>
+                    <option value="zip-hoodies">Zip Hoodies</option>
+                    <option value="sweatpants">Sweatpants</option>
+                    <option value="cargo-pants">Cargo Pants</option>
+                    <option value="jackets">Jackets</option>
+                    <option value="shorts">Shorts</option>
+                    <option value="accessories">Accessories</option>
                   </select>
                 </div>
-                <input name="img" placeholder="Product Image URL (https://...)" value="assets/studio-wide-trouser.png">
+                <div class="form-row">
+                  <select name="collection">
+                    <option value="streetwear">Streetwear</option>
+                    <option value="sportswear">Sportswear</option>
+                    <option value="beachwear">Beachwear</option>
+                    <option value="new">New Arrivals</option>
+                    <option value="best">Best Sellers</option>
+                    <option value="limited">Limited Drops</option>
+                  </select>
+                  <input name="stock" type="number" value="50" placeholder="Stock Quantity">
+                </div>
+                <label>Primary Image URL
+                  <input name="img" placeholder="Main Image URL (https://...)" required>
+                </label>
+                <label>Secondary / Hover Image URL
+                  <input name="hoverImage" placeholder="Hover View Image URL (https://...)">
+                </label>
+                <label>🎥 Product Video URL
+                  <input name="videoUrl" placeholder="Video URL (https://.../video.mp4)">
+                </label>
                 <textarea name="description" placeholder="Product description & fabric details..."></textarea>
                 <button type="submit" class="primary-admin">Add Product</button>
               </form>
             </article>
+
+            <!-- Edit Product Modal -->
+            <div id="editProductModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+              <div style="background:#fff;width:90%;max-width:640px;max-height:90vh;overflow-y:auto;padding:32px;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,0.3);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                  <h2 style="font-size:22px;font-family:Georgia,serif;">Edit Product Details</h2>
+                  <button type="button" id="btnCloseEditModal" style="background:none;border:none;font-size:24px;cursor:pointer;">&times;</button>
+                </div>
+                <form class="admin-form" id="editProductForm">
+                  <input type="hidden" name="id">
+                  <label>Product Title
+                    <input name="name" required placeholder="e.g. Zavora Women Oversized Tee">
+                  </label>
+                  <div class="form-row">
+                    <label>SKU<input name="sku" required></label>
+                    <label>Stock Count<input name="stock" type="number" value="50"></label>
+                  </div>
+                  <div class="form-row">
+                    <label>Price ($)<input name="price" type="number" step="0.01" required></label>
+                    <label>Compare At Price ($)<input name="compareAt" type="number" step="0.01"></label>
+                  </div>
+                  <div class="form-row">
+                    <label>Target Gender
+                      <select name="gender">
+                        <option value="Women">Women</option>
+                        <option value="Men">Men</option>
+                        <option value="Unisex">Unisex</option>
+                      </select>
+                    </label>
+                    <label>Category
+                      <select name="category">
+                        <option value="oversized-tees">Oversized Tees</option>
+                        <option value="heavyweight-tees">Heavyweight Tees</option>
+                        <option value="baby-tees">Baby Tees</option>
+                        <option value="hoodies">Hoodies</option>
+                        <option value="cropped-hoodies">Cropped Hoodies</option>
+                        <option value="zip-hoodies">Zip Hoodies</option>
+                        <option value="sweatpants">Sweatpants</option>
+                        <option value="cargo-pants">Cargo Pants</option>
+                        <option value="jackets">Jackets</option>
+                        <option value="shorts">Shorts</option>
+                        <option value="accessories">Accessories</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label>Primary Image URL (https://...)
+                    <input name="image" required placeholder="https://...">
+                  </label>
+                  <label>Secondary / Hover Image URL (https://...)
+                    <input name="hoverImage" placeholder="https://...">
+                  </label>
+                  <label>🎥 Product Video URL (MP4 / WebM / https://...)
+                    <input name="videoUrl" placeholder="https://.../video.mp4">
+                  </label>
+                  <label>Product Description & Fabric Details
+                    <textarea name="description" rows="3" placeholder="Fabric, fit, care instructions..."></textarea>
+                  </label>
+                  <div style="display:flex;gap:10px;margin-top:16px;">
+                    <button type="submit" class="primary-admin" style="flex:1;">Save Changes</button>
+                    <button type="button" id="btnCancelEditModal" class="pill" style="padding:12px 20px;">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
             <article class="admin-card">
               <div class="card-head"><h2>Inventory & Catalog Tools</h2><button data-section-jump="categories">Categories</button></div>
               <div class="control-grid">

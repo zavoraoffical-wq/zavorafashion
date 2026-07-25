@@ -417,6 +417,7 @@ function renderAdminProducts() {
         <td>
           <div style="display:flex;gap:6px;">
             <a href="product.html?id=${encodeURIComponent(product.id)}" target="_blank" style="padding:5px 10px;font-size:12px;background:#050505;color:#fff;text-decoration:none;border-radius:4px;font-weight:600;">View</a>
+            <button type="button" data-edit-product="${product.id}" style="padding:5px 10px;font-size:12px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Edit</button>
             <button type="button" data-toggle-visibility="${product.id}" style="padding:5px 10px;font-size:12px;background:${isHidden ? '#2e7d32' : '#f57c00'};color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">${isHidden ? 'Show' : 'Hide'}</button>
             <button type="button" data-remove-product="${product.id}" style="padding:5px 10px;font-size:12px;background:#d9534f;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Remove</button>
           </div>
@@ -1432,31 +1433,123 @@ function addAdminProduct(form) {
   const data = new FormData(form);
   const name = String(data.get('name') || '').trim();
   const price = Number(String(data.get('price') || '').replace(/[^0-9.]/g, ''));
+  const salePrice = Number(String(data.get('salePrice') || '').replace(/[^0-9.]/g, ''));
   if (!name || !price) {
-    toast('Add product name and price first');
+    toast('Add product title and price first');
     return;
   }
-  const category = String(data.get('category') || 'women').toLowerCase();
+  const category = String(data.get('category') || 'oversized-tees').toLowerCase();
+  const gender = String(data.get('gender') || 'Women');
+  const collectionTag = String(data.get('collection') || 'streetwear').toLowerCase();
+  const mainImg = String(data.get('img') || '').trim() || 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80';
+  const hoverImg = String(data.get('hoverImage') || '').trim() || mainImg;
+  const video = String(data.get('videoUrl') || '').trim();
+  const stock = Number(data.get('stock') || 50);
+
   const product = {
-    id: Date.now(),
+    id: `ZVR-${Date.now().toString().slice(-6)}`,
     name,
-    sku: String(data.get('sku') || `ZAV-${Date.now()}`).trim(),
+    title: name,
+    sku: String(data.get('sku') || `PF-${Date.now().toString().slice(-4)}`).trim(),
     category,
-    color: 'black',
-    size: 'M',
+    gender,
     price,
-    image: DEFAULT_PRODUCT_IMAGE,
-    badge: String(data.get('collection') || 'new').replace(/^\w/, (letter) => letter.toUpperCase()),
-    description: String(data.get('description') || '').trim()
+    compareAt: salePrice || null,
+    originalPrice: salePrice || price * 1.5,
+    rating: 4.9,
+    colors: ['black', 'white', 'gray'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    img: mainImg,
+    image: mainImg,
+    images: [mainImg, hoverImg].filter(Boolean),
+    hoverImage: hoverImg,
+    videoUrl: video,
+    badge: 'NEW',
+    collection: [gender.toLowerCase(), collectionTag, 'new'],
+    collections: [gender.toLowerCase(), collectionTag, 'new'],
+    stock,
+    description: String(data.get('description') || '').trim(),
+    published: true,
+    status: 'active'
   };
-  const products = getAdminProducts().filter((item) => item.id !== product.id);
+
+  const products = getAdminProducts();
   products.unshift(product);
   saveAdminProducts(products);
   renderAdminProducts();
   form.reset();
-  const sku = form.querySelector('[name="sku"]');
-  if (sku) sku.value = `ZAV-2026-${String(products.length + 1).padStart(3, '0')}`;
-  toast('Product added to live preview');
+  toast('New product added to live catalog!');
+}
+
+function openEditProductModal(productId) {
+  const products = getAdminProducts();
+  const product = products.find(p => String(p.id) === String(productId));
+  if (!product) return;
+
+  const modal = document.getElementById('editProductModal');
+  const form = document.getElementById('editProductForm');
+  if (!modal || !form) return;
+
+  form.elements['id'].value = product.id;
+  form.elements['name'].value = product.name || '';
+  form.elements['sku'].value = product.sku || `PF-${product.id}`;
+  form.elements['price'].value = product.price || '';
+  form.elements['compareAt'].value = product.compareAt || product.originalPrice || '';
+  form.elements['gender'].value = product.gender || 'Women';
+  form.elements['category'].value = product.category || 'oversized-tees';
+  form.elements['image'].value = product.image || product.img || '';
+  form.elements['hoverImage'].value = product.hoverImage || product.images?.[1] || '';
+  form.elements['videoUrl'].value = product.videoUrl || '';
+  form.elements['stock'].value = product.stock || 50;
+  form.elements['description'].value = product.description || '';
+
+  modal.style.display = 'flex';
+}
+
+function saveEditProductForm(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = new FormData(form);
+  const id = String(data.get('id'));
+  
+  const products = getAdminProducts().map(product => {
+    if (String(product.id) === id) {
+      const name = String(data.get('name') || '').trim();
+      const price = Number(data.get('price'));
+      const compareAt = Number(data.get('compareAt')) || null;
+      const gender = String(data.get('gender') || 'Women');
+      const category = String(data.get('category') || 'oversized-tees');
+      const mainImg = String(data.get('image') || '').trim();
+      const hoverImg = String(data.get('hoverImage') || '').trim();
+      const video = String(data.get('videoUrl') || '').trim();
+      const stock = Number(data.get('stock') || 50);
+
+      return {
+        ...product,
+        name,
+        title: name,
+        sku: String(data.get('sku') || product.sku),
+        price,
+        compareAt,
+        gender,
+        category,
+        img: mainImg,
+        image: mainImg,
+        images: [mainImg, hoverImg].filter(Boolean),
+        hoverImage: hoverImg,
+        videoUrl: video,
+        stock,
+        description: String(data.get('description') || '').trim()
+      };
+    }
+    return product;
+  });
+
+  saveAdminProducts(products);
+  renderAdminProducts();
+  const modal = document.getElementById('editProductModal');
+  if (modal) modal.style.display = 'none';
+  toast('Product updated successfully!');
 }
 
 // --- PRODUCTION IMPORT PROGRESS & SYNC ENGINE ---
@@ -1732,6 +1825,19 @@ document.addEventListener('click', async (event) => {
   const action = event.target.closest('[data-toast]');
   if (action) {
     toast(action.dataset.toast);
+  }
+
+  const editBtn = event.target.closest('[data-edit-product]');
+  if (editBtn) {
+    const id = editBtn.dataset.editProduct;
+    openEditProductModal(id);
+    return;
+  }
+
+  if (event.target.closest('#btnCloseEditModal') || event.target.closest('#btnCancelEditModal')) {
+    const modal = document.getElementById('editProductModal');
+    if (modal) modal.style.display = 'none';
+    return;
   }
 
   const printfulImport = event.target.closest('[data-import-printful]') || event.target.closest('#btnImportEntireCatalog');
@@ -2181,6 +2287,9 @@ async function bootAdmin() {
   const urlParams = new URLSearchParams(window.location.search);
   const targetUrl = urlParams.get('url');
   if (targetUrl) {
+    // Immediately clean address bar so page refreshes DO NOT trigger modal again
+    window.history.replaceState({}, document.title, window.location.pathname);
+
     setSection('importer');
     const form = document.querySelector('form[data-import-form="url"]');
     if (form) {
@@ -2195,6 +2304,12 @@ async function bootAdmin() {
         importPrintfulUrl(form);
       }, 500);
     }
+  }
+
+  const editForm = document.getElementById('editProductForm');
+  if (editForm && !editForm.dataset.bound) {
+    editForm.dataset.bound = 'true';
+    editForm.addEventListener('submit', saveEditProductForm);
   }
 
   function updateLiveVisitors() {
