@@ -78,4 +78,111 @@ function initZavoraPayPal() {
   }).render('#paypal-button-container');
 }
 
-window.addEventListener('load', initZavoraPayPal);
+// ── Pay Now (COD) Button Logic ────────────────────────────────────────────────
+function handlePayNowCOD() {
+  const form = document.getElementById('checkoutForm');
+
+  // Validate required fields
+  const email = document.getElementById('co-email')?.value?.trim();
+  const name  = document.getElementById('co-name')?.value?.trim();
+  const phone = document.getElementById('co-phone')?.value?.trim();
+  const addr  = document.getElementById('co-address')?.value?.trim();
+  const city  = document.getElementById('co-city')?.value?.trim();
+  const zip   = document.getElementById('co-zip')?.value?.trim();
+
+  if (!email || !name || !phone || !addr || !city || !zip) {
+    alert('Please fill in all required shipping details before placing your order.');
+    return;
+  }
+
+  const cart = typeof getSavedCart === 'function' ? getSavedCart() : (JSON.parse(localStorage.getItem('zavora_cart')) || []);
+  if (!cart || !cart.length) {
+    alert('Your bag is empty. Please add a product first.');
+    return;
+  }
+
+  const btn = document.getElementById('payNowBtn');
+  if (btn) {
+    btn.textContent = '⏳ Placing Your Order...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+  }
+
+  // Build order object
+  const orderId = 'ZV-' + Date.now();
+  const total   = zavoraCheckoutTotal();
+  const order = {
+    id: orderId,
+    createdAt: new Date().toISOString(),
+    status: 'confirmed',
+    method: 'COD',
+    email, name, phone,
+    address: `${addr}, ${city} ${zip}`,
+    items: cart,
+    subtotal: cart.reduce((s, i) => s + Number(i.price || 0) * Number(i.qty || 1), 0),
+    shipping: Number(document.querySelector('input[name="shipping"]:checked')?.value || 0),
+    total
+  };
+
+  // Save order
+  try {
+    const orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
+    orders.unshift(order);
+    localStorage.setItem('zavoraOrders', JSON.stringify(orders));
+    localStorage.setItem('zavoraLastOrder', JSON.stringify(order));
+    // Clear cart
+    localStorage.removeItem('zavora_cart');
+    localStorage.removeItem('zavoraCart');
+  } catch(e) {}
+
+  // Persist order to server if available
+  if (typeof persistOrder === 'function') {
+    persistOrder(order).catch(() => {});
+  }
+  if (typeof requestOrderConfirmation === 'function') {
+    requestOrderConfirmation(order);
+  }
+
+  // Redirect to success
+  setTimeout(() => {
+    window.location.href = `order-success.html?order=${encodeURIComponent(orderId)}&method=cod`;
+  }, 600);
+}
+
+// ── Payment Method Toggle: Show PayPal or Pay Now ─────────────────────────────
+function bindPaymentToggle() {
+  const paypalSection = document.getElementById('paypalSection');
+  const payNowSection = document.getElementById('payNowSection');
+  const payNowBtn     = document.getElementById('payNowBtn');
+
+  document.querySelectorAll('input[name="payment"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const val = document.querySelector('input[name="payment"]:checked')?.value;
+      if (val === 'cod') {
+        if (paypalSection) paypalSection.style.display = 'none';
+        if (payNowSection) payNowSection.style.display = 'block';
+      } else {
+        if (paypalSection) paypalSection.style.display = '';
+        if (payNowSection) payNowSection.style.display = 'none';
+      }
+    });
+  });
+
+  if (payNowBtn) {
+    payNowBtn.addEventListener('click', handlePayNowCOD);
+    // Hover effect
+    payNowBtn.addEventListener('mouseenter', () => {
+      payNowBtn.style.transform = 'translateY(-2px)';
+      payNowBtn.style.boxShadow = '0 10px 32px rgba(0,0,0,0.28)';
+    });
+    payNowBtn.addEventListener('mouseleave', () => {
+      payNowBtn.style.transform = '';
+      payNowBtn.style.boxShadow = '0 6px 24px rgba(0,0,0,0.18)';
+    });
+  }
+}
+
+window.addEventListener('load', () => {
+  initZavoraPayPal();
+  bindPaymentToggle();
+});
