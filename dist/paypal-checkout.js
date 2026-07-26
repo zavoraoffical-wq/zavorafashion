@@ -155,13 +155,8 @@ function bindPaymentToggle() {
   const payNowBtn     = document.getElementById('payNowBtn');
 
   function syncPaymentUI() {
-    const val = document.querySelector('input[name="payment"]:checked')?.value || 'cod';
-    if (paypalSection) {
-      paypalSection.style.display = val === 'paypal' ? 'block' : 'none';
-    }
-    if (payNowSection) {
-      payNowSection.style.display = 'block';
-    }
+    if (paypalSection) paypalSection.style.display = 'block';
+    if (payNowSection) payNowSection.style.display = 'block';
   }
 
   document.querySelectorAll('input[name="payment"]').forEach(radio => {
@@ -181,6 +176,7 @@ function bindPaymentToggle() {
     });
   }
 }
+
 
 
 window.handlePayNowCOD = handlePayNowCOD;

@@ -40,20 +40,24 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
               <label><input type="radio" name="shipping" value="6.99"><span>Standard Shipping</span><b>$6.99</b><small>5-8 Business Days</small></label>
               <label><input type="radio" name="shipping" value="14.99"><span>Express Shipping</span><b>$14.99</b><small>2-4 Business Days</small></label>
             </div>
-            <h2>Payment Method</h2>
+            <h2>Payment Options</h2>
             <div class="payment-methods" role="radiogroup" aria-label="Payment methods">
-              <label class="payment-active"><input type="radio" name="payment" value="cod" checked><span>Cash on Delivery (COD)</span><small>Pay when order arrives</small></label>
-              <label class="payment-active"><input type="radio" name="payment" value="paypal"><span class="pay-icon paypal">PayPal</span><small>Pay securely via PayPal</small></label>
+              <label class="payment-active"><input type="radio" name="payment" value="paypal" checked><span class="pay-icon paypal">PayPal</span><small>PayPal &amp; Debit/Credit Card</small></label>
+              <label class="payment-active"><input type="radio" name="payment" value="cod"><span class="pay-icon" style="background:#2e7d32;color:#fff;font-weight:700;padding:4px 10px;border-radius:6px;font-size:13px;">COD</span><small>Cash on Delivery</small></label>
               <label class="payment-soon"><input type="radio" name="payment" value="visa" disabled><span class="pay-icon visa">Visa</span><small>Coming Soon</small></label>
               <label class="payment-soon"><input type="radio" name="payment" value="mastercard" disabled><span class="pay-icon mastercard">Mastercard</span><small>Coming Soon</small></label>
             </div>
             <label class="promo">Coupon code<input id="co-coupon" placeholder="ZAVORA10"></label>
-            <div class="paypal-checkout" id="paypalSection" style="display:none;margin-top:16px;">
-              <p class="eyebrow">PayPal Express Checkout</p>
+
+            <!-- PayPal Container — Always Visible -->
+            <div class="paypal-checkout" id="paypalSection" style="display:block;margin-top:20px;padding:20px;border:1px solid #e5e5e5;border-radius:12px;background:#fafafa;">
+              <p class="eyebrow" style="font-weight:700;color:#111;margin-bottom:12px;">PayPal &amp; Card Checkout</p>
               <div id="paypal-button-container"></div>
-              <p class="secure-note">PayPal opens a secure payment window. You will be redirected after approval.</p>
+              <p class="secure-note" style="margin-top:8px;">PayPal opens a secure payment window. You will be redirected after approval.</p>
             </div>
-            <div id="payNowSection" style="display:block;margin-top:24px;">
+
+            <!-- Pay Now (COD / Instant) Button — Always Visible -->
+            <div id="payNowSection" style="display:block;margin-top:20px;">
               <button type="button" id="payNowBtn" onclick="window.handlePayNowCOD && window.handlePayNowCOD()" style="width:100%;padding:18px 0;font-size:18px;font-weight:800;letter-spacing:1px;background:linear-gradient(135deg,#050505 0%,#262626 100%);color:#ffffff;border:none;border-radius:14px;cursor:pointer;box-shadow:0 6px 28px rgba(0,0,0,0.25);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 36px rgba(0,0,0,0.35)'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 28px rgba(0,0,0,0.25)'">
                 🛍️ &nbsp;PLACE ORDER — PAY NOW
               </button>
