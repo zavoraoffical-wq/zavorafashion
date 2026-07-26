@@ -1773,11 +1773,29 @@ function productCard(title, price, image, tag) {
 
 function getAdminProducts() {
   try {
-    return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY)) || [];
+    const admin = JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY) || '[]');
+    const imported = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]');
+    const printfulStaging = JSON.parse(localStorage.getItem('zavora_imported_products') || '[]');
+    const staged = JSON.parse(localStorage.getItem('printful_staged_products') || '[]');
+    const productsKey = JSON.parse(localStorage.getItem('zavoraProducts') || '[]');
+
+    const seen = new Set();
+    const clean = [];
+    [...staged, ...printfulStaging, ...imported, ...admin, ...productsKey].forEach(p => {
+      if (p && (p.id || p.printfulId)) {
+        const key = String(p.id || p.printfulId);
+        if (!seen.has(key)) {
+          seen.add(key);
+          clean.push(p);
+        }
+      }
+    });
+    return clean;
   } catch (error) {
     return [];
   }
 }
+
 const catalogData = [...getAdminProducts()];
 
 function swatch(color) {

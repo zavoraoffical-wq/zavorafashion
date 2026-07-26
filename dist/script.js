@@ -369,30 +369,53 @@ function homeProductMatchesSearch(product, term = '') {
 
 function getAdminProducts() {
   try {
-    return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY)) || [];
+    const admin = JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY) || '[]');
+    const imported = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]');
+    const printfulStaging = JSON.parse(localStorage.getItem('zavora_imported_products') || '[]');
+    const staged = JSON.parse(localStorage.getItem('printful_staged_products') || '[]');
+    const productsKey = JSON.parse(localStorage.getItem('zavoraProducts') || '[]');
+
+    const seen = new Set();
+    const clean = [];
+    [...staged, ...printfulStaging, ...imported, ...admin, ...productsKey].forEach(p => {
+      if (p && (p.id || p.printfulId)) {
+        const key = String(p.id || p.printfulId);
+        if (!seen.has(key)) {
+          seen.add(key);
+          clean.push(p);
+        }
+      }
+    });
+    return clean;
   } catch (error) {
     return [];
   }
 }
 
 function normalizeAdminProduct(product, index) {
-  const image = product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png';
+  const image = product.img || product.image || product.thumbnail || product.images?.[0] || 'assets/studio-wide-trouser.png';
+  const collections = Array.isArray(product.collection)
+    ? product.collection
+    : (product.collection ? [product.collection, 'new'] : ['new', 'streetwear']);
+
   return {
+    ...product,
     id: product.id || product.printfulId || `ZVR-${Date.now() + index}`,
-    name: product.name || 'Zavora Preview Product',
+    name: product.name || product.title || 'Zavora Product',
     category: product.category || 'new',
-    collection: [product.collection || 'new', 'new'],
+    collection: collections,
     color: product.color || 'black',
     sizes: product.sizes || ['S', 'M', 'L', 'XL'],
-    price: Number(product.price || 0),
-    sale: false,
-    popularity: 100,
-    badge: product.badge || 'New',
+    price: Number(product.price || 54.89),
+    sale: Boolean(product.sale),
+    popularity: Number(product.popularity || 100),
+    badge: product.badge || 'NEW',
     img: image,
     alt: product.alt || image,
-    description: product.description || 'A premium Zavora Fashion piece prepared from the admin product preview.'
+    description: product.description || ''
   };
 }
+
 
 function uniqueHomeProducts(productsList = []) {
   const seen = new Set();
