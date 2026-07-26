@@ -151,33 +151,8 @@ function handlePayNowCOD() {
 
 function bindPaymentToggle() {
   const paypalSection = document.getElementById('paypalSection');
-  const payNowSection = document.getElementById('payNowSection');
-  const payNowBtn     = document.getElementById('payNowBtn');
-
-  function syncPaymentUI() {
-    if (paypalSection) paypalSection.style.display = 'block';
-    if (payNowSection) payNowSection.style.display = 'block';
-  }
-
-  document.querySelectorAll('input[name="payment"]').forEach(radio => {
-    radio.addEventListener('change', syncPaymentUI);
-  });
-  syncPaymentUI();
-
-  if (payNowBtn) {
-    payNowBtn.addEventListener('click', handlePayNowCOD);
-    payNowBtn.addEventListener('mouseenter', () => {
-      payNowBtn.style.transform = 'translateY(-2px)';
-      payNowBtn.style.boxShadow = '0 10px 32px rgba(0,0,0,0.28)';
-    });
-    payNowBtn.addEventListener('mouseleave', () => {
-      payNowBtn.style.transform = '';
-      payNowBtn.style.boxShadow = '0 6px 24px rgba(0,0,0,0.18)';
-    });
-  }
+  if (paypalSection) paypalSection.style.display = 'block';
 }
-
-
 
 window.handlePayNowCOD = handlePayNowCOD;
 
@@ -185,4 +160,5 @@ window.addEventListener('load', () => {
   initZavoraPayPal();
   bindPaymentToggle();
 });
+
 
