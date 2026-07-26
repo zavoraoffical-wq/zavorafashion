@@ -165,6 +165,23 @@ function isRealHomeProduct(product = {}) {
 
 const STOREFRONT_APPAREL_CATALOG = [];
 
+function clearDemoProductCaches() {
+  [
+    'zavoraImportedCatalog',
+    'zavora_imported_products',
+    'printful_staged_products',
+    'zavoraProducts',
+    'zavoraSelectedProduct'
+  ].forEach((key) => {
+    try { localStorage.removeItem(key); } catch (error) {}
+  });
+  try {
+    Object.keys(sessionStorage)
+      .filter((key) => key.startsWith('zavoraCatalog_'))
+      .forEach((key) => sessionStorage.removeItem(key));
+  } catch (error) {}
+}
+
 function getHomeProducts() {
   const removedIds = new Set(JSON.parse(localStorage.getItem('zavoraRemovedProducts') || '[]'));
   const rawList = uniqueHomeProducts(state.printfulProducts.map(normalizeAdminProduct));
@@ -672,6 +689,7 @@ $('[data-recommend]').addEventListener('click', () => {
 });
 
 hydrateHomeHeaderIcons();
+clearDemoProductCaches();
 loadSavedCart();
 renderDailyFeature();
 renderHomeProductSections();
