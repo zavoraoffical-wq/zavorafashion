@@ -1928,23 +1928,12 @@ function productsForCatalogPage(products, pageName) {
   return products;
 }
 
-const DEFAULT_ZAVORA_CATALOG = [
-  { id: 'ZVR-01', printfulId: '288B', name: 'Zavora Women Oversized Streetwear Tee', category: 'oversized-tees', gender: 'women', price: 54.89, img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'new', 'best'], badge: 'NEW', popularity: 98 },
-  { id: 'ZVR-02', printfulId: '456B', name: 'Zavora Luxury Cropped Hoodie', category: 'cropped-hoodies', gender: 'women', price: 92.89, img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'trending', 'best'], badge: 'BESTSELLER', popularity: 96 },
-  { id: 'ZVR-03', printfulId: '512B', name: 'Zavora Cropped Baby Rib Tee', category: 'baby-tees', gender: 'women', price: 46.89, img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'new'], badge: 'NEW', popularity: 90 },
-  { id: 'ZVR-04', printfulId: '490W', name: 'Zavora Studio Wide-Leg Sweatpants', category: 'sweatpants', gender: 'women', price: 88.89, img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'], badge: 'POPULAR', popularity: 92 },
-  { id: 'ZVR-05', printfulId: '262', name: 'Zavora Unisex Staple Streetwear Tee', category: 'oversized-tees', gender: 'men', price: 54.89, img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best', 'trending'], badge: 'BESTSELLER', popularity: 99 },
-  { id: 'ZVR-06', printfulId: '384', name: 'Zavora Heavy Blend Pullover Hoodie', category: 'hoodies', gender: 'men', price: 94.89, img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'best'], badge: 'POPULAR', popularity: 95 },
-  { id: 'ZVR-07', printfulId: '480', name: 'Zavora Heavyweight Vintage T-Shirt', category: 'heavyweight-tees', gender: 'men', price: 64.89, img: 'https://images.unsplash.com/photo-1490578474895-699bc4e2cf59?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'new'], badge: 'NEW', popularity: 88 },
-  { id: 'ZVR-08', printfulId: '490', name: 'Zavora Heavyweight Streetwear Sweatpants', category: 'sweatpants', gender: 'men', price: 89.89, img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80', collection: ['streetwear', 'matching-sets'], badge: 'BESTSELLER', popularity: 94 },
-  { id: 'ZVR-09', printfulId: '638', name: 'Zavora Embroidered Dad Cap', category: 'accessories', gender: 'unisex', price: 42.89, img: 'assets/zavora-dad-hat.png', collection: ['accessories', 'summer-hats-bags'], badge: 'BESTSELLER', popularity: 91 }
-];
-
+const DEFAULT_ZAVORA_CATALOG = [];
 const REAL_PRINTFUL_APPAREL_CATALOG = [];
 const EXPANDED_REAL_PRINTFUL_CATALOG = [];
 
 function generateExpandedApparelCatalog(gender = 'all') {
-  const source = EXPANDED_REAL_PRINTFUL_CATALOG.length ? EXPANDED_REAL_PRINTFUL_CATALOG : DEFAULT_ZAVORA_CATALOG;
+  const source = EXPANDED_REAL_PRINTFUL_CATALOG.length ? EXPANDED_REAL_PRINTFUL_CATALOG : getAdminProducts();
   if (gender === 'men') {
     return source.filter(p => p.gender === 'men' || p.gender === 'unisex');
   }
@@ -1953,6 +1942,7 @@ function generateExpandedApparelCatalog(gender = 'all') {
   }
   return source;
 }
+
 
 
 function deduplicateProducts(products) {
