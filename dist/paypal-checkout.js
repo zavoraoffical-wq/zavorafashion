@@ -182,7 +182,10 @@ function bindPaymentToggle() {
   }
 }
 
+window.handlePayNowCOD = handlePayNowCOD;
+
 window.addEventListener('load', () => {
   initZavoraPayPal();
   bindPaymentToggle();
 });
+
