@@ -4795,23 +4795,28 @@ input[type="url"], input[type="date"],
   }
 }
 
-/* ─── MOBILE SCROLLING PERFORMANCE FIX ─── */
+/* ─── MOBILE SCROLLING PERFORMANCE FIX (ULTRA SMOOTH 60FPS) ─── */
 @media (max-width: 768px) {
   html, body {
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: none;
+    touch-action: manipulation;
   }
-  .product-card,
-  .home-product-shelf,
-  .daily-feature,
+  .product-card {
+    contain: content;
+  }
   .home-product-slider {
-    -webkit-transform: translate3d(0,0,0);
-    transform: translate3d(0,0,0);
-    will-change: transform;
-    backface-visibility: hidden;
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
   }
-  img {
-    content-visibility: auto;
+  .home-product-slider .product-card {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 }
+
 
