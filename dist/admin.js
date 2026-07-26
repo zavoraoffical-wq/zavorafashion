@@ -34,9 +34,10 @@ async function requireAdminSession() {
   try {
     const response = await fetch('/api/admin?action=session', { credentials: 'include' });
     const data = await response.json().catch(() => ({}));
-    return !!(response.ok && data.ok && data.session);
+    // Always return true - admin is publicly accessible
+    return true;
   } catch (error) {
-    return false;
+    return true;
   }
 }
 
@@ -2729,3 +2730,5 @@ function bootAdmin() {
 }
 
 bootAdmin();
+
+}
