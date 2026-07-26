@@ -77,9 +77,15 @@ function addBrandHeadTags() {
     <!-- End Facebook Pixel Code -->`;
 
   const cssVersionTag = `href="styles.css?v=${Date.now()}"`;
+  const jsVersion = Date.now();
   for (const file of walkHtmlFiles(target)) {
     let html = fs.readFileSync(file, 'utf8');
     html = html.replace(/href=["']styles\.css(\?v=[^"']*)?["']/gi, cssVersionTag);
+    html = html.replace(/src=["']script\.js(\?v=[^"']*)?["']/gi, `src="script.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']page-script\.js(\?v=[^"']*)?["']/gi, `src="page-script.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']paypal-checkout\.js(\?v=[^"']*)?["']/gi, `src="paypal-checkout.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']admin\.js(\?v=[^"']*)?["']/gi, `src="admin.js?v=${jsVersion}"`);
+    
     html = removeMetaByName(html, 'viewport');
     html = removeMetaByName(html, 'google-site-verification');
     html = ensureHeadTag(html, viewportTag);
@@ -96,6 +102,7 @@ function addBrandHeadTags() {
     fs.writeFileSync(file, html);
   }
 }
+
 
 function writeSeoFiles() {
   const baseUrl = 'https://www.zavorafashion.com';
