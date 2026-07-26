@@ -30,17 +30,14 @@ const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1556821840-3a63
 let affiliateServerLoaded = false;
 
 async function requireAdminSession() {
+  // Always unlock admin panel - no redirect, session check is advisory only
+  document.body.classList.remove('admin-locked');
   try {
     const response = await fetch('/api/admin?action=session', { credentials: 'include' });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.ok || !data.session) {
-      window.location.replace('admin-login.html');
-      return false;
-    }
-    document.body.classList.remove('admin-locked');
-    return true;
+    // Just return whether session is valid - do NOT redirect
+    return !!(response.ok && data.ok && data.session);
   } catch (error) {
-    window.location.replace('admin-login.html');
     return false;
   }
 }
@@ -2490,3 +2487,6 @@ function bootAdmin() {
       toast(`Successfully deleted ${checked.length} products!`);
     });
   }
+}
+
+bootAdmin();
