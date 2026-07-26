@@ -340,64 +340,80 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
         </section>
 
         <section class="admin-section" data-panel="importer">
-          <div class="admin-grid two">
-            <article class="admin-card">
-              <div class="card-head">
-                <h2>Production Printful Importer</h2>
-                <button type="button" class="primary-admin" id="btnImportEntireCatalog">⚡ Import Entire Printful Catalog</button>
+          <!-- Printful Store Connection & System Overview -->
+          <div class="admin-card" style="margin-bottom:20px;">
+            <div class="card-head" style="flex-wrap:wrap;gap:12px;">
+              <div>
+                <h2>Shopify-Grade Printful Store Import Manager</h2>
+                <p style="font-size:13px;color:#666;margin-top:2px;">Fetch store sync items, stage as Drafts by default, bulk assign categories & attributes, and save directly to your local MongoDB database for 0ms frontend performance.</p>
               </div>
-              <p style="font-size:13px;color:#666;margin-bottom:16px;">Import single products, selected bulk items, categories, collections, or the entire store catalog with 100% auto-sync for inventory, mockups, variants, and pricing.</p>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="primary-admin" id="btnSyncPrintfulStore">⚡ Connect & Fetch Printful Store Products</button>
+                <button type="button" class="pill gold" id="btnImportSelectedDrafts">📥 Import Selected (0)</button>
+                <button type="button" class="pill" id="btnImportAllDrafts">📦 Import All Store Items</button>
+              </div>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:16px;">
+              <article class="stat-card" style="padding:14px;background:#f8f9fa;border-radius:10px;">
+                <span style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">API Connection</span>
+                <strong style="font-size:18px;display:block;margin-top:4px;color:#2e7d32;" id="printfulApiStatus">🟢 Connected</strong>
+              </article>
+              <article class="stat-card" style="padding:14px;background:#f8f9fa;border-radius:10px;">
+                <span style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">Store Sync Items</span>
+                <strong style="font-size:18px;display:block;margin-top:4px;" id="printfulStoreItemCount">0 Items Found</strong>
+              </article>
+              <article class="stat-card" style="padding:14px;background:#f8f9fa;border-radius:10px;">
+                <span style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">Staged Drafts</span>
+                <strong style="font-size:18px;display:block;margin-top:4px;color:#e65100;" id="printfulDraftCount">0 Pending Review</strong>
+              </article>
+              <article class="stat-card" style="padding:14px;background:#f8f9fa;border-radius:10px;">
+                <span style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">Published Live DB</span>
+                <strong style="font-size:18px;display:block;margin-top:4px;color:#1565c0;" id="printfulPublishedCount">0 Live Products</strong>
+              </article>
+            </div>
+
+            <div style="margin-top:16px;display:flex;gap:20px;align-items:center;background:#fff8e1;padding:10px 14px;border-radius:8px;border:1px solid #ffe082;flex-wrap:wrap;font-size:13px;">
+              <strong style="color:#b78103;">Import Options:</strong>
+              <label style="cursor:pointer;"><input type="checkbox" id="chkSkipExisting" checked> <b>Skip Existing</b> (Prevent duplicates by Printful ID & SKU)</label>
+              <label style="cursor:pointer;"><input type="checkbox" id="chkUpdateExisting"> <b>Update Existing</b> (Refresh metadata & pricing)</label>
+              <span style="margin-left:auto;color:#795548;font-size:12px;">🔒 Safety Guarantee: Existing products are NEVER deleted during import.</span>
+            </div>
+          </div>
+
+          <!-- Shopify-Style Bulk Editor & Staging Panel -->
+          <div class="admin-card">
+            <div class="card-head" style="flex-wrap:wrap;gap:12px;">
+              <div>
+                <h2>Printful Product Staging & Bulk Editor</h2>
+                <p style="font-size:12px;color:#666;margin-top:2px;">Select products below to bulk assign categories, collections, tags, gender, season, and publish status.</p>
+              </div>
+              <input id="stagingSearchInput" type="search" placeholder="🔍 Search staging items by title, SKU, or Printful ID..." style="min-width:280px;padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:13px;">
+            </div>
+
+            <!-- Bulk Actions Toolbar -->
+            <div class="bulk-toolbar" style="background:#f4f6f8;padding:16px;border-radius:12px;border:1px solid #e1e4e8;margin:16px 0;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                <label style="font-size:13px;font-weight:700;cursor:pointer;"><input type="checkbox" id="selectAllStagingItems"> Select All Staging Items</label>
+                <span style="color:#aaa;">|</span>
+                <span style="font-size:13px;color:#555;" id="selectedStagingCountText">0 Products Selected</span>
+              </div>
               
-              <div class="import-mode-selector" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-                <button type="button" class="pill gold active" data-import-tab="url">URL / Product ID</button>
-                <button type="button" class="pill" data-import-tab="category">By Category</button>
-                <button type="button" class="pill" data-import-tab="collection">By Collection</button>
-                <button type="button" class="pill" data-import-tab="catalog">Select & Import</button>
-              </div>
-
-              <!-- Import Tab: URL / Product ID -->
-              <form class="admin-form" data-import-form="url">
-                <label>Printful Product URL or Product ID
-                  <input name="url" type="text" placeholder="e.g. https://www.printful.com/custom/mens/t-shirts/262 or Product ID 262" required>
-                </label>
-                <div class="form-row">
-                  <label>Target Gender
-                    <select name="gender">
-                      <option value="auto">Auto Detect</option>
-                      <option value="Men">Men</option>
-                      <option value="Women">Women</option>
-                      <option value="Unisex">Unisex</option>
-                    </select>
-                  </label>
-                  <label>Target Category
-                    <select name="category">
-                      <option value="auto">Auto Category</option>
-                      <option value="oversized-tees">Oversized Tees</option>
-                      <option value="heavyweight-tees">Heavyweight Tees</option>
-                      <option value="baby-tees">Baby Tees</option>
-                      <option value="hoodies">Hoodies</option>
-                      <option value="cropped-hoodies">Cropped Hoodies</option>
-                      <option value="zip-hoodies">Zip Hoodies</option>
-                      <option value="sweatshirts">Sweatshirts</option>
-                      <option value="sweatpants">Sweatpants</option>
-                      <option value="cargo-pants">Cargo Pants</option>
-                      <option value="jackets">Jackets</option>
-                      <option value="shorts">Shorts</option>
-                      <option value="accessories">Accessories</option>
-                    </select>
-                  </label>
-                </div>
-                <button type="submit" class="primary-admin">Import Product</button>
-              </form>
-
-              <!-- Import Tab: By Category -->
-              <form class="admin-form" data-import-form="category" style="display:none;">
-                <label>Select Printful Apparel Category
-                  <select name="targetCategory">
-                    <option value="all">All Categories</option>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Category</label>
+                  <select id="bulkCategorySelect" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                    <option value="">-- No Change --</option>
                     <option value="oversized-tees">Oversized Tees</option>
                     <option value="heavyweight-tees">Heavyweight Tees</option>
                     <option value="baby-tees">Baby Tees</option>
+                    <option value="polo-shirts">Polo Shirts</option>
+                    <option value="all-over-shirts">All-Over Shirts</option>
+                    <option value="tank-tops">Tank Tops</option>
+                    <option value="crop-tops">Crop Tops</option>
+                    <option value="embroidered-shirts">Embroidered Shirts</option>
+                    <option value="three-quarter-sleeve-shirts">3/4 Sleeve Shirts</option>
+                    <option value="long-sleeve-shirts">Long Sleeve Shirts</option>
                     <option value="hoodies">Hoodies</option>
                     <option value="cropped-hoodies">Cropped Hoodies</option>
                     <option value="zip-hoodies">Zip Hoodies</option>
@@ -408,53 +424,97 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
                     <option value="shorts">Shorts</option>
                     <option value="accessories">Accessories</option>
                   </select>
-                </label>
-                <button type="submit" class="primary-admin">Import Category Products</button>
-              </form>
-
-              <!-- Import Tab: By Collection -->
-              <form class="admin-form" data-import-form="collection" style="display:none;">
-                <label>Select Target Store Collection
-                  <select name="targetCollection">
-                    <option value="streetwear">Streetwear Collection</option>
-                    <option value="sportswear">Sportswear Collection</option>
-                    <option value="beachwear">Beachwear Collection</option>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Collection</label>
+                  <select id="bulkCollectionSelect" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                    <option value="">-- No Change --</option>
+                    <option value="streetwear">Streetwear</option>
+                    <option value="sportswear">Sportswear</option>
+                    <option value="beachwear">Beachwear</option>
                     <option value="new">New Arrivals</option>
                     <option value="best">Best Sellers</option>
                     <option value="limited">Limited Drops</option>
                     <option value="matching-sets">Matching Sets</option>
                   </select>
-                </label>
-                <button type="submit" class="primary-admin">Import Collection Products</button>
-              </form>
-
-              <!-- Import Tab: Selectable Catalog List -->
-              <div data-import-form="catalog" style="display:none;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                  <label><input type="checkbox" id="selectAllCatalogItems"> Select All Products</label>
-                  <button type="button" class="primary-admin" id="btnImportSelectedItems">Import Selected (0)</button>
                 </div>
-                <div class="selectable-catalog-grid" id="selectableCatalogContainer" style="max-height:320px;overflow-y:auto;border:1px solid #eee;padding:10px;border-radius:8px;">
-                  <!-- Dynamically populated with Printful products & checkboxes -->
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Target Gender</label>
+                  <select id="bulkGenderSelect" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                    <option value="">-- No Change --</option>
+                    <option value="Men">Men</option>
+                    <option value="Women">Women</option>
+                    <option value="Unisex">Unisex</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Season</label>
+                  <select id="bulkSeasonSelect" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                    <option value="">-- No Change --</option>
+                    <option value="Spring">Spring</option>
+                    <option value="Summer">Summer</option>
+                    <option value="Fall">Fall</option>
+                    <option value="Winter">Winter</option>
+                    <option value="All-Season">All-Season</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Status / Visibility</label>
+                  <select id="bulkStatusSelect" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                    <option value="">-- No Change --</option>
+                    <option value="published">Published (Live on Website)</option>
+                    <option value="draft">Draft (Hidden from Storefront)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Featured Flag</label>
+                  <select id="bulkFeaturedSelect" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                    <option value="">-- No Change --</option>
+                    <option value="yes">Yes (Featured)</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Best Seller Flag</label>
+                  <select id="bulkBestSellerSelect" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                    <option value="">-- No Change --</option>
+                    <option value="yes">Yes (Best Seller)</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Product Tags</label>
+                  <input id="bulkTagsInput" placeholder="e.g. organic, streetwear" style="width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
                 </div>
               </div>
-            </article>
 
-            <article class="admin-card">
-              <h2>Auto-Sync & System Diagnostics</h2>
-              <p style="font-size:13px;color:#666;line-height:1.55;">Automated background engine syncs prices, inventory stock, mockup photos, color swatches, and size variants with 0 frontend page latency.</p>
-              <div class="metric-list" data-import-status style="margin-top:16px;">
-                <p><span>Sync Engine</span><strong>Instant Local Cache + DB Sync</strong></p>
-                <p><span>Page Load Speed</span><strong>&lt; 1.0 Seconds Target</strong></p>
-                <p><span>Deduplication</span><strong>Strict Unique Product & SKU Key</strong></p>
-                <p><span>Auto Sync Features</span><strong>Images, Stock, Prices, Variants, Colors</strong></p>
-              </div>
-              <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
-                <button type="button" class="pill" id="btnRebuildStoreCache">🔄 Rebuild Store Cache</button>
-                <button type="button" class="pill" id="btnSyncAllInventory">📦 Sync All Inventory</button>
-                <button type="button" class="pill" id="btnClearDemoProducts">🧹 Clear All Demo Items</button>
-              </div>
-            </article>
+              <button type="button" class="primary-admin" id="btnApplyBulkStagingEdits" style="width:100%;padding:10px;">🚀 Apply Bulk Edits & Save Selected to MongoDB Local Database</button>
+            </div>
+
+            <!-- Staging Products Table -->
+            <div style="overflow-x:auto;">
+              <table class="admin-table" id="stagingProductsTable">
+                <thead>
+                  <tr>
+                    <th style="width:40px;"><input type="checkbox" id="hdrSelectAllStaging"></th>
+                    <th>Product Details</th>
+                    <th>Category</th>
+                    <th>Gender</th>
+                    <th>Colors</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="stagingProductsTbody">
+                  <tr>
+                    <td colspan="8" style="text-align:center;padding:32px;color:#888;">
+                      No Printful store items staged yet. Click <b>"⚡ Connect & Fetch Printful Store Products"</b> above to load store items.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
