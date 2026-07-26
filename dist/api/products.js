@@ -36,6 +36,20 @@ function isAllowedProduct(product = {}) {
   return allowedCategories.has(String(product.category || '').toLowerCase()) && !blocked.test(text);
 }
 
+function isRealStorefrontProduct(product = {}) {
+  const text = `${product.name || ''} ${product.title || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
+  const images = [
+    product.img,
+    product.image,
+    product.thumbnail,
+    product.hoverImage,
+    ...(Array.isArray(product.images) ? product.images : [])
+  ].filter(Boolean).join(' ').toLowerCase();
+  const fakeName = /zavora\s+(women'?s|unisex)\s+(relaxed|baby rib|fleece|organic|high-waisted|tailored|staple|heavy blend|heavyweight vintage|luxury|crewneck|champion|embroidered|studio)|zavora\s+ultimate|zavora\s+recycled|zavora\s+classic/i;
+  const fakeAsset = /zavora-(women|men|hero-clean|premium-hero)|studio-wide-trouser/i;
+  return !fakeName.test(text) && !fakeAsset.test(images);
+}
+
 function productMatches(product, query) {
   const gender = String(query.gender || '').toLowerCase();
   const category = String(query.category || '').toLowerCase();
@@ -46,6 +60,7 @@ function productMatches(product, query) {
   const collections = Array.isArray(product.collection) ? product.collection.map((item) => String(item).toLowerCase()) : [];
   const text = `${product.name || ''} ${product.category || ''} ${product.productType || ''} ${(product.colors || []).join(' ')} ${collections.join(' ')}`.toLowerCase();
   return isAllowedProduct(product)
+    && isRealStorefrontProduct(product)
     && (!gender || gender === 'all' || productGender === gender)
     && categoryMatches(productCategory, category)
     && (!collection || collection === 'all' || collections.includes(collection))

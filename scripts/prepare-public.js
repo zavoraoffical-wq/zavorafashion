@@ -43,6 +43,15 @@ function ensureHeadTag(html, tag) {
   return html.replace('</head>', `    ${tag}\n  </head>`);
 }
 
+function optimizeImageTags(html) {
+  html = html.replace(/<img\b(?![^>]*\bdecoding=)([^>]*)>/gi, '<img decoding="async"$1>');
+  html = html.replace(/<img\b(?![^>]*\bloading=)([^>]*)>/gi, '<img loading="lazy"$1>');
+  html = html.replace(/<img([^>]*class=["'][^"']*brand-mark[^"']*["'][^>]*)loading=["']lazy["']([^>]*)>/gi, '<img$1loading="eager"$2>');
+  html = html.replace(/<img([^>]*?)loading=["']lazy["']([^>]*class=["'][^"']*brand-mark[^"']*["'][^>]*)>/gi, '<img$1loading="eager"$2>');
+  html = html.replace(/(<main\b[\s\S]*?)<img([^>]*?)loading=["']lazy["']([^>]*?)>/i, '$1<img$2loading="eager" fetchpriority="high"$3>');
+  return html;
+}
+
 function escapeXml(value) {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -85,6 +94,7 @@ function addBrandHeadTags() {
     html = html.replace(/src=["']page-script\.js(\?v=[^"']*)?["']/gi, `src="page-script.js?v=${jsVersion}"`);
     html = html.replace(/src=["']paypal-checkout\.js(\?v=[^"']*)?["']/gi, `src="paypal-checkout.js?v=${jsVersion}"`);
     html = html.replace(/src=["']admin\.js(\?v=[^"']*)?["']/gi, `src="admin.js?v=${jsVersion}"`);
+    html = optimizeImageTags(html);
     
     html = removeMetaByName(html, 'viewport');
     html = removeMetaByName(html, 'google-site-verification');

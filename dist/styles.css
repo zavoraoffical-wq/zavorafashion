@@ -4820,3 +4820,6 @@ input[type="url"], input[type="date"],
 }
 
 
+body.product-page-pending main {
+  visibility: hidden;
+}

@@ -1543,7 +1543,7 @@ function renderPageSuggestions(term = '') {
   const cleanTerm = term.trim().toLowerCase();
   const products = window.__zavoraSearchProducts || [];
   if (!products.length) {
-    Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))
+    Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 60).catch(() => [])))
       .then((pages) => {
         window.__zavoraSearchProducts = pages.flat();
         renderPageSuggestions(term);
@@ -1928,26 +1928,9 @@ function productsForCatalogPage(products, pageName) {
   return products;
 }
 
-const REAL_PRINTFUL_APPAREL_CATALOG = [
-  { id: 'PF-W-01', printfulId: '288', name: "Zavora Women's Relaxed Streetwear Tee", category: 'oversized-tees', gender: 'women', price: 49.89, img: 'assets/zavora-women-models.png', alt: 'assets/zavora-women-cutout.png', collection: ['streetwear', 'best', 'new'], badge: 'BESTSELLER', popularity: 98 },
-  { id: 'PF-W-02', printfulId: '512', name: "Zavora Women's Baby Rib Crop Tee", category: 'baby-tees', gender: 'women', price: 44.89, img: 'assets/zavora-women-cutout.png', alt: 'assets/zavora-women-models.png', collection: ['streetwear', 'new'], badge: 'NEW', popularity: 95 },
-  { id: 'PF-W-03', printfulId: '456', name: "Zavora Women's Fleece Crop Hoodie", category: 'cropped-hoodies', gender: 'women', price: 89.89, img: 'assets/zavora-hero-clean-hoodie.png', alt: 'assets/zavora-women-models.png', collection: ['streetwear', 'best', 'trending'], badge: 'TRENDING', popularity: 96 },
-  { id: 'PF-W-04', printfulId: '416', name: "Zavora Women's Organic Raglan Hoodie", category: 'hoodies', gender: 'women', price: 104.89, img: 'assets/zavora-hero-clean-collection.png', alt: 'assets/zavora-hero-clean-hoodie.png', collection: ['streetwear', 'new'], badge: 'ORGANIC', popularity: 92 },
-  { id: 'PF-W-05', printfulId: '518', name: "Zavora Women's High-Waisted Fleece Sweatpants", category: 'sweatpants', gender: 'women', price: 84.89, img: 'assets/zavora-women-models.png', alt: 'assets/zavora-women-cutout.png', collection: ['streetwear', 'matching-sets', 'best'], badge: 'COZY', popularity: 94 },
-  { id: 'PF-W-06', printfulId: '472', name: "Zavora Women's Tailored Denim Jacket", category: 'jackets', gender: 'women', price: 148.89, img: 'assets/zavora-hero-clean-stairs.png', alt: 'assets/zavora-women-models.png', collection: ['streetwear', 'trending'], badge: 'PREMIUM', popularity: 91 },
-  { id: 'PF-M-01', printfulId: '262', name: 'Zavora Unisex Staple Streetwear Tee', category: 'oversized-tees', gender: 'men', price: 54.89, img: 'assets/zavora-men-models.png', alt: 'assets/zavora-men-cutout.png', collection: ['streetwear', 'best', 'new'], badge: 'BESTSELLER', popularity: 99 },
-  { id: 'PF-M-02', printfulId: '384', name: 'Zavora Unisex Heavy Blend Hoodie', category: 'hoodies', gender: 'men', price: 94.89, img: 'assets/zavora-hero-clean-hoodie.png', alt: 'assets/zavora-men-models.png', collection: ['streetwear', 'best'], badge: 'POPULAR', popularity: 97 },
-  { id: 'PF-M-03', printfulId: '480', name: 'Zavora Heavyweight Vintage T-Shirt', category: 'heavyweight-tees', gender: 'men', price: 64.89, img: 'assets/zavora-men-cutout.png', alt: 'assets/zavora-men-models.png', collection: ['streetwear', 'new'], badge: 'NEW', popularity: 89 },
-  { id: 'PF-M-04', printfulId: '444', name: 'Zavora Luxury Pullover Hoodie', category: 'hoodies', gender: 'men', price: 114.89, img: 'assets/zavora-premium-hero.png', alt: 'assets/zavora-hero-clean-hoodie.png', collection: ['streetwear', 'best'], badge: 'LUXURY', popularity: 95 },
-  { id: 'PF-M-05', printfulId: '312', name: 'Zavora Fleece Zip Hoodie', category: 'zip-hoodies', gender: 'men', price: 98.89, img: 'assets/zavora-hero-clean-collection.png', alt: 'assets/zavora-men-cutout.png', collection: ['streetwear', 'trending'], badge: 'TRENDING', popularity: 90 },
-  { id: 'PF-M-06', printfulId: '382', name: 'Zavora Crewneck Sweatshirt', category: 'sweatshirts', gender: 'men', price: 84.89, img: 'assets/zavora-men-models.png', alt: 'assets/zavora-men-cutout.png', collection: ['streetwear'], badge: 'CLASSIC', popularity: 88 },
-  { id: 'PF-M-07', printfulId: '490', name: 'Zavora Heavyweight Streetwear Sweatpants', category: 'sweatpants', gender: 'men', price: 89.89, img: 'assets/studio-wide-trouser.png', alt: 'assets/zavora-men-cutout.png', collection: ['streetwear', 'matching-sets'], badge: 'BESTSELLER', popularity: 93 },
-  { id: 'PF-M-09', printfulId: '468', name: 'Zavora Champion Bomber Jacket', category: 'jackets', gender: 'men', price: 168.89, img: 'assets/zavora-hero-clean-stairs.png', alt: 'assets/zavora-men-models.png', collection: ['streetwear', 'trending'], badge: 'PREMIUM', popularity: 96 },
-  { id: 'PF-A-01', printfulId: '638', name: 'Zavora Embroidered Dad Cap', category: 'accessories', gender: 'unisex', price: 42.89, img: 'assets/zavora-hero-clean-collection.png', alt: 'assets/studio-wide-trouser.png', collection: ['accessories', 'summer-hats-bags', 'best'], badge: 'BESTSELLER', popularity: 94 },
-  { id: 'PF-A-02', printfulId: '458', name: 'Zavora Studio Cuffed Beanie', category: 'accessories', gender: 'unisex', price: 34.89, img: 'assets/studio-wide-trouser.png', alt: 'assets/zavora-hero-clean-collection.png', collection: ['accessories'], badge: 'WARM', popularity: 87 }
-];
+const REAL_PRINTFUL_APPAREL_CATALOG = [];
 
-const EXPANDED_REAL_PRINTFUL_CATALOG = [...REAL_PRINTFUL_APPAREL_CATALOG];
+const EXPANDED_REAL_PRINTFUL_CATALOG = [];
 
 function generateExpandedApparelCatalog(gender = 'all') {
   const admin = getAdminProducts();
@@ -1979,7 +1962,7 @@ function deduplicateProducts(products) {
   });
 }
 
-async function fetchCatalogProducts(gender, limit = 1000) {
+async function fetchCatalogProducts(gender, limit = 60) {
   const params = new URLSearchParams({
     gender,
     limit: String(limit)
@@ -1993,14 +1976,7 @@ async function fetchCatalogProducts(gender, limit = 1000) {
     const data = await response.json();
     if (response.ok && data.ok && Array.isArray(data.products) && data.products.length) return data.products;
   } catch (error) {}
-  const pages = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const results = await Promise.all(pages.map((page) => (
-    fetch(`/api/printful-products?gender=${gender}&limit=60&page=${page}`)
-      .then((response) => response.json())
-      .then((data) => Array.isArray(data.products) ? data.products : [])
-      .catch(() => [])
-  )));
-  return results.flat();
+  return [];
 }
 
 // Generate professional skeleton loading cards — zero Printful/loading text
@@ -2024,7 +2000,7 @@ async function loadCatalogFromAPI() {
   try {
     const pageName = normalizePageName(window.location.pathname);
     const genderForPage = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : 'all';
-    const params = new URLSearchParams({ limit: '1000' });
+    const params = new URLSearchParams({ limit: '60' });
     if (genderForPage !== 'all') params.set('gender', genderForPage);
     const urlCategory = new URLSearchParams(window.location.search).get('category');
     const urlCollection = new URLSearchParams(window.location.search).get('collection');
@@ -2038,14 +2014,7 @@ async function loadCatalogFromAPI() {
       grid.dataset.loaded = 'empty';
       // If no DB products, keep what we have from cache
       if (!window.__zavoraCatalogProducts?.length) {
-        // Show real Printful catalog as placeholder
-        const fallback = generateExpandedApparelCatalog(genderForPage).filter(p => isSafeProduct(p));
-        if (fallback.length) {
-          window.__zavoraCatalogProducts = fallback;
-          grid.innerHTML = fallback.map(catalogCard).join('');
-          filterLargeCatalog();
-          refreshWishlistButtons();
-        }
+        grid.innerHTML = '<p class="catalog-empty">No products are available yet.</p>';
       }
       return;
     }
@@ -2090,6 +2059,10 @@ const BLOCKED_PRODUCT_NAMES = /(bodysuit|baby\s*jersey|baby\s*body|legging|under
 function isSafeProduct(p) {
   if (!p || !p.name) return false;
   const text = `${p.name} ${p.category || ''} ${p.productType || ''}`;
+  const images = [p.img, p.image, p.thumbnail, p.hoverImage, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean).join(' ');
+  const FAKE_STOREFRONT_PRODUCT_NAMES = /zavora\s+(women'?s|unisex)\s+(relaxed|baby rib|fleece|organic|high-waisted|tailored|staple|heavy blend|heavyweight vintage|luxury|crewneck|champion|embroidered|studio)|zavora\s+ultimate|zavora\s+recycled|zavora\s+classic/i;
+  const FAKE_STOREFRONT_ASSETS = /zavora-(women|men|hero-clean|premium-hero)|studio-wide-trouser/i;
+  if (FAKE_STOREFRONT_PRODUCT_NAMES.test(text) || FAKE_STOREFRONT_ASSETS.test(images)) return false;
   if (BLOCKED_PRODUCT_NAMES.test(text)) return false;
   const ALLOWED_CATS = new Set(['oversized-tees','heavyweight-tees','baby-tees','hoodies','cropped-hoodies','zip-hoodies','sweatshirts','jackets','cargo-pants','sweatpants','shorts','accessories','sportswear','matching-sets','beachwear','tees','']);
   const cat = String(p.category || '').toLowerCase();
@@ -3956,7 +3929,7 @@ async function initHomepageRecommendationRails() {
   if (document.querySelector('[data-home-recommendation-rails]')) return;
   const anchor = document.querySelector('.product-section') || document.querySelector('.banner.section') || document.querySelector('.footer');
   if (!anchor) return;
-  const allProducts = uniqueProducts((await Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 1000).catch(() => [])))).flat());
+  const allProducts = uniqueProducts((await Promise.all(['men', 'women'].map((gender) => fetchCatalogProducts(gender, 60).catch(() => [])))).flat());
   if (!allProducts.length) return;
   const used = new Set();
   const take = (list, count = 10) => {
@@ -4264,7 +4237,7 @@ enhanceFooter();
 injectHomepageRewardOffer();
 injectLargeCatalog();
 filterLargeCatalog();
-loadPrintfulCatalog();
+
 initHomepageRecommendationRails();
 injectProductRails();
 cleanAuthPageFooter();

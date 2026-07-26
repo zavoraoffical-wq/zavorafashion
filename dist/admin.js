@@ -1728,7 +1728,7 @@ async function importPrintfulProducts(gender = 'all', limit = 100) {
         if (status === 'completed') {
           clearInterval(pollInterval);
           // Fetch updated products list from DB
-          const prodRes = await fetch('/api/products?limit=1000');
+          const prodRes = await fetch('/api/products?limit=200');
           const prodData = await prodRes.json().catch(() => ({}));
           if (prodData.products && prodData.products.length) {
             await rebuildStorefrontCatalogCache(prodData.products);

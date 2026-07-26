@@ -3,260 +3,7 @@ function initHomeLaunchGate() {
 }
 
 if (!initHomeLaunchGate()) {
-const products = [
-  {
-    id: 1,
-    name: 'Noir Oversized Hoodie',
-    category: 'hoodies',
-    collection: ['new', 'oversized', 'best'],
-    color: 'black',
-    sizes: ['S', 'M', 'L', 'XL'],
-    price: 148,
-    sale: false,
-    popularity: 98,
-    badge: 'Best seller',
-    img: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 2,
-    name: 'Gold Label Tee',
-    category: 'tees',
-    collection: ['new', 'trending'],
-    color: 'white',
-    sizes: ['XS', 'S', 'M', 'L'],
-    price: 64,
-    sale: true,
-    popularity: 82,
-    badge: 'Sale',
-    img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 3,
-    name: 'Avenue Cargo Pant',
-    category: 'pants',
-    collection: ['trending', 'best'],
-    color: 'gray',
-    sizes: ['S', 'M', 'L', 'XL'],
-    price: 132,
-    sale: false,
-    popularity: 91,
-    badge: 'Trending',
-    img: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 4,
-    name: 'Zavora Cropped Jacket',
-    category: 'outerwear',
-    collection: ['limited', 'new'],
-    color: 'black',
-    sizes: ['XS', 'S', 'M'],
-    price: 286,
-    sale: false,
-    popularity: 88,
-    badge: 'Limited',
-    img: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 5,
-    name: 'Monogram Cap',
-    category: 'accessories',
-    collection: ['best', 'trending'],
-    color: 'black',
-    sizes: ['M', 'L'],
-    price: 52,
-    sale: true,
-    popularity: 79,
-    badge: '20% off',
-    img: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1534215754734-18e55d13e346?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 6,
-    name: 'Ivory Heavyweight Tee',
-    category: 'tees',
-    collection: ['oversized', 'best'],
-    color: 'white',
-    sizes: ['S', 'M', 'L', 'XL'],
-    price: 78,
-    sale: false,
-    popularity: 86,
-    badge: 'Core',
-    img: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 7,
-    name: 'Gold Chain Belt',
-    category: 'accessories',
-    collection: ['limited'],
-    color: 'gold',
-    sizes: ['XS', 'S', 'M', 'L'],
-    price: 118,
-    sale: false,
-    popularity: 71,
-    badge: 'Gift pick',
-    img: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 8,
-    name: 'Studio Wide Trouser',
-    category: 'pants',
-    collection: ['new', 'oversized'],
-    color: 'black',
-    sizes: ['XS', 'S', 'M', 'L'],
-    price: 168,
-    sale: false,
-    popularity: 83,
-    badge: 'New',
-    img: 'https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 9,
-    name: 'Cropped Zip Hoodie',
-    category: 'hoodies',
-    collection: ['new', 'limited'],
-    color: 'gray',
-    sizes: ['XS', 'S', 'M', 'L'],
-    price: 124,
-    sale: false,
-    popularity: 84,
-    badge: 'New',
-    img: 'https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 10,
-    name: 'Heavyweight Box Tee',
-    category: 'tees',
-    collection: ['new', 'best'],
-    color: 'white',
-    sizes: ['S', 'M', 'L', 'XL'],
-    price: 86,
-    sale: false,
-    popularity: 89,
-    badge: 'Heavyweight',
-    img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 11,
-    name: 'Washed Cargo Trouser',
-    category: 'pants',
-    collection: ['trending', 'oversized'],
-    color: 'gray',
-    sizes: ['S', 'M', 'L', 'XL'],
-    price: 152,
-    sale: false,
-    popularity: 87,
-    badge: 'Trending',
-    img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 12,
-    name: 'Nylon Track Jacket',
-    category: 'outerwear',
-    collection: ['limited', 'best'],
-    color: 'black',
-    sizes: ['S', 'M', 'L', 'XL'],
-    price: 218,
-    sale: false,
-    popularity: 92,
-    badge: 'Best seller',
-    img: 'https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 13,
-    name: 'Baby Rib Tee',
-    category: 'tees',
-    collection: ['new', 'trending'],
-    color: 'white',
-    sizes: ['XS', 'S', 'M', 'L'],
-    price: 58,
-    sale: false,
-    popularity: 78,
-    badge: 'Women edit',
-    img: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 14,
-    name: 'Oversized Graphic Tee',
-    category: 'tees',
-    collection: ['oversized', 'new'],
-    color: 'white',
-    sizes: ['S', 'M', 'L', 'XL'],
-    price: 74,
-    sale: false,
-    popularity: 81,
-    badge: 'Oversized',
-    img: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 15,
-    name: 'Wide Leg Sweatpant',
-    category: 'pants',
-    collection: ['best', 'oversized'],
-    color: 'gray',
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    price: 118,
-    sale: false,
-    popularity: 85,
-    badge: 'Core',
-    img: 'https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 16,
-    name: 'Minimal Coach Jacket',
-    category: 'outerwear',
-    collection: ['new', 'limited'],
-    color: 'black',
-    sizes: ['S', 'M', 'L'],
-    price: 196,
-    sale: false,
-    popularity: 80,
-    badge: 'Limited',
-    img: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 17,
-    name: 'Gold Logo Beanie',
-    category: 'accessories',
-    collection: ['new', 'best'],
-    color: 'black',
-    sizes: ['M', 'L'],
-    price: 46,
-    sale: false,
-    popularity: 76,
-    badge: 'Gift pick',
-    img: 'https://images.unsplash.com/photo-1534215754734-18e55d13e346?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=700&q=80'
-  },
-  {
-    id: 18,
-    name: 'Luxury Tote Bag',
-    category: 'accessories',
-    collection: ['trending', 'limited'],
-    color: 'black',
-    sizes: ['M'],
-    price: 96,
-    sale: false,
-    popularity: 77,
-    badge: 'Zavora',
-    img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=80',
-    alt: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=700&q=80'
-  }
-];
+const products = [];
 
 const CART_KEY = 'zavoraCart';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
@@ -367,31 +114,6 @@ function homeProductMatchesSearch(product, term = '') {
   return normalizedSearch(`${raw}${aliases}`).includes(clean);
 }
 
-function getAdminProducts() {
-  try {
-    const admin = JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY) || '[]');
-    const imported = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]');
-    const printfulStaging = JSON.parse(localStorage.getItem('zavora_imported_products') || '[]');
-    const staged = JSON.parse(localStorage.getItem('printful_staged_products') || '[]');
-    const productsKey = JSON.parse(localStorage.getItem('zavoraProducts') || '[]');
-
-    const seen = new Set();
-    const clean = [];
-    [...staged, ...printfulStaging, ...imported, ...admin, ...productsKey].forEach(p => {
-      if (p && (p.id || p.printfulId)) {
-        const key = String(p.id || p.printfulId);
-        if (!seen.has(key)) {
-          seen.add(key);
-          clean.push(p);
-        }
-      }
-    });
-    return clean;
-  } catch (error) {
-    return [];
-  }
-}
-
 function normalizeAdminProduct(product, index) {
   const image = product.img || product.image || product.thumbnail || product.images?.[0] || 'assets/studio-wide-trouser.png';
   const collections = Array.isArray(product.collection)
@@ -427,33 +149,28 @@ function uniqueHomeProducts(productsList = []) {
   });
 }
 
-const STOREFRONT_APPAREL_CATALOG = [
-  { id: 'PF-W-01', printfulId: '288', name: "Zavora Women's Relaxed Streetwear Tee", category: 'oversized-tees', gender: 'women', price: 49.89, img: 'assets/zavora-women-models.png', alt: 'assets/zavora-women-cutout.png', collection: ['streetwear', 'best', 'new'], badge: 'BESTSELLER', popularity: 98 },
-  { id: 'PF-W-02', printfulId: '512', name: "Zavora Women's Baby Rib Crop Tee", category: 'baby-tees', gender: 'women', price: 44.89, img: 'assets/zavora-women-cutout.png', alt: 'assets/zavora-women-models.png', collection: ['streetwear', 'new'], badge: 'NEW', popularity: 95 },
-  { id: 'PF-W-03', printfulId: '456', name: "Zavora Women's Fleece Crop Hoodie", category: 'cropped-hoodies', gender: 'women', price: 89.89, img: 'assets/zavora-hero-clean-hoodie.png', alt: 'assets/zavora-women-models.png', collection: ['streetwear', 'best', 'trending'], badge: 'TRENDING', popularity: 96 },
-  { id: 'PF-W-04', printfulId: '416', name: "Zavora Women's Organic Raglan Hoodie", category: 'hoodies', gender: 'women', price: 104.89, img: 'assets/zavora-hero-clean-collection.png', alt: 'assets/zavora-hero-clean-hoodie.png', collection: ['streetwear', 'new'], badge: 'ORGANIC', popularity: 92 },
-  { id: 'PF-W-05', printfulId: '518', name: "Zavora Women's High-Waisted Fleece Sweatpants", category: 'sweatpants', gender: 'women', price: 84.89, img: 'assets/zavora-women-models.png', alt: 'assets/zavora-women-cutout.png', collection: ['streetwear', 'matching-sets', 'best'], badge: 'COZY', popularity: 94 },
-  { id: 'PF-W-06', printfulId: '472', name: "Zavora Women's Tailored Denim Jacket", category: 'jackets', gender: 'women', price: 148.89, img: 'assets/zavora-hero-clean-stairs.png', alt: 'assets/zavora-women-models.png', collection: ['streetwear', 'trending'], badge: 'PREMIUM', popularity: 91 },
-  { id: 'PF-M-01', printfulId: '262', name: 'Zavora Unisex Staple Streetwear Tee', category: 'oversized-tees', gender: 'men', price: 54.89, img: 'assets/zavora-men-models.png', alt: 'assets/zavora-men-cutout.png', collection: ['streetwear', 'best', 'new'], badge: 'BESTSELLER', popularity: 99 },
-  { id: 'PF-M-02', printfulId: '384', name: 'Zavora Unisex Heavy Blend Hoodie', category: 'hoodies', gender: 'men', price: 94.89, img: 'assets/zavora-hero-clean-hoodie.png', alt: 'assets/zavora-men-models.png', collection: ['streetwear', 'best'], badge: 'POPULAR', popularity: 97 },
-  { id: 'PF-M-03', printfulId: '480', name: 'Zavora Heavyweight Vintage T-Shirt', category: 'heavyweight-tees', gender: 'men', price: 64.89, img: 'assets/zavora-men-cutout.png', alt: 'assets/zavora-men-models.png', collection: ['streetwear', 'new'], badge: 'NEW', popularity: 89 },
-  { id: 'PF-M-04', printfulId: '444', name: 'Zavora Luxury Pullover Hoodie', category: 'hoodies', gender: 'men', price: 114.89, img: 'assets/zavora-premium-hero.png', alt: 'assets/zavora-hero-clean-hoodie.png', collection: ['streetwear', 'best'], badge: 'LUXURY', popularity: 95 },
-  { id: 'PF-M-05', printfulId: '312', name: 'Zavora Fleece Zip Hoodie', category: 'zip-hoodies', gender: 'men', price: 98.89, img: 'assets/zavora-hero-clean-collection.png', alt: 'assets/zavora-men-cutout.png', collection: ['streetwear', 'trending'], badge: 'TRENDING', popularity: 90 },
-  { id: 'PF-M-06', printfulId: '382', name: 'Zavora Crewneck Sweatshirt', category: 'sweatshirts', gender: 'men', price: 84.89, img: 'assets/zavora-men-models.png', alt: 'assets/zavora-men-cutout.png', collection: ['streetwear'], badge: 'CLASSIC', popularity: 88 },
-  { id: 'PF-M-07', printfulId: '490', name: 'Zavora Heavyweight Streetwear Sweatpants', category: 'sweatpants', gender: 'men', price: 89.89, img: 'assets/studio-wide-trouser.png', alt: 'assets/zavora-men-cutout.png', collection: ['streetwear', 'matching-sets'], badge: 'BESTSELLER', popularity: 93 },
-  { id: 'PF-M-09', printfulId: '468', name: 'Zavora Champion Bomber Jacket', category: 'jackets', gender: 'men', price: 168.89, img: 'assets/zavora-hero-clean-stairs.png', alt: 'assets/zavora-men-models.png', collection: ['streetwear', 'trending'], badge: 'PREMIUM', popularity: 96 },
-  { id: 'PF-A-01', printfulId: '638', name: 'Zavora Embroidered Dad Cap', category: 'accessories', gender: 'unisex', price: 42.89, img: 'assets/zavora-hero-clean-collection.png', alt: 'assets/studio-wide-trouser.png', collection: ['accessories', 'summer-hats-bags', 'best'], badge: 'BESTSELLER', popularity: 94 },
-  { id: 'PF-A-02', printfulId: '458', name: 'Zavora Studio Cuffed Beanie', category: 'accessories', gender: 'unisex', price: 34.89, img: 'assets/studio-wide-trouser.png', alt: 'assets/zavora-hero-clean-collection.png', collection: ['accessories'], badge: 'WARM', popularity: 87 }
-];
+function isRealHomeProduct(product = {}) {
+  const text = `${product.name || ''} ${product.title || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
+  const images = [
+    product.img,
+    product.image,
+    product.thumbnail,
+    product.hoverImage,
+    ...(Array.isArray(product.images) ? product.images : [])
+  ].filter(Boolean).join(' ').toLowerCase();
+  const fakeName = /zavora\s+(women'?s|unisex)\s+(relaxed|baby rib|fleece|organic|high-waisted|tailored|staple|heavy blend|heavyweight vintage|luxury|crewneck|champion|embroidered|studio)|zavora\s+ultimate|zavora\s+recycled|zavora\s+classic/i;
+  const fakeAsset = /zavora-(women|men|hero-clean|premium-hero)|studio-wide-trouser/i;
+  return !fakeName.test(text) && !fakeAsset.test(images);
+}
 
+const STOREFRONT_APPAREL_CATALOG = [];
 
 function getHomeProducts() {
   const removedIds = new Set(JSON.parse(localStorage.getItem('zavoraRemovedProducts') || '[]'));
-  const adminProducts = getAdminProducts().map(normalizeAdminProduct);
-  const rawList = uniqueHomeProducts([...adminProducts, ...state.printfulProducts, ...STOREFRONT_APPAREL_CATALOG]);
+  const rawList = uniqueHomeProducts(state.printfulProducts.map(normalizeAdminProduct));
 
   return rawList
-    .filter(p => p && p.id && !removedIds.has(String(p.id)) && !removedIds.has(String(p.printfulId)))
+    .filter(p => p && p.id && isRealHomeProduct(p) && !removedIds.has(String(p.id)) && !removedIds.has(String(p.printfulId)))
     .map((product) => ({
       ...product,
       img: product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png',
@@ -468,9 +185,12 @@ function getHomeProducts() {
 
 
 async function loadPrintfulProducts() {
+  if (state.printfulLoaded) return;
   state.printfulLoaded = true;
   try {
-    const res = await fetch('/api/products?limit=100');
+    const res = await fetch('/api/products?limit=60', {
+      headers: { Accept: 'application/json' }
+    });
     if (res.ok) {
       const data = await res.json();
       const prods = Array.isArray(data.products) ? data.products : [];
@@ -479,18 +199,6 @@ async function loadPrintfulProducts() {
       }
     }
   } catch (error) {}
-
-  if (!state.printfulProducts.length) {
-    try {
-      const staticRes = await fetch('/products.json');
-      if (staticRes.ok) {
-        const staticProds = await staticRes.json();
-        if (Array.isArray(staticProds) && staticProds.length) {
-          state.printfulProducts = staticProds;
-        }
-      }
-    } catch (e) {}
-  }
 
   renderHomeProductSections();
   renderProducts();
@@ -555,20 +263,13 @@ function renderHomeProductSections() {
     return;
   }
   const used = new Set();
-  container.innerHTML = homeShelfDefinitions.map((section, sectionIndex) => {
-    let items = catalog
+  const shelves = homeShelfDefinitions.map((section) => {
+    const items = catalog
       .filter((product, index) => section.match(product, index))
       .filter((product) => !used.has(String(product.printfulId || product.id || product.name)))
       .slice(0, 10);
     items.forEach((product) => used.add(String(product.printfulId || product.id || product.name)));
-    if (items.length < 4) {
-      const fallback = uniqueHomeProducts([...items, ...catalog.slice(sectionIndex * 4, sectionIndex * 4 + 10)]).slice(0, 10);
-      fallback.forEach((product) => {
-        const key = String(product.printfulId || product.id || product.name);
-        used.add(key);
-      });
-      items = fallback;
-    }
+    if (!items.length) return '';
     return `
       <section class="home-product-shelf" aria-label="${section.title}">
         <div class="section-title">
@@ -580,7 +281,8 @@ function renderHomeProductSections() {
         </div>
       </section>
     `;
-  }).join('');
+  }).filter(Boolean);
+  container.innerHTML = shelves.length ? shelves.join('') : '';
 }
 
 function renderProducts() {
@@ -609,7 +311,7 @@ function renderProducts() {
     if (sort === 'high') return b.price - a.price;
     if (sort === 'popular') return b.popularity - a.popularity;
     if (sort === 'best') return Number(b.collection.includes('best')) - Number(a.collection.includes('best'));
-    return b.id - a.id;
+    return Number(b.id || b.printfulId || 0) - Number(a.id || a.printfulId || 0);
   });
 
   const countBadge = $('#productCount');
@@ -671,7 +373,7 @@ function swatch(color) {
 }
 
 function addToCart(id) {
-  const product = getHomeProducts().find(item => item.id === Number(id));
+  const product = getHomeProducts().find(item => String(item.id) === String(id));
   if (!product) return;
   const found = state.cart.find(item => item.id === product.id);
   if (found) found.qty += 1;

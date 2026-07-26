@@ -32,6 +32,24 @@ function parseBody(req) {
   try { return JSON.parse(String(req.body || '{}')); } catch { return {}; }
 }
 
+function isRealStorefrontProduct(product = {}) {
+  const text = `${product.name || ''} ${product.title || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
+  const images = [
+    product.img,
+    product.image,
+    product.thumbnail,
+    product.hoverImage,
+    ...(Array.isArray(product.images) ? product.images : [])
+  ].filter(Boolean).join(' ').toLowerCase();
+  const fakeName = /zavora\s+(women'?s|unisex)\s+(relaxed|baby rib|fleece|organic|high-waisted|tailored|staple|heavy blend|heavyweight vintage|luxury|crewneck|champion|embroidered|studio)|zavora\s+ultimate|zavora\s+recycled|zavora\s+classic/i;
+  const fakeAsset = /zavora-(women|men|hero-clean|premium-hero)|studio-wide-trouser/i;
+  return !fakeName.test(text) && !fakeAsset.test(images);
+}
+
+function storefrontProducts(products = []) {
+  return products.filter(isRealStorefrontProduct);
+}
+
 module.exports = async function handler(req, res) {
   if (!rateLimit(req, res, 'products-api', { windowMs: 60_000, max: 300 })) return;
 
@@ -126,6 +144,7 @@ module.exports = async function handler(req, res) {
     if (singleId) {
       const product = await ProductRepository.getProductById(singleId);
       if (!product) return json(res, 404, { ok: false, error: 'Product not found' });
+      if (!isRealStorefrontProduct(product)) return json(res, 404, { ok: false, error: 'Product not found' });
       return json(res, 200, { ok: true, product }, 120);
     }
 
@@ -136,6 +155,8 @@ module.exports = async function handler(req, res) {
     res.setHeader('X-Page', String(result.page));
     res.setHeader('X-Per-Page', String(result.limit));
 
+    const products = storefrontProducts(result.products);
+
     return json(res, 200, {
       ok: true,
       provider: 'local-mongodb',
@@ -143,8 +164,8 @@ module.exports = async function handler(req, res) {
       limit: result.limit,
       total: result.total,
       totalPages: result.totalPages,
-      count: result.products.length,
-      products: result.products
+      count: products.length,
+      products
     }, 120); // 2-minute CDN cache
 
   } catch (error) {
