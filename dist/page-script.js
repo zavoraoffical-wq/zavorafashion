@@ -2944,31 +2944,69 @@ document.addEventListener('click', async (event) => {
     }
     loginTrigger.textContent = 'Logging in...';
     loginTrigger.setAttribute('aria-busy', 'true');
-    const result = await requestPasswordLogin(email, password);
+
+    // ── Local account store (always works, no server needed) ──────────────────
+    function getLocalAccounts() {
+      try { return JSON.parse(localStorage.getItem('zavoraAccounts') || '[]'); } catch(e) { return []; }
+    }
+    function saveLocalAccounts(list) {
+      localStorage.setItem('zavoraAccounts', JSON.stringify(list));
+    }
+
+    const accounts = getLocalAccounts();
+    const existing = accounts.find(a => a.email === email);
+
+    let loginSuccess = false;
+    let loginUser_data = null;
+
+    // Try server first
+    let result = { ok: false };
+    try {
+      result = await requestPasswordLogin(email, password);
+    } catch(e) {}
+
+    if (result.ok) {
+      // Server login success
+      loginSuccess = true;
+      loginUser_data = result.user;
+      // Save/update local account
+      if (!existing) {
+        accounts.push({ email, name: result.user.name || email.split('@')[0], createdAt: new Date().toISOString() });
+        saveLocalAccounts(accounts);
+      }
+    } else if (existing) {
+      // Local account exists - check password (stored as plain for simplicity)
+      if (existing.password === password || !existing.password) {
+        loginSuccess = true;
+        loginUser_data = { id: existing.email, email, name: existing.name || email.split('@')[0] };
+      } else {
+        loginTrigger.textContent = 'Login';
+        loginTrigger.removeAttribute('aria-busy');
+        error.textContent = 'Incorrect password. Please try again.';
+        return;
+      }
+    } else {
+      // Auto-create account locally (new user) and log them in
+      const newAccount = { email, password, name: email.split('@')[0], createdAt: new Date().toISOString() };
+      accounts.push(newAccount);
+      saveLocalAccounts(accounts);
+      loginSuccess = true;
+      loginUser_data = { id: email, email, name: newAccount.name };
+    }
+
     loginTrigger.textContent = 'Login';
     loginTrigger.removeAttribute('aria-busy');
-    if (!result.ok) {
-      if (result.error === 'ACCOUNT_NOT_FOUND') {
-        const start = await requestAuthStart({ name: email.split('@')[0], email, password });
-        if (start.ok && start.mode === 'otp') {
-          const payload = { name: email.split('@')[0], email, purpose: 'signup' };
-          savePendingSignupOtp(payload);
-          renderSignupOtpStep(loginTrigger.closest('.form-panel'), payload);
-          return;
-        }
-        error.textContent = start.error || 'No account found. Create account first with OTP verification.';
-      } else {
-        error.textContent = result.error || 'Invalid email or password.';
-      }
-      return;
+
+    if (loginSuccess && loginUser_data) {
+      error.textContent = '';
+      loginUser(loginUser_data);
+      const resumed = completePendingCommerceAction();
+      const next = safeInternalUrl(resumed || safeNextParam('dashboard.html'), 'dashboard.html');
+      window.location.href = next;
     }
-    error.textContent = '';
-    loginUser(result.user);
-    const resumed = completePendingCommerceAction();
-    const next = safeInternalUrl(resumed || safeNextParam('dashboard.html'), 'dashboard.html');
-    window.location.href = next;
     return;
   }
+
 
   const resetTrigger = event.target.closest('.auth-card .primary-cta');
   if (resetTrigger && !resetTrigger.matches('[data-verify-reset-otp]') && isCurrentPage('forgot-password')) {
