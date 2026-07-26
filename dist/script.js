@@ -471,9 +471,23 @@ async function loadPrintfulProducts() {
       }
     }
   } catch (error) {}
+
+  if (!state.printfulProducts.length) {
+    try {
+      const staticRes = await fetch('/products.json');
+      if (staticRes.ok) {
+        const staticProds = await staticRes.json();
+        if (Array.isArray(staticProds) && staticProds.length) {
+          state.printfulProducts = staticProds;
+        }
+      }
+    } catch (e) {}
+  }
+
   renderHomeProductSections();
   renderProducts();
 }
+
 
 
 function dailyProduct(productsForDay) {

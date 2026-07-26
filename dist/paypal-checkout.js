@@ -149,28 +149,28 @@ function handlePayNowCOD() {
   }, 600);
 }
 
-// ── Payment Method Toggle: Show PayPal or Pay Now ─────────────────────────────
 function bindPaymentToggle() {
   const paypalSection = document.getElementById('paypalSection');
   const payNowSection = document.getElementById('payNowSection');
   const payNowBtn     = document.getElementById('payNowBtn');
 
+  function syncPaymentUI() {
+    const val = document.querySelector('input[name="payment"]:checked')?.value || 'cod';
+    if (paypalSection) {
+      paypalSection.style.display = val === 'paypal' ? 'block' : 'none';
+    }
+    if (payNowSection) {
+      payNowSection.style.display = 'block';
+    }
+  }
+
   document.querySelectorAll('input[name="payment"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      const val = document.querySelector('input[name="payment"]:checked')?.value;
-      if (val === 'cod') {
-        if (paypalSection) paypalSection.style.display = 'none';
-        if (payNowSection) payNowSection.style.display = 'block';
-      } else {
-        if (paypalSection) paypalSection.style.display = '';
-        if (payNowSection) payNowSection.style.display = 'none';
-      }
-    });
+    radio.addEventListener('change', syncPaymentUI);
   });
+  syncPaymentUI();
 
   if (payNowBtn) {
     payNowBtn.addEventListener('click', handlePayNowCOD);
-    // Hover effect
     payNowBtn.addEventListener('mouseenter', () => {
       payNowBtn.style.transform = 'translateY(-2px)';
       payNowBtn.style.boxShadow = '0 10px 32px rgba(0,0,0,0.28)';
@@ -181,6 +181,7 @@ function bindPaymentToggle() {
     });
   }
 }
+
 
 window.handlePayNowCOD = handlePayNowCOD;
 
