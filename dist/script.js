@@ -583,13 +583,16 @@ function renderHomeProductSections() {
 }
 
 function renderProducts() {
-  const category = $('#categoryFilter').value;
-  const collection = $('#collectionFilter').value;
-  const color = $('#colorFilter').value;
-  const size = $('#sizeFilter').value;
-  const under = Number($('#priceFilter').value);
-  const sale = $('#saleFilter').checked;
-  const sort = $('#sortFilter').value;
+  const grid = document.querySelector('#productGrid');
+  if (!grid) return; // Only execute if product grid exists (on shop pages)
+
+  const category = $('#categoryFilter')?.value || 'all';
+  const collection = $('#collectionFilter')?.value || 'all';
+  const color = $('#colorFilter')?.value || 'all';
+  const size = $('#sizeFilter')?.value || 'all';
+  const under = Number($('#priceFilter')?.value || 999);
+  const sale = $('#saleFilter')?.checked || false;
+  const sort = $('#sortFilter')?.value || 'new';
 
   let filtered = getHomeProducts().filter((product) => {
     return (category === 'all' || product.category === category)
@@ -608,13 +611,16 @@ function renderProducts() {
     return b.id - a.id;
   });
 
-  $('#productCount').textContent = filtered.length;
+  const countBadge = $('#productCount');
+  if (countBadge) countBadge.textContent = filtered.length;
+
   if (!state.printfulLoaded && !filtered.length) {
-    $('#productGrid').innerHTML = '<p class="catalog-loading">Loading Printful products...</p>';
+    grid.innerHTML = '<p class="catalog-loading">Loading Printful products...</p>';
     return;
   }
-  $('#productGrid').innerHTML = filtered.length ? filtered.slice(0, state.visible).map(productCard).join('') : '<p class="catalog-loading">No Printful products found for this filter.</p>';
+  grid.innerHTML = filtered.length ? filtered.slice(0, state.visible).map(productCard).join('') : '<p class="catalog-loading">No Printful products found for this filter.</p>';
 }
+
 
 function productCard(product) {
   const rawColors = (product.colors || [product.color || 'default']).filter(c => c && c !== 'default' && c !== 'original');
