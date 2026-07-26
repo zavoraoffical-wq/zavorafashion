@@ -4794,3 +4794,24 @@ input[type="url"], input[type="date"],
     color: #050505;
   }
 }
+
+/* ─── MOBILE SCROLLING PERFORMANCE FIX ─── */
+@media (max-width: 768px) {
+  html, body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+  }
+  .product-card,
+  .home-product-shelf,
+  .daily-feature,
+  .home-product-slider {
+    -webkit-transform: translate3d(0,0,0);
+    transform: translate3d(0,0,0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  img {
+    content-visibility: auto;
+  }
+}
+
