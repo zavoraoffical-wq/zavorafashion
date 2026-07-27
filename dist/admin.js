@@ -2513,6 +2513,8 @@ async function bootAdmin() {
 
 // ─── PRINTFUL PRODUCT IMPORT MANAGER & BULK EDITOR ───────────────────────
 
+}
+
 window.__printfulStagingProducts = [];
 
 async function fetchPrintfulStoreProducts() {
@@ -2889,7 +2891,5 @@ async function bootAdmin() {
 }
 
 bootAdmin();
-
-}
 
 window.bulkApplyStagingEdits = bulkApplyStagingEdits;
