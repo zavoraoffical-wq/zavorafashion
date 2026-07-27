@@ -1698,7 +1698,11 @@ async function rebuildStorefrontCatalogCache(productsArray) {
 function stageImportedPrintfulProducts(productsArray = []) {
   const incoming = Array.isArray(productsArray) ? productsArray : [];
   if (!incoming.length) return;
-  const current = Array.isArray(window.__printfulStagingProducts) ? window.__printfulStagingProducts : [];
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('zavoraPrintfulStagingProducts') || '[]'); } catch (error) {}
+  const current = Array.isArray(window.__printfulStagingProducts) && window.__printfulStagingProducts.length
+    ? window.__printfulStagingProducts
+    : saved;
   const byId = new Map(current.map((product) => [String(product.id || product.printfulId || product.sku), product]));
   incoming.forEach((product, index) => {
     const id = String(product.id || product.printfulId || product.sku || `PF-URL-${Date.now()}-${index}`);
@@ -1711,6 +1715,7 @@ function stageImportedPrintfulProducts(productsArray = []) {
     });
   });
   window.__printfulStagingProducts = Array.from(byId.values());
+  try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts)); } catch (error) {}
   if (typeof renderPrintfulStagingTable === 'function') renderPrintfulStagingTable();
 }
 
@@ -2482,6 +2487,7 @@ async function fetchPrintfulStoreProducts() {
         tags: sp.tags || ['printful', 'streetwear']
       };
     });
+    try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts)); } catch (error) {}
 
     updateImportProgress(100, 'Printful Store Sync Complete!');
     setTimeout(closeImportProgress, 800);
@@ -2506,6 +2512,9 @@ function renderPrintfulStagingTable() {
   const searchInput = document.getElementById('stagingSearchInput');
   const query = String(searchInput?.value || '').trim().toLowerCase();
 
+  if (!Array.isArray(window.__printfulStagingProducts) || !window.__printfulStagingProducts.length) {
+    try { window.__printfulStagingProducts = JSON.parse(localStorage.getItem('zavoraPrintfulStagingProducts') || '[]'); } catch (error) { window.__printfulStagingProducts = []; }
+  }
   const stagingList = window.__printfulStagingProducts || [];
   const existingProducts = getAdminProducts();
 
