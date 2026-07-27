@@ -78,7 +78,15 @@ function slugFromUrl(url = '') {
 }
 
 function isPrintfulCategoryImport(url = '') {
-  return /\/dashboard\/custom\/womens\/t-shirts(?:[/?#]|$)|\/custom\/womens\/t-shirts(?:[/?#]|$)|\/womens\/t-shirts(?:[/?#]|$)/i.test(String(url || ''));
+  try {
+    const parsed = new URL(String(url || ''));
+    const path = parsed.pathname.replace(/\/+$/, '').toLowerCase();
+    return path === '/dashboard/custom/womens/t-shirts'
+      || path === '/custom/womens/t-shirts'
+      || path === '/womens/t-shirts';
+  } catch (error) {
+    return false;
+  }
 }
 
 function forceImportCategory(product = {}, category = 'oversized-tees', gender = 'Women') {
