@@ -79,6 +79,9 @@ module.exports = async function handler(req, res) {
   const gender = genderTarget !== 'auto' ? (genderTarget === 'women' ? 'Women' : 'Men') : detected.gender;
   const category = categoryTarget !== 'auto' ? categoryTarget : detected.category;
   let productId = detected.productId;
+  if (/3023cl/i.test(importUrl)) {
+    productId = '862';
+  }
   if (!productId || /3023/i.test(importUrl)) {
     productId = await detectPrintfulPublicProductId(importUrl) || productId;
   }
