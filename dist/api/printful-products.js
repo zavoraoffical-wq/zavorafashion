@@ -783,6 +783,32 @@ function normalizeCatalogProduct(product, index, requestedGender = '') {
   }, index, requestedGender);
 }
 
+async function detectPrintfulProductIdFromUrl(importUrl = '') {
+  const cleanUrl = String(importUrl || '').trim();
+  if (!/^https?:\/\/([^/]+\.)?printful\.com\//i.test(cleanUrl)) return '';
+  if (/3023cl/i.test(cleanUrl)) return '862';
+  if (/bella-canvas-6400/i.test(cleanUrl)) return '360';
+  try {
+    const publicUrl = cleanUrl
+      .replace('/dashboard/custom/', '/custom/')
+      .replace(/\/dashboard\//, '/');
+    const response = await fetch(publicUrl, {
+      headers: {
+        'User-Agent': 'ZavoraFashionImporter/1.0',
+        'Accept': 'text/html,application/xhtml+xml'
+      }
+    });
+    if (!response.ok) return '';
+    const html = await response.text();
+    return (html.match(/\\?"item_id\\?"\s*:\s*(\d+)/i) || [])[1]
+      || (html.match(/item_id["\\]*\s*:\s*(\d+)/i) || [])[1]
+      || (html.match(/"itemId"\s*:\s*(\d+)/i) || [])[1]
+      || '';
+  } catch (error) {
+    return '';
+  }
+}
+
 async function fetchCatalogProducts({ gender, limit, offset, query, collection, category, productId }) {
   if (productId) {
     const detail = await printfulCatalogFetch(`/products/${encodeURIComponent(productId)}`);
@@ -887,7 +913,12 @@ module.exports = async function handler(req, res) {
     const page = Math.max(Number(req.query.page || 1), 1);
     const collection = String(req.query.collection || '').toLowerCase();
     const category = String(req.query.category || '').toLowerCase();
-    const productId = String(req.query.productId || req.query.product_id || '').trim();
+    const importUrl = String(req.query.url || req.query.printfulUrl || '').trim();
+    let productId = String(req.query.productId || req.query.product_id || '').trim();
+    if (!productId && importUrl) {
+      productId = await detectPrintfulProductIdFromUrl(importUrl);
+      if (!productId) return response(res, 404, { ok: false, error: 'Product Not Found', products: [] });
+    }
     const offset = (page - 1) * limit;
     const storeOnly = String(req.query.action || '').toLowerCase() === 'store_products' || String(req.query.store || '') === 'true';
     const catalogImport = storeOnly ? await fetchStoreProducts({
@@ -906,7 +937,15 @@ module.exports = async function handler(req, res) {
       category,
       productId
     });
-    const products = catalogImport.products;
+    const products = importUrl && category
+      ? catalogImport.products.map((product) => ({
+        ...product,
+        category,
+        productType: category,
+        categoryPath: `${gender === 'women' ? 'Women' : gender === 'men' ? 'Men' : 'Unisex'} > ${category.replace(/-/g, ' ')}`,
+        gender: gender === 'women' ? 'Women' : gender === 'men' ? 'Men' : product.gender
+      }))
+      : catalogImport.products;
     const source = catalogImport.source;
     let db = {
       saved: false,
