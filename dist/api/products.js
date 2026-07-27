@@ -80,6 +80,13 @@ function filterProducts(products = []) {
   return uniqueProducts(products).filter(isRealStorefrontProduct);
 }
 
+function isTshirtProduct(product = {}) {
+  const text = `${product.name || ''} ${product.title || ''} ${product.description || ''} ${product.category || ''} ${product.productType || ''}`.toLowerCase();
+  const category = String(product.category || '').toLowerCase();
+  return ['oversized-tees', 'heavyweight-tees', 'baby-tees', 'tees', 'polo-shirts', 'crop-tops'].includes(category)
+    || /(t-?shirt|tee|shirt|polo)/i.test(text);
+}
+
 const REAL_PRINTFUL_IMPORTED_PRODUCTS = [
   {
     id: 862,
@@ -152,7 +159,17 @@ module.exports = async function handler(req, res) {
       });
       return Array.isArray(data.products) ? data.products : [];
     }));
-    const products = filterProducts([...REAL_PRINTFUL_IMPORTED_PRODUCTS, ...batches.flat()]).slice(0, limit);
+    let products = filterProducts([...REAL_PRINTFUL_IMPORTED_PRODUCTS, ...batches.flat()]);
+    const requestedCategory = String(req.query.category || '').toLowerCase();
+    if (requestedGender === 'women' && (!requestedCategory || requestedCategory === 'all' || requestedCategory === 'oversized-tees' || requestedCategory === 'tees')) {
+      products = products.filter(isTshirtProduct).map((product) => ({
+        ...product,
+        category: ['heavyweight-tees', 'baby-tees', 'polo-shirts', 'crop-tops'].includes(product.category) ? product.category : 'oversized-tees',
+        categoryPath: product.categoryPath || 'Women > Oversized T-Shirts',
+        gender: 'Women'
+      }));
+    }
+    products = products.slice(0, limit);
 
     return json(res, 200, {
       ok: true,
