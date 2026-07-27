@@ -77,6 +77,23 @@ function slugFromUrl(url = '') {
   }
 }
 
+function isPrintfulCategoryImport(url = '') {
+  return /\/dashboard\/custom\/womens\/t-shirts(?:[/?#]|$)|\/custom\/womens\/t-shirts(?:[/?#]|$)|\/womens\/t-shirts(?:[/?#]|$)/i.test(String(url || ''));
+}
+
+function forceImportCategory(product = {}, category = 'oversized-tees', gender = 'Women') {
+  return {
+    ...product,
+    category,
+    productType: category,
+    categoryPath: `${gender} > Oversized T-Shirts`,
+    gender,
+    collection: Array.isArray(product.collection)
+      ? [...new Set(['streetwear', 'new', ...product.collection])]
+      : ['streetwear', 'new']
+  };
+}
+
 async function detectPrintfulPublicProductId(importUrl = '') {
   const cleanUrl = String(importUrl || '').trim();
   if (!/^https?:\/\/([^/]+\.)?printful\.com\//i.test(cleanUrl)) return '';
@@ -112,6 +129,7 @@ module.exports = async function handler(req, res) {
   const detected = slugFromUrl(importUrl);
   const gender = genderTarget !== 'auto' ? (genderTarget === 'women' ? 'Women' : 'Men') : detected.gender;
   const category = categoryTarget !== 'auto' ? categoryTarget : detected.category;
+  const categoryImport = isPrintfulCategoryImport(importUrl);
   let productId = detected.productId;
   if (/3023cl/i.test(importUrl)) {
     productId = '862';
@@ -131,8 +149,8 @@ module.exports = async function handler(req, res) {
         limit: '60',
         page: '1',
         category: category !== 'auto' ? category : '',
-        productId: productId || '',
-        search: productId ? '' : detected.query
+        productId: categoryImport ? '' : (productId || ''),
+        search: productId || categoryImport ? '' : detected.query
       }
     };
     let bodyStr = '';
@@ -144,7 +162,9 @@ module.exports = async function handler(req, res) {
     await printfulHandler(fakeReq, fakeRes);
     const parsed = JSON.parse(bodyStr || '{}');
     if (parsed.ok && Array.isArray(parsed.products) && parsed.products.length) {
-      printfulProducts = parsed.products;
+      printfulProducts = categoryImport
+        ? parsed.products.map((product) => forceImportCategory(product, 'oversized-tees', gender))
+        : parsed.products;
     }
   } catch (e) {}
 
