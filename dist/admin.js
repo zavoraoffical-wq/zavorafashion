@@ -1448,7 +1448,8 @@ async function refreshLiveAdminDashboard() {
   renderLiveProductRows(stats.topProducts || []);
   renderLiveOrders(stats);
   renderRewardClaims(stats.rewardClaims || []);
-  if (bell) bell.textContent = `Live ${stats.products || 0}`;
+  const liveBell = document.querySelector('[data-live-admin-count]');
+  if (liveBell) liveBell.textContent = `Live ${stats.products || 0}`;
 }
 
 function addAdminProduct(form) {
