@@ -1797,28 +1797,10 @@ function productCard(title, price, image, tag) {
 }
 
 function getAdminProducts() {
-  try {
-    const admin = JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY) || '[]');
-    const imported = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]');
-    const printfulStaging = JSON.parse(localStorage.getItem('zavora_imported_products') || '[]');
-    const staged = JSON.parse(localStorage.getItem('printful_staged_products') || '[]');
-    const productsKey = JSON.parse(localStorage.getItem('zavoraProducts') || '[]');
-
-    const seen = new Set();
-    const clean = [];
-    [...staged, ...printfulStaging, ...imported, ...admin, ...productsKey].forEach(p => {
-      if (p && (p.id || p.printfulId)) {
-        const key = String(p.id || p.printfulId);
-        if (!seen.has(key)) {
-          seen.add(key);
-          clean.push(p);
-        }
-      }
-    });
-    return clean;
-  } catch (error) {
-    return [];
-  }
+  ['zavoraImportedCatalog', 'zavora_imported_products', 'printful_staged_products', 'zavoraProducts'].forEach((key) => {
+    try { localStorage.removeItem(key); } catch (error) {}
+  });
+  return [];
 }
 
 const catalogData = [...getAdminProducts()];
@@ -2058,7 +2040,7 @@ async function loadCatalogFromAPI() {
 
     // Update sessionStorage for next instant load
     try {
-      const cacheKey = `zavoraCatalog_${pageName}`;
+      const cacheKey = `zavoraCatalog_v2_${pageName}_${window.location.search || 'all'}`;
       sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), products }));
     } catch(e) {}
 
@@ -2104,9 +2086,9 @@ function injectLargeCatalog() {
   const genderTarget = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : 'all';
 
   // ── 1. Try sessionStorage (sub-second warm load) ─────────────────────
-  if (!window.__zavoraCatalogProducts?.length) {
+  if (false && !window.__zavoraCatalogProducts?.length) {
     try {
-      const cacheKey = `zavoraCatalog_${pageName}`;
+      const cacheKey = `zavoraCatalog_v2_${pageName}_${window.location.search || 'all'}`;
       const hit = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
       if (hit && hit.products?.length && (Date.now() - hit.ts) < 300_000) { // 5-min TTL
         window.__zavoraCatalogProducts = hit.products.filter(p =>
@@ -2118,7 +2100,7 @@ function injectLargeCatalog() {
   }
 
   // ── 2. Try localStorage merged catalog (fallback) ────────────────────
-  if (!window.__zavoraCatalogProducts?.length) {
+  if (false && !window.__zavoraCatalogProducts?.length) {
     try {
       let importedRaw = [];
       let adminRaw = [];
