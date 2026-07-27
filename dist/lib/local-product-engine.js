@@ -412,6 +412,13 @@ class ProductRepository {
   static async deleteByIds(ids = []) {
     if (!ids.length) return { deleted: 0 };
     const col = await this.getCollection();
+    if (!col) {
+      let deleted = 0;
+      ids.map(String).forEach((id) => {
+        if (memoryProductStore.delete(id)) deleted += 1;
+      });
+      return { deleted, adapter: 'memory' };
+    }
     const stringIds = ids.map(String);
     const res = await col.deleteMany({
       $or: [
@@ -420,6 +427,24 @@ class ProductRepository {
       ]
     });
     return { deleted: res.deletedCount };
+  }
+
+  static async deleteAllProducts() {
+    const memoryDeleted = memoryProductStore.size;
+    memoryProductStore.clear();
+
+    const col = await this.getCollection();
+    if (!col) {
+      return { deleted: memoryDeleted, adapter: 'memory' };
+    }
+
+    if (typeof col.clear === 'function') {
+      const res = await col.clear();
+      return { deleted: res.deletedCount || 0, cleared: Boolean(res.cleared), adapter: 'database-clear' };
+    }
+
+    const res = await col.deleteMany({});
+    return { deleted: res.deletedCount || 0, adapter: 'database' };
   }
 }
 

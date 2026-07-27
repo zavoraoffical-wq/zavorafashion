@@ -268,10 +268,31 @@ module.exports = async function handler(req, res) {
     try {
       const action = String(req.query?.action || '').toLowerCase();
       if (action === 'delete') {
-        parseBody(req);
-        return json(res, 200, { ok: true, deleted: 0, note: 'Demo products are blocked from storefront output.' });
+        const body = parseBody(req);
+        const ids = Array.isArray(body.ids) ? body.ids : [body.id || body.printfulId].filter(Boolean);
+        const result = ids.length ? await ProductRepository.deleteByIds(ids) : { deleted: 0 };
+        return json(res, 200, { ok: true, deleted: result.deleted || 0, db: result });
       }
       const body = parseBody(req);
+      if (['clear_all', 'delete_all', 'wipe'].includes(action)) {
+        const confirm = String(body.confirm || body.confirmation || '').trim().toUpperCase();
+        if (confirm !== 'DELETE_ALL_PRODUCTS') {
+          return json(res, 400, {
+            ok: false,
+            error: 'Confirmation required',
+            requiredConfirmation: 'DELETE_ALL_PRODUCTS'
+          });
+        }
+        const result = await ProductRepository.deleteAllProducts();
+        return json(res, 200, {
+          ok: true,
+          action,
+          deleted: result.deleted || 0,
+          db: result,
+          cache: { invalidated: true },
+          message: 'All product catalog records were deleted. Users, orders, and settings were not touched.'
+        });
+      }
       const products = Array.isArray(body.products) ? body.products : (body.product ? [body.product] : (body.id || body.printfulId ? [body] : []));
       if (['bulk_upsert', 'sync-cache', 'update', 'upsert', 'save'].includes(action) || products.length) {
         const clean = uniqueProducts(products).filter(Boolean).map((product) => {

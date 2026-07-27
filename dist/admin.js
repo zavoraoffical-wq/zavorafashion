@@ -2776,16 +2776,6 @@ function renderPrintfulStagingTable() {
   if (!Array.isArray(window.__printfulStagingProducts) || !window.__printfulStagingProducts.length) {
     try { window.__printfulStagingProducts = JSON.parse(localStorage.getItem('zavoraPrintfulStagingProducts') || '[]'); } catch (error) { window.__printfulStagingProducts = []; }
   }
-  if (!Array.isArray(window.__printfulStagingProducts) || !window.__printfulStagingProducts.length) {
-    const recovered = getAdminProducts().filter((product) => {
-      const text = `${product?.source || ''} ${product?.sku || ''} ${product?.printfulId || ''} ${product?.importedSourceUrl || ''}`.toLowerCase();
-      return text.includes('printful') || /^pf-/i.test(String(product?.sku || ''));
-    });
-    if (recovered.length) {
-      window.__printfulStagingProducts = recovered;
-      try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(recovered)); } catch (error) {}
-    }
-  }
   const stagingList = window.__printfulStagingProducts || [];
   const existingProducts = getAdminProducts();
 
@@ -2880,6 +2870,83 @@ function updateStagingSelectedCount() {
   if (btnSelected) btnSelected.textContent = `📥 Import Selected (${count})`;
 }
 
+function selectedStagingIds() {
+  return new Set([...document.querySelectorAll('.staging-chk:checked')].map((box) => String(box.value)));
+}
+
+function persistStagingProducts() {
+  try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts || [])); } catch (error) {}
+}
+
+async function deleteSelectedStagingProducts() {
+  const ids = selectedStagingIds();
+  if (!ids.size) {
+    toast('Please select product(s) to delete.', 'error');
+    return;
+  }
+  if (!confirm(`Delete ${ids.size} selected product(s) from importer and website database?`)) return;
+  showImportProgress('Deleting Products...', `Removing ${ids.size} selected product(s)...`, 35);
+  const idList = [...ids];
+  try {
+    const response = await fetch('/api/products?action=delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: idList })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) throw new Error(result.error || 'Delete failed');
+    window.__printfulStagingProducts = (window.__printfulStagingProducts || []).filter((product) => !ids.has(String(product.id)) && !ids.has(String(product.printfulId)));
+    const remaining = getAdminProducts().filter((product) => !ids.has(String(product.id)) && !ids.has(String(product.printfulId)));
+    saveAdminProducts(remaining);
+    persistStagingProducts();
+    updateImportProgress(100, `Deleted ${result.deleted || ids.size} product(s).`);
+    setTimeout(closeImportProgress, 900);
+    renderAdminProducts();
+    renderPrintfulStagingTable();
+    toast(`Deleted ${result.deleted || ids.size} product(s).`);
+  } catch (error) {
+    updateImportProgress(100, `Delete failed: ${error.message}`);
+    toast(`Delete failed: ${error.message}`, 'error');
+  }
+}
+
+function clearImporterStagingProducts() {
+  if (!confirm('Clear all importer staged products from this admin screen? Website DB will not be deleted.')) return;
+  window.__printfulStagingProducts = [];
+  try { localStorage.removeItem('zavoraPrintfulStagingProducts'); } catch (error) {}
+  try { localStorage.removeItem('printful_staged_products'); } catch (error) {}
+  renderPrintfulStagingTable();
+  toast('Importer staging cleared.');
+}
+
+async function clearWebsiteProductDatabase() {
+  if (!confirm('Delete ALL website products from database? This will remove products from storefront.')) return;
+  showImportProgress('Deleting Website Products...', 'Removing all products from database...', 35);
+  try {
+    const response = await fetch('/api/products?action=clear_all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: 'DELETE_ALL_PRODUCTS' })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) throw new Error(result.error || 'Database clear failed');
+    window.__printfulStagingProducts = [];
+    saveAdminProducts([]);
+    ['zavoraPrintfulStagingProducts', 'printful_staged_products', 'zavoraImportedCatalog', 'zavora_imported_products', 'zavoraProducts'].forEach((key) => {
+      try { localStorage.removeItem(key); } catch (error) {}
+      try { sessionStorage.removeItem(key); } catch (error) {}
+    });
+    updateImportProgress(100, `Website database cleared. Deleted ${result.deleted || 0} product(s).`);
+    setTimeout(closeImportProgress, 900);
+    renderAdminProducts();
+    renderPrintfulStagingTable();
+    toast(`Website DB cleared. Deleted ${result.deleted || 0} product(s).`);
+  } catch (error) {
+    updateImportProgress(100, `Clear failed: ${error.message}`);
+    toast(`Clear failed: ${error.message}`, 'error');
+  }
+}
+
 async function toggleSingleStagingPublish(productId) {
   const product = (window.__printfulStagingProducts || []).find(p => String(p.id) === String(productId));
   if (!product) return;
@@ -2939,6 +3006,8 @@ async function bulkApplyStagingEdits() {
   const status = document.getElementById('bulkStatusSelect')?.value;
   const featured = document.getElementById('bulkFeaturedSelect')?.value;
   const bestSeller = document.getElementById('bulkBestSellerSelect')?.value;
+  const minPrice = Number(document.getElementById('bulkMinPriceInput')?.value || 0);
+  const maxPrice = Number(document.getElementById('bulkMaxPriceInput')?.value || 0);
   const tagsRaw = document.getElementById('bulkTagsInput')?.value.trim();
   const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : null;
 
@@ -2972,6 +3041,11 @@ async function bulkApplyStagingEdits() {
     if (season) product.season = season;
     if (featured) product.featured = featured === 'yes';
     if (bestSeller) product.bestSeller = bestSeller === 'yes';
+    if (minPrice > 0) product.price = Math.round(minPrice * 100) / 100;
+    if (maxPrice > 0) {
+      product.compareAt = Math.round(maxPrice * 100) / 100;
+      product.originalPrice = product.compareAt;
+    }
     if (tags) product.tags = tags;
     Object.assign(product, normalizeProductTarget(product, product.gender, product.category, collection || ''));
     product.status = targetStatus;
@@ -3046,6 +3120,24 @@ async function bootAdmin() {
     btnApplyBulk.addEventListener('click', bulkApplyStagingEdits);
   }
 
+  const btnDeleteSelectedStaging = document.getElementById('btnDeleteSelectedStaging');
+  if (btnDeleteSelectedStaging && !btnDeleteSelectedStaging.dataset.bound) {
+    btnDeleteSelectedStaging.dataset.bound = 'true';
+    btnDeleteSelectedStaging.addEventListener('click', deleteSelectedStagingProducts);
+  }
+
+  const btnClearImporterStaging = document.getElementById('btnClearImporterStaging');
+  if (btnClearImporterStaging && !btnClearImporterStaging.dataset.bound) {
+    btnClearImporterStaging.dataset.bound = 'true';
+    btnClearImporterStaging.addEventListener('click', clearImporterStagingProducts);
+  }
+
+  const btnClearWebsiteProducts = document.getElementById('btnClearWebsiteProducts');
+  if (btnClearWebsiteProducts && !btnClearWebsiteProducts.dataset.bound) {
+    btnClearWebsiteProducts.dataset.bound = 'true';
+    btnClearWebsiteProducts.addEventListener('click', clearWebsiteProductDatabase);
+  }
+
   const btnImportSel = document.getElementById('btnImportSelectedDrafts');
   if (btnImportSel && !btnImportSel.dataset.bound) {
     btnImportSel.dataset.bound = 'true';
@@ -3108,6 +3200,9 @@ async function bootAdmin() {
 }
 
 window.bulkApplyStagingEdits = bulkApplyStagingEdits;
+window.deleteSelectedStagingProducts = deleteSelectedStagingProducts;
+window.clearImporterStagingProducts = clearImporterStagingProducts;
+window.clearWebsiteProductDatabase = clearWebsiteProductDatabase;
 window.toggleSingleStagingPublish = toggleSingleStagingPublish;
 window.updateStagingSelectedCount = updateStagingSelectedCount;
 window.openEditProductModal = openEditProductModal;

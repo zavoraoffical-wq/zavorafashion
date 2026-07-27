@@ -402,6 +402,8 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
                 <button type="button" class="primary-admin" id="btnSyncPrintfulStore">âš¡ Connect & Fetch Printful Store Products</button>
                 <button type="button" class="pill gold" id="btnImportSelectedDrafts">ðŸ“¥ Import Selected (0)</button>
                 <button type="button" class="pill" id="btnImportAllDrafts">ðŸ“¦ Import All Store Items</button>
+                <button type="button" class="pill" id="btnClearImporterStaging" style="border-color:#d9534f;color:#d9534f;">Clear Importer</button>
+                <button type="button" class="pill" id="btnClearWebsiteProducts" style="border-color:#d9534f;color:#d9534f;">Delete Website DB</button>
               </div>
             </div>
 
@@ -537,9 +539,20 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
                   <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Product Tags</label>
                   <input id="bulkTagsInput" placeholder="e.g. organic, streetwear" style="width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
                 </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Min Price ($)</label>
+                  <input id="bulkMinPriceInput" type="number" min="0" step="0.01" placeholder="58" style="width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Max / Compare Price ($)</label>
+                  <input id="bulkMaxPriceInput" type="number" min="0" step="0.01" placeholder="156" style="width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                </div>
               </div>
 
-              <button type="button" class="primary-admin" id="btnApplyBulkStagingEdits" style="width:100%;padding:10px;">ðŸš€ Apply Bulk Edits & Save Selected to Website Database</button>
+              <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
+                <button type="button" class="primary-admin" id="btnApplyBulkStagingEdits" style="width:100%;padding:10px;">ðŸš€ Apply Bulk Edits & Save Selected to Website Database</button>
+                <button type="button" class="primary-admin" id="btnDeleteSelectedStaging" style="width:100%;padding:10px;background:#d9534f;border-color:#d9534f;">Delete Selected</button>
+              </div>
             </div>
 
             <!-- Staging Products Table -->
