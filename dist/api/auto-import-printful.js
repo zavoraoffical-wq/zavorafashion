@@ -169,6 +169,33 @@ module.exports = async function handler(req, res) {
   } catch (e) {}
 
   // 2. If Printful handler produced products, upsert them to MongoDB
+  if (!printfulProducts.length && categoryImport) {
+    try {
+      const directReq = {
+        ...req,
+        method: 'GET',
+        headers: req.headers || {},
+        query: {
+          gender: 'women',
+          limit: '60',
+          page: '1',
+          category: 'oversized-tees'
+        }
+      };
+      let directBody = '';
+      const directRes = {
+        setHeader() {},
+        statusCode: 200,
+        end(val) { directBody = val || ''; }
+      };
+      await printfulHandler(directReq, directRes);
+      const parsed = JSON.parse(directBody || '{}');
+      if (parsed.ok && Array.isArray(parsed.products) && parsed.products.length) {
+        printfulProducts = parsed.products.map((product) => forceImportCategory(product, 'oversized-tees', 'Women'));
+      }
+    } catch (error) {}
+  }
+
   if (!printfulProducts.length && /3023cl/i.test(importUrl)) {
     printfulProducts = [PRINTFUL_3023CL_PRODUCT];
   }
