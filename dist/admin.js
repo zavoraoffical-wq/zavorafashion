@@ -1724,6 +1724,15 @@ function stageImportedPrintfulProducts(productsArray = []) {
   });
   window.__printfulStagingProducts = Array.from(byId.values());
   try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts)); } catch (error) {}
+  try {
+    const existingAdmin = getAdminProducts();
+    const adminMap = new Map(existingAdmin.map((product) => [String(product.id || product.printfulId || product.sku), product]));
+    window.__printfulStagingProducts.forEach((product) => {
+      const key = String(product.id || product.printfulId || product.sku);
+      adminMap.set(key, { ...adminMap.get(key), ...product, published: product.published === true, status: product.status || 'draft' });
+    });
+    saveAdminProducts(Array.from(adminMap.values()));
+  } catch (error) {}
   if (typeof renderPrintfulStagingTable === 'function') renderPrintfulStagingTable();
   forceRenderImportedStagingRows(window.__printfulStagingProducts);
 }
@@ -2574,6 +2583,16 @@ function renderPrintfulStagingTable() {
   if (!Array.isArray(window.__printfulStagingProducts) || !window.__printfulStagingProducts.length) {
     try { window.__printfulStagingProducts = JSON.parse(localStorage.getItem('zavoraPrintfulStagingProducts') || '[]'); } catch (error) { window.__printfulStagingProducts = []; }
   }
+  if (!Array.isArray(window.__printfulStagingProducts) || !window.__printfulStagingProducts.length) {
+    const recovered = getAdminProducts().filter((product) => {
+      const text = `${product?.source || ''} ${product?.sku || ''} ${product?.printfulId || ''} ${product?.importedSourceUrl || ''}`.toLowerCase();
+      return text.includes('printful') || /^pf-/i.test(String(product?.sku || ''));
+    });
+    if (recovered.length) {
+      window.__printfulStagingProducts = recovered;
+      try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(recovered)); } catch (error) {}
+    }
+  }
   const stagingList = window.__printfulStagingProducts || [];
   const existingProducts = getAdminProducts();
 
@@ -2694,6 +2713,7 @@ function toggleSingleStagingPublish(productId) {
 
 window.toggleSingleStagingPublish = toggleSingleStagingPublish;
 window.updateStagingSelectedCount = updateStagingSelectedCount;
+window.openEditProductModal = openEditProductModal;
 
 async function bulkApplyStagingEdits() {
   const selectedBoxes = [...document.querySelectorAll('.staging-chk:checked')];
@@ -2871,3 +2891,5 @@ async function bootAdmin() {
 bootAdmin();
 
 }
+
+window.bulkApplyStagingEdits = bulkApplyStagingEdits;
