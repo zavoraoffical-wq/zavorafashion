@@ -4,7 +4,14 @@ function initHomeLaunchGate() {
 
 function showMaintenancePage() {
   const allowed = /admin|login|sign-up|forgot-password|affiliate/i.test(window.location.pathname);
-  if (allowed || window.__ZAVORA_DISABLE_MAINTENANCE__) return false;
+  const previewKey = 'zavora-preview-2026';
+  const params = new URLSearchParams(window.location.search || '');
+  if (params.get('zv_preview') === previewKey) {
+    try { sessionStorage.setItem('zavoraMaintenancePreview', previewKey); } catch (error) {}
+  }
+  let previewEnabled = false;
+  try { previewEnabled = sessionStorage.getItem('zavoraMaintenancePreview') === previewKey; } catch (error) {}
+  if (allowed || previewEnabled || window.__ZAVORA_DISABLE_MAINTENANCE__) return false;
   document.documentElement.classList.add('maintenance-mode');
   document.body.innerHTML = `
     <main class="maintenance-page">

@@ -14,7 +14,7 @@ function json(res, status, data) {
 function slugFromUrl(url = '') {
   try {
     const cleanUrl = decodeURIComponent(url);
-    const productId = (cleanUrl.match(/(?:product|products|catalog|custom|items|id|pants|tees|hoodies|\/)?(\d{3,5})/i) || [])[1] || '';
+    const productId = (cleanUrl.match(/(?:product|products|catalog|custom|items|id|pants|tees|hoodies|\/)?(\d{3,5})(?:[a-z]{0,3})?(?=[^\d]|$)/i) || [])[1] || '';
     const slug = (cleanUrl.match(/\/([^/?#]+)(?:\?|#|$)/) || [])[1] || '';
     const query = slug
       .replace(/-\d+[a-z]*$/i, '')
@@ -43,6 +43,29 @@ function slugFromUrl(url = '') {
   }
 }
 
+async function detectPrintfulPublicProductId(importUrl = '') {
+  const cleanUrl = String(importUrl || '').trim();
+  if (!/^https?:\/\/([^/]+\.)?printful\.com\//i.test(cleanUrl)) return '';
+  try {
+    const publicUrl = cleanUrl
+      .replace('/dashboard/custom/', '/custom/')
+      .replace(/\/dashboard\//, '/');
+    const response = await fetch(publicUrl, {
+      headers: {
+        'User-Agent': 'ZavoraFashionImporter/1.0',
+        'Accept': 'text/html,application/xhtml+xml'
+      }
+    });
+    if (!response.ok) return '';
+    const html = await response.text();
+    const itemId = (html.match(/"item_id"\s*:\s*(\d+)/i) || [])[1]
+      || (html.match(/item_id\\?":\s*(\d+)/i) || [])[1];
+    return itemId || '';
+  } catch (error) {
+    return '';
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (!['GET', 'POST'].includes(req.method)) {
     return json(res, 405, { ok: false, error: 'Method not allowed' });
@@ -55,7 +78,10 @@ module.exports = async function handler(req, res) {
   const detected = slugFromUrl(importUrl);
   const gender = genderTarget !== 'auto' ? (genderTarget === 'women' ? 'Women' : 'Men') : detected.gender;
   const category = categoryTarget !== 'auto' ? categoryTarget : detected.category;
-  const productId = detected.productId;
+  let productId = detected.productId;
+  if (!productId || /3023/i.test(importUrl)) {
+    productId = await detectPrintfulPublicProductId(importUrl) || productId;
+  }
 
   // 1. First, try calling Printful handler in-memory
   let printfulProducts = [];

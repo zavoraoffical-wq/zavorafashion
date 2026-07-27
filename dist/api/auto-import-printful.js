@@ -1,36 +1,69 @@
+'use strict';
+
+const { ProductRepository, NormalizationEngine } = require('../lib/local-product-engine');
+const printfulHandler = require('../api/printful-products');
+
 function json(res, status, data) {
   res.statusCode = status;
+  require('../lib/security').setSecurityHeaders({ headers: {} }, res);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.end(JSON.stringify(data));
 }
 
-function originFromRequest(req) {
-  const host = req.headers['x-forwarded-host'] || req.headers.host || process.env.VERCEL_URL || 'www.zavorafashion.com';
-  const protocol = req.headers['x-forwarded-proto'] || 'https';
-  return `${protocol}://${host}`;
+function slugFromUrl(url = '') {
+  try {
+    const cleanUrl = decodeURIComponent(url);
+    const productId = (cleanUrl.match(/(?:product|products|catalog|custom|items|id|pants|tees|hoodies|\/)?(\d{3,5})(?:[a-z]{0,3})?(?=[^\d]|$)/i) || [])[1] || '';
+    const slug = (cleanUrl.match(/\/([^/?#]+)(?:\?|#|$)/) || [])[1] || '';
+    const query = slug
+      .replace(/-\d+[a-z]*$/i, '')
+      .replace(/-/g, ' ')
+      .replace(/\b(womens|mens|custom|comfort|colors?)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    let gender = '';
+    if (/women|womens|ladies|female/i.test(cleanUrl)) gender = 'Women';
+    else if (/men|mens|male/i.test(cleanUrl)) gender = 'Men';
+    else gender = 'Unisex';
+
+    let category = '';
+    if (/pants|trouser|jogger|sweatpant/i.test(cleanUrl)) category = 'sweatpants';
+    else if (/crop|cropped hoodie/i.test(cleanUrl)) category = 'cropped-hoodies';
+    else if (/hoodie|pullover|sweatshirt/i.test(cleanUrl)) category = 'hoodies';
+    else if (/jacket|bomber|coat/i.test(cleanUrl)) category = 'jackets';
+    else if (/baby tee|crop tee/i.test(cleanUrl)) category = 'baby-tees';
+    else if (/t-shirt|tee|shirt|polo/i.test(cleanUrl)) category = 'oversized-tees';
+    else if (/hat|cap|beanie/i.test(cleanUrl)) category = 'accessories';
+    else category = 'oversized-tees';
+
+    return { productId, gender, category, query };
+  } catch (error) {
+    return { productId: '', gender: 'Women', category: 'oversized-tees', query: '' };
+  }
 }
 
-async function importPage({ origin, gender, page, limit }) {
-  const url = `${origin}/api/printful-products?gender=${encodeURIComponent(gender)}&limit=${limit}&page=${page}&save=true`;
-  const result = await fetch(url, {
-    headers: {
-      Accept: 'application/json',
-      'x-zavora-auto-import': 'true'
-    }
-  });
-  const body = await result.json().catch(() => ({}));
-  if (!result.ok || body.ok === false) {
-    throw new Error(body.error || `Import failed for ${gender} page ${page}: ${result.status}`);
+async function detectPrintfulPublicProductId(importUrl = '') {
+  const cleanUrl = String(importUrl || '').trim();
+  if (!/^https?:\/\/([^/]+\.)?printful\.com\//i.test(cleanUrl)) return '';
+  try {
+    const publicUrl = cleanUrl
+      .replace('/dashboard/custom/', '/custom/')
+      .replace(/\/dashboard\//, '/');
+    const response = await fetch(publicUrl, {
+      headers: {
+        'User-Agent': 'ZavoraFashionImporter/1.0',
+        'Accept': 'text/html,application/xhtml+xml'
+      }
+    });
+    if (!response.ok) return '';
+    const html = await response.text();
+    const itemId = (html.match(/"item_id"\s*:\s*(\d+)/i) || [])[1]
+      || (html.match(/item_id\\?":\s*(\d+)/i) || [])[1];
+    return itemId || '';
+  } catch (error) {
+    return '';
   }
-  return {
-    gender,
-    page,
-    source: body.source,
-    count: body.count || 0,
-    total: body.total || 0,
-    db: body.db || null
-  };
 }
 
 module.exports = async function handler(req, res) {
@@ -38,44 +71,64 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { ok: false, error: 'Method not allowed' });
   }
 
-  const cronSecret = process.env.CRON_SECRET || '';
-  const providedSecret = String(req.query.secret || req.headers['x-cron-secret'] || '');
-  if (cronSecret && providedSecret !== cronSecret) {
-    return json(res, 401, { ok: false, error: 'Invalid cron secret' });
+  const importUrl = String(req.query.url || req.body?.url || '').trim();
+  const genderTarget = String(req.query.gender || req.body?.gender || 'auto').toLowerCase();
+  const categoryTarget = String(req.query.targetCategory || req.query.category || req.body?.category || 'auto').toLowerCase();
+
+  const detected = slugFromUrl(importUrl);
+  const gender = genderTarget !== 'auto' ? (genderTarget === 'women' ? 'Women' : 'Men') : detected.gender;
+  const category = categoryTarget !== 'auto' ? categoryTarget : detected.category;
+  let productId = detected.productId;
+  if (!productId || /3023/i.test(importUrl)) {
+    productId = await detectPrintfulPublicProductId(importUrl) || productId;
   }
 
-  const origin = process.env.SITE_URL || process.env.PUBLIC_SITE_URL || originFromRequest(req);
-  const genders = String(req.query.genders || process.env.AUTO_IMPORT_GENDERS || 'men,women')
-    .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-  const limit = Math.min(Number(req.query.limit || process.env.AUTO_IMPORT_LIMIT || 60), 60);
-  const pages = Math.max(1, Math.min(Number(req.query.pages || process.env.AUTO_IMPORT_PAGES || 10), 10));
-  const imported = [];
-  const errors = [];
-
-  for (const gender of genders) {
-    for (let page = 1; page <= pages; page += 1) {
-      try {
-        const result = await importPage({ origin, gender, page, limit });
-        imported.push(result);
-        if (!result.count) break;
-      } catch (error) {
-        errors.push({ gender, page, error: error.message });
-        break;
+  // 1. First, try calling Printful handler in-memory
+  let printfulProducts = [];
+  try {
+    const fakeReq = {
+      ...req,
+      method: 'GET',
+      query: {
+        gender: gender.toLowerCase(),
+        limit: '60',
+        page: '1',
+        category: category !== 'auto' ? category : '',
+        productId: productId || '',
+        search: productId ? '' : detected.query
       }
+    };
+    let bodyStr = '';
+    const fakeRes = {
+      setHeader() {},
+      statusCode: 200,
+      end(val) { bodyStr = val || ''; }
+    };
+    await printfulHandler(fakeReq, fakeRes);
+    const parsed = JSON.parse(bodyStr || '{}');
+    if (parsed.ok && Array.isArray(parsed.products) && parsed.products.length) {
+      printfulProducts = parsed.products;
     }
+  } catch (e) {}
+
+  // 2. If Printful handler produced products, upsert them to MongoDB
+  if (printfulProducts.length) {
+    const upsertRes = await ProductRepository.bulkUpsert(printfulProducts);
+    return json(res, 200, {
+      ok: true,
+      provider: 'printful-catalog',
+      count: printfulProducts.length,
+      importedCount: printfulProducts.length,
+      db: upsertRes,
+      products: printfulProducts
+    });
   }
 
-  return json(res, errors.length ? 207 : 200, {
-    ok: errors.length === 0,
+  return json(res, 404, {
+    ok: false,
     provider: 'printful-catalog',
-    storage: 'mongodb+supabase',
-    origin,
-    limit,
-    pages,
-    imported,
-    errors,
-    importedCount: imported.reduce((sum, item) => sum + item.count, 0)
+    count: 0,
+    importedCount: 0,
+    error: 'No real Printful product matched this link. Share a Printful product/catalog URL with a product id or create it in your Printful store first.'
   });
 };

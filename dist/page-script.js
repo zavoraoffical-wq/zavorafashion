@@ -1,6 +1,13 @@
 if (typeof window !== 'undefined') {
+  const maintenancePreviewKey = 'zavora-preview-2026';
+  const maintenanceParams = new URLSearchParams(window.location.search || '');
+  if (maintenanceParams.get('zv_preview') === maintenancePreviewKey) {
+    try { sessionStorage.setItem('zavoraMaintenancePreview', maintenancePreviewKey); } catch (error) {}
+  }
+  let maintenancePreviewEnabled = false;
+  try { maintenancePreviewEnabled = sessionStorage.getItem('zavoraMaintenancePreview') === maintenancePreviewKey; } catch (error) {}
   const maintenanceAllowed = /admin|login|sign-up|forgot-password|affiliate/i.test(window.location.pathname);
-  if (!maintenanceAllowed && !window.__ZAVORA_DISABLE_MAINTENANCE__) {
+  if (!maintenanceAllowed && !maintenancePreviewEnabled && !window.__ZAVORA_DISABLE_MAINTENANCE__) {
     document.documentElement.classList.add('maintenance-mode');
     document.addEventListener('DOMContentLoaded', () => {
       document.body.innerHTML = `

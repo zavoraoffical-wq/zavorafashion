@@ -79,6 +79,42 @@ function filterProducts(products = []) {
   return uniqueProducts(products).filter(isRealStorefrontProduct);
 }
 
+const REAL_PRINTFUL_IMPORTED_PRODUCTS = [
+  {
+    id: 862,
+    printfulId: 862,
+    name: "Zavora Women's Heavyweight Boxy T-Shirt",
+    category: 'oversized-tees',
+    categoryPath: 'Women > Oversized T-Shirts',
+    gender: 'Women',
+    productType: 'T-Shirt',
+    collection: ['streetwear', 'new', 'limited'],
+    color: 'orchid',
+    colors: ['black', 'white', 'orchid', 'pepper'],
+    sizes: ['S', 'M', 'L', 'XL', '2XL'],
+    basePrice: 58,
+    includedShippingCost: 14.99,
+    price: 94.89,
+    compareAt: 167.88,
+    sale: true,
+    popularity: 95,
+    badge: 'New',
+    img: 'https://files.cdn.printful.com/products/862/22604_1743753168.jpg',
+    alt: 'Comfort Colors 3023CL heavyweight boxy t-shirt from Printful',
+    images: [
+      'https://files.cdn.printful.com/products/862/22604_1743753168.jpg',
+      'https://files.cdn.printful.com/products/862/22585_1769501205.jpg',
+      'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'
+    ],
+    stock: 5,
+    sku: 'PF-862-3023CL-ORCHID-S',
+    description: "Women's Heavyweight Boxy T-Shirt | Comfort Colors 3023CL imported from Printful.",
+    source: 'printful-catalog',
+    status: 'active',
+    published: true
+  }
+];
+
 module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
     const action = String(req.query.action || '').toLowerCase();
@@ -97,7 +133,8 @@ module.exports = async function handler(req, res) {
 
     if (productId) {
       const data = await callPrintfulHandler(req, { ...req.query, productId, limit: 1 });
-      const product = filterProducts(data.products || [data.product].filter(Boolean))[0];
+      const seed = REAL_PRINTFUL_IMPORTED_PRODUCTS.find((item) => String(item.id) === productId || String(item.printfulId) === productId);
+      const product = seed || filterProducts(data.products || [data.product].filter(Boolean))[0];
       if (!product) return json(res, 404, { ok: false, error: 'Product not found' });
       return json(res, 200, { ok: true, provider: 'printful', product }, 120);
     }
@@ -114,7 +151,7 @@ module.exports = async function handler(req, res) {
       });
       return Array.isArray(data.products) ? data.products : [];
     }));
-    const products = filterProducts(batches.flat()).slice(0, limit);
+    const products = filterProducts([...REAL_PRINTFUL_IMPORTED_PRODUCTS, ...batches.flat()]).slice(0, limit);
 
     return json(res, 200, {
       ok: true,
