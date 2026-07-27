@@ -1990,15 +1990,14 @@ function deduplicateProducts(products) {
 async function fetchCatalogProducts(gender, limit = 60) {
   const params = new URLSearchParams({
     gender,
-    limit: String(limit),
-    action: 'store_products'
+    limit: String(limit)
   });
   const urlCategory = new URLSearchParams(window.location.search).get('category');
   const urlCollection = new URLSearchParams(window.location.search).get('collection');
   if (urlCategory) params.set('category', urlCategory);
   if (urlCollection) params.set('collection', urlCollection);
   try {
-    const response = await fetch(`/api/printful-products?${params.toString()}`);
+    const response = await fetch(`/api/products?${params.toString()}`);
     const data = await response.json();
     if (response.ok && data.ok && Array.isArray(data.products) && data.products.length) return data.products;
   } catch (error) {}
@@ -2026,14 +2025,14 @@ async function loadCatalogFromAPI() {
   try {
     const pageName = normalizePageName(window.location.pathname);
     const genderForPage = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : 'all';
-    const params = new URLSearchParams({ limit: '60', action: 'store_products' });
+    const params = new URLSearchParams({ limit: '60' });
     if (genderForPage !== 'all') params.set('gender', genderForPage);
     const urlCategory = new URLSearchParams(window.location.search).get('category');
     const urlCollection = new URLSearchParams(window.location.search).get('collection');
     if (urlCategory) params.set('category', urlCategory);
     if (urlCollection) params.set('collection', urlCollection);
 
-    const response = await fetch(`/api/printful-products?${params.toString()}`);
+    const response = await fetch(`/api/products?${params.toString()}`);
     if (!response.ok) { grid.dataset.loaded = 'failed'; return; }
     const data = await response.json();
     if (!data.ok || !Array.isArray(data.products) || !data.products.length) {
@@ -3766,7 +3765,7 @@ async function refreshSelectedProductFromUrl() {
   }
 
   try {
-    const res = await fetch(`/api/printful-products?productId=${encodeURIComponent(id)}`);
+    const res = await fetch(`/api/products?productId=${encodeURIComponent(id)}`);
     const data = await res.json();
     const prod = data.product || (Array.isArray(data.products) ? data.products.find(p => String(p.id) === String(id) || String(p.printfulId) === String(id)) : null);
     if (prod) {

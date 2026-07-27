@@ -235,7 +235,7 @@ async function loadPrintfulProducts() {
   state.printfulLoaded = true;
   try {
     const batches = await Promise.all(['men', 'women'].map(async (gender) => {
-      const res = await fetch(`/api/printful-products?action=store_products&gender=${gender}&limit=30&page=1`, {
+      const res = await fetch(`/api/products?gender=${gender}&limit=30&page=1`, {
         headers: { Accept: 'application/json' }
       });
       if (!res.ok) return [];
