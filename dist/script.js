@@ -205,15 +205,17 @@ async function loadPrintfulProducts() {
   if (state.printfulLoaded) return;
   state.printfulLoaded = true;
   try {
-    const res = await fetch('/api/products?limit=60', {
-      headers: { Accept: 'application/json' }
-    });
-    if (res.ok) {
+    const batches = await Promise.all(['men', 'women'].map(async (gender) => {
+      const res = await fetch(`/api/printful-products?gender=${gender}&limit=30&page=1`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!res.ok) return [];
       const data = await res.json();
-      const prods = Array.isArray(data.products) ? data.products : [];
-      if (prods.length) {
-        state.printfulProducts = prods;
-      }
+      return Array.isArray(data.products) ? data.products : [];
+    }));
+    const prods = batches.flat();
+    if (prods.length) {
+      state.printfulProducts = prods;
     }
   } catch (error) {}
 

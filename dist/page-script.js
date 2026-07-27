@@ -1972,7 +1972,7 @@ async function fetchCatalogProducts(gender, limit = 60) {
   if (urlCategory) params.set('category', urlCategory);
   if (urlCollection) params.set('collection', urlCollection);
   try {
-    const response = await fetch(`/api/products?${params.toString()}`);
+    const response = await fetch(`/api/printful-products?${params.toString()}`);
     const data = await response.json();
     if (response.ok && data.ok && Array.isArray(data.products) && data.products.length) return data.products;
   } catch (error) {}
@@ -2007,7 +2007,7 @@ async function loadCatalogFromAPI() {
     if (urlCategory) params.set('category', urlCategory);
     if (urlCollection) params.set('collection', urlCollection);
 
-    const response = await fetch(`/api/products?${params.toString()}`);
+    const response = await fetch(`/api/printful-products?${params.toString()}`);
     if (!response.ok) { grid.dataset.loaded = 'failed'; return; }
     const data = await response.json();
     if (!data.ok || !Array.isArray(data.products) || !data.products.length) {
@@ -3786,7 +3786,7 @@ async function refreshSelectedProductFromUrl() {
   }
 
   try {
-    const res = await fetch(`/api/products?id=${encodeURIComponent(id)}`);
+    const res = await fetch(`/api/printful-products?productId=${encodeURIComponent(id)}`);
     const data = await res.json();
     const prod = data.product || (Array.isArray(data.products) ? data.products.find(p => String(p.id) === String(id) || String(p.printfulId) === String(id)) : null);
     if (prod) {
