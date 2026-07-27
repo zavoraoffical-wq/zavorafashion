@@ -1,5 +1,7 @@
 'use strict';
 
+const { ProductRepository } = require('../lib/local-product-engine');
+
 function json(res, status, body, cacheSeconds = 0) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -130,7 +132,19 @@ module.exports = async function handler(req, res) {
       parseBody(req);
       return json(res, 200, { ok: true, deleted: 0, note: 'Demo products are blocked from storefront output.' });
     }
-    return json(res, 405, { ok: false, error: 'Product writes are handled from the admin import flow.' });
+    const body = parseBody(req);
+    const products = Array.isArray(body.products) ? body.products : (body.product ? [body.product] : (body.id || body.printfulId ? [body] : []));
+    if (['bulk_upsert', 'sync-cache', 'update', 'upsert', 'save'].includes(action) || products.length) {
+      const clean = filterProducts(products).map((product) => ({
+        ...product,
+        status: product.status || (product.published === false ? 'draft' : 'active'),
+        published: product.published !== false,
+        updatedAt: new Date().toISOString()
+      }));
+      const db = await ProductRepository.bulkUpsert(clean);
+      return json(res, 200, { ok: true, saved: clean.length, db, products: clean });
+    }
+    return json(res, 400, { ok: false, error: 'No valid products supplied.' });
   }
 
   if (req.method !== 'GET') return json(res, 405, { ok: false, error: 'Method not allowed' });
@@ -140,26 +154,16 @@ module.exports = async function handler(req, res) {
     const productId = String(req.query.id || req.query.productId || '').trim();
 
     if (productId) {
-      const data = await callPrintfulHandler(req, { ...req.query, productId, limit: 1 });
       const seed = REAL_PRINTFUL_IMPORTED_PRODUCTS.find((item) => String(item.id) === productId || String(item.printfulId) === productId);
-      const product = seed || filterProducts(data.products || [data.product].filter(Boolean))[0];
+      const saved = await ProductRepository.getProductById(productId).catch(() => null);
+      const product = saved || seed;
       if (!product) return json(res, 404, { ok: false, error: 'Product not found' });
-      return json(res, 200, { ok: true, provider: 'printful', product }, 120);
+      return json(res, 200, { ok: true, provider: saved ? 'mongodb' : 'seed', product }, 120);
     }
 
     const requestedGender = String(req.query.gender || '').toLowerCase();
-    const genders = requestedGender && requestedGender !== 'all' ? [requestedGender] : ['men', 'women'];
-    const perGenderLimit = Math.max(12, Math.ceil(limit / genders.length));
-    const batches = await Promise.all(genders.map(async (gender) => {
-      const data = await callPrintfulHandler(req, {
-        ...req.query,
-        gender,
-        limit: perGenderLimit,
-        page: req.query.page || 1
-      });
-      return Array.isArray(data.products) ? data.products : [];
-    }));
-    let products = filterProducts([...REAL_PRINTFUL_IMPORTED_PRODUCTS, ...batches.flat()]);
+    const savedData = await ProductRepository.findProducts({ ...req.query, limit, page: req.query.page || 1 }).catch(() => ({ products: [], total: 0 }));
+    let products = filterProducts([...REAL_PRINTFUL_IMPORTED_PRODUCTS, ...(savedData.products || [])]);
     const requestedCategory = String(req.query.category || '').toLowerCase();
     if (requestedGender === 'women' && (!requestedCategory || requestedCategory === 'all' || requestedCategory === 'oversized-tees' || requestedCategory === 'tees')) {
       products = products.filter(isTshirtProduct).map((product) => ({

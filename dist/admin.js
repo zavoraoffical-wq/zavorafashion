@@ -1786,42 +1786,99 @@ function parsePrintfulUrlClientSide(url, targetGender, targetCategory) {
 
 async function importPrintfulUrl(form) {
   const data = new FormData(form);
-  const url = String(data.get('url') || '').trim();
+  const rawUrls = String(data.get('url') || '').trim();
+  const urls = rawUrls.split(/\s+/).map((item) => item.trim()).filter((item) => /^https?:\/\/(www\.)?printful\.com\//i.test(item));
   const gender = String(data.get('gender') || 'auto');
   const targetCategory = String(data.get('category') || 'auto');
 
-  if (!url) {
-    toast('Enter a Printful URL or Product ID first');
+  if (!urls.length) {
+    toast('Enter one or more valid Printful product URLs first');
     return;
   }
 
-  showImportProgressModal('Importing Target Product...', `Parsing Printful URL: ${url}`);
-  updateImportProgress(20, 'Extracting Printful product metadata & mockups...');
+  showImportProgressModal('Importing Printful Products...', `Preparing ${urls.length} product link(s)...`);
+  updateImportProgress(8, 'Validating links...');
 
   try {
-    let current = 35;
-    const interval = setInterval(() => {
-      current = Math.min(85, current + 15);
-      updateImportProgress(current, 'Downloading HD mockups, variants, and colors...');
-    }, 350);
-
-    const params = new URLSearchParams({ url, gender, targetCategory, pages: '4', limit: '60' });
-    const response = await fetch(`/api/admin?action=auto-import-printful&${params.toString()}`);
-    const result = await response.json().catch(() => ({}));
-    clearInterval(interval);
-
-    let importedProducts = Array.isArray(result.products) ? result.products : [];
-    if (!importedProducts.length) {
-      throw new Error(result.error || 'No real Printful products found for this link.');
+    const importedProducts = [];
+    const errors = [];
+    for (let index = 0; index < urls.length; index += 1) {
+      const url = urls[index];
+      updateImportProgress(Math.round(12 + (index / urls.length) * 70), `Fetching Product ${index + 1} of ${urls.length}...`);
+      const params = new URLSearchParams({ url, gender, targetCategory, pages: '1', limit: '1' });
+      const response = await fetch(`/api/admin?action=auto-import-printful&${params.toString()}`);
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) {
+        errors.push(`${url}: ${result.error || 'Product Not Found'}`);
+        continue;
+      }
+      const products = Array.isArray(result.products) ? result.products : [];
+      products.forEach((product) => importedProducts.push({
+        ...product,
+        published: true,
+        status: 'active',
+        importedSourceUrl: url
+      }));
     }
 
+    if (!importedProducts.length) {
+      throw new Error(errors[0] || 'No real Printful products found for these links.');
+    }
+
+    updateImportProgress(88, 'Saving Database...');
     await rebuildStorefrontCatalogCache(importedProducts);
+    await fetch('/api/products?action=bulk_upsert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ products: importedProducts })
+    }).catch(() => {});
     await refreshLiveAdminDashboard();
-    finishImportProgress(importedProducts.length, `Successfully imported ${importedProducts.length} product(s) into your store!`);
+    renderPrintfulUrlPreview(importedProducts, errors);
+    finishImportProgress(importedProducts.length, `Completed: ${importedProducts.length} product(s) imported${errors.length ? `, ${errors.length} failed` : ''}.`);
   } catch (error) {
     finishImportProgress(0, `Import failed: ${error.message}`);
     toast('Import failed: ' + error.message, 'error');
   }
+}
+
+async function previewPrintfulUrls(form) {
+  const data = new FormData(form);
+  const urls = String(data.get('url') || '').split(/\s+/).map((item) => item.trim()).filter((item) => /^https?:\/\/(www\.)?printful\.com\//i.test(item));
+  const gender = String(data.get('gender') || 'auto');
+  const targetCategory = String(data.get('category') || 'auto');
+  const status = document.getElementById('printfulUrlImportStatus');
+  if (!urls.length) {
+    toast('Paste valid Printful product links first');
+    return;
+  }
+  if (status) status.textContent = `Previewing ${urls.length} Printful link(s)...`;
+  const products = [];
+  const errors = [];
+  for (const url of urls.slice(0, 20)) {
+    const params = new URLSearchParams({ url, gender, targetCategory, preview: 'true', limit: '1' });
+    const response = await fetch(`/api/admin?action=auto-import-printful&${params.toString()}`);
+    const result = await response.json().catch(() => ({}));
+    if (response.ok && result.ok && Array.isArray(result.products) && result.products.length) products.push(...result.products);
+    else errors.push(`${url}: ${result.error || 'Invalid Link'}`);
+  }
+  renderPrintfulUrlPreview(products, errors);
+}
+
+function renderPrintfulUrlPreview(products = [], errors = []) {
+  const grid = document.getElementById('printfulUrlPreviewGrid');
+  const status = document.getElementById('printfulUrlImportStatus');
+  const badge = document.getElementById('printfulUrlImportBadge');
+  if (badge) badge.textContent = `${products.length} Ready${errors.length ? ` / ${errors.length} Failed` : ''}`;
+  if (status) status.textContent = products.length ? `${products.length} product(s) ready. ${errors.length ? errors.join(' | ') : 'No errors.'}` : (errors.join(' | ') || 'No products found.');
+  if (!grid) return;
+  grid.innerHTML = products.map((product) => `
+    <article style="border:1px solid #ddd;border-radius:12px;padding:12px;background:#fff;">
+      <img src="${product.img || product.image || product.images?.[0] || ''}" alt="${product.name || ''}" style="width:100%;height:180px;object-fit:contain;background:#f7f7f7;border-radius:8px;">
+      <h3 style="font-size:14px;margin:10px 0 4px;">${product.name || 'Printful Product'}</h3>
+      <p style="font-size:12px;color:#666;margin:0;">PF-${product.printfulId || product.id} • ${product.gender || 'Auto'} • ${product.category || 'auto'}</p>
+      <p style="font-size:13px;font-weight:800;margin:8px 0 0;">${money(product.price || 0)}</p>
+    </article>
+  `).join('');
 }
 
 document.addEventListener('click', async (event) => {
@@ -1852,6 +1909,13 @@ document.addEventListener('click', async (event) => {
   const action = event.target.closest('[data-toast]');
   if (action) {
     toast(action.dataset.toast);
+  }
+
+  const previewPrintful = event.target.closest('#btnPreviewPrintfulLinks');
+  if (previewPrintful) {
+    const form = document.querySelector('[data-printful-url-import]');
+    if (form) previewPrintfulUrls(form);
+    return;
   }
 
   const editBtn = event.target.closest('[data-edit-product]');

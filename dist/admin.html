@@ -340,6 +340,48 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
         </section>
 
         <section class="admin-section" data-panel="importer">
+          <div class="admin-card" style="margin-bottom:20px;border:2px solid #050505;">
+            <div class="card-head" style="align-items:flex-start;gap:16px;flex-wrap:wrap;">
+              <div>
+                <p style="margin:0 0 4px;color:#d59a00;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;">Products → Import From Printful</p>
+                <h2>Import real Printful product links</h2>
+                <p style="font-size:13px;color:#666;margin-top:4px;max-width:760px;">Paste one product URL per line. You can import 1, 10, or 20 product links together. The importer previews each real Printful product first, detects duplicates, then saves published products to the product database and Admin → Products.</p>
+              </div>
+              <span class="pill gold" id="printfulUrlImportBadge">Ready</span>
+            </div>
+            <form data-printful-url-import style="display:grid;grid-template-columns:1.4fr .6fr .6fr;gap:12px;margin-top:16px;align-items:end;">
+              <div style="grid-column:1 / -1;">
+                <label style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;">Printful Product URLs</label>
+                <textarea name="url" id="printfulUrlBulkInput" rows="7" placeholder="https://www.printful.com/dashboard/custom/womens/t-shirts/womens-heavyweight-boxy-tshirt-comfort-colors-3023cl?technique=T-SHIRT&color=Orchid&size=S&#10;https://www.printful.com/dashboard/product/xxxxxxxx" style="width:100%;margin-top:6px;padding:12px;border:1px solid #bbb;border-radius:8px;font-size:13px;resize:vertical;"></textarea>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:700;">Target Gender</label>
+                <select name="gender" style="width:100%;padding:10px;border:1px solid #bbb;border-radius:8px;">
+                  <option value="auto">Auto detect</option>
+                  <option value="Women">Women</option>
+                  <option value="Men">Men</option>
+                  <option value="Unisex">Unisex</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:700;">Target Category</label>
+                <select name="category" style="width:100%;padding:10px;border:1px solid #bbb;border-radius:8px;">
+                  <option value="auto">Auto detect</option>
+                  <option value="oversized-tees">Oversized Tees</option>
+                  <option value="baby-tees">Baby Tees</option>
+                  <option value="hoodies">Hoodies</option>
+                  <option value="jackets">Jackets</option>
+                  <option value="accessories">Accessories</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="submit" class="primary-admin" style="min-width:170px;">Import Product</button>
+                <button type="button" class="pill" id="btnPreviewPrintfulLinks">Preview First</button>
+              </div>
+            </form>
+            <div id="printfulUrlImportStatus" style="margin-top:14px;font-size:13px;color:#555;">Paste product links above to begin.</div>
+            <div id="printfulUrlPreviewGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px;"></div>
+          </div>
           <!-- Printful Store Connection & System Overview -->
           <div class="admin-card" style="margin-bottom:20px;">
             <div class="card-head" style="flex-wrap:wrap;gap:12px;">

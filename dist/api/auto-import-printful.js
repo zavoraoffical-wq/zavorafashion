@@ -125,6 +125,7 @@ module.exports = async function handler(req, res) {
   const importUrl = String(req.query.url || req.body?.url || '').trim();
   const genderTarget = String(req.query.gender || req.body?.gender || 'auto').toLowerCase();
   const categoryTarget = String(req.query.targetCategory || req.query.category || req.body?.category || 'auto').toLowerCase();
+  const previewOnly = String(req.query.preview || req.body?.preview || '').toLowerCase() === 'true';
 
   const detected = slugFromUrl(importUrl);
   const gender = genderTarget !== 'auto' ? (genderTarget === 'women' ? 'Women' : 'Men') : detected.gender;
@@ -202,18 +203,29 @@ module.exports = async function handler(req, res) {
 
   if (printfulProducts.length) {
     let upsertRes = { saved: false, count: 0 };
-    try {
-      upsertRes = await ProductRepository.bulkUpsert(printfulProducts);
-    } catch (error) {
-      upsertRes = { saved: false, count: 0, error: error.message };
+    const withDuplicateState = await Promise.all(printfulProducts.map(async (product) => {
+      const existing = await ProductRepository.getProductById(product.printfulId || product.id).catch(() => null);
+      return {
+        ...product,
+        duplicate: Boolean(existing),
+        importAction: existing ? 'update-existing-product' : 'import-new-product'
+      };
+    }));
+    if (!previewOnly) {
+      try {
+        upsertRes = await ProductRepository.bulkUpsert(withDuplicateState);
+      } catch (error) {
+        upsertRes = { saved: false, count: 0, error: error.message };
+      }
     }
     return json(res, 200, {
       ok: true,
       provider: 'printful-catalog',
-      count: printfulProducts.length,
-      importedCount: printfulProducts.length,
+      count: withDuplicateState.length,
+      importedCount: previewOnly ? 0 : withDuplicateState.length,
+      preview: previewOnly,
       db: upsertRes,
-      products: printfulProducts
+      products: withDuplicateState
     });
   }
 
