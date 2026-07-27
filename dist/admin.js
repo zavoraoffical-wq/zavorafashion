@@ -2716,8 +2716,23 @@ async function bulkApplyStagingEdits() {
   toast(`Bulk Edits Applied! ${updatedCount} updated, ${publishedCount} live on website.`);
 }
 
-function bootAdmin() {
+async function bootAdmin() {
+  const ready = await requireAdminSession();
+  if (!ready) return;
   document.body.classList.remove('admin-locked');
+  renderQuickPanels();
+  renderAdminProducts();
+  renderAdminCategories();
+  renderAdminCustomers();
+  renderAdminPayments();
+  renderAdminCoupons();
+  renderAdminWishlist();
+  renderAdminShipping();
+  renderAdminAnalytics();
+  setSection(window.location.hash.replace('#', '') || 'dashboard');
+  refreshLiveAdminDashboard();
+  window.setInterval(refreshLiveAdminDashboard, 30000);
+  renderPrintfulStagingTable();
 
   const btnSyncStore = document.getElementById('btnSyncPrintfulStore');
   if (btnSyncStore && !btnSyncStore.dataset.bound) {
