@@ -809,6 +809,23 @@ async function detectPrintfulProductIdFromUrl(importUrl = '') {
   }
 }
 
+function detectTargetsFromUrl(importUrl = '', gender = '', category = '') {
+  const text = decodeURIComponent(String(importUrl || '')).toLowerCase();
+  let detectedGender = String(gender || '').toLowerCase();
+  let detectedCategory = String(category || '').toLowerCase();
+  if (!detectedGender || detectedGender === 'auto') {
+    detectedGender = /women|womens|ladies/.test(text) ? 'women' : (/men|mens/.test(text) ? 'men' : 'unisex');
+  }
+  if (!detectedCategory || detectedCategory === 'auto') {
+    if (/hoodie|sweatshirt/.test(text)) detectedCategory = 'hoodies';
+    else if (/jacket|bomber|coat/.test(text)) detectedCategory = 'jackets';
+    else if (/hat|cap|beanie/.test(text)) detectedCategory = 'accessories';
+    else if (/shirt|t-shirt|tee|t-shirts/.test(text)) detectedCategory = 'oversized-tees';
+    else detectedCategory = 'oversized-tees';
+  }
+  return { gender: detectedGender, category: detectedCategory };
+}
+
 async function fetchCatalogProducts({ gender, limit, offset, query, collection, category, productId }) {
   if (productId) {
     const detail = await printfulCatalogFetch(`/products/${encodeURIComponent(productId)}`);
@@ -908,12 +925,13 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const gender = String(req.query.gender || 'men').toLowerCase();
+    const importUrl = String(req.query.url || req.query.printfulUrl || '').trim();
+    const targets = detectTargetsFromUrl(importUrl, req.query.gender || 'men', req.query.category || req.query.targetCategory || '');
+    const gender = targets.gender;
     const limit = Math.min(Number(req.query.limit || 23), 60);
     const page = Math.max(Number(req.query.page || 1), 1);
     const collection = String(req.query.collection || '').toLowerCase();
-    const category = String(req.query.category || '').toLowerCase();
-    const importUrl = String(req.query.url || req.query.printfulUrl || '').trim();
+    const category = targets.category;
     let productId = String(req.query.productId || req.query.product_id || '').trim();
     if (!productId && importUrl) {
       productId = await detectPrintfulProductIdFromUrl(importUrl);

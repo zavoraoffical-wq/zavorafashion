@@ -1806,7 +1806,7 @@ async function importPrintfulUrl(form) {
     for (let index = 0; index < urls.length; index += 1) {
       const url = urls[index];
       updateImportProgress(Math.round(12 + (index / urls.length) * 70), `Fetching Product ${index + 1} of ${urls.length}...`);
-      const params = new URLSearchParams({ url, gender, targetCategory, pages: '1', limit: '1' });
+      const params = new URLSearchParams({ url, gender, category: targetCategory, pages: '1', limit: '1' });
       const response = await fetch(`/api/printful-products?${params.toString()}`);
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.ok) {
@@ -1856,7 +1856,7 @@ async function previewPrintfulUrls(form) {
   const products = [];
   const errors = [];
   for (const url of urls.slice(0, 20)) {
-    const params = new URLSearchParams({ url, gender, targetCategory, preview: 'true', limit: '1' });
+    const params = new URLSearchParams({ url, gender, category: targetCategory, preview: 'true', limit: '1' });
     params.set('save', 'false');
     const response = await fetch(`/api/printful-products?${params.toString()}`);
     const result = await response.json().catch(() => ({}));
