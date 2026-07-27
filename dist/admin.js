@@ -1695,6 +1695,25 @@ async function rebuildStorefrontCatalogCache(productsArray) {
   }
 }
 
+function stageImportedPrintfulProducts(productsArray = []) {
+  const incoming = Array.isArray(productsArray) ? productsArray : [];
+  if (!incoming.length) return;
+  const current = Array.isArray(window.__printfulStagingProducts) ? window.__printfulStagingProducts : [];
+  const byId = new Map(current.map((product) => [String(product.id || product.printfulId || product.sku), product]));
+  incoming.forEach((product, index) => {
+    const id = String(product.id || product.printfulId || product.sku || `PF-URL-${Date.now()}-${index}`);
+    byId.set(id, {
+      ...product,
+      id: product.id || product.printfulId || id,
+      status: product.status || 'published',
+      published: product.published !== false,
+      tags: product.tags || ['printful', 'streetwear']
+    });
+  });
+  window.__printfulStagingProducts = Array.from(byId.values());
+  if (typeof renderPrintfulStagingTable === 'function') renderPrintfulStagingTable();
+}
+
 async function importPrintfulProducts(gender = 'all', limit = 100) {
   showImportProgressModal('Importing Catalog via Enterprise Queue...', 'Initializing background import queue & batch processor...');
   updateImportProgress(5, 'Starting import queue job...');
@@ -1829,6 +1848,7 @@ async function importPrintfulUrl(form) {
 
     updateImportProgress(88, 'Saving Database...');
     await rebuildStorefrontCatalogCache(importedProducts);
+    stageImportedPrintfulProducts(importedProducts);
     await fetch('/api/products?action=bulk_upsert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
