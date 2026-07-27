@@ -1807,7 +1807,7 @@ async function importPrintfulUrl(form) {
       const url = urls[index];
       updateImportProgress(Math.round(12 + (index / urls.length) * 70), `Fetching Product ${index + 1} of ${urls.length}...`);
       const params = new URLSearchParams({ url, gender, targetCategory, pages: '1', limit: '1' });
-      const response = await fetch(`/api/admin?action=auto-import-printful&${params.toString()}`);
+      const response = await fetch(`/api/auto-import-printful?${params.toString()}`);
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.ok) {
         errors.push(`${url}: ${result.error || 'Product Not Found'}`);
@@ -1857,7 +1857,7 @@ async function previewPrintfulUrls(form) {
   const errors = [];
   for (const url of urls.slice(0, 20)) {
     const params = new URLSearchParams({ url, gender, targetCategory, preview: 'true', limit: '1' });
-    const response = await fetch(`/api/admin?action=auto-import-printful&${params.toString()}`);
+    const response = await fetch(`/api/auto-import-printful?${params.toString()}`);
     const result = await response.json().catch(() => ({}));
     if (response.ok && result.ok && Array.isArray(result.products) && result.products.length) products.push(...result.products);
     else errors.push(`${url}: ${result.error || 'Invalid Link'}`);
