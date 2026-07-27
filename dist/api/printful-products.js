@@ -1,13 +1,18 @@
 const PRINTFUL_API_BASE_URL = process.env.PRINTFUL_API_BASE_URL || 'https://api.printful.com';
-const PRINTFUL_API_KEY = process.env.PRINTFUL_API_KEY;
+const PRINTFUL_API_KEY = process.env.PRINTFUL_API_KEY
+  || process.env.PRINTFUL_API_TOKEN
+  || process.env.PRINTFUL_ACCESS_TOKEN
+  || process.env.PRINTFUL_PRIVATE_TOKEN
+  || process.env.PRINTFUL_TOKEN;
 const PRINTFUL_STORE_ID = process.env.PRINTFUL_STORE_ID;
 const INCLUDED_SHIPPING_COST = 14.99;
 const SELLING_MARKUP = 1.3;
 const COMPARE_AT_MARKUP = 2.3;
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_PRODUCTS_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || process.env.PRODUCTS_TABLE || 'products';
 const { db: mongoDb } = require('../lib/auth-lib');
+const { logSecurityEvent, rateLimit, setSecurityHeaders } = require('../lib/security');
 
 const categoryRules = [
   { match: /women|women's|ladies|female/i, gender: 'Women' },
@@ -32,6 +37,23 @@ const categoryRules = [
   { match: /cap|hat|beanie/i, category: 'accessories', categoryPath: 'Men > Accessories', collection: 'streetwear', label: 'Accessory' }
 ];
 
+const collectionRules = [
+  { slug: 'sportswear', label: 'Sportswear', match: /sport|performance|athletic|training|gym|workout|active|jersey|soccer|basketball|tennis|golf|yoga|legging|running/i },
+  { slug: 'streetwear', label: 'Streetwear', match: /street|hoodie|sweatshirt|tee|t-shirt|cargo|jogger|cap|hat|sneaker|oversized|heavyweight|beanie|fleece/i },
+  { slug: 'beachwear', label: 'Beachwear', match: /beach|swim|board short|boardshort|flip-flop|flip flop|slide|short|summer|towel|sandal/i },
+  { slug: 'gifts', label: 'Gifts', match: /gift|mug|tumbler|journal|notebook|poster|card|blanket|pillow|bag|tote|phone|case|sticker|hat|cap|beanie/i },
+  { slug: 'style-trends', label: 'Style Trends', match: /trend|fashion|style|oversized|minimal|premium|crop|vintage|washed|acid|tie-dye|tie dye/i },
+  { slug: 'grow-a-fashion-brand', label: 'Grow a Fashion Brand', match: /brand|label|sample|starter|basic|classic|premium|organic|eco|essential/i },
+  { slug: 'made-in-eu', label: 'Made in EU', match: /eu|europe|made in eu|organic|eco|stanley|stella/i },
+  { slug: 'halloween', label: 'Halloween', match: /halloween|skull|black|orange|costume|spooky|goth|dark/i },
+  { slug: 'back-to-school', label: 'Back to School', match: /school|backpack|notebook|journal|tote|hoodie|tee|cap|sweatshirt/i },
+  { slug: 'holiday-season', label: 'Holiday Season', match: /holiday|christmas|gift|winter|beanie|sweater|fleece|blanket|red|green/i },
+  { slug: 'summer-hats-bags', label: 'Summer Hats & Bags', match: /hat|cap|bag|tote|bucket|summer|visor|beach/i },
+  { slug: 'matching-sets', label: 'Matching Sets', match: /set|matching|tracksuit|sweatpants.*hoodie|hoodie.*sweatpants/i },
+  { slug: 'summer-soccer-2026', label: 'Summer of Soccer 2026', match: /soccer|football|jersey|sport|performance|short|training/i },
+  { slug: 'fourth-of-july', label: '4th of July', match: /4th|july|usa|america|american|red|blue|white|stars|stripe/i }
+];
+
 const allowedCatalogCategories = new Set([
   'oversized-tees',
   'heavyweight-tees',
@@ -51,8 +73,11 @@ const allowedCatalogCategories = new Set([
   'beachwear'
 ]);
 
+const blockedStorefrontProductTerms = /(napkin|placemat|place\s*mat|tablecloth|table\s*cloth|coaster|kitchen|dining|home\s*&?\s*living|home decor|wall art|towel|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|drinkware|water bottle|card|postcard|puzzle|flag)/i;
+
 function response(res, status, body) {
   res.statusCode = status;
+  setSecurityHeaders({ headers: {} }, res);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.end(JSON.stringify(body));
@@ -211,6 +236,23 @@ async function saveProductsToMongo(products = []) {
       }
     };
   });
+  if (typeof collection.bulkWrite !== 'function') {
+    let upserted = 0;
+    let modified = 0;
+    for (const operation of operations) {
+      const update = operation.updateOne;
+      const result = await collection.updateOne(update.filter, update.update, { upsert: update.upsert });
+      if (result.upsertedId) upserted += 1;
+      if (result.modifiedCount) modified += result.modifiedCount;
+    }
+    return {
+      saved: true,
+      provider: 'mongodb-adapter',
+      count: products.length,
+      upserted,
+      modified
+    };
+  }
   const result = await collection.bulkWrite(operations, { ordered: false });
   return {
     saved: true,
@@ -243,6 +285,7 @@ async function saveProducts(products = []) {
 
 function isMenCatalogProduct(product) {
   const text = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
+  if (blockedStorefrontProductTerms.test(text)) return false;
   const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|shorts|board short|sport|performance|athletic|training|gym|active|set|matching|tracksuit|shoe|sneaker|flip-flop|flip flop|slide|cap|hat|beanie)/i.test(text);
   const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|bikini|sock|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
@@ -250,6 +293,7 @@ function isMenCatalogProduct(product) {
 
 function isWomenCatalogProduct(product) {
   const text = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
+  if (blockedStorefrontProductTerms.test(text)) return false;
   const allowed = /(women|women's|ladies|female|crop|cropped|baby tee|hoodie|zip|quarter-zip|tee|t-shirt|shirt|sweatshirt|pullover|fleece|sweatpants|jogger|shorts|sport|performance|athletic|training|gym|active|set|matching|tracksuit|beach|slide)/i.test(text);
   const blocked = /(men|men's|male|unisex|underwear|boxer|brief|trunk|thong|panties|bra|legging|bikini|sock|backpack|bag|tote|duffle|luggage|tag|headband|neck gaiter|rash guard|kids|youth|baby clothes|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
@@ -272,6 +316,9 @@ function detectGender(product, name) {
 
 function categoryMapping(product, name, requestedGender = '') {
   const metadata = `${product?.main_category || ''} ${product?.sub_category || ''} ${product?.type_name || ''} ${product?.category || ''}`;
+  if (blockedStorefrontProductTerms.test(`${metadata} ${name} ${product?.description || ''}`)) {
+    return { category: 'blocked', categoryPath: 'Blocked', collection: '', label: 'Blocked', gender: 'Blocked', productType: 'Blocked' };
+  }
   const rule = pickRule(`${metadata} ${name}`);
   const requested = String(requestedGender || '').toLowerCase();
   const gender = requested === 'women' ? 'Women' : requested === 'men' ? 'Men' : detectGender(product, name);
@@ -294,12 +341,20 @@ function categoryMapping(product, name, requestedGender = '') {
 function collectionTags(product, rule, index) {
   const raw = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.description || ''}`.toLowerCase();
   const tags = new Set([rule.collection, index < 6 ? 'new' : 'best']);
-  if (/sport|performance|athletic|training|gym|workout|active|jersey/.test(raw)) tags.add('sportswear');
-  if (/street|hoodie|sweatshirt|tee|t-shirt|cargo|jogger|cap|hat|sneaker/.test(raw)) tags.add('streetwear');
-  if (/set|matching|tracksuit/.test(raw)) tags.add('matching-sets');
-  if (/beach|swim|board short|boardshort|flip-flop|flip flop|slide|short/.test(raw)) tags.add('beachwear');
+  collectionRules.forEach((collection) => {
+    if (collection.match.test(raw)) tags.add(collection.slug);
+  });
   if (index % 23 === 0) tags.add('limited');
   return [...tags].filter(Boolean);
+}
+
+function productMatchesCollection(product, collection) {
+  const slug = String(collection || '').trim().toLowerCase();
+  if (!slug || slug === 'all') return true;
+  const rule = collectionRules.find((item) => item.slug === slug);
+  if (!rule) return true;
+  const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''} ${product?.category || ''} ${product?.main_category || ''} ${product?.sub_category || ''}`.toLowerCase();
+  return rule.match.test(text);
 }
 
 function productCopy(rule, name) {
@@ -727,12 +782,28 @@ function normalizeCatalogProduct(product, index, requestedGender = '') {
   }, index, requestedGender);
 }
 
-async function fetchCatalogProducts({ gender, limit, offset, query }) {
+async function fetchCatalogProducts({ gender, limit, offset, query, collection, category, productId }) {
+  if (productId) {
+    const detail = await printfulCatalogFetch(`/products/${encodeURIComponent(productId)}`);
+    const product = normalizeCatalogProduct({
+      id: productId,
+      printful_detail: detail.result || {},
+      catalog_product: detail.result?.product || {},
+      catalog_variants: detail.result?.variants || []
+    }, 0, gender);
+    return {
+      source: `printful-catalog:product:${productId}`,
+      total: 1,
+      products: allowedCatalogCategories.has(product.category) ? [product] : []
+    };
+  }
   const catalog = await printfulCatalogFetch('/products');
   const rows = Array.isArray(catalog.result) ? catalog.result : [];
   const search = String(query || '').trim().toLowerCase();
+  const requestedCategory = String(category || '').trim().toLowerCase();
   const filtered = rows
     .filter(catalogPredicate(gender))
+    .filter((product) => productMatchesCollection(product, collection))
     .filter((product) => {
       if (!search) return true;
       const text = `${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
@@ -755,27 +826,84 @@ async function fetchCatalogProducts({ gender, limit, offset, query }) {
     }
   }));
   return {
-    source: `printful-catalog:${gender}`,
+    source: `printful-catalog:${gender}${collection ? `:${collection}` : ''}`,
     total: filtered.length,
-    products: detailed.filter((product) => allowedCatalogCategories.has(product.category))
+    products: detailed
+      .filter((product) => allowedCatalogCategories.has(product.category))
+      .filter((product) => product.category !== 'blocked')
+      .filter((product) => !requestedCategory || product.category === requestedCategory || (requestedCategory === 'tees' && ['oversized-tees', 'heavyweight-tees', 'baby-tees'].includes(product.category)))
+  };
+}
+
+async function fetchStoreProducts({ gender, limit, offset, query, collection, category }) {
+  const store = await printfulFetch(`/store/products?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`);
+  const rows = Array.isArray(store.result) ? store.result : [];
+  const detailed = await Promise.all(rows.map(async (product, index) => {
+    try {
+      const detail = await printfulFetch(`/store/products/${encodeURIComponent(product.id)}`);
+      return normalizeProduct({
+        ...product,
+        printful_detail: detail.result || {},
+        sync_product: detail.result?.sync_product || product,
+        sync_variants: detail.result?.sync_variants || []
+      }, index, gender);
+    } catch (error) {
+      return normalizeProduct(product, index, gender);
+    }
+  }));
+  const search = String(query || '').trim().toLowerCase();
+  const requestedCategory = String(category || '').trim().toLowerCase();
+  const products = detailed
+    .filter(Boolean)
+    .filter((product) => product.category !== 'blocked')
+    .filter((product) => allowedCatalogCategories.has(product.category))
+    .filter((product) => {
+      const text = `${product.name || ''} ${product.category || ''} ${product.productType || ''}`.toLowerCase();
+      if (blockedStorefrontProductTerms.test(text)) return false;
+      if (search && !text.includes(search)) return false;
+      if (requestedCategory && requestedCategory !== 'all' && product.category !== requestedCategory && !(requestedCategory === 'tees' && ['oversized-tees', 'heavyweight-tees', 'baby-tees'].includes(product.category))) return false;
+      if (collection && collection !== 'all' && !(product.collection || []).includes(collection)) return false;
+      return true;
+    });
+  return {
+    source: 'printful-store',
+    total: products.length,
+    products: products.slice(0, limit)
   };
 }
 
 module.exports = async function handler(req, res) {
+  if (req.method !== 'GET') return response(res, 405, { ok: false, error: 'Method not allowed' });
+  if (!rateLimit(req, res, 'printful-api', { windowMs: 60_000, max: 50 })) return;
   if (!PRINTFUL_API_KEY) {
-    return response(res, 500, { ok: false, error: 'PRINTFUL_API_KEY is missing in Vercel environment variables.' });
+    logSecurityEvent(req, 'printful_missing_api_key');
+    return response(res, 500, { ok: false, error: 'Printful integration is not configured.' });
   }
 
   try {
     const gender = String(req.query.gender || 'men').toLowerCase();
     const limit = Math.min(Number(req.query.limit || 23), 60);
     const page = Math.max(Number(req.query.page || 1), 1);
+    const collection = String(req.query.collection || '').toLowerCase();
+    const category = String(req.query.category || '').toLowerCase();
+    const productId = String(req.query.productId || req.query.product_id || '').trim();
     const offset = (page - 1) * limit;
-    const catalogImport = await fetchCatalogProducts({
+    const storeOnly = String(req.query.action || '').toLowerCase() === 'store_products' || String(req.query.store || '') === 'true';
+    const catalogImport = storeOnly ? await fetchStoreProducts({
       gender,
       limit,
       offset,
-      query: req.query.q || req.query.search || ''
+      query: req.query.q || req.query.search || '',
+      collection,
+      category
+    }) : await fetchCatalogProducts({
+      gender,
+      limit,
+      offset,
+      query: req.query.q || req.query.search || '',
+      collection,
+      category,
+      productId
     });
     const products = catalogImport.products;
     const source = catalogImport.source;
@@ -789,16 +917,18 @@ module.exports = async function handler(req, res) {
       try {
         db = await saveProducts(products);
       } catch (error) {
+        logSecurityEvent(req, 'printful_save_error', { message: error.message });
         db = {
           saved: false,
           provider: 'mongodb+supabase',
           count: 0,
-          error: error.message || 'Unable to save Printful products.'
+          error: 'Unable to save Printful products.'
         };
       }
     }
     response(res, 200, { ok: true, source, page, limit, total: catalogImport.total, count: products.length, db, products });
   } catch (error) {
-    response(res, 500, { ok: false, error: error.message || 'Unable to import Printful products.' });
+    logSecurityEvent(req, 'printful_import_error', { message: error.message });
+    response(res, 500, { ok: false, error: 'Unable to import Printful products.' });
   }
 };

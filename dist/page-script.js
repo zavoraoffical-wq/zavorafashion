@@ -1965,7 +1965,8 @@ function deduplicateProducts(products) {
 async function fetchCatalogProducts(gender, limit = 60) {
   const params = new URLSearchParams({
     gender,
-    limit: String(limit)
+    limit: String(limit),
+    action: 'store_products'
   });
   const urlCategory = new URLSearchParams(window.location.search).get('category');
   const urlCollection = new URLSearchParams(window.location.search).get('collection');
@@ -2000,7 +2001,7 @@ async function loadCatalogFromAPI() {
   try {
     const pageName = normalizePageName(window.location.pathname);
     const genderForPage = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : 'all';
-    const params = new URLSearchParams({ limit: '60' });
+    const params = new URLSearchParams({ limit: '60', action: 'store_products' });
     if (genderForPage !== 'all') params.set('gender', genderForPage);
     const urlCategory = new URLSearchParams(window.location.search).get('category');
     const urlCollection = new URLSearchParams(window.location.search).get('collection');
@@ -2055,6 +2056,7 @@ async function loadPrintfulCatalog() { return loadCatalogFromAPI(); }
 
 // Product safety guard — NEVER show blocked, demo or incorrectly typed products
 const BLOCKED_PRODUCT_NAMES = /(bodysuit|baby\s*jersey|baby\s*body|legging|underwear|boxer|brief|poster|mug|sticker|phone\s*case|pillow|blanket|apron|notebook|tumbler|cup|postcard)/i;
+const BLOCKED_HOME_PRODUCT_NAMES = /(napkin|placemat|place\s*mat|tablecloth|table\s*cloth|coaster|kitchen|dining|home\s*&?\s*living|home decor|wall art|towel|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|drinkware|water bottle|card|postcard|puzzle|flag)/i;
 
 function isSafeProduct(p) {
   if (!p || !p.name) return false;
@@ -2064,6 +2066,7 @@ function isSafeProduct(p) {
   const FAKE_STOREFRONT_ASSETS = /zavora-(women|men|hero-clean|premium-hero)|studio-wide-trouser/i;
   if (FAKE_STOREFRONT_PRODUCT_NAMES.test(text) || FAKE_STOREFRONT_ASSETS.test(images)) return false;
   if (BLOCKED_PRODUCT_NAMES.test(text)) return false;
+  if (BLOCKED_HOME_PRODUCT_NAMES.test(`${text} ${images}`)) return false;
   const ALLOWED_CATS = new Set(['oversized-tees','heavyweight-tees','baby-tees','hoodies','cropped-hoodies','zip-hoodies','sweatshirts','jackets','cargo-pants','sweatpants','shorts','accessories','sportswear','matching-sets','beachwear','tees','']);
   const cat = String(p.category || '').toLowerCase();
   return !cat || ALLOWED_CATS.has(cat);
@@ -2443,49 +2446,6 @@ function injectProductFilters(beforeNode) {
 
 function injectProductRails() {
   return;
-  const footer = document.querySelector('.footer');
-  if (!footer || document.querySelector('.global-product-rails')) return;
-  const pageName = window.location.pathname.split('/').pop();
-  if (plainCommercePages.includes(pageName) || catalogOnlyPages.includes(pageName)) return;
-
-  const rails = document.createElement('section');
-  rails.className = 'section global-product-rails';
-  rails.innerHTML = `
-    <div>
-      <div class="global-rail-head"><div><p class="eyebrow">New Products</p><h2>Fresh Zavora pieces</h2></div><a class="text-link" href="new-arrivals.html">View new</a></div>
-      <div class="page-grid">
-        ${productCard('Noir Oversized Hoodie', '$148', 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=80', 'Black - S M L XL')}
-        ${productCard('Gold Label Tee', '$64', 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=700&q=80', 'White - Sale')}
-        ${productCard('Avenue Cargo Pant', '$132', 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=700&q=80', 'Gray - Trending')}
-      </div>
-    </div>
-    <div>
-      <div class="global-rail-head"><div><p class="eyebrow">Best Sellers</p><h2>Most-wanted this week</h2></div><a class="text-link" href="best-sellers.html">Shop best sellers</a></div>
-      <div class="page-grid">
-        ${productCard('Studio Wide Trouser', '$168', 'https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=700&q=80', 'Wide fit')}
-        ${productCard('Gold Chain Belt', '$118', 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=700&q=80', 'Luxury accent')}
-        ${productCard('Gold Label Tee', '$64', 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=700&q=80', 'Sale discount')}
-      </div>
-    </div>
-    <div>
-      <div class="global-rail-head"><div><p class="eyebrow">Recommended</p><h2>Styled for everyday luxury</h2></div><a class="text-link" href="recommended-products.html">View picks</a></div>
-      <div class="page-grid">
-        ${productCard('Ivory Heavyweight Tee', '$78', 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=700&q=80', 'Core essential')}
-        ${productCard('Zavora Cropped Jacket', '$286', 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=700&q=80', 'Limited')}
-        ${productCard('Monogram Cap', '$52', 'https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=700&q=80', 'Recently viewed')}
-      </div>
-    </div>
-    <div>
-      <div class="global-rail-head"><div><p class="eyebrow">Recently Viewed</p><h2>Continue the edit</h2></div><a class="text-link" href="recently-viewed.html">View recent</a></div>
-      <div class="page-grid">
-        ${productCard('Avenue Cargo Pant', '$132', 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=700&q=80', 'Recently viewed')}
-        ${productCard('Noir Oversized Hoodie', '$148', 'https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80', 'Recently viewed')}
-        ${productCard('Zavora Cropped Jacket', '$286', 'https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=700&q=80', 'Recently viewed')}
-      </div>
-    </div>
-  `;
-  injectProductFilters(footer);
-  footer.parentNode.insertBefore(rails, footer);
 }
 
 document.querySelectorAll('[data-page-search]').forEach((button) => {
@@ -2708,12 +2668,7 @@ document.addEventListener('click', async (event) => {
 
   if (event.target.closest('[data-add-wishlist]')) {
     event.preventDefault();
-    const grid = document.querySelector('.dashboard-grid');
-    if (grid) {
-      grid.insertAdjacentHTML('beforeend', `
-        <article class="wishlist-item"><button class="remove-x" type="button" data-remove-wishlist aria-label="Remove Gold Label Tee">&times;</button><img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=500&q=80" alt="Gold Label Tee"><div><h3>Gold Label Tee</h3><p>$64 / White / Added now</p><a class="text-link" href="product.html">View details</a></div></article>
-      `);
-    }
+    setDashboardView('wishlist');
     return;
   }
 

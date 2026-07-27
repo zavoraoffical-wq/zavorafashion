@@ -1810,69 +1810,17 @@ async function importPrintfulUrl(form) {
     const result = await response.json().catch(() => ({}));
     clearInterval(interval);
 
-    let importedProducts = result.products || [];
-    
-    // Client-side parser fallback if serverless response is restricted or offline
+    let importedProducts = Array.isArray(result.products) ? result.products : [];
     if (!importedProducts.length) {
-      const parsed = parsePrintfulUrlClientSide(url, gender, targetCategory);
-      const categoryTitle = parsed.category.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase());
-      const sampleImg = parsed.category === 'sweatpants' 
-        ? 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80'
-        : parsed.category.includes('hoodie')
-        ? 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80'
-        : 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80';
-
-      const fallbackProduct = {
-        id: parsed.productId ? `PF-${parsed.productId}` : `PF-IMP-${Date.now().toString().slice(-5)}`,
-        printfulId: parsed.productId || '288',
-        name: `Printful ${parsed.gender} ${categoryTitle}`,
-        title: `Printful ${parsed.gender} ${categoryTitle}`,
-        category: parsed.category,
-        gender: parsed.gender,
-        price: 89.89,
-        originalPrice: 139.99,
-        rating: 4.9,
-        colors: ['black', 'white', 'gray'],
-        sizes: ['XS', 'S', 'M', 'L', 'XL'],
-        img: sampleImg,
-        image: sampleImg,
-        badge: 'IMPORTED',
-        collection: [parsed.gender.toLowerCase(), 'streetwear', 'new'],
-        published: true,
-        status: 'active'
-      };
-
-      importedProducts = [fallbackProduct];
+      throw new Error(result.error || 'No real Printful products found for this link.');
     }
 
     await rebuildStorefrontCatalogCache(importedProducts);
     await refreshLiveAdminDashboard();
     finishImportProgress(importedProducts.length, `Successfully imported ${importedProducts.length} product(s) into your store!`);
   } catch (error) {
-    const parsed = parsePrintfulUrlClientSide(url, gender, targetCategory);
-    const categoryTitle = parsed.category.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const fallbackProduct = {
-      id: `PF-IMP-${Date.now().toString().slice(-5)}`,
-      printfulId: parsed.productId || '288',
-      name: `Printful ${parsed.gender} ${categoryTitle}`,
-      title: `Printful ${parsed.gender} ${categoryTitle}`,
-      category: parsed.category,
-      gender: parsed.gender,
-      price: 89.89,
-      originalPrice: 139.99,
-      rating: 4.9,
-      colors: ['black', 'white', 'gray'],
-      sizes: ['S', 'M', 'L', 'XL'],
-      img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80',
-      badge: 'IMPORTED',
-      collection: [parsed.gender.toLowerCase(), 'streetwear', 'new'],
-      published: true,
-      status: 'active'
-    };
-
-    await rebuildStorefrontCatalogCache([fallbackProduct]);
-    await refreshLiveAdminDashboard();
-    finishImportProgress(1, `Successfully imported 1 product from Printful link!`);
+    finishImportProgress(0, `Import failed: ${error.message}`);
+    toast('Import failed: ' + error.message, 'error');
   }
 }
 

@@ -73,6 +73,8 @@ const allowedCatalogCategories = new Set([
   'beachwear'
 ]);
 
+const blockedStorefrontProductTerms = /(napkin|placemat|place\s*mat|tablecloth|table\s*cloth|coaster|kitchen|dining|home\s*&?\s*living|home decor|wall art|towel|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|drinkware|water bottle|card|postcard|puzzle|flag)/i;
+
 function response(res, status, body) {
   res.statusCode = status;
   setSecurityHeaders({ headers: {} }, res);
@@ -283,6 +285,7 @@ async function saveProducts(products = []) {
 
 function isMenCatalogProduct(product) {
   const text = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
+  if (blockedStorefrontProductTerms.test(text)) return false;
   const allowed = /(hoodie|zip|quarter-zip|tee|t-shirt|shirt|polo|sweatshirt|pullover|fleece|jacket|windbreaker|coat|pants|sweatpants|jogger|cargo|shorts|board short|sport|performance|athletic|training|gym|active|set|matching|tracksuit|shoe|sneaker|flip-flop|flip flop|slide|cap|hat|beanie)/i.test(text);
   const blocked = /(underwear|boxer|brief|trunk|thong|panties|bra|legging|bikini|sock|backpack|bag|tote|duffle|luggage|tag|crop|headband|neck gaiter|rash guard|women|women's|kids|youth|baby|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
@@ -290,6 +293,7 @@ function isMenCatalogProduct(product) {
 
 function isWomenCatalogProduct(product) {
   const text = `${product?.name || ''} ${product?.external_name || ''} ${product?.sync_product?.name || ''} ${product?.title || ''} ${product?.type_name || ''} ${product?.description || ''}`.toLowerCase();
+  if (blockedStorefrontProductTerms.test(text)) return false;
   const allowed = /(women|women's|ladies|female|crop|cropped|baby tee|hoodie|zip|quarter-zip|tee|t-shirt|shirt|sweatshirt|pullover|fleece|sweatpants|jogger|shorts|sport|performance|athletic|training|gym|active|set|matching|tracksuit|beach|slide)/i.test(text);
   const blocked = /(men|men's|male|unisex|underwear|boxer|brief|trunk|thong|panties|bra|legging|bikini|sock|backpack|bag|tote|duffle|luggage|tag|headband|neck gaiter|rash guard|kids|youth|baby clothes|toddler|dress|skirt|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|towel|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|mug|straw|drinkware|water bottle|card|postcard|poster)/i.test(text);
   return allowed && !blocked && !product?.is_discontinued;
@@ -312,6 +316,9 @@ function detectGender(product, name) {
 
 function categoryMapping(product, name, requestedGender = '') {
   const metadata = `${product?.main_category || ''} ${product?.sub_category || ''} ${product?.type_name || ''} ${product?.category || ''}`;
+  if (blockedStorefrontProductTerms.test(`${metadata} ${name} ${product?.description || ''}`)) {
+    return { category: 'blocked', categoryPath: 'Blocked', collection: '', label: 'Blocked', gender: 'Blocked', productType: 'Blocked' };
+  }
   const rule = pickRule(`${metadata} ${name}`);
   const requested = String(requestedGender || '').toLowerCase();
   const gender = requested === 'women' ? 'Women' : requested === 'men' ? 'Men' : detectGender(product, name);
@@ -823,7 +830,45 @@ async function fetchCatalogProducts({ gender, limit, offset, query, collection, 
     total: filtered.length,
     products: detailed
       .filter((product) => allowedCatalogCategories.has(product.category))
+      .filter((product) => product.category !== 'blocked')
       .filter((product) => !requestedCategory || product.category === requestedCategory || (requestedCategory === 'tees' && ['oversized-tees', 'heavyweight-tees', 'baby-tees'].includes(product.category)))
+  };
+}
+
+async function fetchStoreProducts({ gender, limit, offset, query, collection, category }) {
+  const store = await printfulFetch(`/store/products?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`);
+  const rows = Array.isArray(store.result) ? store.result : [];
+  const detailed = await Promise.all(rows.map(async (product, index) => {
+    try {
+      const detail = await printfulFetch(`/store/products/${encodeURIComponent(product.id)}`);
+      return normalizeProduct({
+        ...product,
+        printful_detail: detail.result || {},
+        sync_product: detail.result?.sync_product || product,
+        sync_variants: detail.result?.sync_variants || []
+      }, index, gender);
+    } catch (error) {
+      return normalizeProduct(product, index, gender);
+    }
+  }));
+  const search = String(query || '').trim().toLowerCase();
+  const requestedCategory = String(category || '').trim().toLowerCase();
+  const products = detailed
+    .filter(Boolean)
+    .filter((product) => product.category !== 'blocked')
+    .filter((product) => allowedCatalogCategories.has(product.category))
+    .filter((product) => {
+      const text = `${product.name || ''} ${product.category || ''} ${product.productType || ''}`.toLowerCase();
+      if (blockedStorefrontProductTerms.test(text)) return false;
+      if (search && !text.includes(search)) return false;
+      if (requestedCategory && requestedCategory !== 'all' && product.category !== requestedCategory && !(requestedCategory === 'tees' && ['oversized-tees', 'heavyweight-tees', 'baby-tees'].includes(product.category))) return false;
+      if (collection && collection !== 'all' && !(product.collection || []).includes(collection)) return false;
+      return true;
+    });
+  return {
+    source: 'printful-store',
+    total: products.length,
+    products: products.slice(0, limit)
   };
 }
 
@@ -843,7 +888,15 @@ module.exports = async function handler(req, res) {
     const category = String(req.query.category || '').toLowerCase();
     const productId = String(req.query.productId || req.query.product_id || '').trim();
     const offset = (page - 1) * limit;
-    const catalogImport = await fetchCatalogProducts({
+    const storeOnly = String(req.query.action || '').toLowerCase() === 'store_products' || String(req.query.store || '') === 'true';
+    const catalogImport = storeOnly ? await fetchStoreProducts({
+      gender,
+      limit,
+      offset,
+      query: req.query.q || req.query.search || '',
+      collection,
+      category
+    }) : await fetchCatalogProducts({
       gender,
       limit,
       offset,
