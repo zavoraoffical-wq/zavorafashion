@@ -137,6 +137,30 @@ function parseBody(req) {
   }
 }
 
+function productIsLive(product = {}) {
+  const status = String(product.status || '').toLowerCase();
+  if (product.published === false) return false;
+  if (['draft', 'hidden', 'inactive', 'archived', 'blocked'].includes(status)) return false;
+  return true;
+}
+
+function productMatchesGender(product = {}, requestedGender = '') {
+  const requested = String(requestedGender || '').toLowerCase();
+  if (!requested || requested === 'all') return true;
+  const gender = String(product.gender || product.categoryPath || product.name || '').toLowerCase();
+  if (requested === 'women') return /\bwomen\b|women's|ladies|female/.test(gender);
+  if (requested === 'men') return /\bmen\b|men's|male/.test(gender) && !/\bwomen\b|women's|ladies|female/.test(gender);
+  return gender === requested;
+}
+
+function productMatchesCategory(product = {}, requestedCategory = '') {
+  const requested = String(requestedCategory || '').toLowerCase();
+  if (!requested || requested === 'all') return true;
+  const category = String(product.category || '').toLowerCase();
+  if (requested === 'tees') return ['oversized-tees', 'heavyweight-tees', 'baby-tees', 'polo-shirts', 'crop-tops'].includes(category);
+  return category === requested;
+}
+
 function isRealStorefrontProduct(product = {}) {
   const text = `${product.name || ''} ${product.title || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
   const images = [
@@ -298,16 +322,20 @@ module.exports = async function handler(req, res) {
     }
 
     const requestedGender = String(req.query.gender || '').toLowerCase();
+    const requestedStatus = String(req.query.status || '').toLowerCase();
     const savedData = await ProductRepository.findProducts({ ...req.query, limit, page: req.query.page || 1 }).catch(() => ({ products: [], total: 0 }));
     const supabaseProducts = await fetchProductsFromSupabase({ limit }).catch(() => []);
     let products = filterProducts([...REAL_PRINTFUL_IMPORTED_PRODUCTS, ...supabaseProducts, ...(savedData.products || [])]);
     const requestedCategory = String(req.query.category || '').toLowerCase();
+    products = products
+      .filter((product) => requestedStatus === 'all' || productIsLive(product))
+      .filter((product) => productMatchesGender(product, requestedGender))
+      .filter((product) => productMatchesCategory(product, requestedCategory));
     if (requestedGender === 'women' && (!requestedCategory || requestedCategory === 'all' || requestedCategory === 'oversized-tees' || requestedCategory === 'tees')) {
       products = products.filter(isTshirtProduct).map((product) => ({
         ...product,
         category: ['heavyweight-tees', 'baby-tees', 'polo-shirts', 'crop-tops'].includes(product.category) ? product.category : 'oversized-tees',
-        categoryPath: product.categoryPath || 'Women > Oversized T-Shirts',
-        gender: 'Women'
+        categoryPath: product.categoryPath || 'Women > Oversized T-Shirts'
       }));
     }
     products = products.slice(0, limit);
