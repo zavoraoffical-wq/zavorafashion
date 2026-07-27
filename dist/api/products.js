@@ -241,41 +241,45 @@ const REAL_PRINTFUL_IMPORTED_PRODUCTS = [
 
 module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
-    const action = String(req.query.action || '').toLowerCase();
-    if (action === 'delete') {
-      parseBody(req);
-      return json(res, 200, { ok: true, deleted: 0, note: 'Demo products are blocked from storefront output.' });
+    try {
+      const action = String(req.query?.action || '').toLowerCase();
+      if (action === 'delete') {
+        parseBody(req);
+        return json(res, 200, { ok: true, deleted: 0, note: 'Demo products are blocked from storefront output.' });
+      }
+      const body = parseBody(req);
+      const products = Array.isArray(body.products) ? body.products : (body.product ? [body.product] : (body.id || body.printfulId ? [body] : []));
+      if (['bulk_upsert', 'sync-cache', 'update', 'upsert', 'save'].includes(action) || products.length) {
+        const clean = filterProducts(products).map((product) => ({
+          ...product,
+          status: product.status || (product.published === false ? 'draft' : 'active'),
+          published: product.published !== false,
+          updatedAt: new Date().toISOString()
+        }));
+        let mongo = { saved: false, provider: 'mongodb', count: 0 };
+        try {
+          mongo = await ProductRepository.bulkUpsert(clean);
+        } catch (error) {
+          mongo = { saved: false, provider: 'mongodb', count: 0, error: error.message };
+        }
+        let supabase = { saved: false, provider: 'supabase', count: 0 };
+        try {
+          supabase = await saveProductsToSupabase(clean);
+        } catch (error) {
+          supabase = { saved: false, provider: 'supabase', count: 0, error: error.message };
+        }
+        const mongoSaved = Boolean(mongo?.saved || mongo?.acknowledged || mongo?.count || mongo?.upserted || mongo?.modified);
+        const supabaseSaved = Boolean(supabase?.saved);
+        const db = { mongo, supabase, saved: Boolean(mongoSaved || supabaseSaved), count: Math.max(Number(mongo?.count || mongo?.total || mongo?.upserted || 0), Number(supabase?.count || 0)) };
+        if (!db.saved) {
+          return json(res, 500, { ok: false, saved: 0, error: 'Database save failed. Product was not published because no persistent database accepted it.', db, products: clean });
+        }
+        return json(res, 200, { ok: true, saved: clean.length, db, products: clean });
+      }
+      return json(res, 400, { ok: false, error: 'No valid products supplied.' });
+    } catch (error) {
+      return json(res, 500, { ok: false, error: error.message || 'Product save crashed before completion.' });
     }
-    const body = parseBody(req);
-    const products = Array.isArray(body.products) ? body.products : (body.product ? [body.product] : (body.id || body.printfulId ? [body] : []));
-    if (['bulk_upsert', 'sync-cache', 'update', 'upsert', 'save'].includes(action) || products.length) {
-      const clean = filterProducts(products).map((product) => ({
-        ...product,
-        status: product.status || (product.published === false ? 'draft' : 'active'),
-        published: product.published !== false,
-        updatedAt: new Date().toISOString()
-      }));
-      let mongo = { saved: false, provider: 'mongodb', count: 0 };
-      try {
-        mongo = await ProductRepository.bulkUpsert(clean);
-      } catch (error) {
-        mongo = { saved: false, provider: 'mongodb', count: 0, error: error.message };
-      }
-      let supabase = { saved: false, provider: 'supabase', count: 0 };
-      try {
-        supabase = await saveProductsToSupabase(clean);
-      } catch (error) {
-        supabase = { saved: false, provider: 'supabase', count: 0, error: error.message };
-      }
-      const mongoSaved = Boolean(mongo?.saved || mongo?.acknowledged || mongo?.count || mongo?.upserted || mongo?.modified);
-      const supabaseSaved = Boolean(supabase?.saved);
-      const db = { mongo, supabase, saved: Boolean(mongoSaved || supabaseSaved), count: Math.max(Number(mongo?.count || mongo?.total || mongo?.upserted || 0), Number(supabase?.count || 0)) };
-      if (!db.saved) {
-        return json(res, 500, { ok: false, saved: 0, error: 'Database save failed. Product was not published because no persistent database accepted it.', db, products: clean });
-      }
-      return json(res, 200, { ok: true, saved: clean.length, db, products: clean });
-    }
-    return json(res, 400, { ok: false, error: 'No valid products supplied.' });
   }
 
   if (req.method !== 'GET') return json(res, 405, { ok: false, error: 'Method not allowed' });
