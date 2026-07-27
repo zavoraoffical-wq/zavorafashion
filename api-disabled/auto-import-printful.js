@@ -15,6 +15,13 @@ function slugFromUrl(url = '') {
   try {
     const cleanUrl = decodeURIComponent(url);
     const productId = (cleanUrl.match(/(?:product|products|catalog|custom|items|id|pants|tees|hoodies|\/)?(\d{3,5})/i) || [])[1] || '';
+    const slug = (cleanUrl.match(/\/([^/?#]+)(?:\?|#|$)/) || [])[1] || '';
+    const query = slug
+      .replace(/-\d+[a-z]*$/i, '')
+      .replace(/-/g, ' ')
+      .replace(/\b(womens|mens|custom|comfort|colors?)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     let gender = '';
     if (/women|womens|ladies|female/i.test(cleanUrl)) gender = 'Women';
     else if (/men|mens|male/i.test(cleanUrl)) gender = 'Men';
@@ -30,9 +37,9 @@ function slugFromUrl(url = '') {
     else if (/hat|cap|beanie/i.test(cleanUrl)) category = 'accessories';
     else category = 'oversized-tees';
 
-    return { productId, gender, category };
+    return { productId, gender, category, query };
   } catch (error) {
-    return { productId: '', gender: 'Women', category: 'sweatpants' };
+    return { productId: '', gender: 'Women', category: 'oversized-tees', query: '' };
   }
 }
 
@@ -61,7 +68,8 @@ module.exports = async function handler(req, res) {
         limit: '60',
         page: '1',
         category: category !== 'auto' ? category : '',
-        productId: productId || ''
+        productId: productId || '',
+        search: productId ? '' : detected.query
       }
     };
     let bodyStr = '';
@@ -90,42 +98,11 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // 3. Fallback: Local Normalization Engine guarantees product creation!
-  const categoryTitle = category.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase());
-  const sampleImg = category === 'sweatpants'
-    ? 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80'
-    : category.includes('hoodie')
-    ? 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80'
-    : 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80';
-
-  const rawFallback = {
-    id: productId ? Number(productId) : Date.now(),
-    printfulId: productId || `PF-${Date.now().toString().slice(-6)}`,
-    title: `Printful ${gender} ${categoryTitle}`,
-    name: `Printful ${gender} ${categoryTitle}`,
-    category,
-    gender,
-    price: 89.89,
-    originalPrice: 139.99,
-    rating: 4.9,
-    colors: ['black', 'white', 'gray'],
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    image: sampleImg,
-    thumbnail_url: sampleImg,
-    badge: 'NEW',
-    collection: ['streetwear']
-  };
-
-  const normalized = NormalizationEngine.normalize(rawFallback, 0, gender);
-  if (normalized) {
-    await ProductRepository.bulkUpsert([normalized]);
-  }
-
-  return json(res, 200, {
-    ok: true,
-    provider: 'local-engine-fallback',
-    count: 1,
-    importedCount: 1,
-    products: [normalized || rawFallback]
+  return json(res, 404, {
+    ok: false,
+    provider: 'printful-catalog',
+    count: 0,
+    importedCount: 0,
+    error: 'No real Printful product matched this link. Share a Printful product/catalog URL with a product id or create it in your Printful store first.'
   });
 };

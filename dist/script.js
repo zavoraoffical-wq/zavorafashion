@@ -2,6 +2,27 @@ function initHomeLaunchGate() {
   return false;
 }
 
+function showMaintenancePage() {
+  const allowed = /admin|login|sign-up|forgot-password|affiliate/i.test(window.location.pathname);
+  if (allowed || window.__ZAVORA_DISABLE_MAINTENANCE__) return false;
+  document.documentElement.classList.add('maintenance-mode');
+  document.body.innerHTML = `
+    <main class="maintenance-page">
+      <section>
+        <img src="assets/zavora-logo.png" alt="" aria-hidden="true">
+        <p class="eyebrow">Zavora Fashion</p>
+        <h1>Website under maintenance</h1>
+        <p>We are updating the product catalog and checkout experience. Please check back soon.</p>
+      </section>
+    </main>
+  `;
+  return true;
+}
+
+if (showMaintenancePage()) {
+  throw new Error('Zavora maintenance mode active');
+}
+
 if (!initHomeLaunchGate()) {
 const products = [];
 
@@ -279,7 +300,9 @@ function renderHomeProductSections() {
   if (!container) return;
   const catalog = getHomeProducts();
   if (!catalog.length) {
-    container.innerHTML = '<p class="catalog-loading">Loading Zavora product edits...</p>';
+    container.innerHTML = state.printfulLoaded
+      ? '<p class="catalog-loading">No products are live yet. New Printful products will appear here after import.</p>'
+      : '<p class="catalog-loading">Loading Zavora product edits...</p>';
     return;
   }
   const used = new Set();
@@ -341,7 +364,7 @@ function renderProducts() {
     grid.innerHTML = '<p class="catalog-loading">Loading Printful products...</p>';
     return;
   }
-  grid.innerHTML = filtered.length ? filtered.slice(0, state.visible).map(productCard).join('') : '<p class="catalog-loading">No Printful products found for this filter.</p>';
+  grid.innerHTML = filtered.length ? filtered.slice(0, state.visible).map(productCard).join('') : '<p class="catalog-loading">No products are live yet. Import a Printful product from admin to show it here.</p>';
 }
 
 
