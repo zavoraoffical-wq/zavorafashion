@@ -255,14 +255,24 @@ module.exports = async function handler(req, res) {
         published: product.published !== false,
         updatedAt: new Date().toISOString()
       }));
-      const mongo = await ProductRepository.bulkUpsert(clean);
+      let mongo = { saved: false, provider: 'mongodb', count: 0 };
+      try {
+        mongo = await ProductRepository.bulkUpsert(clean);
+      } catch (error) {
+        mongo = { saved: false, provider: 'mongodb', count: 0, error: error.message };
+      }
       let supabase = { saved: false, provider: 'supabase', count: 0 };
       try {
         supabase = await saveProductsToSupabase(clean);
       } catch (error) {
         supabase = { saved: false, provider: 'supabase', count: 0, error: error.message };
       }
-      const db = { mongo, supabase, saved: Boolean(mongo?.count || mongo?.upserted || supabase?.saved), count: Math.max(Number(mongo?.count || 0), Number(supabase?.count || 0)) };
+      const mongoSaved = Boolean(mongo?.saved || mongo?.acknowledged || mongo?.count || mongo?.upserted || mongo?.modified);
+      const supabaseSaved = Boolean(supabase?.saved);
+      const db = { mongo, supabase, saved: Boolean(mongoSaved || supabaseSaved), count: Math.max(Number(mongo?.count || mongo?.total || mongo?.upserted || 0), Number(supabase?.count || 0)) };
+      if (!db.saved) {
+        return json(res, 500, { ok: false, saved: 0, error: 'Database save failed. Product was not published because no persistent database accepted it.', db, products: clean });
+      }
       return json(res, 200, { ok: true, saved: clean.length, db, products: clean });
     }
     return json(res, 400, { ok: false, error: 'No valid products supplied.' });

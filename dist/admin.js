@@ -1917,7 +1917,19 @@ async function importPrintfulUrl(form) {
       throw new Error(errors[0] || 'No real Printful products found for these links.');
     }
 
-    updateImportProgress(88, 'Adding products to staging...');
+    updateImportProgress(78, 'Saving imported products to database as drafts...');
+    const saveResponse = await fetch('/api/products?action=bulk_upsert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ products: importedProducts })
+    });
+    const saveResult = await saveResponse.json().catch(() => ({}));
+    if (!saveResponse.ok || !saveResult.ok || !saveResult.db?.saved) {
+      const dbMessage = saveResult.db?.supabase?.error || saveResult.db?.mongo?.error || saveResult.error || 'Database save failed';
+      throw new Error(dbMessage);
+    }
+
+    updateImportProgress(88, 'Adding saved products to staging...');
     stageImportedPrintfulProducts(importedProducts);
     renderPrintfulUrlPreview(importedProducts, errors);
     const stagingPanel = document.getElementById('stagingProductsTbody')?.closest('section, .admin-card, div');
@@ -2454,7 +2466,7 @@ function renderAdminAnalytics() {
   }
 }
 
-async function bootAdmin() {
+async function bootAdminLegacyDisabled() {
   const ready = await requireAdminSession();
   if (!ready) return;
   renderQuickPanels();
@@ -2689,7 +2701,7 @@ function updateStagingSelectedCount() {
   if (btnSelected) btnSelected.textContent = `📥 Import Selected (${count})`;
 }
 
-function toggleSingleStagingPublish(productId) {
+async function toggleSingleStagingPublish(productId) {
   const product = (window.__printfulStagingProducts || []).find(p => String(p.id) === String(productId));
   if (!product) return;
 
@@ -2703,9 +2715,24 @@ function toggleSingleStagingPublish(productId) {
     if (index >= 0) existing[index] = { ...existing[index], ...product };
     else existing.unshift(product);
 
-    saveAdminProducts(existing);
-    renderAdminProducts();
-    toast(`"${product.name}" published to storefront!`);
+    try {
+      const saveResponse = await fetch('/api/products?action=bulk_upsert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: [product] })
+      });
+      const saveResult = await saveResponse.json().catch(() => ({}));
+      if (!saveResponse.ok || !saveResult.ok || !saveResult.db?.saved) {
+        throw new Error(saveResult.db?.supabase?.error || saveResult.db?.mongo?.error || saveResult.error || 'Database save failed');
+      }
+      saveAdminProducts(existing);
+      renderAdminProducts();
+      toast(`"${product.name}" published to storefront and saved to database!`);
+    } catch (error) {
+      product.status = 'draft';
+      product.published = false;
+      toast(`Publish failed: ${error.message}`, 'error');
+    }
   } else {
     toast(`"${product.name}" saved as Draft.`);
   }
@@ -2778,18 +2805,24 @@ async function bulkApplyStagingEdits() {
     }
   });
 
-  updateImportProgress(75, 'Saving products to local MongoDB database...');
+  updateImportProgress(75, 'Saving selected products to database...');
 
   saveAdminProducts(existingProducts);
   try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts || [])); } catch (error) {}
 
-  try {
-    await fetch('/api/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'bulk_upsert', products: existingProducts })
-    });
-  } catch (e) {}
+  const productsToSave = existingProducts.filter((product) => selectedIds.has(String(product.id)) || selectedIds.has(String(product.printfulId)));
+  const saveResponse = await fetch('/api/products?action=bulk_upsert', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ products: productsToSave })
+  });
+  const saveResult = await saveResponse.json().catch(() => ({}));
+  if (!saveResponse.ok || !saveResult.ok || !saveResult.db?.saved) {
+    const dbMessage = saveResult.db?.supabase?.error || saveResult.db?.mongo?.error || saveResult.error || 'Database save failed';
+    updateImportProgress(100, `Save failed: ${dbMessage}`);
+    toast(`Database save failed: ${dbMessage}`, 'error');
+    return;
+  }
 
   updateImportProgress(100, `Bulk Edit Complete! Updated ${updatedCount} items, Published ${publishedCount} to live website.`);
   setTimeout(closeImportProgress, 1200);
@@ -2890,6 +2923,9 @@ async function bootAdmin() {
   setInterval(updateLiveVisitors, 3000);
 }
 
-bootAdmin();
-
 window.bulkApplyStagingEdits = bulkApplyStagingEdits;
+window.toggleSingleStagingPublish = toggleSingleStagingPublish;
+window.updateStagingSelectedCount = updateStagingSelectedCount;
+window.openEditProductModal = openEditProductModal;
+
+bootAdmin();
