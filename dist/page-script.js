@@ -3779,6 +3779,7 @@ function initDynamicProductPage() {
   if (!isCurrentPage('product')) return;
   const product = getSelectedProduct();
   if (!product) return;
+  document.body.classList.remove('product-page-pending');
   if (!document.querySelector('.product-buy') || !document.querySelector('.product-gallery')) {
     const main = document.querySelector('main');
     if (main) {

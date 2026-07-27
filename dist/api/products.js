@@ -91,7 +91,7 @@ const REAL_PRINTFUL_IMPORTED_PRODUCTS = [
     productType: 'T-Shirt',
     collection: ['streetwear', 'new', 'limited'],
     color: 'orchid',
-    colors: ['black', 'white', 'orchid', 'pepper'],
+    colors: ['orchid', 'black', 'white', 'pepper'],
     sizes: ['S', 'M', 'L', 'XL', '2XL'],
     basePrice: 58,
     includedShippingCost: 14.99,
@@ -100,12 +100,12 @@ const REAL_PRINTFUL_IMPORTED_PRODUCTS = [
     sale: true,
     popularity: 95,
     badge: 'New',
-    img: 'https://files.cdn.printful.com/products/862/22604_1743753168.jpg',
+    img: 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg',
     alt: 'Comfort Colors 3023CL heavyweight boxy t-shirt from Printful',
     images: [
+      'https://files.cdn.printful.com/products/862/22596_1743753167.jpg',
       'https://files.cdn.printful.com/products/862/22604_1743753168.jpg',
-      'https://files.cdn.printful.com/products/862/22585_1769501205.jpg',
-      'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'
+      'https://files.cdn.printful.com/products/862/22585_1769501205.jpg'
     ],
     stock: 5,
     sku: 'PF-862-3023CL-ORCHID-S',
