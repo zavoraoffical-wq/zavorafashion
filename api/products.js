@@ -50,6 +50,58 @@ function storefrontProducts(products = []) {
   return products.filter(isRealStorefrontProduct);
 }
 
+async function callPrintfulHandler(req, query) {
+  const printfulHandler = require('./printful-products');
+  let statusCode = 200;
+  let body = '';
+  const fakeReq = {
+    ...req,
+    method: 'GET',
+    query
+  };
+  const fakeRes = {
+    setHeader() {},
+    get statusCode() {
+      return statusCode;
+    },
+    set statusCode(value) {
+      statusCode = value;
+    },
+    end(value) {
+      body = value || '';
+    }
+  };
+  await printfulHandler(fakeReq, fakeRes);
+  if (statusCode >= 400) return {};
+  try {
+    return JSON.parse(body || '{}');
+  } catch (error) {
+    return {};
+  }
+}
+
+async function loadPrintfulFallback(req, limit) {
+  const requestedGender = String(req.query.gender || '').toLowerCase();
+  const genders = requestedGender && requestedGender !== 'all' ? [requestedGender] : ['men', 'women'];
+  const perGenderLimit = Math.max(12, Math.ceil(limit / genders.length));
+  const batches = await Promise.all(genders.map(async (gender) => {
+    const data = await callPrintfulHandler(req, {
+      ...req.query,
+      gender,
+      limit: perGenderLimit,
+      page: 1
+    });
+    return Array.isArray(data.products) ? data.products : [];
+  }));
+  const seen = new Set();
+  return storefrontProducts(batches.flat()).filter((product) => {
+    const key = String(product?.id || product?.printfulId || product?.name || '');
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, limit);
+}
+
 module.exports = async function handler(req, res) {
   if (!rateLimit(req, res, 'products-api', { windowMs: 60_000, max: 300 })) return;
 
@@ -155,11 +207,14 @@ module.exports = async function handler(req, res) {
     res.setHeader('X-Page', String(result.page));
     res.setHeader('X-Per-Page', String(result.limit));
 
-    const products = storefrontProducts(result.products);
+    let products = storefrontProducts(result.products);
+    if (!products.length) {
+      products = await loadPrintfulFallback(req, result.limit || Number(req.query.limit || 60));
+    }
 
     return json(res, 200, {
       ok: true,
-      provider: 'local-mongodb',
+      provider: products.length ? 'local-mongodb-or-printful' : 'local-mongodb',
       page: result.page,
       limit: result.limit,
       total: result.total,
