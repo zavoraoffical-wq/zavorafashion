@@ -339,20 +339,36 @@ function getAdminProducts() {
 }
 
 function saveAdminProducts(products) {
-  localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(products));
+  const compactProducts = (Array.isArray(products) ? products : []).map((product) => ({
+    ...product,
+    images: Array.isArray(product.images) ? product.images.slice(0, 3) : product.images,
+    galleryImages: undefined,
+    mockupImages: undefined,
+    printAreas: undefined,
+    variants: Array.isArray(product.variants) ? product.variants.slice(0, 30) : product.variants,
+    variantOptions: Array.isArray(product.variantOptions) ? product.variantOptions.slice(0, 30) : product.variantOptions,
+    payload: undefined,
+    raw: undefined
+  }));
+  try {
+    localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(compactProducts));
+  } catch (error) {
+    try { localStorage.removeItem('zavoraImportedCatalog'); } catch (e) {}
+    try { localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(compactProducts.slice(0, 25))); } catch (e) {}
+  }
   try {
     const existing = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]');
-    const adminIds = new Set(products.map(p => String(p.id)));
+    const adminIds = new Set(compactProducts.map(p => String(p.id)));
     const kept = existing.filter(p => !adminIds.has(String(p.id)));
-    const merged = [...products, ...kept];
+    const merged = [...compactProducts, ...kept].slice(0, 40);
     localStorage.setItem('zavoraImportedCatalog', JSON.stringify(merged));
   } catch(e) {
-    localStorage.setItem('zavoraImportedCatalog', JSON.stringify(products));
+    try { localStorage.removeItem('zavoraImportedCatalog'); } catch (error) {}
   }
 
   // Sync latest product list to MongoDB database
-  if (Array.isArray(products) && products.length) {
-    products.forEach(product => {
+  if (Array.isArray(compactProducts) && compactProducts.length) {
+    compactProducts.forEach(product => {
       fetch('/api/products?action=update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
