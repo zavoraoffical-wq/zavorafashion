@@ -1762,6 +1762,13 @@ async function saveEditProductForm(e) {
 
 // --- PRODUCTION IMPORT PROGRESS & SYNC ENGINE ---
 
+function closeImportProgress() {
+  const modal = document.getElementById('importProgressModal');
+  if (modal) modal.style.display = 'none';
+  try { renderAdminProducts(); } catch (error) {}
+  try { renderPrintfulStagingTable(); } catch (error) {}
+}
+
 function showImportProgressModal(title, subtitle) {
   const modal = document.getElementById('importProgressModal');
   const titleEl = document.getElementById('importProgressTitle');
@@ -1770,6 +1777,7 @@ function showImportProgressModal(title, subtitle) {
   const percentEl = document.getElementById('importProgressPercent');
   const logEl = document.getElementById('importProgressLog');
   const closeBtn = document.getElementById('btnCloseImportProgress');
+  const xBtn = document.getElementById('btnImportProgressX');
 
   if (modal) modal.style.display = 'flex';
   if (titleEl) titleEl.textContent = title || 'Importing Printful Products...';
@@ -1778,6 +1786,7 @@ function showImportProgressModal(title, subtitle) {
   if (percentEl) percentEl.textContent = '0%';
   if (logEl) logEl.textContent = 'Initializing connection...';
   if (closeBtn) closeBtn.style.display = 'none';
+  if (xBtn) xBtn.onclick = closeImportProgress;
 }
 
 function updateImportProgress(percent, logText) {
@@ -1804,11 +1813,7 @@ function finishImportProgress(importedCount, message) {
   if (logEl) logEl.textContent = message || `Successfully imported ${importedCount || 0} production products with full sync!`;
   if (closeBtn) {
     closeBtn.style.display = 'block';
-    closeBtn.onclick = () => {
-      const modal = document.getElementById('importProgressModal');
-      if (modal) modal.style.display = 'none';
-      renderAdminProducts();
-    };
+    closeBtn.onclick = closeImportProgress;
   }
   if (titleEl) titleEl.textContent = Number(importedCount || 0) > 0 ? 'Import Completed Successfully!' : 'Import Failed';
 }

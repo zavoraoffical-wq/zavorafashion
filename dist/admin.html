@@ -584,7 +584,8 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
 
         <!-- Live Import Progress Modal -->
         <div id="importProgressModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
-          <div style="background:#fff;width:90%;max-width:540px;padding:32px;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,0.3);text-align:center;">
+          <div style="background:#fff;width:90%;max-width:540px;padding:32px;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,0.3);text-align:center;position:relative;">
+            <button type="button" id="btnImportProgressX" aria-label="Close import progress" style="position:absolute;top:12px;right:12px;width:34px;height:34px;border:1px solid #ddd;background:#fff;color:#111;border-radius:50%;font-size:22px;line-height:28px;cursor:pointer;">×</button>
             <div style="font-size:36px;margin-bottom:12px;">ðŸ“¦</div>
             <h2 id="importProgressTitle" style="font-size:24px;margin-bottom:8px;font-family:Georgia,serif;">Importing Printful Products...</h2>
             <p id="importProgressSub" style="font-size:14px;color:#666;margin-bottom:20px;">Fetching mockups, variant colors, sizes, and pricing...</p>
