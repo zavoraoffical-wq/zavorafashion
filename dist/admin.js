@@ -397,9 +397,19 @@ function productTargetPages(gender = '', category = '', collections = []) {
   return Array.from(new Set(pages));
 }
 
+function splitTargetCategory(value = '', fallbackGender = '') {
+  const raw = String(value || '').trim();
+  if (!raw || raw === 'auto') return { gender: fallbackGender, category: raw };
+  const match = raw.match(/^(Women|Men|Unisex):(.*)$/i);
+  if (!match) return { gender: fallbackGender, category: raw };
+  const gender = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+  return { gender, category: match[2] || 'oversized-tees' };
+}
+
 function normalizeProductTarget(product = {}, genderValue = '', categoryValue = '', collectionValue = '') {
-  const gender = genderValue && genderValue !== 'auto' ? genderValue : (product.gender || 'Women');
-  const category = categoryValue && categoryValue !== 'auto' ? categoryValue : (product.category || 'oversized-tees');
+  const split = splitTargetCategory(categoryValue, genderValue);
+  const gender = split.gender && split.gender !== 'auto' ? split.gender : (product.gender || 'Women');
+  const category = split.category && split.category !== 'auto' ? split.category : (product.category || 'oversized-tees');
   const currentCollections = Array.isArray(product.collection)
     ? product.collection
     : (Array.isArray(product.collections) ? product.collections : [product.collection || 'streetwear']);
@@ -1644,7 +1654,10 @@ function openEditProductModal(productId) {
   form.elements['price'].value = product.price || '';
   form.elements['compareAt'].value = product.compareAt || product.originalPrice || '';
   form.elements['gender'].value = product.gender || 'Women';
-  form.elements['category'].value = product.category || 'oversized-tees';
+  const targetCategoryValue = `${product.gender || 'Women'}:${product.category || 'oversized-tees'}`;
+  form.elements['category'].value = [...form.elements['category'].options].some((option) => option.value === targetCategoryValue)
+    ? targetCategoryValue
+    : (product.category || 'oversized-tees');
   if (form.elements['colors']) form.elements['colors'].value = (product.colors || [product.color || 'black']).join(', ');
   if (form.elements['sizes']) form.elements['sizes'].value = (product.sizes || ['XS', 'S', 'M', 'L', 'XL']).join(', ');
   if (form.elements['image']) form.elements['image'].value = imgs[0] || '';
@@ -1671,7 +1684,10 @@ async function saveEditProductForm(e) {
       const price = Number(data.get('price'));
       const compareAt = Number(data.get('compareAt')) || null;
       const gender = String(data.get('gender') || 'Women');
-      const category = String(data.get('category') || 'oversized-tees');
+      const rawCategory = String(data.get('category') || 'oversized-tees');
+      const splitCategory = splitTargetCategory(rawCategory, gender);
+      const finalGender = splitCategory.gender || gender;
+      const category = splitCategory.category || 'oversized-tees';
 
       const colorsRaw = String(data.get('colors') || '').trim();
       const colors = colorsRaw ? colorsRaw.split(',').map(c => c.trim().toLowerCase()).filter(Boolean) : (product.colors || ['black']);
@@ -1696,7 +1712,7 @@ async function saveEditProductForm(e) {
         sku: String(data.get('sku') || product.sku),
         price,
         compareAt,
-        gender,
+        gender: finalGender,
         category,
         colors,
         color: colors[0] || 'black',
@@ -1708,7 +1724,7 @@ async function saveEditProductForm(e) {
         videoUrl: video,
         stock,
         description: String(data.get('description') || '').trim()
-      }, gender, category);
+      }, finalGender, category);
     }
     return product;
   }
@@ -1984,8 +2000,9 @@ async function importPrintfulProducts(gender = 'all', limit = 100) {
 }
 
 function parsePrintfulUrlClientSide(url, targetGender, targetCategory) {
-  let gender = targetGender && targetGender !== 'auto' ? targetGender : '';
-  let category = targetCategory && targetCategory !== 'auto' ? targetCategory : '';
+  const target = splitTargetCategory(targetCategory, targetGender);
+  let gender = target.gender && target.gender !== 'auto' ? target.gender : '';
+  let category = target.category && target.category !== 'auto' ? target.category : '';
   let productId = '';
 
   try {
@@ -2024,6 +2041,9 @@ async function importPrintfulUrl(form) {
   const urls = rawUrls.split(/\s+/).map((item) => item.trim()).filter((item) => /^https?:\/\/(www\.)?printful\.com\//i.test(item));
   const gender = String(data.get('gender') || 'auto');
   const targetCategory = String(data.get('category') || 'auto');
+  const target = splitTargetCategory(targetCategory, gender);
+  const importGender = target.gender || gender;
+  const importCategory = target.category || targetCategory;
 
   if (!urls.length) {
     toast('Enter one or more valid Printful product URLs first');
@@ -2039,7 +2059,7 @@ async function importPrintfulUrl(form) {
     for (let index = 0; index < urls.length; index += 1) {
       const url = urls[index];
       updateImportProgress(Math.round(12 + (index / urls.length) * 70), `Fetching Product ${index + 1} of ${urls.length}...`);
-      const params = new URLSearchParams({ url, gender, category: targetCategory, pages: '1', limit: '1' });
+      const params = new URLSearchParams({ url, gender: importGender, category: importCategory, pages: '1', limit: '1' });
       const response = await fetch(`/api/printful-products?${params.toString()}`);
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.ok) {
@@ -2048,7 +2068,7 @@ async function importPrintfulUrl(form) {
       }
       let products = Array.isArray(result.products) ? result.products : [];
       products.forEach((product) => importedProducts.push({
-        ...normalizeProductTarget(product, gender, targetCategory),
+        ...normalizeProductTarget(product, importGender, importCategory),
         published: false,
         status: 'draft',
         importedSourceUrl: url
@@ -2941,13 +2961,14 @@ async function bulkApplyStagingEdits() {
       return;
     }
 
-      if (category) product.category = category;
+    const splitCategory = splitTargetCategory(category, gender || product.gender);
+    if (splitCategory.category) product.category = splitCategory.category;
     if (collection) {
       const colArr = Array.isArray(product.collection) ? product.collection : [product.collection || 'new'];
       if (!colArr.includes(collection)) colArr.push(collection);
       product.collection = colArr;
     }
-    if (gender) product.gender = gender;
+    if (splitCategory.gender || gender) product.gender = splitCategory.gender || gender;
     if (season) product.season = season;
     if (featured) product.featured = featured === 'yes';
     if (bestSeller) product.bestSeller = bestSeller === 'yes';
