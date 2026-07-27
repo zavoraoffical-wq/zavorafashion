@@ -1520,7 +1520,8 @@ function addAdminProduct(form) {
 
 function openEditProductModal(productId) {
   const products = getAdminProducts();
-  const product = products.find(p => String(p.id) === String(productId));
+  const staged = Array.isArray(window.__printfulStagingProducts) ? window.__printfulStagingProducts : [];
+  const product = products.find(p => String(p.id) === String(productId)) || staged.find(p => String(p.id) === String(productId));
   if (!product) return;
 
   const modal = document.getElementById('editProductModal');
@@ -1556,7 +1557,7 @@ function saveEditProductForm(e) {
   const data = new FormData(form);
   const id = String(data.get('id'));
 
-  const products = getAdminProducts().map(product => {
+  function applyEdit(product) {
     if (String(product.id) === id) {
       const name = String(data.get('name') || '').trim();
       const price = Number(data.get('price'));
@@ -1602,10 +1603,17 @@ function saveEditProductForm(e) {
       };
     }
     return product;
-  });
+  }
+
+  const products = getAdminProducts().map(applyEdit);
+  if (Array.isArray(window.__printfulStagingProducts)) {
+    window.__printfulStagingProducts = window.__printfulStagingProducts.map(applyEdit);
+    try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts)); } catch (error) {}
+  }
 
   saveAdminProducts(products);
   renderAdminProducts();
+  renderPrintfulStagingTable();
   const modal = document.getElementById('editProductModal');
   if (modal) modal.style.display = 'none';
   toast('Product updated successfully!');
@@ -1754,7 +1762,12 @@ function forceRenderImportedStagingRows(productsArray = []) {
         <td><span style="font-size:11px;color:#555;">${colors}</span></td>
         <td><strong>$${Number(product.price || 0).toFixed(2)}</strong></td>
         <td><span class="pill ${isPublished ? 'gold' : ''}" style="${isPublished ? '' : 'background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;'}">${isPublished ? 'Published (Live)' : 'Draft (Staged)'}</span></td>
-        <td><button type="button" class="pill" onclick="toggleSingleStagingPublish('${product.id}')">${isPublished ? 'Unpublish' : 'Publish'}</button></td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" data-staging-publish="${product.id}" style="padding:6px 10px;background:#050505;color:#fff;border:1px solid #050505;border-radius:6px;font-size:12px;cursor:pointer;">${isPublished ? 'Unpublish' : 'Publish'}</button>
+            <button type="button" data-edit-product="${product.id}" style="padding:6px 10px;background:#fff;color:#050505;border:1px solid #bbb;border-radius:6px;font-size:12px;cursor:pointer;">Edit</button>
+          </div>
+        </td>
       </tr>`;
   }).join('');
   tbody.querySelectorAll('.staging-chk').forEach((checkbox) => checkbox.addEventListener('change', () => {
@@ -2614,9 +2627,10 @@ function renderPrintfulStagingTable() {
         </td>
         <td>
           <div style="display:flex;gap:6px;">
-            <button type="button" class="pill" onclick="toggleSingleStagingPublish('${product.id}')">
+            <button type="button" data-staging-publish="${product.id}" style="padding:6px 10px;background:#050505;color:#fff;border:1px solid #050505;border-radius:6px;font-size:12px;cursor:pointer;">
               ${isPublished ? 'Unpublish' : 'Publish'}
             </button>
+            <button type="button" data-edit-product="${product.id}" style="padding:6px 10px;background:#fff;color:#050505;border:1px solid #bbb;border-radius:6px;font-size:12px;cursor:pointer;">Edit</button>
           </div>
         </td>
       </tr>
@@ -2713,8 +2727,9 @@ async function bulkApplyStagingEdits() {
   (window.__printfulStagingProducts || []).forEach((product) => {
     if (!selectedIds.has(String(product.id))) return;
 
+    const targetStatus = status || 'published';
     const isDuplicate = existingIds.has(String(product.id)) || existingIds.has(String(product.printfulId));
-    if (skipExisting && isDuplicate && status !== 'published') {
+    if (skipExisting && isDuplicate && targetStatus !== 'published') {
       return;
     }
 
@@ -2729,7 +2744,6 @@ async function bulkApplyStagingEdits() {
     if (featured) product.featured = featured === 'yes';
     if (bestSeller) product.bestSeller = bestSeller === 'yes';
     if (tags) product.tags = tags;
-    const targetStatus = status || 'published';
     product.status = targetStatus;
     product.published = targetStatus === 'published';
 
@@ -2813,6 +2827,23 @@ async function bootAdmin() {
   if (searchStaging && !searchStaging.dataset.bound) {
     searchStaging.dataset.bound = 'true';
     searchStaging.addEventListener('input', renderPrintfulStagingTable);
+  }
+
+  if (!document.body.dataset.stagingActionsBound) {
+    document.body.dataset.stagingActionsBound = 'true';
+    document.addEventListener('click', (event) => {
+      const publishBtn = event.target.closest('[data-staging-publish]');
+      if (publishBtn) {
+        event.preventDefault();
+        toggleSingleStagingPublish(publishBtn.dataset.stagingPublish);
+        return;
+      }
+      const applyBtn = event.target.closest('#btnApplyBulkStagingEdits, #btnImportSelectedDrafts');
+      if (applyBtn) {
+        event.preventDefault();
+        bulkApplyStagingEdits();
+      }
+    });
   }
 
   const editForm = document.getElementById('editProductForm');
