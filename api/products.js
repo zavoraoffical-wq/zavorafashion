@@ -276,10 +276,11 @@ module.exports = async function handler(req, res) {
       if (['bulk_upsert', 'sync-cache', 'update', 'upsert', 'save'].includes(action) || products.length) {
         const clean = filterProducts(products).map((product) => ({
           ...product,
+          printfulId: String(product.printfulId || product.id || product.sku || product.slug || product.name || '').trim(),
           status: product.status || (product.published === false ? 'draft' : 'active'),
           published: product.published !== false,
           updatedAt: new Date().toISOString()
-        }));
+        })).filter((product) => product.printfulId && (product.name || product.title));
         let mongo = { saved: false, provider: 'mongodb', count: 0 };
         try {
           mongo = await ProductRepository.bulkUpsert(clean);
@@ -292,7 +293,7 @@ module.exports = async function handler(req, res) {
         } catch (error) {
           supabase = { saved: false, provider: 'supabase', count: 0, error: error.message };
         }
-        const mongoSaved = Boolean(mongo?.saved || mongo?.acknowledged || mongo?.count || mongo?.upserted || mongo?.modified);
+        const mongoSaved = Boolean(mongo?.saved || mongo?.acknowledged || mongo?.count || mongo?.total || mongo?.upserted || mongo?.modified);
         const supabaseSaved = Boolean(supabase?.saved);
         const db = { mongo, supabase, saved: Boolean(mongoSaved || supabaseSaved), count: Math.max(Number(mongo?.count || mongo?.total || mongo?.upserted || 0), Number(supabase?.count || 0)) };
         if (!db.saved) {
