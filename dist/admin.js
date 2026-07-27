@@ -1881,9 +1881,16 @@ async function previewPrintfulUrls(form) {
     params.set('save', 'false');
     const response = await fetch(`/api/printful-products?${params.toString()}`);
     const result = await response.json().catch(() => ({}));
-    if (response.ok && result.ok && Array.isArray(result.products) && result.products.length) products.push(...result.products);
+    if (response.ok && result.ok && Array.isArray(result.products) && result.products.length) {
+      products.push(...result.products.map((product) => ({
+        ...product,
+        published: false,
+        status: 'draft'
+      })));
+    }
     else errors.push(`${url}: ${result.error || 'Invalid Link'}`);
   }
+  stageImportedPrintfulProducts(products);
   renderPrintfulUrlPreview(products, errors);
 }
 
