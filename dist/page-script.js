@@ -3889,8 +3889,9 @@ function initDynamicProductPage() {
 async function initDynamicRelatedProducts() {
   if (!isCurrentPage('product')) return;
   if (document.querySelector('[data-smart-product-rails]')) return;
-  const anchor = [...document.querySelectorAll('.section-title')].find((section) => section.textContent.includes('Related Products'))?.parentElement
-    || document.querySelector('.product-detail')?.parentElement;
+  const existingRelated = [...document.querySelectorAll('.section-title')].find((section) => section.textContent.includes('Related Products'))?.parentElement;
+  const productDetail = document.querySelector('.product-detail');
+  const anchor = existingRelated || productDetail;
   if (!anchor) return;
   try {
     const current = getSelectedProduct();
@@ -3937,7 +3938,11 @@ async function initDynamicRelatedProducts() {
         ${cappedRelated.map(catalogCard).join('')}
       </div>
     `;
-    anchor.replaceWith(section);
+    if (existingRelated) {
+      existingRelated.replaceWith(section);
+    } else {
+      productDetail.insertAdjacentElement('afterend', section);
+    }
     window.__zavoraCatalogProducts = uniqueProducts([...(window.__zavoraCatalogProducts || []), ...allProducts]);
     refreshWishlistButtons();
   } catch (error) {
