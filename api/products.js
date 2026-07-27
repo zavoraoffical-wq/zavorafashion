@@ -141,7 +141,7 @@ function productIsLive(product = {}) {
   const status = String(product.status || '').toLowerCase();
   if (product.published === false) return false;
   if (['draft', 'hidden', 'inactive', 'archived', 'blocked'].includes(status)) return false;
-  return true;
+  return product.published === true || ['active', 'published', 'live'].includes(status);
 }
 
 function productMatchesGender(product = {}, requestedGender = '') {
