@@ -1717,6 +1717,48 @@ function stageImportedPrintfulProducts(productsArray = []) {
   window.__printfulStagingProducts = Array.from(byId.values());
   try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts)); } catch (error) {}
   if (typeof renderPrintfulStagingTable === 'function') renderPrintfulStagingTable();
+  forceRenderImportedStagingRows(window.__printfulStagingProducts);
+}
+
+function forceRenderImportedStagingRows(productsArray = []) {
+  const tbody = document.getElementById('stagingProductsTbody');
+  if (!tbody) return;
+  const products = Array.isArray(productsArray) ? productsArray : [];
+  if (!products.length) return;
+  const countItem = document.getElementById('printfulStoreItemCount');
+  const countDraft = document.getElementById('printfulDraftCount');
+  const countPub = document.getElementById('printfulPublishedCount');
+  const draftsCount = products.filter((product) => product.status === 'draft' || product.published === false).length;
+  const publishedCount = products.filter((product) => product.status === 'published' || product.published === true).length;
+  if (countItem) countItem.textContent = `${products.length} Items Found`;
+  if (countDraft) countDraft.textContent = `${draftsCount} Pending Review`;
+  if (countPub) countPub.textContent = `${publishedCount} Live Products`;
+  tbody.innerHTML = products.map((product) => {
+    const thumb = product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png';
+    const isPublished = product.status === 'published' || product.published;
+    const colors = Array.isArray(product.colors) ? product.colors.join(', ') : (product.color || 'Default');
+    return `
+      <tr data-staging-id="${product.id}">
+        <td><input type="checkbox" class="staging-chk" value="${product.id}"></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img src="${thumb}" alt="" style="width:42px;height:42px;object-fit:contain;border-radius:6px;border:1px solid #eee;background:#f7f7f7;">
+            <div>
+              <strong style="font-size:13px;display:block;">${product.name || 'Printful Product'}</strong>
+              <small style="color:#888;font-size:11px;">ID: ${product.id || product.printfulId || 'N/A'} | SKU: ${product.sku || `PF-${product.printfulId || product.id || 'ITEM'}`}</small>
+            </div>
+          </div>
+        </td>
+        <td><span class="pill">${product.category || 'oversized-tees'}</span></td>
+        <td>${product.gender || 'Women'}</td>
+        <td><span style="font-size:11px;color:#555;">${colors}</span></td>
+        <td><strong>$${Number(product.price || 0).toFixed(2)}</strong></td>
+        <td><span class="pill ${isPublished ? 'gold' : ''}" style="${isPublished ? '' : 'background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;'}">${isPublished ? 'Published (Live)' : 'Draft (Staged)'}</span></td>
+        <td><button type="button" class="pill" onclick="toggleSingleStagingPublish('${product.id}')">${isPublished ? 'Unpublish' : 'Publish'}</button></td>
+      </tr>`;
+  }).join('');
+  tbody.querySelectorAll('.staging-chk').forEach((checkbox) => checkbox.addEventListener('change', updateStagingSelectedCount));
+  updateStagingSelectedCount();
 }
 
 async function importPrintfulProducts(gender = 'all', limit = 100) {
