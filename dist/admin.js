@@ -338,6 +338,45 @@ function getAdminProducts() {
   }
 }
 
+function compactProductForDatabase(product = {}) {
+  const images = Array.isArray(product.images)
+    ? product.images.filter(Boolean).slice(0, 12)
+    : [product.img || product.image || product.thumbnail].filter(Boolean);
+  const rawVariants = Array.isArray(product.variantOptions || product.variants)
+    ? (product.variantOptions || product.variants)
+    : [];
+  const variants = rawVariants.slice(0, 80).map((variant) => ({
+    id: variant?.id || variant?.variant_id || variant?.catalog_variant_id || variant?.external_id || variant?.sku || '',
+    sku: variant?.sku || variant?.external_id || variant?.variant_id || '',
+    name: variant?.name || variant?.variantName || variant?.title || '',
+    color: variant?.color || variant?.color_name || variant?.colorName || '',
+    size: variant?.size || variant?.size_name || variant?.sizeName || '',
+    price: Number(variant?.price || variant?.retail_price || product.price || 0),
+    inStock: variant?.inStock ?? variant?.available ?? (variant?.availability_status !== 'discontinued')
+  }));
+  return {
+    ...product,
+    printfulId: String(product.printfulId || product.id || product.sku || product.slug || product.name || '').trim(),
+    img: product.img || product.image || product.thumbnail || images[0] || '',
+    image: product.image || product.img || product.thumbnail || images[0] || '',
+    thumbnail: product.thumbnail || product.img || product.image || images[0] || '',
+    images,
+    galleryImages: Array.isArray(product.galleryImages) ? product.galleryImages.filter(Boolean).slice(0, 12) : undefined,
+    mockupImages: Array.isArray(product.mockupImages) ? product.mockupImages.filter(Boolean).slice(0, 12) : undefined,
+    variants,
+    variantOptions: variants,
+    printAreas: Array.isArray(product.printAreas) ? product.printAreas.slice(0, 20) : undefined,
+    raw: undefined,
+    payload: undefined,
+    printful_detail: undefined,
+    catalog_variants: undefined,
+    sync_variants: undefined,
+    catalogProduct: undefined,
+    syncProduct: undefined,
+    files: undefined
+  };
+}
+
 async function hydrateAdminProductsFromDatabase() {
   try {
     const response = await fetch('/api/products?status=all&limit=1000&page=1', {
@@ -384,17 +423,8 @@ function saveAdminProducts(products) {
   } catch(e) {
     try { localStorage.removeItem('zavoraImportedCatalog'); } catch (error) {}
   }
-
-  // Sync latest product list to MongoDB database
-  if (Array.isArray(compactProducts) && compactProducts.length) {
-    compactProducts.forEach(product => {
-      fetch('/api/products?action=update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(product)
-      }).catch(() => {});
-    });
-  }
+  // Database publishing is handled only by explicit Import/Publish actions.
+  // This avoids background API spam and false UI publish states.
 }
 
 function getProductStorefrontPages(product) {
@@ -1586,7 +1616,7 @@ function openEditProductModal(productId) {
   modal.style.display = 'flex';
 }
 
-function saveEditProductForm(e) {
+async function saveEditProductForm(e) {
   e.preventDefault();
   const form = e.target;
   const data = new FormData(form);
@@ -1641,17 +1671,34 @@ function saveEditProductForm(e) {
   }
 
   const products = getAdminProducts().map(applyEdit);
+  const editedProduct = products.find((product) => String(product.id) === id);
   if (Array.isArray(window.__printfulStagingProducts)) {
     window.__printfulStagingProducts = window.__printfulStagingProducts.map(applyEdit);
     try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts)); } catch (error) {}
   }
 
   saveAdminProducts(products);
+  if (editedProduct) {
+    try {
+      const saveResponse = await fetch('/api/products?action=bulk_upsert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: [compactProductForDatabase(editedProduct)] })
+      });
+      const saveResult = await saveResponse.json().catch(() => ({}));
+      if (!saveResponse.ok || !saveResult.ok || !saveResult.db?.saved) {
+        throw new Error(saveResult.db?.supabase?.error || saveResult.db?.mongo?.error || saveResult.error || 'Database save failed');
+      }
+    } catch (error) {
+      toast(`Edit saved locally, database save failed: ${error.message}`, 'error');
+      return;
+    }
+  }
   renderAdminProducts();
   renderPrintfulStagingTable();
   const modal = document.getElementById('editProductModal');
   if (modal) modal.style.display = 'none';
-  toast('Product updated successfully!');
+  toast('Product updated and saved to database!');
 }
 
 // --- PRODUCTION IMPORT PROGRESS & SYNC ENGINE ---
@@ -1983,7 +2030,7 @@ async function importPrintfulUrl(form) {
     const saveResponse = await fetch('/api/products?action=bulk_upsert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ products: importedProducts })
+      body: JSON.stringify({ products: importedProducts.map(compactProductForDatabase) })
     });
     const saveResult = await saveResponse.json().catch(() => ({}));
     if (!saveResponse.ok || !saveResult.ok || !saveResult.db?.saved) {
@@ -2798,7 +2845,7 @@ async function toggleSingleStagingPublish(productId) {
       const saveResponse = await fetch('/api/products?action=bulk_upsert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products: [product] })
+        body: JSON.stringify({ products: [compactProductForDatabase(product)] })
       });
       const saveResult = await saveResponse.json().catch(() => ({}));
       if (!saveResponse.ok || !saveResult.ok || !saveResult.db?.saved) {
@@ -2889,7 +2936,9 @@ async function bulkApplyStagingEdits() {
   saveAdminProducts(existingProducts);
   try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts || [])); } catch (error) {}
 
-  const productsToSave = existingProducts.filter((product) => selectedIds.has(String(product.id)) || selectedIds.has(String(product.printfulId)));
+  const productsToSave = existingProducts
+    .filter((product) => selectedIds.has(String(product.id)) || selectedIds.has(String(product.printfulId)))
+    .map(compactProductForDatabase);
   const saveResponse = await fetch('/api/products?action=bulk_upsert', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

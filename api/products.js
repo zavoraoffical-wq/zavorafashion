@@ -47,6 +47,44 @@ function supabaseProductRow(product = {}) {
   };
 }
 
+function compactProductPayload(product = {}) {
+  const images = Array.isArray(product.images)
+    ? product.images.filter(Boolean).slice(0, 12)
+    : [product.img || product.image || product.thumbnail].filter(Boolean);
+  const rawVariants = Array.isArray(product.variantOptions || product.variants)
+    ? (product.variantOptions || product.variants)
+    : [];
+  const variants = rawVariants.slice(0, 80).map((variant) => ({
+    id: variant?.id || variant?.variant_id || variant?.catalog_variant_id || variant?.external_id || variant?.sku || '',
+    sku: variant?.sku || variant?.external_id || variant?.variant_id || '',
+    name: variant?.name || variant?.variantName || variant?.title || '',
+    color: variant?.color || variant?.color_name || variant?.colorName || '',
+    size: variant?.size || variant?.size_name || variant?.sizeName || '',
+    price: Number(variant?.price || variant?.retail_price || product.price || 0),
+    inStock: variant?.inStock ?? variant?.available ?? (variant?.availability_status !== 'discontinued')
+  }));
+  return {
+    ...product,
+    img: product.img || product.image || product.thumbnail || images[0] || '',
+    image: product.image || product.img || product.thumbnail || images[0] || '',
+    thumbnail: product.thumbnail || product.img || product.image || images[0] || '',
+    images,
+    galleryImages: Array.isArray(product.galleryImages) ? product.galleryImages.filter(Boolean).slice(0, 12) : undefined,
+    mockupImages: Array.isArray(product.mockupImages) ? product.mockupImages.filter(Boolean).slice(0, 12) : undefined,
+    variants,
+    variantOptions: variants,
+    printAreas: Array.isArray(product.printAreas) ? product.printAreas.slice(0, 20) : undefined,
+    raw: undefined,
+    payload: undefined,
+    printful_detail: undefined,
+    catalog_variants: undefined,
+    sync_variants: undefined,
+    catalogProduct: undefined,
+    syncProduct: undefined,
+    files: undefined
+  };
+}
+
 function supabaseRowProduct(row = {}) {
   const payload = row.payload && typeof row.payload === 'object' ? row.payload : {};
   return {
@@ -293,7 +331,7 @@ module.exports = async function handler(req, res) {
       }
       const products = Array.isArray(body.products) ? body.products : (body.product ? [body.product] : (body.id || body.printfulId ? [body] : []));
       if (['bulk_upsert', 'sync-cache', 'update', 'upsert', 'save'].includes(action) || products.length) {
-        const clean = filterProducts(products).map((product) => ({
+        const clean = filterProducts(products).map(compactProductPayload).map((product) => ({
           ...product,
           printfulId: String(product.printfulId || product.id || product.sku || product.slug || product.name || '').trim(),
           status: product.status || (product.published === false ? 'draft' : 'active'),
