@@ -3900,8 +3900,27 @@ async function initDynamicRelatedProducts() {
     ]);
     const allProducts = pages.flat();
     if (!Array.isArray(allProducts) || !allProducts.length) return;
-    const realProducts = allProducts.filter((item) => String(item.id) !== String(current?.id));
+    const isCapHatRelated = (item = {}) => /(cap|hat|beanie|dad\s*hat|snapback|trucker|bucket\s*hat|visor)/i.test(`${item.name || ''} ${item.category || ''} ${item.description || ''}`);
+    const preferredCategories = similarCategoryList(current?.category || '').filter((category) => category !== 'accessories');
+    const realProducts = allProducts
+      .filter((item) => String(item.id) !== String(current?.id))
+      .sort((a, b) => {
+        const aPreferred = preferredCategories.includes(a.category) ? 0 : 1;
+        const bPreferred = preferredCategories.includes(b.category) ? 0 : 1;
+        if (aPreferred !== bPreferred) return aPreferred - bPreferred;
+        return Number(isCapHatRelated(a)) - Number(isCapHatRelated(b));
+      });
     if (!realProducts.length) return;
+    const cappedRelated = [];
+    let capHatCount = 0;
+    realProducts.forEach((item) => {
+      if (cappedRelated.length >= 12) return;
+      if (isCapHatRelated(item)) {
+        capHatCount += 1;
+        if (capHatCount > 1) return;
+      }
+      cappedRelated.push(item);
+    });
 
     const section = document.createElement('section');
     section.className = 'section product-smart-rails';
@@ -3915,7 +3934,7 @@ async function initDynamicRelatedProducts() {
         <a class="text-link" href="shop.html">View all</a>
       </div>
       <div class="page-grid catalog-grid">
-        ${realProducts.slice(0, 12).map(catalogCard).join('')}
+        ${cappedRelated.map(catalogCard).join('')}
       </div>
     `;
     anchor.replaceWith(section);
