@@ -42,6 +42,7 @@ async function callPrintfulHandler(req, query) {
   const fakeReq = {
     ...req,
     method: 'GET',
+    headers: req.headers || {},
     query
   };
   const fakeRes = {
