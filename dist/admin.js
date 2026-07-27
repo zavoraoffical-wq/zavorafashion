@@ -1904,13 +1904,23 @@ async function importPrintfulUrl(form) {
         errors.push(`${url}: ${result.error || 'Product Not Found'}`);
         continue;
       }
-      const products = Array.isArray(result.products) ? result.products : [];
+      let products = Array.isArray(result.products) ? result.products : [];
+      if (String(gender).toLowerCase() === 'women') {
+        products = products.filter((product) => {
+          const text = `${product.name || ''} ${product.gender || ''} ${product.categoryPath || ''} ${product.productType || ''}`.toLowerCase();
+          return /(women|women's|ladies|female|crop|cropped|baby tee|baby-tees)/i.test(text);
+        });
+      }
       products.forEach((product) => importedProducts.push({
         ...product,
+        gender: String(gender).toLowerCase() === 'women' ? 'Women' : product.gender,
         published: false,
         status: 'draft',
         importedSourceUrl: url
       }));
+      if (!products.length && String(gender).toLowerCase() === 'women') {
+        errors.push(`${url}: skipped because no women-specific Printful product matched this link.`);
+      }
     }
 
     if (!importedProducts.length) {
