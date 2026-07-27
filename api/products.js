@@ -306,8 +306,10 @@ module.exports = async function handler(req, res) {
     try {
       const action = String(req.query?.action || '').toLowerCase();
       if (action === 'delete') {
-        parseBody(req);
-        return json(res, 200, { ok: true, deleted: 0, note: 'Demo products are blocked from storefront output.' });
+        const body = parseBody(req);
+        const ids = Array.isArray(body.ids) ? body.ids : [body.id || body.printfulId].filter(Boolean);
+        const result = ids.length ? await ProductRepository.deleteByIds(ids) : { deleted: 0 };
+        return json(res, 200, { ok: true, deleted: result.deleted || 0, db: result });
       }
       const body = parseBody(req);
       if (['clear_all', 'delete_all', 'wipe'].includes(action)) {
