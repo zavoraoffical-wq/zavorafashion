@@ -1841,8 +1841,8 @@ async function importPrintfulUrl(form) {
       const products = Array.isArray(result.products) ? result.products : [];
       products.forEach((product) => importedProducts.push({
         ...product,
-        published: true,
-        status: 'active',
+        published: false,
+        status: 'draft',
         importedSourceUrl: url
       }));
     }
@@ -1851,17 +1851,12 @@ async function importPrintfulUrl(form) {
       throw new Error(errors[0] || 'No real Printful products found for these links.');
     }
 
-    updateImportProgress(88, 'Saving Database...');
-    await rebuildStorefrontCatalogCache(importedProducts);
+    updateImportProgress(88, 'Adding products to staging...');
     stageImportedPrintfulProducts(importedProducts);
-    await fetch('/api/products?action=bulk_upsert', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ products: importedProducts })
-    }).catch(() => {});
-    await refreshLiveAdminDashboard();
     renderPrintfulUrlPreview(importedProducts, errors);
-    finishImportProgress(importedProducts.length, `Completed: ${importedProducts.length} product(s) imported${errors.length ? `, ${errors.length} failed` : ''}.`);
+    const stagingPanel = document.getElementById('stagingProductsTbody')?.closest('section, .admin-card, div');
+    if (stagingPanel?.scrollIntoView) setTimeout(() => stagingPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 250);
+    finishImportProgress(importedProducts.length, `Added ${importedProducts.length} product(s) to staging as Draft. Select them below and bulk publish when ready.`);
   } catch (error) {
     finishImportProgress(0, `Import failed: ${error.message}`);
     toast('Import failed: ' + error.message, 'error');
@@ -2680,10 +2675,9 @@ async function bulkApplyStagingEdits() {
     if (featured) product.featured = featured === 'yes';
     if (bestSeller) product.bestSeller = bestSeller === 'yes';
     if (tags) product.tags = tags;
-    if (status) {
-      product.status = status;
-      product.published = status === 'published';
-    }
+    const targetStatus = status || 'published';
+    product.status = targetStatus;
+    product.published = targetStatus === 'published';
 
     updatedCount++;
     if (product.status === 'published' || product.published) {
@@ -2697,6 +2691,7 @@ async function bulkApplyStagingEdits() {
   updateImportProgress(75, 'Saving products to local MongoDB database...');
 
   saveAdminProducts(existingProducts);
+  try { localStorage.setItem('zavoraPrintfulStagingProducts', JSON.stringify(window.__printfulStagingProducts || [])); } catch (error) {}
 
   try {
     await fetch('/api/products', {
