@@ -117,8 +117,9 @@ async function detectPrintfulPublicProductId(importUrl = '') {
     });
     if (!response.ok) return '';
     const html = await response.text();
-    const itemId = (html.match(/"item_id"\s*:\s*(\d+)/i) || [])[1]
-      || (html.match(/item_id\\?":\s*(\d+)/i) || [])[1];
+    const itemId = (html.match(/\\?"item_id\\?"\s*:\s*(\d+)/i) || [])[1]
+      || (html.match(/item_id["\\]*\s*:\s*(\d+)/i) || [])[1]
+      || (html.match(/"itemId"\s*:\s*(\d+)/i) || [])[1];
     return itemId || '';
   } catch (error) {
     return '';
@@ -139,12 +140,15 @@ module.exports = async function handler(req, res) {
   const gender = genderTarget !== 'auto' ? (genderTarget === 'women' ? 'Women' : 'Men') : detected.gender;
   const category = categoryTarget !== 'auto' ? categoryTarget : detected.category;
   const categoryImport = isPrintfulCategoryImport(importUrl);
-  let productId = detected.productId;
+  let productId = '';
   if (/3023cl/i.test(importUrl)) {
     productId = '862';
   }
-  if (!productId || /3023/i.test(importUrl)) {
-    productId = await detectPrintfulPublicProductId(importUrl) || productId;
+  if (/bella-canvas-6400/i.test(importUrl)) {
+    productId = '360';
+  }
+  if (!categoryImport) {
+    productId = await detectPrintfulPublicProductId(importUrl) || productId || detected.productId;
   }
 
   // 1. First, try calling Printful handler in-memory

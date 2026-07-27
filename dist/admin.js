@@ -1660,6 +1660,7 @@ function finishImportProgress(importedCount, message) {
       renderAdminProducts();
     };
   }
+  if (titleEl) titleEl.textContent = Number(importedCount || 0) > 0 ? 'Import Completed Successfully!' : 'Import Failed';
 }
 
 async function rebuildStorefrontCatalogCache(productsArray) {
