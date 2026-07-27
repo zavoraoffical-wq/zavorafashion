@@ -2,6 +2,120 @@
 
 const { ProductRepository } = require('../lib/local-product-engine');
 
+function envValue(...names) {
+  for (const name of names) {
+    const value = String(process.env[name] || '').trim().replace(/^['"]|['"]$/g, '');
+    if (value) return value;
+  }
+  return '';
+}
+
+function supabaseConfig() {
+  const url = envValue('SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL');
+  const key = envValue('SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_ANON_KEY', 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  if (!url || !key) return null;
+  return { url: url.replace(/\/$/, ''), key };
+}
+
+function supabaseProductRow(product = {}) {
+  const id = String(product.printfulId || product.id || product.sku || product.name || '').trim();
+  return {
+    printful_id: id,
+    store_product_id: product.id ? String(product.id) : id,
+    name: product.name || product.title || 'Zavora Product',
+    gender: product.gender || 'Unisex',
+    category: product.category || 'oversized-tees',
+    category_path: product.categoryPath || product.category_path || '',
+    product_type: product.productType || product.product_type || product.category || '',
+    collection: Array.isArray(product.collection) ? product.collection : [product.collection || 'new'].filter(Boolean),
+    color: product.color || (Array.isArray(product.colors) ? product.colors[0] : ''),
+    colors: Array.isArray(product.colors) ? product.colors : [product.color || 'black'].filter(Boolean),
+    sizes: Array.isArray(product.sizes) ? product.sizes : ['S', 'M', 'L', 'XL'],
+    price: Number(product.price || 0),
+    compare_at: Number(product.compareAt || product.compare_at || product.originalPrice || 0) || null,
+    image: product.img || product.image || product.thumbnail || (Array.isArray(product.images) ? product.images[0] : ''),
+    images: Array.isArray(product.images) ? product.images : [product.img || product.image].filter(Boolean),
+    variant_groups: product.variantGroups || product.variant_groups || {},
+    variants: product.variantOptions || product.variants || [],
+    payload: {
+      ...product,
+      status: product.status || (product.published === false ? 'draft' : 'active'),
+      published: product.published !== false
+    },
+    source: product.source || 'printful-import',
+    updated_at: new Date().toISOString()
+  };
+}
+
+function supabaseRowProduct(row = {}) {
+  const payload = row.payload && typeof row.payload === 'object' ? row.payload : {};
+  return {
+    ...payload,
+    id: payload.id || row.store_product_id || row.printful_id,
+    printfulId: payload.printfulId || row.printful_id,
+    name: payload.name || row.name,
+    gender: payload.gender || row.gender,
+    category: payload.category || row.category,
+    categoryPath: payload.categoryPath || row.category_path,
+    productType: payload.productType || row.product_type,
+    collection: payload.collection || row.collection || [],
+    color: payload.color || row.color,
+    colors: payload.colors || row.colors || [],
+    sizes: payload.sizes || row.sizes || [],
+    price: payload.price ?? Number(row.price || 0),
+    compareAt: payload.compareAt ?? Number(row.compare_at || 0),
+    img: payload.img || row.image,
+    image: payload.image || row.image,
+    images: payload.images || row.images || [],
+    variantGroups: payload.variantGroups || row.variant_groups || {},
+    variantOptions: payload.variantOptions || row.variants || [],
+    source: payload.source || row.source || 'supabase-products'
+  };
+}
+
+async function saveProductsToSupabase(products = []) {
+  const config = supabaseConfig();
+  if (!config || !products.length) return { saved: false, provider: 'supabase', count: 0, reason: 'missing config or products' };
+  const rows = products.map(supabaseProductRow).filter((row) => row.printful_id && row.name);
+  if (!rows.length) return { saved: false, provider: 'supabase', count: 0, reason: 'no valid rows' };
+  const response = await fetch(`${config.url}/rest/v1/products?on_conflict=printful_id`, {
+    method: 'POST',
+    headers: {
+      apikey: config.key,
+      Authorization: `Bearer ${config.key}`,
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates,return=representation'
+    },
+    body: JSON.stringify(rows)
+  });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Supabase products upsert failed: ${response.status} ${text}`);
+  let savedRows = [];
+  try { savedRows = JSON.parse(text || '[]'); } catch (error) {}
+  return { saved: true, provider: 'supabase', count: rows.length, rows: Array.isArray(savedRows) ? savedRows.length : 0 };
+}
+
+async function fetchProductsFromSupabase({ id = '', limit = 60 } = {}) {
+  const config = supabaseConfig();
+  if (!config) return [];
+  const params = new URLSearchParams({
+    select: '*',
+    order: 'updated_at.desc',
+    limit: String(limit)
+  });
+  if (id) params.set('or', `(printful_id.eq.${id},store_product_id.eq.${id})`);
+  const response = await fetch(`${config.url}/rest/v1/products?${params.toString()}`, {
+    headers: {
+      apikey: config.key,
+      Authorization: `Bearer ${config.key}`,
+      Accept: 'application/json'
+    }
+  });
+  if (!response.ok) return [];
+  const rows = await response.json().catch(() => []);
+  return Array.isArray(rows) ? rows.map(supabaseRowProduct) : [];
+}
+
 function json(res, status, body, cacheSeconds = 0) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -141,7 +255,14 @@ module.exports = async function handler(req, res) {
         published: product.published !== false,
         updatedAt: new Date().toISOString()
       }));
-      const db = await ProductRepository.bulkUpsert(clean);
+      const mongo = await ProductRepository.bulkUpsert(clean);
+      let supabase = { saved: false, provider: 'supabase', count: 0 };
+      try {
+        supabase = await saveProductsToSupabase(clean);
+      } catch (error) {
+        supabase = { saved: false, provider: 'supabase', count: 0, error: error.message };
+      }
+      const db = { mongo, supabase, saved: Boolean(mongo?.count || mongo?.upserted || supabase?.saved), count: Math.max(Number(mongo?.count || 0), Number(supabase?.count || 0)) };
       return json(res, 200, { ok: true, saved: clean.length, db, products: clean });
     }
     return json(res, 400, { ok: false, error: 'No valid products supplied.' });
@@ -156,14 +277,16 @@ module.exports = async function handler(req, res) {
     if (productId) {
       const seed = REAL_PRINTFUL_IMPORTED_PRODUCTS.find((item) => String(item.id) === productId || String(item.printfulId) === productId);
       const saved = await ProductRepository.getProductById(productId).catch(() => null);
-      const product = saved || seed;
+      const supabaseProducts = await fetchProductsFromSupabase({ id: productId, limit: 1 }).catch(() => []);
+      const product = saved || supabaseProducts[0] || seed;
       if (!product) return json(res, 404, { ok: false, error: 'Product not found' });
-      return json(res, 200, { ok: true, provider: saved ? 'mongodb' : 'seed', product }, 120);
+      return json(res, 200, { ok: true, provider: saved ? 'mongodb' : (supabaseProducts[0] ? 'supabase' : 'seed'), product }, 120);
     }
 
     const requestedGender = String(req.query.gender || '').toLowerCase();
     const savedData = await ProductRepository.findProducts({ ...req.query, limit, page: req.query.page || 1 }).catch(() => ({ products: [], total: 0 }));
-    let products = filterProducts([...REAL_PRINTFUL_IMPORTED_PRODUCTS, ...(savedData.products || [])]);
+    const supabaseProducts = await fetchProductsFromSupabase({ limit }).catch(() => []);
+    let products = filterProducts([...REAL_PRINTFUL_IMPORTED_PRODUCTS, ...supabaseProducts, ...(savedData.products || [])]);
     const requestedCategory = String(req.query.category || '').toLowerCase();
     if (requestedGender === 'women' && (!requestedCategory || requestedCategory === 'all' || requestedCategory === 'oversized-tees' || requestedCategory === 'tees')) {
       products = products.filter(isTshirtProduct).map((product) => ({
