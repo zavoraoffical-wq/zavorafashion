@@ -170,9 +170,9 @@ function isRealStorefrontProduct(product = {}) {
     product.hoverImage,
     ...(Array.isArray(product.images) ? product.images : [])
   ].filter(Boolean).join(' ').toLowerCase();
-  const fakeName = /zavora\s+(women'?s|unisex)\s+(relaxed|baby rib|fleece|organic|high-waisted|tailored|staple|heavy blend|heavyweight vintage|luxury|crewneck|champion|embroidered|studio)|zavora\s+ultimate|zavora\s+recycled|zavora\s+classic/i;
+  const fakeText = /\b(demo|sample product|placeholder|lorem ipsum)\b/i;
   const fakeAsset = /zavora-(women|men|hero-clean|premium-hero)|studio-wide-trouser/i;
-  return !fakeName.test(text) && !fakeAsset.test(images);
+  return !fakeText.test(text) && !fakeAsset.test(images);
 }
 
 async function callPrintfulHandler(req, query) {
@@ -274,12 +274,17 @@ module.exports = async function handler(req, res) {
       const body = parseBody(req);
       const products = Array.isArray(body.products) ? body.products : (body.product ? [body.product] : (body.id || body.printfulId ? [body] : []));
       if (['bulk_upsert', 'sync-cache', 'update', 'upsert', 'save'].includes(action) || products.length) {
-        const clean = filterProducts(products).map((product) => ({
-          ...product,
-          status: product.status || (product.published === false ? 'draft' : 'active'),
-          published: product.published !== false,
-          updatedAt: new Date().toISOString()
-        }));
+        const clean = uniqueProducts(products).filter(Boolean).map((product) => {
+          const isPublished = product.published === true
+            || ['published', 'active', 'live'].includes(String(product.status || '').toLowerCase());
+          return {
+            ...product,
+            printfulId: String(product.printfulId || product.id || product.sku || product.slug || product.name || '').trim(),
+            status: isPublished ? 'published' : 'draft',
+            published: isPublished,
+            updatedAt: new Date().toISOString()
+          };
+        }).filter((product) => product.printfulId && (product.name || product.title));
         let mongo = { saved: false, provider: 'mongodb', count: 0 };
         try {
           mongo = await ProductRepository.bulkUpsert(clean);
