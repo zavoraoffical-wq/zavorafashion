@@ -242,8 +242,12 @@ class ProductRepository {
     if (status !== 'all') {
       filter['$or'] = [
         { 'payload.status': 'active' },
+        { 'payload.status': 'published' },
+        { 'payload.published': true },
         { 'payload.status': { $exists: false } },
-        { status: 'active' }
+        { status: 'active' },
+        { status: 'published' },
+        { published: true }
       ];
     }
 
