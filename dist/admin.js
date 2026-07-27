@@ -1757,8 +1757,10 @@ function forceRenderImportedStagingRows(productsArray = []) {
         <td><button type="button" class="pill" onclick="toggleSingleStagingPublish('${product.id}')">${isPublished ? 'Unpublish' : 'Publish'}</button></td>
       </tr>`;
   }).join('');
-  tbody.querySelectorAll('.staging-chk').forEach((checkbox) => checkbox.addEventListener('change', updateStagingSelectedCount));
-  updateStagingSelectedCount();
+  tbody.querySelectorAll('.staging-chk').forEach((checkbox) => checkbox.addEventListener('change', () => {
+    if (typeof updateStagingSelectedCount === 'function') updateStagingSelectedCount();
+  }));
+  if (typeof updateStagingSelectedCount === 'function') updateStagingSelectedCount();
 }
 
 async function importPrintfulProducts(gender = 'all', limit = 100) {
@@ -2675,6 +2677,9 @@ function toggleSingleStagingPublish(productId) {
 
   renderPrintfulStagingTable();
 }
+
+window.toggleSingleStagingPublish = toggleSingleStagingPublish;
+window.updateStagingSelectedCount = updateStagingSelectedCount;
 
 async function bulkApplyStagingEdits() {
   const selectedBoxes = [...document.querySelectorAll('.staging-chk:checked')];
