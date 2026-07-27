@@ -1917,9 +1917,20 @@ function categoryMatches(productCategory, requestedCategory) {
 function productsForCatalogPage(products, pageName) {
   products = deduplicateProducts(products);
   const norm = normalizePageName(pageName);
+  products = products.filter((product) => {
+    const targetPages = Array.isArray(product.targetPages) ? product.targetPages.map((item) => String(item).toLowerCase()) : [];
+    if (!targetPages.length) return true;
+    if (norm === 'women' || norm === 'men' || norm === 'new-arrivals' || norm === 'best-sellers' || norm === 'limited') {
+      return targetPages.includes(norm);
+    }
+    return true;
+  });
   const urlCategory = new URLSearchParams(window.location.search).get('category');
   if (urlCategory) {
-    products = products.filter((product) => categoryMatches(product.category, urlCategory));
+    products = products.filter((product) => {
+      const targetPages = Array.isArray(product.targetPages) ? product.targetPages.map((item) => String(item).toLowerCase()) : [];
+      return categoryMatches(product.category, urlCategory) || targetPages.includes(`category:${String(urlCategory).toLowerCase()}`);
+    });
   }
   if (norm === 'new-arrivals') {
     return products.filter((product) => product.collection?.includes('new'));

@@ -377,6 +377,49 @@ function compactProductForDatabase(product = {}) {
   };
 }
 
+function productTargetPages(gender = '', category = '', collections = []) {
+  const pages = [];
+  const g = String(gender || '').toLowerCase();
+  const c = String(category || '').toLowerCase();
+  const cols = Array.isArray(collections) ? collections.map((item) => String(item).toLowerCase()) : [String(collections || '').toLowerCase()];
+  if (g === 'women') pages.push('women');
+  if (g === 'men') pages.push('men');
+  if (g === 'unisex') pages.push('women', 'men');
+  if (c) pages.push(`category:${c}`);
+  cols.forEach((collection) => {
+    if (!collection) return;
+    pages.push(`collection:${collection}`);
+    if (collection === 'new') pages.push('new-arrivals');
+    if (collection === 'best') pages.push('best-sellers');
+    if (collection === 'limited') pages.push('limited');
+  });
+  pages.push('shop');
+  return Array.from(new Set(pages));
+}
+
+function normalizeProductTarget(product = {}, genderValue = '', categoryValue = '', collectionValue = '') {
+  const gender = genderValue && genderValue !== 'auto' ? genderValue : (product.gender || 'Women');
+  const category = categoryValue && categoryValue !== 'auto' ? categoryValue : (product.category || 'oversized-tees');
+  const currentCollections = Array.isArray(product.collection)
+    ? product.collection
+    : (Array.isArray(product.collections) ? product.collections : [product.collection || 'streetwear']);
+  const collections = Array.from(new Set([
+    String(gender).toLowerCase(),
+    ...currentCollections.filter(Boolean),
+    collectionValue || ''
+  ].filter(Boolean).map((item) => String(item).toLowerCase())));
+  return {
+    ...product,
+    gender,
+    category,
+    productType: category,
+    categoryPath: `${gender} > ${category.replace(/-/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase())}`,
+    collection: collections,
+    collections,
+    targetPages: productTargetPages(gender, category, collections)
+  };
+}
+
 async function hydrateAdminProductsFromDatabase() {
   try {
     const response = await fetch('/api/products?status=all&limit=1000&page=1', {
@@ -1646,7 +1689,7 @@ async function saveEditProductForm(e) {
       const video = String(data.get('videoUrl') || '').trim();
       const stock = Number(data.get('stock') || 50);
 
-      return {
+      return normalizeProductTarget({
         ...product,
         name,
         title: name,
@@ -1665,7 +1708,7 @@ async function saveEditProductForm(e) {
         videoUrl: video,
         stock,
         description: String(data.get('description') || '').trim()
-      };
+      }, gender, category);
     }
     return product;
   }
@@ -2004,22 +2047,12 @@ async function importPrintfulUrl(form) {
         continue;
       }
       let products = Array.isArray(result.products) ? result.products : [];
-      if (String(gender).toLowerCase() === 'women') {
-        products = products.filter((product) => {
-          const text = `${product.name || ''} ${product.gender || ''} ${product.categoryPath || ''} ${product.productType || ''}`.toLowerCase();
-          return /(women|women's|ladies|female|crop|cropped|baby tee|baby-tees)/i.test(text);
-        });
-      }
       products.forEach((product) => importedProducts.push({
-        ...product,
-        gender: String(gender).toLowerCase() === 'women' ? 'Women' : product.gender,
+        ...normalizeProductTarget(product, gender, targetCategory),
         published: false,
         status: 'draft',
         importedSourceUrl: url
       }));
-      if (!products.length && String(gender).toLowerCase() === 'women') {
-        errors.push(`${url}: skipped because no women-specific Printful product matched this link.`);
-      }
     }
 
     if (!importedProducts.length) {
@@ -2908,7 +2941,7 @@ async function bulkApplyStagingEdits() {
       return;
     }
 
-    if (category) product.category = category;
+      if (category) product.category = category;
     if (collection) {
       const colArr = Array.isArray(product.collection) ? product.collection : [product.collection || 'new'];
       if (!colArr.includes(collection)) colArr.push(collection);
@@ -2919,6 +2952,7 @@ async function bulkApplyStagingEdits() {
     if (featured) product.featured = featured === 'yes';
     if (bestSeller) product.bestSeller = bestSeller === 'yes';
     if (tags) product.tags = tags;
+    Object.assign(product, normalizeProductTarget(product, product.gender, product.category, collection || ''));
     product.status = targetStatus;
     product.published = targetStatus === 'published';
 
