@@ -272,6 +272,25 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, deleted: 0, note: 'Demo products are blocked from storefront output.' });
       }
       const body = parseBody(req);
+      if (['clear_all', 'delete_all', 'wipe'].includes(action)) {
+        const confirm = String(body.confirm || body.confirmation || '').trim().toUpperCase();
+        if (confirm !== 'DELETE_ALL_PRODUCTS') {
+          return json(res, 400, {
+            ok: false,
+            error: 'Confirmation required',
+            requiredConfirmation: 'DELETE_ALL_PRODUCTS'
+          });
+        }
+        const result = await ProductRepository.deleteAllProducts();
+        return json(res, 200, {
+          ok: true,
+          action,
+          deleted: result.deleted || 0,
+          db: result,
+          cache: { invalidated: true },
+          message: 'All product catalog records were deleted. Users, orders, and settings were not touched.'
+        });
+      }
       const products = Array.isArray(body.products) ? body.products : (body.product ? [body.product] : (body.id || body.printfulId ? [body] : []));
       if (['bulk_upsert', 'sync-cache', 'update', 'upsert', 'save'].includes(action) || products.length) {
         const clean = filterProducts(products).map((product) => ({
@@ -314,19 +333,18 @@ module.exports = async function handler(req, res) {
     const productId = String(req.query.id || req.query.productId || '').trim();
 
     if (productId) {
-      const seed = REAL_PRINTFUL_IMPORTED_PRODUCTS.find((item) => String(item.id) === productId || String(item.printfulId) === productId);
       const saved = await ProductRepository.getProductById(productId).catch(() => null);
       const supabaseProducts = await fetchProductsFromSupabase({ id: productId, limit: 1 }).catch(() => []);
-      const product = saved || supabaseProducts[0] || seed;
+      const product = saved || supabaseProducts[0];
       if (!product) return json(res, 404, { ok: false, error: 'Product not found' });
-      return json(res, 200, { ok: true, provider: saved ? 'mongodb' : (supabaseProducts[0] ? 'supabase' : 'seed'), product }, 120);
+      return json(res, 200, { ok: true, provider: saved ? 'mongodb' : 'supabase', product }, 120);
     }
 
     const requestedGender = String(req.query.gender || '').toLowerCase();
     const requestedStatus = String(req.query.status || '').toLowerCase();
     const savedData = await ProductRepository.findProducts({ ...req.query, limit, page: req.query.page || 1 }).catch(() => ({ products: [], total: 0 }));
     const supabaseProducts = await fetchProductsFromSupabase({ limit }).catch(() => []);
-    let products = filterProducts([...REAL_PRINTFUL_IMPORTED_PRODUCTS, ...supabaseProducts, ...(savedData.products || [])]);
+    let products = filterProducts([...supabaseProducts, ...(savedData.products || [])]);
     const requestedCategory = String(req.query.category || '').toLowerCase();
     products = products
       .filter((product) => requestedStatus === 'all' || productIsLive(product))
@@ -343,7 +361,7 @@ module.exports = async function handler(req, res) {
 
     return json(res, 200, {
       ok: true,
-      provider: 'printful-live',
+      provider: 'mongodb',
       page: Number(req.query.page || 1),
       limit,
       total: products.length,

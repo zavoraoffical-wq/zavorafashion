@@ -115,7 +115,7 @@ async function appendJobLog(jobId, message, level = 'info') {
   });
 }
 
-const { NormalizationEngine, ProductRepository, BLOCKED_TERMS } = require('../lib/local-product-engine');
+const { NormalizationEngine, ProductRepository } = require('../lib/local-product-engine');
 
 function transformProduct(raw, index, requestedGender) {
   return NormalizationEngine.normalize(raw, index, requestedGender);

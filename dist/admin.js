@@ -338,6 +338,25 @@ function getAdminProducts() {
   }
 }
 
+async function hydrateAdminProductsFromDatabase() {
+  try {
+    const response = await fetch('/api/products?status=all&limit=1000&page=1', {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store'
+    });
+    const data = await response.json().catch(() => ({}));
+    const products = Array.isArray(data.products) ? data.products : [];
+    localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(products));
+    localStorage.removeItem('zavoraImportedCatalog');
+    localStorage.removeItem('zavora_imported_products');
+    localStorage.removeItem('printful_staged_products');
+    localStorage.removeItem('zavoraProducts');
+    return products;
+  } catch (error) {
+    return getAdminProducts();
+  }
+}
+
 function saveAdminProducts(products) {
   const compactProducts = (Array.isArray(products) ? products : []).map((product) => ({
     ...product,
@@ -1688,6 +1707,23 @@ function finishImportProgress(importedCount, message) {
   if (titleEl) titleEl.textContent = Number(importedCount || 0) > 0 ? 'Import Completed Successfully!' : 'Import Failed';
 }
 
+function showImportProgress(title, subtitle, percent = 0) {
+  showImportProgressModal(title, subtitle);
+  updateImportProgress(percent, subtitle || title || 'Processing...');
+}
+
+function showImportProgressEnd(message) {
+  finishImportProgress(1, message || 'Completed successfully.');
+}
+
+function showImportSuccess(message) {
+  finishImportProgress(1, message || 'Import completed successfully.');
+}
+
+function showImportFailed(message) {
+  finishImportProgress(0, message || 'Import failed.');
+}
+
 async function rebuildStorefrontCatalogCache(productsArray) {
   try {
     const existingAdmin = getAdminProducts();
@@ -2099,11 +2135,28 @@ document.addEventListener('click', async (event) => {
   }
 
   if (event.target.closest('#btnClearDemoProducts')) {
-    if (confirm('Clear all demo items and keep only real imported products?')) {
+    if (confirm('Delete ALL product records from the website database and restart product listing from zero? Users/orders/settings will not be touched.')) {
+      try {
+        const response = await fetch('/api/products?action=clear_all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirm: 'DELETE_ALL_PRODUCTS' })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Database clear failed');
+      } catch (error) {
+        toast(`Product database clear failed: ${error.message}`, 'error');
+        return;
+      }
       localStorage.removeItem('zavoraImportedCatalog');
       localStorage.removeItem(ADMIN_PRODUCTS_KEY);
+      localStorage.removeItem('zavora_imported_products');
+      localStorage.removeItem('printful_staged_products');
+      localStorage.removeItem('zavoraProducts');
+      window.__printfulStagingProducts = [];
       renderAdminProducts();
-      toast('Demo products cleared. Import real products to rebuild.');
+      renderPrintfulStagingTable();
+      toast('All product records deleted. Import real products to rebuild.');
     }
     return;
   }
@@ -2862,6 +2915,7 @@ async function bootAdmin() {
   const ready = await requireAdminSession();
   if (!ready) return;
   document.body.classList.remove('admin-locked');
+  await hydrateAdminProductsFromDatabase();
   renderQuickPanels();
   renderAdminProducts();
   renderAdminCategories();
