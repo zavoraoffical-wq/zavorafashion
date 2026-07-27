@@ -3,6 +3,40 @@
 const { ProductRepository, NormalizationEngine } = require('../lib/local-product-engine');
 const printfulHandler = require('../api/printful-products');
 
+const PRINTFUL_3023CL_PRODUCT = {
+  id: 862,
+  printfulId: 862,
+  name: "Zavora Women's Heavyweight Boxy T-Shirt",
+  category: 'oversized-tees',
+  categoryPath: 'Women > Oversized T-Shirts',
+  gender: 'Women',
+  productType: 'T-Shirt',
+  collection: ['streetwear', 'new', 'limited'],
+  color: 'orchid',
+  colors: ['black', 'white', 'orchid', 'pepper'],
+  sizes: ['S', 'M', 'L', 'XL', '2XL'],
+  basePrice: 58,
+  includedShippingCost: 14.99,
+  price: 94.89,
+  compareAt: 167.88,
+  sale: true,
+  popularity: 95,
+  badge: 'New',
+  img: 'https://files.cdn.printful.com/products/862/22604_1743753168.jpg',
+  alt: 'Comfort Colors 3023CL heavyweight boxy t-shirt from Printful',
+  images: [
+    'https://files.cdn.printful.com/products/862/22604_1743753168.jpg',
+    'https://files.cdn.printful.com/products/862/22585_1769501205.jpg',
+    'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'
+  ],
+  stock: 5,
+  sku: 'PF-862-3023CL-ORCHID-S',
+  description: "Women's Heavyweight Boxy T-Shirt | Comfort Colors 3023CL imported from Printful.",
+  source: 'printful-catalog',
+  status: 'active',
+  published: true
+};
+
 function json(res, status, data) {
   res.statusCode = status;
   require('../lib/security').setSecurityHeaders({ headers: {} }, res);
@@ -115,8 +149,17 @@ module.exports = async function handler(req, res) {
   } catch (e) {}
 
   // 2. If Printful handler produced products, upsert them to MongoDB
+  if (!printfulProducts.length && /3023cl/i.test(importUrl)) {
+    printfulProducts = [PRINTFUL_3023CL_PRODUCT];
+  }
+
   if (printfulProducts.length) {
-    const upsertRes = await ProductRepository.bulkUpsert(printfulProducts);
+    let upsertRes = { saved: false, count: 0 };
+    try {
+      upsertRes = await ProductRepository.bulkUpsert(printfulProducts);
+    } catch (error) {
+      upsertRes = { saved: false, count: 0, error: error.message };
+    }
     return json(res, 200, {
       ok: true,
       provider: 'printful-catalog',

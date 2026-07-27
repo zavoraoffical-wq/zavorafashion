@@ -192,6 +192,11 @@ function isRealHomeProduct(product = {}) {
   return !fakeName.test(text) && !fakeAsset.test(images) && !blockedProduct.test(`${text} ${images}`);
 }
 
+function isCapHatProduct(product = {}) {
+  const text = `${product.name || ''} ${product.title || ''} ${product.description || ''} ${product.category || ''} ${(product.collection || []).join ? product.collection.join(' ') : product.collection || ''}`.toLowerCase();
+  return /(cap|hat|beanie|dad\s*hat|snapback|trucker|bucket\s*hat|visor)/i.test(text);
+}
+
 const STOREFRONT_APPAREL_CATALOG = [];
 
 function clearDemoProductCaches() {
@@ -215,7 +220,7 @@ function getHomeProducts() {
   const removedIds = new Set(JSON.parse(localStorage.getItem('zavoraRemovedProducts') || '[]'));
   const rawList = uniqueHomeProducts(state.printfulProducts.map(normalizeAdminProduct));
 
-  return rawList
+  const homeList = rawList
     .filter(p => p && p.id && isRealHomeProduct(p) && !removedIds.has(String(p.id)) && !removedIds.has(String(p.printfulId)))
     .map((product) => ({
       ...product,
@@ -225,6 +230,14 @@ function getHomeProducts() {
       colors: Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'default'],
       sizes: Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL']
     }));
+  let capHatCount = 0;
+  return homeList
+    .sort((a, b) => Number(isCapHatProduct(a)) - Number(isCapHatProduct(b)))
+    .filter((product) => {
+      if (!isCapHatProduct(product)) return true;
+      capHatCount += 1;
+      return capHatCount <= 2;
+    });
 }
 
 

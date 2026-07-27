@@ -3779,6 +3779,29 @@ function initDynamicProductPage() {
   if (!isCurrentPage('product')) return;
   const product = getSelectedProduct();
   if (!product) return;
+  if (!document.querySelector('.product-buy') || !document.querySelector('.product-gallery')) {
+    const main = document.querySelector('main');
+    if (main) {
+      main.innerHTML = `
+        <section class="product-detail section">
+          <div class="product-gallery"></div>
+          <div class="product-buy">
+            <p class="eyebrow">Zavora</p>
+            <h1>${product.name || 'Zavora Product'}</h1>
+            <p>${product.description || 'Premium Zavora Fashion streetwear piece with clean fit and everyday comfort.'}</p>
+            <p class="price">${money(product.price || 0)}</p>
+            <div class="option-row" aria-label="Color options"></div>
+            <div class="option-row" aria-label="Size options"></div>
+            <div class="product-actions">
+              <a class="primary-cta" href="#" data-product-add="true">Add to Cart</a>
+              <a class="secondary-btn" href="#" data-add-selected-wishlist="true">Wishlist</a>
+            </div>
+            <a class="primary-cta" href="#" data-buy-now="true">Buy Now</a>
+          </div>
+        </section>
+      `;
+    }
+  }
   // Track ViewContent event
   trackMetaEvent('ViewContent', {
     content_name: product.name,
