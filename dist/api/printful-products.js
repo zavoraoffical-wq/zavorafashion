@@ -795,7 +795,7 @@ async function fetchCatalogProducts({ gender, limit, offset, query, collection, 
     return {
       source: `printful-catalog:product:${productId}`,
       total: 1,
-      products: allowedCatalogCategories.has(product.category) ? [product] : []
+      products: [product]
     };
   }
   const catalog = await printfulCatalogFetch('/products');
