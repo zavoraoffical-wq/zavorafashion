@@ -5179,3 +5179,33 @@ body.product-page-pending main {
     font-size: 12px !important;
   }
 }
+
+/* Phone catalog: always show 2 products per row */
+@media (max-width: 768px) {
+  .catalog-main .catalog-grid,
+  .catalog-grid[data-catalog-grid] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 18px 12px !important;
+  }
+  .catalog-main .catalog-card {
+    min-width: 0 !important;
+  }
+  .catalog-main .catalog-card h3 {
+    font-size: 13px !important;
+    line-height: 1.15 !important;
+  }
+  .catalog-main .catalog-card p,
+  .catalog-main .catalog-rating,
+  .catalog-main .catalog-stock {
+    font-size: 11px !important;
+  }
+  .catalog-main .catalog-card-actions {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  .catalog-main .catalog-card-actions button,
+  .catalog-main .catalog-card-actions a {
+    min-height: 38px !important;
+    font-size: 11px !important;
+  }
+}
