@@ -225,7 +225,7 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
                         <option value="Unisex">Unisex</option>
                       </select>
                     </label>
-                    <label>Category
+                  <label>Category
                       <select name="category">
                         <option value="Women:oversized-tees">Women - Oversized Tees</option><option value="Men:oversized-tees">Men - Oversized Tees</option>
                         <option value="Women:heavyweight-tees">Women - Heavyweight Tees</option><option value="Men:heavyweight-tees">Men - Heavyweight Tees</option>
@@ -248,6 +248,19 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
                       </select>
                     </label>
                   </div>
+                  <label>Header Menu Page
+                    <select name="headerMenuPage">
+                      <option value="">Auto / No Change</option>
+                      <option value="home">Home</option>
+                      <option value="shop">Shop All</option>
+                      <option value="women">Women</option>
+                      <option value="men">Men</option>
+                      <option value="new">New</option>
+                      <option value="collections">Collections</option>
+                      <option value="best">Best Sellers</option>
+                      <option value="limited">Limited</option>
+                    </select>
+                  </label>
                   <div style="background:#fafafa;padding:12px;border:1px solid #eee;border-radius:8px;margin:8px 0;">
                     <strong style="display:block;font-size:12px;color:#333;margin-bottom:6px;">ðŸŽ¨ Product Colors</strong>
                     <input name="colors" placeholder="e.g. black, white, gray, blue, red">
@@ -538,6 +551,20 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
                 <div>
                   <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Product Tags</label>
                   <input id="bulkTagsInput" placeholder="e.g. organic, streetwear" style="width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Header Menu Page</label>
+                  <select id="bulkHeaderMenuPageSelect" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+                    <option value="">-- No Change --</option>
+                    <option value="home">Home</option>
+                    <option value="shop">Shop All</option>
+                    <option value="women">Women</option>
+                    <option value="men">Men</option>
+                    <option value="new">New</option>
+                    <option value="collections">Collections</option>
+                    <option value="best">Best Sellers</option>
+                    <option value="limited">Limited</option>
+                  </select>
                 </div>
                 <div>
                   <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Auto Pricing</label>

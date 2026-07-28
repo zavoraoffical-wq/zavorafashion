@@ -397,6 +397,58 @@ function productTargetPages(gender = '', category = '', collections = []) {
   return Array.from(new Set(pages));
 }
 
+function applyHeaderMenuPageTarget(product = {}, menuPage = '') {
+  const page = String(menuPage || '').toLowerCase();
+  if (!page) return product;
+
+  const next = { ...product };
+  const collections = new Set(Array.isArray(next.collection)
+    ? next.collection.map((item) => String(item).toLowerCase()).filter(Boolean)
+    : [String(next.collection || '').toLowerCase()].filter(Boolean));
+  const targetPages = new Set(Array.isArray(next.targetPages)
+    ? next.targetPages.map((item) => String(item).toLowerCase()).filter(Boolean)
+    : []);
+
+  targetPages.add(page);
+  if (page === 'home') {
+    collections.add('new');
+    targetPages.add('home');
+  } else if (page === 'shop') {
+    targetPages.add('shop');
+  } else if (page === 'women') {
+    next.gender = 'Women';
+    collections.add('women');
+    targetPages.add('women');
+  } else if (page === 'men') {
+    next.gender = 'Men';
+    collections.add('men');
+    targetPages.add('men');
+  } else if (page === 'new') {
+    collections.add('new');
+    next.badge = next.badge || 'NEW';
+    next.newArrival = true;
+    targetPages.add('new-arrivals');
+  } else if (page === 'best') {
+    collections.add('best');
+    next.bestSeller = true;
+    next.popularity = Math.max(Number(next.popularity || 0), 92);
+    targetPages.add('best-sellers');
+  } else if (page === 'limited') {
+    collections.add('limited');
+    next.limitedEdition = true;
+    next.badge = next.badge || 'LIMITED';
+    targetPages.add('limited');
+  } else if (page === 'collections') {
+    collections.add('streetwear');
+    targetPages.add('collections');
+  }
+
+  next.collection = Array.from(collections);
+  next.collections = next.collection;
+  next.targetPages = Array.from(targetPages);
+  return next;
+}
+
 function splitTargetCategory(value = '', fallbackGender = '') {
   const raw = String(value || '').trim();
   if (!raw || raw === 'auto') return { gender: fallbackGender, category: raw };
@@ -484,12 +536,18 @@ function getProductStorefrontPages(product) {
   const pages = [];
   const gender = String(product.gender || '').toLowerCase();
   const cols = Array.isArray(product.collection) ? product.collection.map(c => String(c).toLowerCase()) : [String(product.collection || '').toLowerCase()];
+  const targets = Array.isArray(product.targetPages) ? product.targetPages.map(p => String(p).toLowerCase()) : [];
   
   if (gender === 'women' || product.category?.includes('women') || product.name?.toLowerCase().includes('women')) pages.push('Women');
   if (gender === 'men' || product.category?.includes('men') || product.name?.toLowerCase().includes('men')) pages.push('Men');
   if (cols.includes('new') || cols.includes('streetwear')) pages.push('New Arrivals');
   if (cols.includes('best') || product.popularity >= 80) pages.push('Best Sellers');
   if (cols.includes('limited') || product.badge?.toLowerCase().includes('limited')) pages.push('Limited Drops');
+  if (targets.includes('home')) pages.push('Home');
+  if (targets.includes('collections')) pages.push('Collections');
+  if (targets.includes('new-arrivals')) pages.push('New Arrivals');
+  if (targets.includes('best-sellers')) pages.push('Best Sellers');
+  if (targets.includes('limited')) pages.push('Limited Drops');
   pages.push('Shop All');
 
   return Array.from(new Set(pages));
@@ -1654,6 +1712,18 @@ function openEditProductModal(productId) {
   form.elements['price'].value = product.price || '';
   form.elements['compareAt'].value = product.compareAt || product.originalPrice || '';
   form.elements['gender'].value = product.gender || 'Women';
+  if (form.elements['headerMenuPage']) {
+    const pages = Array.isArray(product.targetPages) ? product.targetPages.map((item) => String(item).toLowerCase()) : [];
+    const collections = Array.isArray(product.collection) ? product.collection.map((item) => String(item).toLowerCase()) : [];
+    form.elements['headerMenuPage'].value =
+      pages.includes('limited') || collections.includes('limited') ? 'limited' :
+      pages.includes('best-sellers') || collections.includes('best') ? 'best' :
+      pages.includes('new-arrivals') || collections.includes('new') ? 'new' :
+      pages.includes('men') || String(product.gender || '').toLowerCase() === 'men' ? 'men' :
+      pages.includes('women') || String(product.gender || '').toLowerCase() === 'women' ? 'women' :
+      pages.includes('collections') ? 'collections' :
+      pages.includes('shop') ? 'shop' : '';
+  }
   const targetCategoryValue = `${product.gender || 'Women'}:${product.category || 'oversized-tees'}`;
   form.elements['category'].value = [...form.elements['category'].options].some((option) => option.value === targetCategoryValue)
     ? targetCategoryValue
@@ -1685,6 +1755,7 @@ async function saveEditProductForm(e) {
       const compareAt = Number(data.get('compareAt')) || null;
       const gender = String(data.get('gender') || 'Women');
       const rawCategory = String(data.get('category') || 'oversized-tees');
+      const headerMenuPage = String(data.get('headerMenuPage') || '');
       const splitCategory = splitTargetCategory(rawCategory, gender);
       const finalGender = splitCategory.gender || gender;
       const category = splitCategory.category || 'oversized-tees';
@@ -1705,7 +1776,7 @@ async function saveEditProductForm(e) {
       const video = String(data.get('videoUrl') || '').trim();
       const stock = Number(data.get('stock') || 50);
 
-      return normalizeProductTarget({
+      return applyHeaderMenuPageTarget(normalizeProductTarget({
         ...product,
         name,
         title: name,
@@ -1724,7 +1795,7 @@ async function saveEditProductForm(e) {
         videoUrl: video,
         stock,
         description: String(data.get('description') || '').trim()
-      }, finalGender, category);
+      }, finalGender, category), headerMenuPage);
     }
     return product;
   }
@@ -3041,6 +3112,7 @@ async function bulkApplyStagingEdits() {
   const status = document.getElementById('bulkStatusSelect')?.value;
   const featured = document.getElementById('bulkFeaturedSelect')?.value;
   const bestSeller = document.getElementById('bulkBestSellerSelect')?.value;
+  const headerMenuPage = document.getElementById('bulkHeaderMenuPageSelect')?.value;
   const tagsRaw = document.getElementById('bulkTagsInput')?.value.trim();
   const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : null;
 
@@ -3075,7 +3147,10 @@ async function bulkApplyStagingEdits() {
     if (featured) product.featured = featured === 'yes';
     if (bestSeller) product.bestSeller = bestSeller === 'yes';
     if (tags) product.tags = tags;
-    Object.assign(product, normalizeProductTarget(product, product.gender, product.category, collection || ''));
+    Object.assign(product, applyHeaderMenuPageTarget(
+      normalizeProductTarget(product, product.gender, product.category, collection || ''),
+      headerMenuPage
+    ));
     product.status = targetStatus;
     product.published = targetStatus === 'published';
 
