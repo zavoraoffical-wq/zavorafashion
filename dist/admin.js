@@ -2995,6 +2995,36 @@ window.toggleSingleStagingPublish = toggleSingleStagingPublish;
 window.updateStagingSelectedCount = updateStagingSelectedCount;
 window.openEditProductModal = openEditProductModal;
 
+function randomMoney(min = 58, max = 130) {
+  return Math.round((min + Math.random() * (max - min)) * 100) / 100;
+}
+
+function randomizeSelectedStagingPrices() {
+  const selectedBoxes = [...document.querySelectorAll('.staging-chk:checked')];
+  if (!selectedBoxes.length) {
+    toast('Random price ke liye pehle product select karo.', 'error');
+    return;
+  }
+
+  const selectedIds = new Set(selectedBoxes.map(b => String(b.value)));
+  let changed = 0;
+  (window.__printfulStagingProducts || []).forEach((product) => {
+    if (!selectedIds.has(String(product.id))) return;
+    const price = randomMoney(58, 130);
+    const compareAt = Math.round((price * 1.75 + randomMoney(8, 22)) * 100) / 100;
+    product.price = price;
+    product.compareAt = compareAt;
+    product.originalPrice = compareAt;
+    changed++;
+  });
+
+  persistStagingProducts();
+  renderPrintfulStagingTable();
+  toast(`Random price applied to ${changed} product(s): $58-$130.`);
+}
+
+window.randomizeSelectedStagingPrices = randomizeSelectedStagingPrices;
+
 async function bulkApplyStagingEdits() {
   const selectedBoxes = [...document.querySelectorAll('.staging-chk:checked')];
   if (!selectedBoxes.length) {
@@ -3011,8 +3041,6 @@ async function bulkApplyStagingEdits() {
   const status = document.getElementById('bulkStatusSelect')?.value;
   const featured = document.getElementById('bulkFeaturedSelect')?.value;
   const bestSeller = document.getElementById('bulkBestSellerSelect')?.value;
-  const minPrice = Number(document.getElementById('bulkMinPriceInput')?.value || 0);
-  const maxPrice = Number(document.getElementById('bulkMaxPriceInput')?.value || 0);
   const tagsRaw = document.getElementById('bulkTagsInput')?.value.trim();
   const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : null;
 
@@ -3046,11 +3074,6 @@ async function bulkApplyStagingEdits() {
     if (season) product.season = season;
     if (featured) product.featured = featured === 'yes';
     if (bestSeller) product.bestSeller = bestSeller === 'yes';
-    if (minPrice > 0) product.price = Math.round(minPrice * 100) / 100;
-    if (maxPrice > 0) {
-      product.compareAt = Math.round(maxPrice * 100) / 100;
-      product.originalPrice = product.compareAt;
-    }
     if (tags) product.tags = tags;
     Object.assign(product, normalizeProductTarget(product, product.gender, product.category, collection || ''));
     product.status = targetStatus;
@@ -3129,6 +3152,12 @@ async function bootAdmin() {
   if (btnDeleteSelectedStaging && !btnDeleteSelectedStaging.dataset.bound) {
     btnDeleteSelectedStaging.dataset.bound = 'true';
     btnDeleteSelectedStaging.addEventListener('click', deleteSelectedStagingProducts);
+  }
+
+  const btnRandomizeStagingPrices = document.getElementById('btnRandomizeStagingPrices');
+  if (btnRandomizeStagingPrices && !btnRandomizeStagingPrices.dataset.bound) {
+    btnRandomizeStagingPrices.dataset.bound = 'true';
+    btnRandomizeStagingPrices.addEventListener('click', randomizeSelectedStagingPrices);
   }
 
   const btnClearImporterStaging = document.getElementById('btnClearImporterStaging');
