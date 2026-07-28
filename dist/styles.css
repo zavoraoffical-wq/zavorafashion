@@ -5188,20 +5188,51 @@ body.product-page-pending main {
     gap: 18px 12px !important;
   }
   .catalog-main .catalog-card {
+    display: grid !important;
+    grid-template-rows: auto 1fr !important;
+    min-width: 0 !important;
+  }
+  .catalog-main .catalog-card > div {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
     min-width: 0 !important;
   }
   .catalog-main .catalog-card h3 {
     font-size: 13px !important;
     line-height: 1.15 !important;
+    min-height: 30px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
   }
   .catalog-main .catalog-card p,
   .catalog-main .catalog-rating,
   .catalog-main .catalog-stock {
     font-size: 11px !important;
   }
+  .catalog-main .catalog-card p {
+    min-height: 40px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  .catalog-main .swatches {
+    min-height: 20px !important;
+  }
+  .catalog-main .sale-price {
+    min-height: 22px !important;
+    display: block !important;
+  }
+  .catalog-main .catalog-rating {
+    min-height: 18px !important;
+  }
   .catalog-main .catalog-card-actions {
     grid-template-columns: 1fr !important;
     gap: 8px !important;
+    margin-top: auto !important;
   }
   .catalog-main .catalog-card-actions button,
   .catalog-main .catalog-card-actions a {
