@@ -2166,14 +2166,6 @@ function injectLargeCatalog() {
     <div class="catalog-area">
       ${pageName === 'collections' ? collectionShowcase(activeCollection) : ''}
       <div class="mobile-filter-bar">
-        <nav class="catalog-filter-tabs" aria-label="Quick category filters">
-          <a href="${pageName}.html" data-filter-tab="all">View All</a>
-          <a href="${pageName}.html?category=oversized-tees&label=Oversized%20Tees" data-filter-tab="oversized-tees">Oversized Tees</a>
-          <a href="${pageName}.html?category=hoodies&label=Hoodies" data-filter-tab="hoodies">Hoodies</a>
-          <a href="${pageName}.html?category=sweatpants&label=Sweatpants" data-filter-tab="sweatpants">Sweatpants</a>
-          <a href="${pageName}.html?category=jackets&label=Jackets" data-filter-tab="jackets">Jackets</a>
-          <a href="${pageName}.html?category=accessories&label=Accessories" data-filter-tab="accessories">Accessories</a>
-        </nav>
         <button type="button" class="mobile-filter-btn" id="openMobileFilterBtn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           <span>FILTER</span>
@@ -2202,9 +2194,6 @@ function injectLargeCatalog() {
   if (urlCategory && categorySelect && [...categorySelect.options].some((option) => option.value === urlCategory)) {
     categorySelect.value = urlCategory;
   }
-  section.querySelectorAll('[data-filter-tab]').forEach((tab) => {
-    tab.classList.toggle('active', (urlCategory || 'all') === tab.dataset.filterTab);
-  });
   const label = new URLSearchParams(window.location.search).get('label');
   if (label) {
     const title = section.querySelector('.catalog-toolbar h1');

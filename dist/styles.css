@@ -5081,55 +5081,38 @@ body.product-page-pending main {
   align-items: center !important;
   justify-content: space-between !important;
   gap: 14px !important;
-  position: sticky !important;
-  top: 78px !important;
+  position: relative !important;
+  top: auto !important;
   z-index: 25 !important;
-  margin: 0 0 22px !important;
-  padding: 16px clamp(16px, 3vw, 28px) !important;
-  background: #050505 !important;
+  margin: 0 0 26px !important;
+  padding: 0 !important;
+  background: transparent !important;
   color: #ffffff !important;
   border: 0 !important;
-  border-bottom: 1px solid rgba(255,255,255,.16) !important;
-  box-shadow: 0 14px 34px rgba(0,0,0,.18) !important;
-}
-.catalog-main .catalog-filter-tabs {
-  display: flex !important;
-  align-items: center !important;
-  gap: 26px !important;
-  overflow-x: auto !important;
-  scrollbar-width: none !important;
-  min-width: 0 !important;
-  flex: 1 1 auto !important;
-}
-.catalog-main .catalog-filter-tabs::-webkit-scrollbar {
-  display: none !important;
-}
-.catalog-main .catalog-filter-tabs a {
-  color: rgba(255,255,255,.72) !important;
-  text-decoration: none !important;
-  text-transform: uppercase !important;
-  letter-spacing: .06em !important;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-  white-space: nowrap !important;
-  padding: 8px 0 !important;
-  border-bottom: 2px solid transparent !important;
-}
-.catalog-main .catalog-filter-tabs a:hover,
-.catalog-main .catalog-filter-tabs a.active {
-  color: #ffffff !important;
-  border-bottom-color: #ffffff !important;
+  border-bottom: 1px solid var(--line) !important;
+  box-shadow: none !important;
 }
 .catalog-main .mobile-filter-btn {
   width: auto !important;
-  min-width: 130px !important;
-  border: 1px solid rgba(255,255,255,.55) !important;
+  min-width: 162px !important;
+  height: 52px !important;
+  background: #050505 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(0,0,0,.92) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
+  font-size: 15px !important;
+  letter-spacing: .14em !important;
 }
 .catalog-main .mobile-sort-select {
-  width: min(210px, 46vw) !important;
+  width: min(262px, 48vw) !important;
+  height: 52px !important;
+  background-color: #050505 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(0,0,0,.92) !important;
   border-radius: 0 !important;
+  font-size: 15px !important;
+  letter-spacing: .1em !important;
 }
 .catalog-main .mobile-filter-drawer {
   display: flex !important;
@@ -5176,18 +5159,19 @@ body.product-page-pending main {
   .catalog-main .mobile-filter-bar {
     grid-template-columns: none !important;
     flex-wrap: nowrap !important;
-    top: 60px !important;
-    padding: 12px 14px !important;
-  }
-  .catalog-main .catalog-filter-tabs {
-    gap: 18px !important;
+    top: auto !important;
+    padding: 0 !important;
+    gap: 10px !important;
   }
   .catalog-main .mobile-filter-btn {
-    min-width: 112px !important;
-    height: 40px !important;
+    min-width: 128px !important;
+    height: 48px !important;
     padding-inline: 12px !important;
   }
   .catalog-main .mobile-sort-select {
-    display: none !important;
+    display: block !important;
+    width: min(190px, 52vw) !important;
+    height: 48px !important;
+    font-size: 12px !important;
   }
 }
