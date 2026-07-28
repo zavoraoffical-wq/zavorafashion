@@ -5087,32 +5087,36 @@ body.product-page-pending main {
   margin: 0 0 26px !important;
   padding: 0 !important;
   background: transparent !important;
-  color: #ffffff !important;
+  color: #050505 !important;
   border: 0 !important;
-  border-bottom: 1px solid var(--line) !important;
+  border-bottom: 0 !important;
   box-shadow: none !important;
 }
 .catalog-main .mobile-filter-btn {
   width: auto !important;
   min-width: 162px !important;
   height: 52px !important;
-  background: #050505 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(0,0,0,.92) !important;
+  background: #ffffff !important;
+  color: #050505 !important;
+  border: 1px solid rgba(0,0,0,.78) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
   font-size: 15px !important;
   letter-spacing: .14em !important;
 }
+.catalog-main .mobile-filter-btn svg {
+  stroke: #050505 !important;
+}
 .catalog-main .mobile-sort-select {
   width: min(262px, 48vw) !important;
   height: 52px !important;
-  background-color: #050505 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(0,0,0,.92) !important;
+  background-color: #ffffff !important;
+  color: #050505 !important;
+  border: 1px solid rgba(0,0,0,.78) !important;
   border-radius: 0 !important;
   font-size: 15px !important;
   letter-spacing: .1em !important;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23050505' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
 }
 .catalog-main .mobile-filter-drawer {
   display: flex !important;
