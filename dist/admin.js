@@ -508,7 +508,7 @@ async function hydrateAdminProductsFromDatabase() {
   const cacheBust = Date.now();
   try {
     const fetchProductPage = async (page = 1) => {
-      const response = await fetch(`/api/products?status=all&limit=60&page=${page}&t=${cacheBust}`, {
+      const response = await fetch(`/api/products?status=all&limit=1000&page=${page}&t=${cacheBust}`, {
         headers: { Accept: 'application/json' },
         credentials: 'include',
         cache: 'no-store'
@@ -626,6 +626,10 @@ async function renderAdminProducts() {
   const list = document.querySelector('[data-admin-product-list]');
   if (!list) return;
 
+  if (!latestProductDatabaseSummary) {
+    await refreshProductDatabaseSummaryBadges();
+  }
+
   const removedIds = new Set(JSON.parse(localStorage.getItem('zavoraRemovedProducts') || '[]'));
   const customProducts = getAdminProducts();
   if (!customProducts.length && !adminProductsHydrating) {
@@ -656,11 +660,25 @@ async function renderAdminProducts() {
 
   const badge = document.querySelector('[data-admin-product-count]');
   if (badge) {
-    const publishedTotal = latestProductDatabaseSummary?.published;
-    badge.textContent = `${Number(publishedTotal || filtered.length)} Products Live`;
+    const publishedTotal = Number(latestProductDatabaseSummary?.published);
+    badge.textContent = `${Number.isFinite(publishedTotal) ? publishedTotal : filtered.filter((product) => product.published !== false && String(product.status || '').toLowerCase() !== 'draft').length} Products Live`;
   }
 
   if (!filtered.length) {
+    const dbTotal = Number(latestProductDatabaseSummary?.total);
+    if (Number.isFinite(dbTotal) && dbTotal > 0 && !adminProductsHydrating) {
+      adminProductsHydrating = true;
+      list.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">Refreshing ${dbTotal} products from MongoDB...</td></tr>`;
+      try {
+        await hydrateAdminProductsFromDatabase();
+      } finally {
+        adminProductsHydrating = false;
+      }
+      const refreshedProducts = getAdminProducts();
+      if (refreshedProducts.length) {
+        return renderAdminProducts();
+      }
+    }
     list.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">No products found matching criteria.</td></tr>`;
     return;
   }
