@@ -94,6 +94,7 @@ function addBrandHeadTags() {
     html = html.replace(/src=["']page-script\.js(\?v=[^"']*)?["']/gi, `src="page-script.js?v=${jsVersion}"`);
     html = html.replace(/src=["']paypal-checkout\.js(\?v=[^"']*)?["']/gi, `src="paypal-checkout.js?v=${jsVersion}"`);
     html = html.replace(/src=["']admin\.js(\?v=[^"']*)?["']/gi, `src="admin.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']admin-login\.js(\?v=[^"']*)?["']/gi, `src="admin-login.js?v=${jsVersion}"`);
     html = optimizeImageTags(html);
     
     html = removeMetaByName(html, 'viewport');
