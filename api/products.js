@@ -375,6 +375,14 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return json(res, 405, { ok: false, error: 'Method not allowed' });
 
   try {
+    const action = String(req.query.action || '').toLowerCase();
+    const wantsSummary = action === 'summary' || String(req.query.summary || '').toLowerCase() === 'true';
+    if (wantsSummary) {
+      if (!requireAdminSession(req, res)) return;
+      const summary = await ProductRepository.countSummary();
+      return json(res, 200, { ok: true, provider: summary.provider || 'mongodb', summary });
+    }
+
     const limit = Math.min(Math.max(Number(req.query.limit || 24), 1), 60);
     const productId = String(req.query.id || req.query.productId || '').trim();
 

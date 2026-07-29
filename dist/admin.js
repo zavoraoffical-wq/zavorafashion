@@ -1996,6 +1996,7 @@ function forceRenderImportedStagingRows(productsArray = []) {
   if (countItem) countItem.textContent = `${products.length} Items Found`;
   if (countDraft) countDraft.textContent = `${draftsCount} Pending Review`;
   if (countPub) countPub.textContent = `${publishedCount} Live Products`;
+  refreshProductDatabaseSummaryBadges();
   tbody.innerHTML = products.map((product) => {
     const thumb = product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png';
     const isPublished = product.status === 'published' || product.published;
@@ -2853,6 +2854,28 @@ async function fetchPrintfulStoreProducts() {
   }
 }
 
+let productDatabaseSummaryTimer = null;
+async function refreshProductDatabaseSummaryBadges() {
+  clearTimeout(productDatabaseSummaryTimer);
+  productDatabaseSummaryTimer = setTimeout(async () => {
+    const countItem = document.getElementById('printfulStoreItemCount');
+    const countDraft = document.getElementById('printfulDraftCount');
+    const countPub = document.getElementById('printfulPublishedCount');
+    if (!countItem && !countDraft && !countPub) return;
+    try {
+      const response = await fetch('/api/products?action=summary', { credentials: 'include', cache: 'no-store' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.ok || !data.summary) return;
+      const summary = data.summary || {};
+      if (countItem) countItem.textContent = `${Number(summary.total || 0)} DB Products`;
+      if (countDraft) countDraft.textContent = `${Number(summary.draft || 0)} Draft Products`;
+      if (countPub) countPub.textContent = `${Number(summary.published || 0)} Live Products`;
+    } catch (error) {
+      // Keep local staging counters if the protected summary endpoint is unavailable.
+    }
+  }, 80);
+}
+
 function renderPrintfulStagingTable() {
   const tbody = document.getElementById('stagingProductsTbody');
   const countItem = document.getElementById('printfulStoreItemCount');
@@ -2873,6 +2896,7 @@ function renderPrintfulStagingTable() {
   if (countItem) countItem.textContent = `${stagingList.length} Items Found`;
   if (countDraft) countDraft.textContent = `${draftsCount} Pending Review`;
   if (countPub) countPub.textContent = `${publishedCount} Live Products`;
+  refreshProductDatabaseSummaryBadges();
 
   if (!tbody) return;
 
