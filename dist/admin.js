@@ -268,6 +268,8 @@ function toast(message) {
 }
 
 let latestStats = {};
+let latestProductDatabaseSummary = null;
+let adminProductsHydrating = false;
 
 function setSection(name) {
   const title = sectionTitles[name] || 'Zavora Admin';
@@ -611,12 +613,22 @@ function getProductStorefrontPages(product) {
   return Array.from(new Set(pages));
 }
 
-function renderAdminProducts() {
+async function renderAdminProducts() {
   const list = document.querySelector('[data-admin-product-list]');
   if (!list) return;
 
   const removedIds = new Set(JSON.parse(localStorage.getItem('zavoraRemovedProducts') || '[]'));
   const customProducts = getAdminProducts();
+  if (!customProducts.length && !adminProductsHydrating) {
+    adminProductsHydrating = true;
+    list.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">Loading products from MongoDB...</td></tr>`;
+    try {
+      await hydrateAdminProductsFromDatabase();
+    } finally {
+      adminProductsHydrating = false;
+    }
+    return renderAdminProducts();
+  }
   const merged = customProducts;
   const seen = new Set();
   const allProducts = merged.filter(p => {
@@ -634,7 +646,10 @@ function renderAdminProducts() {
   }
 
   const badge = document.querySelector('[data-admin-product-count]');
-  if (badge) badge.textContent = `${filtered.length} Products Live`;
+  if (badge) {
+    const publishedTotal = latestProductDatabaseSummary?.published;
+    badge.textContent = `${Number(publishedTotal || filtered.length)} Products Live`;
+  }
 
   if (!filtered.length) {
     list.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">No products found matching criteria.</td></tr>`;
@@ -2923,9 +2938,16 @@ async function refreshProductDatabaseSummaryBadges() {
         const published = Number(publishedData.total || 0);
         summary = { total, published, draft: Math.max(total - published, 0) };
       }
+      latestProductDatabaseSummary = {
+        total: Number(summary.total || 0),
+        published: Number(summary.published || 0),
+        draft: Number(summary.draft || 0)
+      };
       if (countItem) countItem.textContent = `${Number(summary.total || 0)} DB Products`;
       if (countDraft) countDraft.textContent = `${Number(summary.draft || 0)} Draft Products`;
       if (countPub) countPub.textContent = `${Number(summary.published || 0)} Live Products`;
+      const productCountBadge = document.querySelector('[data-admin-product-count]');
+      if (productCountBadge) productCountBadge.textContent = `${latestProductDatabaseSummary.published} Products Live`;
     } catch (error) {
       // Keep local staging counters if the protected summary endpoint is unavailable.
     }
