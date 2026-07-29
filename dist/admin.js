@@ -498,6 +498,7 @@ async function hydrateAdminProductsFromDatabase() {
   try {
     const response = await fetch('/api/products?status=all&limit=1000&page=1', {
       headers: { Accept: 'application/json' },
+      credentials: 'include',
       cache: 'no-store'
     });
     const data = await response.json().catch(() => ({}));
@@ -511,6 +512,25 @@ async function hydrateAdminProductsFromDatabase() {
   } catch (error) {
     return getAdminProducts();
   }
+}
+
+function syncStagingProductsFromAdminProducts() {
+  const adminProducts = getAdminProducts();
+  if (!Array.isArray(adminProducts) || !adminProducts.length) return;
+  if (!Array.isArray(window.__printfulStagingProducts)) window.__printfulStagingProducts = [];
+  const staged = window.__printfulStagingProducts;
+  const stagedKeys = new Set(staged.map((product) => String(product.printfulId || product.id || product.sku || product.slug || '')));
+  adminProducts.forEach((product) => {
+    const key = String(product.printfulId || product.id || product.sku || product.slug || '');
+    if (!key || stagedKeys.has(key)) return;
+    staged.push({
+      ...product,
+      status: product.status || (product.published === false ? 'draft' : 'published'),
+      published: product.published !== false && String(product.status || '').toLowerCase() !== 'draft'
+    });
+    stagedKeys.add(key);
+  });
+  persistStagingProducts();
 }
 
 function saveAdminProducts(products) {
@@ -2882,11 +2902,14 @@ function renderPrintfulStagingTable() {
   const countDraft = document.getElementById('printfulDraftCount');
   const countPub = document.getElementById('printfulPublishedCount');
   const searchInput = document.getElementById('stagingSearchInput');
+  const statusFilterInput = document.getElementById('stagingStatusFilter');
   const query = String(searchInput?.value || '').trim().toLowerCase();
+  const statusFilter = String(statusFilterInput?.value || 'all').toLowerCase();
 
   if (!Array.isArray(window.__printfulStagingProducts) || !window.__printfulStagingProducts.length) {
     try { window.__printfulStagingProducts = JSON.parse(localStorage.getItem('zavoraPrintfulStagingProducts') || '[]'); } catch (error) { window.__printfulStagingProducts = []; }
   }
+  syncStagingProductsFromAdminProducts();
   const stagingList = window.__printfulStagingProducts || [];
   const existingProducts = getAdminProducts();
 
@@ -2901,6 +2924,9 @@ function renderPrintfulStagingTable() {
   if (!tbody) return;
 
   const filtered = stagingList.filter(p => {
+    const isPublished = p.status === 'published' || p.published;
+    if (statusFilter === 'draft' && isPublished) return false;
+    if (statusFilter === 'published' && !isPublished) return false;
     if (!query) return true;
     const text = `${p.name || ''} ${p.sku || ''} ${p.category || ''} ${p.id || ''}`.toLowerCase();
     return text.includes(query);
@@ -3303,6 +3329,12 @@ async function bootAdmin() {
   if (searchStaging && !searchStaging.dataset.bound) {
     searchStaging.dataset.bound = 'true';
     searchStaging.addEventListener('input', renderPrintfulStagingTable);
+  }
+
+  const stagingStatusFilter = document.getElementById('stagingStatusFilter');
+  if (stagingStatusFilter && !stagingStatusFilter.dataset.bound) {
+    stagingStatusFilter.dataset.bound = 'true';
+    stagingStatusFilter.addEventListener('change', renderPrintfulStagingTable);
   }
 
   if (!document.body.dataset.stagingActionsBound) {

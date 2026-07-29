@@ -1,7 +1,7 @@
 'use strict';
 
 const { ProductRepository } = require('../lib/local-product-engine');
-const { requireAdminSession } = require('../lib/admin-auth');
+const { requireAdminSession, validAdminSession } = require('../lib/admin-auth');
 
 function envValue(...names) {
   for (const name of names) {
@@ -383,7 +383,9 @@ module.exports = async function handler(req, res) {
       return json(res, 200, { ok: true, provider: summary.provider || 'mongodb', summary });
     }
 
-    const limit = Math.min(Math.max(Number(req.query.limit || 24), 1), 60);
+    const isAdminListRequest = Boolean(validAdminSession(req));
+    const maxLimit = isAdminListRequest ? 1000 : 60;
+    const limit = Math.min(Math.max(Number(req.query.limit || 24), 1), maxLimit);
     const productId = String(req.query.id || req.query.productId || '').trim();
 
     if (productId) {
