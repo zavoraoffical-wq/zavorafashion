@@ -496,13 +496,28 @@ function normalizeProductTarget(product = {}, genderValue = '', categoryValue = 
 
 async function hydrateAdminProductsFromDatabase() {
   try {
-    const response = await fetch('/api/products?status=all&limit=1000&page=1', {
-      headers: { Accept: 'application/json' },
-      credentials: 'include',
-      cache: 'no-store'
+    const fetchProductPage = async (page = 1) => {
+      const response = await fetch(`/api/products?status=all&limit=60&page=${page}`, {
+        headers: { Accept: 'application/json' },
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      return response.json().catch(() => ({}));
+    };
+    const firstPage = await fetchProductPage(1);
+    const allProducts = Array.isArray(firstPage.products) ? [...firstPage.products] : [];
+    const totalPages = Math.min(Number(firstPage.totalPages || 1), 50);
+    for (let page = 2; page <= totalPages; page += 1) {
+      const data = await fetchProductPage(page);
+      if (Array.isArray(data.products)) allProducts.push(...data.products);
+    }
+    const seen = new Set();
+    const products = allProducts.filter((product) => {
+      const key = String(product.printfulId || product.id || product.sku || product.slug || product.name || '').trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
-    const data = await response.json().catch(() => ({}));
-    const products = Array.isArray(data.products) ? data.products : [];
     localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(products));
     localStorage.removeItem('zavoraImportedCatalog');
     localStorage.removeItem('zavora_imported_products');
@@ -510,6 +525,17 @@ async function hydrateAdminProductsFromDatabase() {
     localStorage.removeItem('zavoraProducts');
     return products;
   } catch (error) {
+    try {
+      const response = await fetch('/api/products?status=all&limit=1000&page=1', {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+      cache: 'no-store'
+      });
+      const data = await response.json().catch(() => ({}));
+      const products = Array.isArray(data.products) ? data.products : [];
+      localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(products));
+      return products;
+    } catch (fallbackError) {}
     return getAdminProducts();
   }
 }
@@ -2885,8 +2911,18 @@ async function refreshProductDatabaseSummaryBadges() {
     try {
       const response = await fetch('/api/products?action=summary', { credentials: 'include', cache: 'no-store' });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data?.ok || !data.summary) return;
-      const summary = data.summary || {};
+      let summary = data?.summary || null;
+      if (!response.ok || !data?.ok || !summary) {
+        const [allResponse, publishedResponse] = await Promise.all([
+          fetch('/api/products?status=all&limit=1&page=1', { credentials: 'include', cache: 'no-store' }),
+          fetch('/api/products?status=published&limit=1&page=1', { credentials: 'include', cache: 'no-store' })
+        ]);
+        const allData = await allResponse.json().catch(() => ({}));
+        const publishedData = await publishedResponse.json().catch(() => ({}));
+        const total = Number(allData.total || 0);
+        const published = Number(publishedData.total || 0);
+        summary = { total, published, draft: Math.max(total - published, 0) };
+      }
       if (countItem) countItem.textContent = `${Number(summary.total || 0)} DB Products`;
       if (countDraft) countDraft.textContent = `${Number(summary.draft || 0)} Draft Products`;
       if (countPub) countPub.textContent = `${Number(summary.published || 0)} Live Products`;
