@@ -280,7 +280,15 @@ function setSection(name) {
   window.history.replaceState(null, '', `#${name}`);
 
   if (name === 'orders') renderLiveOrders(latestStats);
-  if (name === 'products') renderAdminProducts();
+  if (name === 'products') {
+    renderAdminProducts();
+    hydrateAdminProductsFromDatabase()
+      .then(() => {
+        renderAdminProducts();
+        refreshProductDatabaseSummaryBadges();
+      })
+      .catch(() => refreshProductDatabaseSummaryBadges());
+  }
   if (name === 'categories') renderAdminCategories();
   if (name === 'customers') renderAdminCustomers();
   if (name === 'payments') renderAdminPayments();
@@ -497,9 +505,10 @@ function normalizeProductTarget(product = {}, genderValue = '', categoryValue = 
 }
 
 async function hydrateAdminProductsFromDatabase() {
+  const cacheBust = Date.now();
   try {
     const fetchProductPage = async (page = 1) => {
-      const response = await fetch(`/api/products?status=all&limit=60&page=${page}`, {
+      const response = await fetch(`/api/products?status=all&limit=60&page=${page}&t=${cacheBust}`, {
         headers: { Accept: 'application/json' },
         credentials: 'include',
         cache: 'no-store'
@@ -528,7 +537,7 @@ async function hydrateAdminProductsFromDatabase() {
     return products;
   } catch (error) {
     try {
-      const response = await fetch('/api/products?status=all&limit=1000&page=1', {
+      const response = await fetch(`/api/products?status=all&limit=1000&page=1&t=${Date.now()}`, {
       headers: { Accept: 'application/json' },
       credentials: 'include',
       cache: 'no-store'
@@ -2052,11 +2061,9 @@ function forceRenderImportedStagingRows(productsArray = []) {
   const countItem = document.getElementById('printfulStoreItemCount');
   const countDraft = document.getElementById('printfulDraftCount');
   const countPub = document.getElementById('printfulPublishedCount');
-  const draftsCount = products.filter((product) => product.status === 'draft' || product.published === false).length;
-  const publishedCount = products.filter((product) => product.status === 'published' || product.published === true).length;
-  if (countItem) countItem.textContent = `${products.length} Items Found`;
-  if (countDraft) countDraft.textContent = `${draftsCount} Pending Review`;
-  if (countPub) countPub.textContent = `${publishedCount} Live Products`;
+  if ((countItem || countDraft || countPub) && latestProductDatabaseSummary) {
+    applyProductDatabaseSummary(latestProductDatabaseSummary);
+  }
   refreshProductDatabaseSummaryBadges();
   tbody.innerHTML = products.map((product) => {
     const thumb = product.img || product.image || product.images?.[0] || 'assets/studio-wide-trouser.png';
@@ -2915,43 +2922,65 @@ async function fetchPrintfulStoreProducts() {
   }
 }
 
-let productDatabaseSummaryTimer = null;
+function normalizeProductDatabaseSummary(summary = {}) {
+  const total = Number(summary.total || 0);
+  const published = Number(summary.published || summary.live || 0);
+  const draft = Number.isFinite(Number(summary.draft))
+    ? Number(summary.draft || 0)
+    : Math.max(total - published, 0);
+  return { total, published, draft: Math.max(draft, 0) };
+}
+
+function applyProductDatabaseSummary(summary = {}) {
+  latestProductDatabaseSummary = normalizeProductDatabaseSummary(summary);
+  const countItem = document.getElementById('printfulStoreItemCount');
+  const countDraft = document.getElementById('printfulDraftCount');
+  const countPub = document.getElementById('printfulPublishedCount');
+  if (countItem) countItem.textContent = `${latestProductDatabaseSummary.total} DB Products`;
+  if (countDraft) countDraft.textContent = `${latestProductDatabaseSummary.draft} Draft Products`;
+  if (countPub) countPub.textContent = `${latestProductDatabaseSummary.published} Live Products`;
+  const productCountBadge = document.querySelector('[data-admin-product-count]');
+  if (productCountBadge) productCountBadge.textContent = `${latestProductDatabaseSummary.published} Products Live`;
+  return latestProductDatabaseSummary;
+}
+
+async function fetchProductDatabaseSummary() {
+  const cacheBust = Date.now();
+  try {
+    const response = await fetch(`/api/products?action=summary&t=${cacheBust}`, {
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.ok && data?.ok && data?.summary) return normalizeProductDatabaseSummary(data.summary);
+  } catch (error) {}
+
+  const [allResponse, publishedResponse] = await Promise.all([
+    fetch(`/api/products?status=all&limit=1&page=1&t=${cacheBust}`, {
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' }
+    }),
+    fetch(`/api/products?status=published&limit=1&page=1&t=${cacheBust}`, {
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' }
+    })
+  ]);
+  const allData = await allResponse.json().catch(() => ({}));
+  const publishedData = await publishedResponse.json().catch(() => ({}));
+  const total = Number(allData.total || 0);
+  const published = Number(publishedData.total || 0);
+  return normalizeProductDatabaseSummary({ total, published, draft: Math.max(total - published, 0) });
+}
+
 async function refreshProductDatabaseSummaryBadges() {
-  clearTimeout(productDatabaseSummaryTimer);
-  productDatabaseSummaryTimer = setTimeout(async () => {
-    const countItem = document.getElementById('printfulStoreItemCount');
-    const countDraft = document.getElementById('printfulDraftCount');
-    const countPub = document.getElementById('printfulPublishedCount');
-    if (!countItem && !countDraft && !countPub) return;
-    try {
-      const response = await fetch('/api/products?action=summary', { credentials: 'include', cache: 'no-store' });
-      const data = await response.json().catch(() => ({}));
-      let summary = data?.summary || null;
-      if (!response.ok || !data?.ok || !summary) {
-        const [allResponse, publishedResponse] = await Promise.all([
-          fetch('/api/products?status=all&limit=1&page=1', { credentials: 'include', cache: 'no-store' }),
-          fetch('/api/products?status=published&limit=1&page=1', { credentials: 'include', cache: 'no-store' })
-        ]);
-        const allData = await allResponse.json().catch(() => ({}));
-        const publishedData = await publishedResponse.json().catch(() => ({}));
-        const total = Number(allData.total || 0);
-        const published = Number(publishedData.total || 0);
-        summary = { total, published, draft: Math.max(total - published, 0) };
-      }
-      latestProductDatabaseSummary = {
-        total: Number(summary.total || 0),
-        published: Number(summary.published || 0),
-        draft: Number(summary.draft || 0)
-      };
-      if (countItem) countItem.textContent = `${Number(summary.total || 0)} DB Products`;
-      if (countDraft) countDraft.textContent = `${Number(summary.draft || 0)} Draft Products`;
-      if (countPub) countPub.textContent = `${Number(summary.published || 0)} Live Products`;
-      const productCountBadge = document.querySelector('[data-admin-product-count]');
-      if (productCountBadge) productCountBadge.textContent = `${latestProductDatabaseSummary.published} Products Live`;
-    } catch (error) {
-      // Keep local staging counters if the protected summary endpoint is unavailable.
-    }
-  }, 80);
+  try {
+    return applyProductDatabaseSummary(await fetchProductDatabaseSummary());
+  } catch (error) {
+    return latestProductDatabaseSummary ? applyProductDatabaseSummary(latestProductDatabaseSummary) : null;
+  }
 }
 
 function renderPrintfulStagingTable() {
@@ -2971,12 +3000,9 @@ function renderPrintfulStagingTable() {
   const stagingList = window.__printfulStagingProducts || [];
   const existingProducts = getAdminProducts();
 
-  const draftsCount = stagingList.filter(p => p.status === 'draft' || !p.published).length;
-  const publishedCount = existingProducts.filter(p => p.status === 'published' || p.published).length;
-
-  if (countItem) countItem.textContent = `${stagingList.length} Items Found`;
-  if (countDraft) countDraft.textContent = `${draftsCount} Pending Review`;
-  if (countPub) countPub.textContent = `${publishedCount} Live Products`;
+  if (countItem || countDraft || countPub) {
+    if (latestProductDatabaseSummary) applyProductDatabaseSummary(latestProductDatabaseSummary);
+  }
   refreshProductDatabaseSummaryBadges();
 
   if (!tbody) return;
@@ -3317,6 +3343,7 @@ async function bootAdmin() {
   if (!ready) return;
   document.body.classList.remove('admin-locked');
   await hydrateAdminProductsFromDatabase();
+  await refreshProductDatabaseSummaryBadges();
   renderQuickPanels();
   renderAdminProducts();
   renderAdminCategories();
@@ -3330,6 +3357,7 @@ async function bootAdmin() {
   refreshLiveAdminDashboard();
   window.setInterval(refreshLiveAdminDashboard, 30000);
   renderPrintfulStagingTable();
+  refreshProductDatabaseSummaryBadges();
 
   const btnSyncStore = document.getElementById('btnSyncPrintfulStore');
   if (btnSyncStore && !btnSyncStore.dataset.bound) {
