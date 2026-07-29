@@ -404,14 +404,17 @@ module.exports = async function handler(req, res) {
       }));
     }
     products = products.slice(0, limit);
+    const repositoryTotal = Number(savedData.total || 0);
+    const minimumPagedTotal = ((Number(req.query.page || 1) - 1) * limit) + products.length;
+    const total = Math.max(repositoryTotal, minimumPagedTotal, products.length);
 
     return json(res, 200, {
       ok: true,
       provider: 'mongodb',
       page: Number(req.query.page || 1),
       limit,
-      total: products.length,
-      totalPages: 1,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
       count: products.length,
       products
     }, 120);
