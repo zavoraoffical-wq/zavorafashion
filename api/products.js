@@ -1,6 +1,7 @@
 'use strict';
 
 const { ProductRepository } = require('../lib/local-product-engine');
+const { requireAdminSession } = require('../lib/admin-auth');
 
 function envValue(...names) {
   for (const name of names) {
@@ -303,6 +304,7 @@ const REAL_PRINTFUL_IMPORTED_PRODUCTS = [
 
 module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
+    if (!requireAdminSession(req, res)) return;
     try {
       const action = String(req.query?.action || '').toLowerCase();
       if (action === 'delete') {

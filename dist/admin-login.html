@@ -28,12 +28,12 @@ src="https://www.facebook.com/tr?id=2147338562493580&ev=PageView&noscript=1"
         <p class="admin-eyebrow">Hidden admin access</p>
         <img class="admin-login-logo" src="assets/zavora-logo.png" alt="Zavora Fashion">
         <h1>Zavora Admin</h1>
-        <p>Secure login is protected by password and one-time email OTP from Zavora Support.</p>
+        <p>Secure login is protected by admin email, password, and an HttpOnly server session.</p>
         <form class="admin-form" data-admin-login-form autocomplete="off">
-          <input type="email" placeholder="Admin email" autocomplete="off" data-lpignore="true" data-form-type="other" required>
-          <input type="password" placeholder="Admin password" autocomplete="new-password" data-lpignore="true" data-form-type="other" required>
-          <button class="primary-admin" type="submit">Send OTP</button>
-          <p class="admin-login-note" data-admin-login-note>OTP will be sent to the admin email only.</p>
+          <input name="email" type="email" placeholder="Admin email" autocomplete="username" data-lpignore="true" data-form-type="other" required>
+          <input name="password" type="password" placeholder="Admin password" autocomplete="current-password" data-lpignore="true" data-form-type="other" required>
+          <button class="primary-admin" type="submit">Sign In</button>
+          <p class="admin-login-note" data-admin-login-note>Only configured admin credentials can open the control center.</p>
         </form>
       </section>
     </main>

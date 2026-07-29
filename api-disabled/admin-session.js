@@ -11,5 +11,9 @@ function json(req, res, status, body) {
 
 module.exports = function handler(req, res) {
   const session = validAdminSession(req);
-  return json(req, res, 200, { ok: Boolean(session), session });
+  return json(req, res, 200, {
+    ok: Boolean(session),
+    authenticated: Boolean(session),
+    session: session ? { email: session.email, expiresAt: session.expiresAt } : null
+  });
 };

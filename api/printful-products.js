@@ -1,4 +1,5 @@
 const PRINTFUL_API_BASE_URL = process.env.PRINTFUL_API_BASE_URL || 'https://api.printful.com';
+const { requireAdminSession } = require('../lib/admin-auth');
 const PRINTFUL_API_KEY = process.env.PRINTFUL_API_KEY
   || process.env.PRINTFUL_API_TOKEN
   || process.env.PRINTFUL_ACCESS_TOKEN
@@ -917,6 +918,7 @@ async function fetchStoreProducts({ gender, limit, offset, query, collection, ca
 }
 
 module.exports = async function handler(req, res) {
+  if (!requireAdminSession(req, res)) return;
   if (req.method !== 'GET') return response(res, 405, { ok: false, error: 'Method not allowed' });
   if (!rateLimit(req, res, 'printful-api', { windowMs: 60_000, max: 50 })) return;
   if (!PRINTFUL_API_KEY) {

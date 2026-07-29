@@ -80,7 +80,7 @@ module.exports = async function handler(req, res) {
   setSecurityHeaders(req, res);
   if (!rateLimit(req, res, 'admin-api', { windowMs: 60_000, max: 60 })) return;
   const action = String(req.query.action || '').trim();
-  const publicActions = new Set(['login', 'verify', 'session', 'logout', 'orders', 'rewards', 'auto-import-printful']);
+  const publicActions = new Set(['login', 'verify', 'session', 'logout']);
   const hasAdmin = Boolean(validAdminSession(req));
   if (!publicActions.has(action) && !hasAdmin) {
     logSecurityEvent(req, 'admin_action_denied', { action });

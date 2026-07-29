@@ -5,6 +5,7 @@
  */
 
 const { db: mongoDb } = require('../lib/auth-lib');
+const { requireAdminSession } = require('../lib/admin-auth');
 const { rateLimit, setSecurityHeaders, logSecurityEvent } = require('../lib/security');
 
 const PRINTFUL_API_BASE = process.env.PRINTFUL_API_BASE_URL || 'https://api.printful.com';
@@ -239,6 +240,7 @@ async function runImportJob(jobId) {
 
 module.exports = async function handler(req, res) {
   setSecurityHeaders({ headers: {} }, res);
+  if (!requireAdminSession(req, res)) return;
 
   if (!rateLimit(req, res, 'import-queue', { windowMs: 60_000, max: 60 })) return;
 

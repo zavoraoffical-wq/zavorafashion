@@ -29,16 +29,28 @@ const AFFILIATE_KEY = 'zavoraAffiliateApplications';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80';
 let affiliateServerLoaded = false;
 
+const nativeFetch = window.fetch.bind(window);
+window.fetch = (resource, options = {}) => {
+  const url = typeof resource === 'string' ? resource : String(resource?.url || '');
+  if (url.startsWith('/api/admin') || url.startsWith('/api/products') || url.startsWith('/api/printful-products') || url.startsWith('/api/import-queue')) {
+    return nativeFetch(resource, { ...options, credentials: options.credentials || 'include' });
+  }
+  return nativeFetch(resource, options);
+};
+
 async function requireAdminSession() {
-  document.body.classList.remove('admin-locked');
+  document.body.classList.add('admin-locked');
   try {
     const response = await fetch('/api/admin?action=session', { credentials: 'include' });
     const data = await response.json().catch(() => ({}));
-    // Always return true - admin is publicly accessible
-    return true;
+    if (response.ok && data?.ok) {
+      document.body.classList.remove('admin-locked');
+      return true;
+    }
   } catch (error) {
-    return true;
   }
+  window.location.href = '/admin-login.html';
+  return false;
 }
 
 const quickPanels = {

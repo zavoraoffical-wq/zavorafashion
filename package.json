@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/prepare-public.js",
+    "hash-admin-password": "node scripts/hash-admin-password.js",
     "import:printful": "node scripts/auto-import-printful.js",
     "vercel-build": "node scripts/prepare-public.js"
   },
