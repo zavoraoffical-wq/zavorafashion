@@ -36,13 +36,7 @@ if (typeof window !== 'undefined') {
 }
 
 function trackMetaEvent(eventName, params = {}) {
-  if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
-    try {
-      window.fbq('track', eventName, params);
-    } catch (e) {
-      console.error('[Meta Pixel] Error tracking:', e);
-    }
-  }
+  return false;
 }
 
 const pageHeader = document.querySelector('.page-header');
