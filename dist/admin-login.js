@@ -1,7 +1,7 @@
 fetch('/api/admin?action=session', { credentials: 'include' })
   .then((response) => response.json())
   .then((data) => {
-    if (data?.ok) window.location.href = 'admin.html';
+    if (data?.ok) window.location.href = '/admin.html?admin_bust=20260730';
   })
   .catch(() => {});
 
@@ -42,5 +42,5 @@ document.addEventListener('submit', async (event) => {
   }
 
   note('Login successful. Opening admin...', true);
-  window.location.href = 'admin.html';
+  window.location.href = '/admin.html?admin_bust=20260730';
 });
