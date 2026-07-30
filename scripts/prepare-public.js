@@ -43,6 +43,13 @@ function ensureHeadTag(html, tag) {
   return html.replace('</head>', `    ${tag}\n  </head>`);
 }
 
+function removeFacebookPixel(html) {
+  html = html.replace(/\s*<!-- Facebook Pixel Code -->[\s\S]*?<!-- End Facebook Pixel Code -->/gi, '');
+  html = html.replace(/\s*<script>\s*!function\(f,b,e,v,n,t,s\)[\s\S]*?fbq\('track',\s*'PageView'\);\s*<\/script>/gi, '');
+  html = html.replace(/\s*<noscript>\s*<img[^>]*facebook\.com\/tr[^>]*>\s*<\/noscript>/gi, '');
+  return html;
+}
+
 function optimizeImageTags(html) {
   html = html.replace(/<img\b(?![^>]*\bdecoding=)([^>]*)>/gi, '<img decoding="async"$1>');
   html = html.replace(/<img\b(?![^>]*\bloading=)([^>]*)>/gi, '<img loading="lazy"$1>');
@@ -87,8 +94,14 @@ function addBrandHeadTags() {
 
   const cssVersionTag = `href="styles.css?v=${Date.now()}"`;
   const jsVersion = Date.now();
+  const adminHtmlFiles = new Set(['admin.html', 'admin-login.html']);
   for (const file of walkHtmlFiles(target)) {
+    const fileName = path.basename(file).toLowerCase();
+    const isAdminHtml = adminHtmlFiles.has(fileName);
     let html = fs.readFileSync(file, 'utf8');
+    if (isAdminHtml) {
+      html = removeFacebookPixel(html);
+    }
     html = html.replace(/href=["']styles\.css(\?v=[^"']*)?["']/gi, cssVersionTag);
     html = html.replace(/src=["']script\.js(\?v=[^"']*)?["']/gi, `src="script.js?v=${jsVersion}"`);
     html = html.replace(/src=["']page-script\.js(\?v=[^"']*)?["']/gi, `src="page-script.js?v=${jsVersion}"`);
@@ -101,7 +114,7 @@ function addBrandHeadTags() {
     html = removeMetaByName(html, 'google-site-verification');
     html = ensureHeadTag(html, viewportTag);
     html = ensureHeadTag(html, googleVerificationTag);
-    if (!html.includes('connect.facebook.net/en_US/fbevents.js')) {
+    if (!isAdminHtml && !html.includes('connect.facebook.net/en_US/fbevents.js')) {
       html = ensureHeadTag(html, metaPixelCode);
     }
     if (!html.includes('rel="icon"') && html.includes('</head>')) {
