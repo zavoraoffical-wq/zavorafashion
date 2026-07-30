@@ -2834,7 +2834,9 @@ async function bootAdminLegacyDisabled() {
   renderAdminAnalytics();
   setSection(window.location.hash.replace('#', '') || 'dashboard');
   refreshLiveAdminDashboard();
-  window.setInterval(refreshLiveAdminDashboard, 30000);
+  if (!window.__zavoraAdminDashboardRefreshTimer) {
+    window.__zavoraAdminDashboardRefreshTimer = window.setInterval(refreshLiveAdminDashboard, 30000);
+  }
 
   // Auto-detect URL parameter for Printful Auto-Import
   const urlParams = new URLSearchParams(window.location.search);
@@ -3373,7 +3375,9 @@ async function bootAdmin() {
   renderAdminAnalytics();
   setSection(window.location.hash.replace('#', '') || 'dashboard');
   refreshLiveAdminDashboard();
-  window.setInterval(refreshLiveAdminDashboard, 30000);
+  if (!window.__zavoraAdminDashboardRefreshTimer) {
+    window.__zavoraAdminDashboardRefreshTimer = window.setInterval(refreshLiveAdminDashboard, 30000);
+  }
   renderPrintfulStagingTable();
   refreshProductDatabaseSummaryBadges();
 
@@ -3477,7 +3481,9 @@ async function bootAdmin() {
     }
   }
   updateLiveVisitors();
-  setInterval(updateLiveVisitors, 3000);
+  if (!window.__zavoraLiveVisitorTimer) {
+    window.__zavoraLiveVisitorTimer = window.setInterval(updateLiveVisitors, 15000);
+  }
 }
 
 window.bulkApplyStagingEdits = bulkApplyStagingEdits;

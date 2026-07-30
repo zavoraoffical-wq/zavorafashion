@@ -3,31 +3,11 @@ function initHomeLaunchGate() {
 }
 
 function showMaintenancePage() {
-  const allowed = /admin|login|sign-up|forgot-password|affiliate/i.test(window.location.pathname);
-  const previewKey = 'zavora-preview-2026';
-  const params = new URLSearchParams(window.location.search || '');
-  if (params.get('zv_preview') === previewKey) {
-    try { sessionStorage.setItem('zavoraMaintenancePreview', previewKey); } catch (error) {}
-  }
-  let previewEnabled = false;
-  try { previewEnabled = sessionStorage.getItem('zavoraMaintenancePreview') === previewKey; } catch (error) {}
-  if (allowed || previewEnabled || window.__ZAVORA_DISABLE_MAINTENANCE__) return false;
-  document.documentElement.classList.add('maintenance-mode');
-  document.body.innerHTML = `
-    <main class="maintenance-page">
-      <section>
-        <img src="assets/zavora-logo.png" alt="" aria-hidden="true">
-        <p class="eyebrow">Zavora Fashion</p>
-        <h1>Website under maintenance</h1>
-        <p>We are updating the product catalog and checkout experience. Please check back soon.</p>
-      </section>
-    </main>
-  `;
-  return true;
+  return false;
 }
 
 if (showMaintenancePage()) {
-  throw new Error('Zavora maintenance mode active');
+  document.documentElement.classList.remove('maintenance-mode');
 }
 
 if (!initHomeLaunchGate()) {
