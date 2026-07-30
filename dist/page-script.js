@@ -1,28 +1,6 @@
 if (typeof window !== 'undefined') {
-  const maintenancePreviewKey = 'zavora-preview-2026';
-  const maintenanceParams = new URLSearchParams(window.location.search || '');
-  if (maintenanceParams.get('zv_preview') === maintenancePreviewKey) {
-    try { sessionStorage.setItem('zavoraMaintenancePreview', maintenancePreviewKey); } catch (error) {}
-  }
-  let maintenancePreviewEnabled = false;
-  try { maintenancePreviewEnabled = sessionStorage.getItem('zavoraMaintenancePreview') === maintenancePreviewKey; } catch (error) {}
-  const maintenanceAllowed = /admin|login|sign-up|forgot-password|affiliate/i.test(window.location.pathname);
-  if (!maintenanceAllowed && !maintenancePreviewEnabled && !window.__ZAVORA_DISABLE_MAINTENANCE__) {
-    document.documentElement.classList.add('maintenance-mode');
-    document.addEventListener('DOMContentLoaded', () => {
-      document.body.innerHTML = `
-        <main class="maintenance-page">
-          <section>
-            <img src="assets/zavora-logo.png" alt="" aria-hidden="true">
-            <p class="eyebrow">Zavora Fashion</p>
-            <h1>Website under maintenance</h1>
-            <p>We are updating the product catalog and checkout experience. Please check back soon.</p>
-          </section>
-        </main>
-      `;
-    });
-    throw new Error('Zavora maintenance mode active');
-  }
+  window.__ZAVORA_DISABLE_MAINTENANCE__ = true;
+  document.documentElement.classList.remove('maintenance-mode');
 
   ['gesturestart', 'gesturechange', 'gestureend'].forEach((eventName) => {
     window.addEventListener(eventName, (e) => e.preventDefault(), { passive: false });
