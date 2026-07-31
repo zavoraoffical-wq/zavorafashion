@@ -48,23 +48,44 @@ function redirectToAdminLogin() {
 
 async function requireAdminSession() {
   document.body.classList.add('admin-locked');
-  try {
-    const response = await fetch('/api/admin?action=session', { credentials: 'include' });
-    const data = await response.json().catch(() => ({}));
-    if (response.ok && data?.ok) {
-      document.body.classList.remove('admin-locked');
-      return true;
+
+  // Retry up to 3 times with increasing delay — cookie may need a moment
+  // to be stored by the browser after redirect from admin-login.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await new Promise(function(resolve) { setTimeout(resolve, 600 * attempt); });
     }
-    if (response.status === 401 || response.status === 403 || (response.ok && data?.ok === false)) {
-      redirectToAdminLogin();
-      return false;
+    try {
+      const response = await nativeFetch('/api/admin?action=session', {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-store' }
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data && data.ok) {
+        document.body.classList.remove('admin-locked');
+        return true;
+      }
+
+      // Only redirect on definitive authentication failure (401/403 + ok:false)
+      if ((response.status === 401 || response.status === 403) && data && data.ok === false) {
+        console.warn('Admin session invalid, redirecting to login.');
+        redirectToAdminLogin();
+        return false;
+      }
+
+      // Any other status (200 with ok:false, 5xx, 429, etc.) — retry
+      console.warn('Admin session check returned non-auth response:', response.status, data);
+
+    } catch (error) {
+      console.warn('Admin session check network error (attempt ' + (attempt + 1) + '):', error);
     }
-    console.warn('Admin session check temporarily unavailable.', response.status);
-  } catch (error) {
-    console.warn('Admin session check temporarily unavailable.', error);
   }
-  // A network/5xx/429 failure must not create a redirect loop. Protected API
-  // routes still enforce the HttpOnly admin session server-side.
+
+  // After 3 failed attempts that weren't definitive 401/403, allow admin to
+  // proceed — the server-side route protection is still active.
+  console.warn('Admin session check could not be confirmed after retries. Proceeding with caution.');
   document.body.classList.remove('admin-locked');
   return true;
 }
