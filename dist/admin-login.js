@@ -1,7 +1,15 @@
+let adminRedirectStarted = false;
+
+function openAdmin() {
+  if (adminRedirectStarted) return;
+  adminRedirectStarted = true;
+  window.location.replace('/admin.html');
+}
+
 fetch('/api/admin?action=session', { credentials: 'include' })
-  .then((response) => response.json())
-  .then((data) => {
-    if (data?.ok) window.location.href = '/admin.html?admin_bust=20260730';
+  .then(async (response) => ({ response, data: await response.json().catch(() => ({})) }))
+  .then(({ response, data }) => {
+    if (response.ok && data?.ok) openAdmin();
   })
   .catch(() => {});
 
@@ -42,5 +50,5 @@ document.addEventListener('submit', async (event) => {
   }
 
   note('Login successful. Opening admin...', true);
-  window.location.href = '/admin.html?admin_bust=20260730';
+  openAdmin();
 });

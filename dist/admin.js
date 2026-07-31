@@ -38,6 +38,14 @@ window.fetch = (resource, options = {}) => {
   return nativeFetch(resource, options);
 };
 
+let adminLoginRedirectStarted = false;
+
+function redirectToAdminLogin() {
+  if (adminLoginRedirectStarted) return;
+  adminLoginRedirectStarted = true;
+  window.location.replace('/admin-login.html');
+}
+
 async function requireAdminSession() {
   document.body.classList.add('admin-locked');
   try {
@@ -47,10 +55,18 @@ async function requireAdminSession() {
       document.body.classList.remove('admin-locked');
       return true;
     }
+    if (response.status === 401 || response.status === 403 || (response.ok && data?.ok === false)) {
+      redirectToAdminLogin();
+      return false;
+    }
+    console.warn('Admin session check temporarily unavailable.', response.status);
   } catch (error) {
+    console.warn('Admin session check temporarily unavailable.', error);
   }
-  window.location.href = '/admin-login.html';
-  return false;
+  // A network/5xx/429 failure must not create a redirect loop. Protected API
+  // routes still enforce the HttpOnly admin session server-side.
+  document.body.classList.remove('admin-locked');
+  return true;
 }
 
 const quickPanels = {
