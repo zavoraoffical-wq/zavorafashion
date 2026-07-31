@@ -21,7 +21,7 @@ function parseBody(req) {
 module.exports = async function handler(req, res) {
   try {
     if (req.method !== 'POST') return json(req, res, 405, { ok: false, error: 'Method not allowed' });
-    if (!rateLimit(req, res, 'admin-login', { windowMs: 60_000, max: 8 })) return;
+    if (!rateLimit(req, res, 'admin-login', { windowMs: 60_000, max: 30 })) return;
 
     if (!process.env.ADMIN_AUTH_SECRET && !process.env.AUTH_JWT_SECRET) {
       return json(req, res, 500, { ok: false, error: 'ADMIN_AUTH_SECRET is not configured' });
