@@ -1,27 +1,11 @@
-let adminRedirectStarted = false;
+// =====================================================================
+// Admin Login — NO auto-redirect. Only explicit Sign In button triggers
+// authentication. This prevents the refresh/redirect loop caused by
+// stale session cookies or failed API responses.
+// =====================================================================
 
 function openAdmin() {
-  if (adminRedirectStarted) return;
-  adminRedirectStarted = true;
-  window.location.replace('/admin?admin_bust=' + Date.now());
-}
-
-// Only auto-redirect to admin if already logged in AND this is not a forced
-// fresh login (e.g. after logout, the page is opened with ?fresh=1 to skip
-// the auto-session check that caused the "page refresh" symptom).
-const urlParams = new URLSearchParams(window.location.search);
-const forceFresh = urlParams.has('fresh') || urlParams.has('logout');
-
-if (!forceFresh) {
-  fetch('/api/admin?action=session', { credentials: 'include', cache: 'no-store' })
-    .then(async function(response) {
-      var data = {};
-      try { data = await response.json(); } catch(e) {}
-      if (response.ok && data && data.ok) {
-        openAdmin();
-      }
-    })
-    .catch(function() {});
+  window.location.replace('/admin');
 }
 
 function note(message, good) {
@@ -30,8 +14,10 @@ function note(message, good) {
   box.textContent = message;
   if (good) {
     box.classList.add('success');
+    box.classList.remove('error');
   } else {
     box.classList.remove('success');
+    box.classList.add('error');
   }
 }
 
@@ -41,12 +27,12 @@ async function submitAdminLogin(form, event) {
     event.stopImmediatePropagation();
   }
 
-  var email = (form.querySelector('[name="email"]') || {}).value;
-  var password = (form.querySelector('[name="password"]') || {}).value;
+  var emailInput = form.querySelector('[name="email"]');
+  var passwordInput = form.querySelector('[name="password"]');
   var button = form.querySelector('[data-admin-login-button]');
 
-  email = (email || '').trim().toLowerCase();
-  password = password || '';
+  var email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+  var password = passwordInput ? passwordInput.value : '';
 
   if (!email || !password) {
     note('Admin email aur password required hai.');
@@ -54,11 +40,13 @@ async function submitAdminLogin(form, event) {
   }
 
   if (button && button.disabled) return false;
+
   if (button) {
     button.disabled = true;
     button.textContent = 'Signing in...';
   }
 
+  // Step 1: POST login credentials
   var response = null;
   try {
     response = await fetch('/api/admin?action=login', {
@@ -68,78 +56,82 @@ async function submitAdminLogin(form, event) {
       body: JSON.stringify({ email: email, password: password }),
       cache: 'no-store'
     });
-  } catch(e) {
+  } catch (networkErr) {
     if (button) {
       button.disabled = false;
       button.textContent = 'Sign In';
     }
-    note('Network error. Please check your connection and try again.');
+    note('Network error. Internet connection check karo aur dobara try karo.');
     return false;
   }
 
   var data = {};
-  try { data = await response.json(); } catch(e) {}
+  try { data = await response.json(); } catch (e) {}
 
   if (!response.ok || !data.ok) {
     if (button) {
       button.disabled = false;
       button.textContent = 'Sign In';
     }
-    note(data.error || 'Admin login failed. Check your email and password.');
+    note(data.error || 'Login failed. Email aur password check karo.');
     return false;
   }
 
-  note('Login verified. Checking secure session...', true);
+  note('Login verified. Session check ho raha hai...', true);
 
-  var sessionResponse = null;
+  // Step 2: Verify session cookie was actually set
+  var sessionResp = null;
   try {
-    sessionResponse = await fetch('/api/admin?action=session&t=' + Date.now(), {
+    sessionResp = await fetch('/api/admin?action=session&t=' + Date.now(), {
       credentials: 'include',
       cache: 'no-store'
     });
-  } catch(e) {}
+  } catch (e) {}
 
   var session = {};
-  try { session = await sessionResponse.json(); } catch(e) {}
+  try { session = await sessionResp.json(); } catch (e) {}
 
-  if (!sessionResponse || !sessionResponse.ok || !session.ok) {
+  if (!sessionResp || !sessionResp.ok || !session.ok) {
     if (button) {
       button.disabled = false;
       button.textContent = 'Sign In';
     }
-    note('Login accepted, but secure session cookie was not saved. Please allow cookies for zavorafashion.com and try again.');
+    note('Session cookie save nahi hua. zavorafashion.com ke liye cookies allow karo aur dobara try karo.');
     return false;
   }
 
-  note('Login successful. Opening admin...', true);
-  openAdmin();
+  note('Login successful! Admin panel khul raha hai...', true);
+  setTimeout(openAdmin, 500);
   return false;
 }
 
-// Bind events — script is placed at end of <body> so DOM is ready
+// Bind all form events — script placed at end of body, DOM is fully ready
 (function bindLoginForm() {
   var loginForm = document.querySelector('[data-admin-login-form]');
-  if (!loginForm || loginForm.dataset.loginBound === 'true') return;
+  if (!loginForm) return;
+  if (loginForm.dataset.loginBound === 'true') return;
   loginForm.dataset.loginBound = 'true';
 
-  // Block form submission at every level
-  loginForm.addEventListener('submit', function(e) {
+  // Block ALL form submit events at capture phase
+  loginForm.addEventListener('submit', function (e) {
     e.preventDefault();
     e.stopImmediatePropagation();
     submitAdminLogin(loginForm, e);
     return false;
   }, true);
 
+  // Sign In button click
   var btn = loginForm.querySelector('[data-admin-login-button]');
   if (btn) {
-    btn.addEventListener('click', function(e) {
+    btn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
       submitAdminLogin(loginForm, e);
     });
   }
 
-  loginForm.addEventListener('keydown', function(e) {
+  // Enter key in any field
+  loginForm.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     e.stopImmediatePropagation();
