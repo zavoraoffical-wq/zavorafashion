@@ -80,13 +80,13 @@ module.exports = async function handler(req, res) {
   setSecurityHeaders(req, res);
   const action = String(req.query.action || '').trim();
   const rateLimitKey = `admin-api:${action || 'unknown'}`;
-  const rateLimitOptions = action === 'login'
-    ? { windowMs: 60_000, max: 20 }
-    : { windowMs: 60_000, max: 120 };
+  const rateLimitOptions = { windowMs: 60_000, max: 120 };
   // Session checks happen during every protected admin boot. Never rate-limit
   // this read-only check, otherwise a 429 is mistaken for a logout and causes
   // an admin-login redirect loop across tabs/browsers.
-  if (action !== 'session' && !rateLimit(req, res, rateLimitKey, rateLimitOptions)) return;
+  // Login has its own stricter limiter in the dedicated handler. Applying a
+  // second limiter here caused valid form submissions to intermittently fail.
+  if (!['session', 'login'].includes(action) && !rateLimit(req, res, rateLimitKey, rateLimitOptions)) return;
   const publicActions = new Set(['login', 'verify', 'session', 'logout']);
   const hasAdmin = Boolean(validAdminSession(req));
   if (!publicActions.has(action) && !hasAdmin) {

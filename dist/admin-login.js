@@ -3,10 +3,10 @@ let adminRedirectStarted = false;
 function openAdmin() {
   if (adminRedirectStarted) return;
   adminRedirectStarted = true;
-  window.location.replace('/admin.html');
+  window.location.replace(`/admin.html?admin_bust=${Date.now()}`);
 }
 
-fetch('/api/admin?action=session', { credentials: 'include' })
+fetch('/api/admin?action=session', { credentials: 'include', cache: 'no-store' })
   .then(async (response) => ({ response, data: await response.json().catch(() => ({})) }))
   .then(({ response, data }) => {
     if (response.ok && data?.ok) openAdmin();
@@ -20,10 +20,10 @@ function note(message, good = false) {
   box.classList.toggle('success', good);
 }
 
-document.addEventListener('submit', async (event) => {
-  const form = event.target.closest('[data-admin-login-form]');
-  if (!form) return;
+async function submitAdminLogin(event) {
   event.preventDefault();
+  event.stopPropagation();
+  const form = event.currentTarget;
 
   const email = form.querySelector('[name="email"]')?.value.trim().toLowerCase();
   const password = form.querySelector('[name="password"]')?.value;
@@ -39,7 +39,8 @@ document.addEventListener('submit', async (event) => {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ email, password }),
+    cache: 'no-store'
   }).catch(() => null);
   const data = await response?.json().catch(() => ({}));
   if (!response?.ok || !data?.ok) {
@@ -49,6 +50,25 @@ document.addEventListener('submit', async (event) => {
     return;
   }
 
+  note('Login verified. Checking secure session...', true);
+  const sessionResponse = await fetch(`/api/admin?action=session&t=${Date.now()}`, {
+    credentials: 'include',
+    cache: 'no-store'
+  }).catch(() => null);
+  const session = await sessionResponse?.json().catch(() => ({}));
+  if (!sessionResponse?.ok || !session?.ok) {
+    button.disabled = false;
+    button.textContent = 'Sign In';
+    note('Login accepted, but secure session cookie was not saved. Please allow cookies for zavorafashion.com and try again.');
+    return;
+  }
+
   note('Login successful. Opening admin...', true);
   openAdmin();
-});
+}
+
+const loginForm = document.querySelector('[data-admin-login-form]');
+if (loginForm && loginForm.dataset.loginBound !== 'true') {
+  loginForm.dataset.loginBound = 'true';
+  loginForm.addEventListener('submit', submitAdminLogin);
+}
