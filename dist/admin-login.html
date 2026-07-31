@@ -15,7 +15,7 @@
         <img class="admin-login-logo" src="assets/zavora-logo.png" alt="Zavora Fashion">
         <h1>Zavora Admin</h1>
         <p>Secure login is protected by admin email, password, and an HttpOnly server session.</p>
-        <form class="admin-form" data-admin-login-form autocomplete="off" novalidate>
+        <form class="admin-form" data-admin-login-form autocomplete="off" novalidate onsubmit="return false;">
           <input name="email" type="email" placeholder="Admin email" autocomplete="username" data-lpignore="true" data-form-type="other" required>
           <input name="password" type="password" placeholder="Admin password" autocomplete="current-password" data-lpignore="true" data-form-type="other" required>
           <button class="primary-admin" type="button" data-admin-login-button>Sign In</button>
@@ -23,7 +23,7 @@
         </form>
       </section>
     </main>
-    <script src="admin-login.js?v=20260731-login-no-refresh" defer></script>
+    <script src="admin-login.js?v=20260731-fix-refresh"></script>
   </body>
 </html>
 

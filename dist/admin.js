@@ -43,7 +43,7 @@ let adminLoginRedirectStarted = false;
 function redirectToAdminLogin() {
   if (adminLoginRedirectStarted) return;
   adminLoginRedirectStarted = true;
-  window.location.replace('/admin-login.html');
+  window.location.replace('/admin-login.html?fresh=1');
 }
 
 async function requireAdminSession() {
