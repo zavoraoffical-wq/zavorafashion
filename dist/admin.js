@@ -38,55 +38,15 @@ window.fetch = (resource, options = {}) => {
   return nativeFetch(resource, options);
 };
 
-let adminLoginRedirectStarted = false;
-
+// Session redirect is disabled on client-side.
+// All /api/admin endpoints enforce authentication server-side (401/403).
+// Client-side redirect was causing a loop due to cookie timing issues.
 function redirectToAdminLogin() {
-  if (adminLoginRedirectStarted) return;
-  adminLoginRedirectStarted = true;
-  window.location.replace('/admin-login?fresh=1&admin_bust=' + Date.now());
+  // no-op: server-side protection handles unauthorized API calls
+  console.warn('Admin: redirectToAdminLogin called — skipped to prevent refresh loop.');
 }
 
 async function requireAdminSession() {
-  document.body.classList.add('admin-locked');
-
-  // Give the browser time to process the Set-Cookie from the login API
-  // before making the session check request.
-  await new Promise(function(resolve) { setTimeout(resolve, 300); });
-
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt > 0) {
-      await new Promise(function(resolve) { setTimeout(resolve, 800 * attempt); });
-    }
-    try {
-      const response = await nativeFetch('/api/admin?action=session', {
-        credentials: 'include',
-        cache: 'no-store'
-      });
-      const data = await response.json().catch(() => ({}));
-
-      if (response.ok && data && data.ok) {
-        document.body.classList.remove('admin-locked');
-        return true;
-      }
-
-      // ONLY redirect on an unambiguous 401 or 403 from the server.
-      // A 200 with ok:false is a race condition (cookie not yet available)
-      // and must NOT trigger a redirect — just retry.
-      if (response.status === 401 || response.status === 403) {
-        console.warn('Admin: unauthenticated (', response.status, '). Redirecting to login.');
-        redirectToAdminLogin();
-        return false;
-      }
-
-      console.warn('Admin session check non-definitive response:', response.status, data);
-    } catch (err) {
-      console.warn('Admin session network error (attempt ' + (attempt + 1) + '):', err);
-    }
-  }
-
-  // All retries exhausted without a definitive 401/403 — allow admin.
-  // Each protected API endpoint enforces the session server-side anyway.
-  console.warn('Admin session could not be confirmed — allowing with server-side protection active.');
   document.body.classList.remove('admin-locked');
   return true;
 }
