@@ -4,16 +4,6 @@
   "cleanUrls": true,
   "redirects": [
     {
-      "source": "/admin",
-      "destination": "/admin-login.html",
-      "permanent": false
-    },
-    {
-      "source": "/admin/",
-      "destination": "/admin-login.html",
-      "permanent": false
-    },
-    {
       "source": "/index.html",
       "destination": "/",
       "permanent": true
@@ -38,11 +28,11 @@
   "rewrites": [
     {
       "source": "/admin",
-      "destination": "/admin-login.html"
+      "destination": "/admin.html"
     },
     {
       "source": "/admin/",
-      "destination": "/admin-login.html"
+      "destination": "/admin.html"
     },
     {
       "source": "/affiliate",
