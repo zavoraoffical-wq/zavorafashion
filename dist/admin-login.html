@@ -14,17 +14,90 @@
         <p class="admin-eyebrow">Hidden admin access</p>
         <img class="admin-login-logo" src="assets/zavora-logo.png" alt="Zavora Fashion">
         <h1>Zavora Admin</h1>
-        <p>Secure login is protected by admin email, password, and an HttpOnly server session.</p>
-        <form class="admin-form" data-admin-login-form autocomplete="off" novalidate onsubmit="return false;">
-          <input name="email" type="email" placeholder="Admin email" autocomplete="username" data-lpignore="true" data-form-type="other" required>
-          <input name="password" type="password" placeholder="Admin password" autocomplete="current-password" data-lpignore="true" data-form-type="other" required>
-          <button class="primary-admin" type="button" data-admin-login-button>Sign In</button>
-          <p class="admin-login-note" data-admin-login-note>Only configured admin credentials can open the control center.</p>
-        </form>
+        <p>Secure login protected by admin email and password.</p>
+
+        <div id="adminLoginBox">
+          <input id="adminEmail" type="email" placeholder="Admin email" autocomplete="username" style="display:block;width:100%;margin-bottom:12px;padding:14px 16px;border:1px solid #ddd;border-radius:8px;font-size:15px;box-sizing:border-box;">
+          <input id="adminPassword" type="password" placeholder="Admin password" autocomplete="current-password" style="display:block;width:100%;margin-bottom:12px;padding:14px 16px;border:1px solid #ddd;border-radius:8px;font-size:15px;box-sizing:border-box;">
+          <button id="adminSignInBtn" onclick="doAdminLogin()" style="display:block;width:100%;padding:15px;background:#111;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:12px;">Sign In</button>
+          <p id="adminLoginMsg" style="font-size:13px;color:#888;text-align:center;min-height:20px;"></p>
+        </div>
       </section>
     </main>
-  <script src="admin-login.js?v=20260801-login-loop-final"></script>
+
+    <script>
+    var _adminInFlight = false;
+
+    function setMsg(text, ok) {
+      var el = document.getElementById('adminLoginMsg');
+      if (el) {
+        el.textContent = text || '';
+        el.style.color = ok ? '#2e7d32' : (text ? '#c62828' : '#888');
+      }
+    }
+
+    function setBtn(busy) {
+      var btn = document.getElementById('adminSignInBtn');
+      if (btn) {
+        btn.disabled = !!busy;
+        btn.textContent = busy ? 'Signing in...' : 'Sign In';
+      }
+    }
+
+    async function doAdminLogin() {
+      if (_adminInFlight) return;
+
+      var email = (document.getElementById('adminEmail') || {}).value || '';
+      var pass  = (document.getElementById('adminPassword') || {}).value || '';
+
+      email = email.trim().toLowerCase();
+
+      if (!email || !pass) {
+        setMsg('Email aur password required hai.');
+        return;
+      }
+
+      _adminInFlight = true;
+      setBtn(true);
+      setMsg('Login verify ho raha hai...', true);
+
+      try {
+        var res = await fetch('/api/admin?action=login', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: pass }),
+          cache: 'no-store'
+        });
+
+        var data = {};
+        try { data = await res.json(); } catch(e) {}
+
+        if (!res.ok || !data.ok) {
+          _adminInFlight = false;
+          setBtn(false);
+          setMsg(data.error || 'Login failed. Email aur password check karo.');
+          return;
+        }
+
+        setMsg('Login successful! Admin panel khul raha hai...', true);
+        // Use replace to prevent back-button loop
+        setTimeout(function() { window.location.replace('/admin'); }, 600);
+
+      } catch(err) {
+        _adminInFlight = false;
+        setBtn(false);
+        setMsg('Network error. Internet check karo.');
+      }
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        doAdminLogin();
+      }
+    });
+    </script>
   </body>
 </html>
-
-
