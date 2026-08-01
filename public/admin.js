@@ -49,7 +49,7 @@ function redirectToAdminLogin() {
 async function requireAdminSession() {
   document.body.classList.add('admin-locked');
 
-  // Retry up to 3 times with increasing delay — cookie may need a moment
+  // Retry up to 3 times with increasing delay â€” cookie may need a moment
   // to be stored by the browser after redirect from admin-login.
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt > 0) {
@@ -75,7 +75,7 @@ async function requireAdminSession() {
         return false;
       }
 
-      // Any other status (200 with ok:false, 5xx, 429, etc.) — retry
+      // Any other status (200 with ok:false, 5xx, 429, etc.) â€” retry
       console.warn('Admin session check returned non-auth response:', response.status, data);
 
     } catch (error) {
@@ -84,7 +84,7 @@ async function requireAdminSession() {
   }
 
   // After 3 failed attempts that weren't definitive 401/403, allow admin to
-  // proceed — the server-side route protection is still active.
+  // proceed â€” the server-side route protection is still active.
   console.warn('Admin session check could not be confirmed after retries. Proceeding with caution.');
   document.body.classList.remove('admin-locked');
   return true;
@@ -246,7 +246,7 @@ async function renderAffiliatesPanel() {
           <tr data-affiliate-id="${app.id}">
             <td>
               <strong style="font-size:14px;color:#050505;display:block;">${app.fullName || 'Applicant'}</strong>
-              <span style="font-size:12px;color:#333;">✉️ ${app.email || ''}</span>
+              <span style="font-size:12px;color:#333;">âœ‰ï¸ ${app.email || ''}</span>
               <br><small style="color:#666;">Ref Link: <code>${app.link || ('https://www.zavorafashion.com/?ref=' + refCode)}</code></small>
             </td>
             <td>
@@ -382,7 +382,7 @@ function getAdminProducts() {
   try {
     const admin = JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY) || '[]');
     const imported = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]');
-    
+
     const seen = new Set();
     const clean = [];
     [...imported, ...admin].forEach(p => {
@@ -643,7 +643,7 @@ function getProductStorefrontPages(product) {
   const gender = String(product.gender || '').toLowerCase();
   const cols = Array.isArray(product.collection) ? product.collection.map(c => String(c).toLowerCase()) : [String(product.collection || '').toLowerCase()];
   const targets = Array.isArray(product.targetPages) ? product.targetPages.map(p => String(p).toLowerCase()) : [];
-  
+
   if (gender === 'women' || product.category?.includes('women') || product.name?.toLowerCase().includes('women')) pages.push('Women');
   if (gender === 'men' || product.category?.includes('men') || product.name?.toLowerCase().includes('men')) pages.push('Men');
   if (cols.includes('new') || cols.includes('streetwear')) pages.push('New Arrivals');
@@ -734,7 +734,7 @@ async function renderAdminProducts() {
             <img src="${imgSrc}" alt="${product.name}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #ddd;flex-shrink:0;">
             <div>
               <strong style="display:block;font-size:13px;color:#050505;">${product.name}</strong>
-              <span style="font-size:11px;color:#777;">SKU: ${idVal} • Gender: ${product.gender || 'Unisex'}</span>
+              <span style="font-size:11px;color:#777;">SKU: ${idVal} â€¢ Gender: ${product.gender || 'Unisex'}</span>
             </div>
           </div>
         </td>
@@ -746,8 +746,8 @@ async function renderAdminProducts() {
           </div>
         </td>
         <td>
-          ${isHidden 
-            ? `<span class="pill red" style="background:#ffebee;color:#c62828;font-weight:700;">Hidden</span>` 
+          ${isHidden
+            ? `<span class="pill red" style="background:#ffebee;color:#c62828;font-weight:700;">Hidden</span>`
             : `<span class="pill green" style="background:#e8f5e9;color:#2e7d32;font-weight:700;">Live on Web</span>`}
         </td>
         <td>
@@ -886,15 +886,15 @@ function renderAdminCustomers() {
     <tr>
       <td>
         <strong style="color:#050505;font-size:13px;display:block;">${c.name}</strong>
-        <span style="font-size:12px;color:#333;">✉️ ${c.email}</span>
-        ${c.phone ? `<br><span style="font-size:11px;color:#666;">📞 ${c.phone}</span>` : ''}
+        <span style="font-size:12px;color:#333;">âœ‰ï¸ ${c.email}</span>
+        ${c.phone ? `<br><span style="font-size:11px;color:#666;">ðŸ“ž ${c.phone}</span>` : ''}
       </td>
       <td>
         <strong style="color:#2e7d32;font-size:13px;">${c.orderCount} Orders</strong>
         <br><span style="font-size:11px;color:#555;">Total Spent: ${money(c.spent)}</span>
       </td>
       <td><span class="pill gold">${c.wishlistItems || 0} Saved Items</span></td>
-      <td><span style="font-size:11px;color:#444;max-width:200px;display:inline-block;">📍 ${c.address}</span></td>
+      <td><span style="font-size:11px;color:#444;max-width:200px;display:inline-block;">ðŸ“ ${c.address}</span></td>
       <td>
         <div style="display:flex;gap:6px;">
           <button type="button" data-admin-view-history="${c.email}" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">History</button>
@@ -965,7 +965,7 @@ function renderAdminCoupons() {
   const defaultCoupons = [
     { code: 'SUMMER15', type: '15% OFF', details: 'Valid on all Summer Collection' },
     { code: 'WELCOME10', type: '$10 OFF', details: 'First Order Only (Min $49)' },
-    { code: 'WEEKEND20', type: '20% OFF', details: 'Friday–Sunday Only' },
+    { code: 'WEEKEND20', type: '20% OFF', details: 'Fridayâ€“Sunday Only' },
     { code: 'FREESHIP', type: 'Free Shipping', details: 'Free USA Shipping (Min $75)' },
     { code: 'PREMIUM25', type: '$25 OFF', details: 'Minimum Order $150' },
     { code: 'LAUNCH20', type: '20% OFF', details: 'First 100 Customers Only' }
@@ -1043,7 +1043,7 @@ function renderAdminWishlist() {
       </td>
       <td><strong style="color:#2e7d32;font-size:13px;">${money(item.price || 0)}</strong></td>
       <td><strong style="font-size:12px;color:#050505;">${user?.name || 'Customer'}</strong></td>
-      <td><span style="font-size:12px;color:#555;">✉️ ${user?.email || 'customer@zavorafashion.com'}</span></td>
+      <td><span style="font-size:12px;color:#555;">âœ‰ï¸ ${user?.email || 'customer@zavorafashion.com'}</span></td>
       <td>
         <a href="product.html?id=${encodeURIComponent(item.id || '638')}" target="_blank" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;text-decoration:none;border-radius:4px;">View</a>
       </td>
@@ -1084,14 +1084,14 @@ function renderAdminNotifications() {
   returnRequests.forEach((req) => {
     const cleanOrderId = req.orderId ? '#' + String(req.orderId).replace(/^#+/, '') : 'N/A';
     const numId = cleanOrderId.replace(/^#+/, '');
-    
+
     // Find matching order in zavoraOrders to get the exact real product ordered & its image!
     const matchOrder = orders.find(o => String(o.id).replace(/^#+/, '') === numId);
     const orderItems = matchOrder && Array.isArray(matchOrder.items) && matchOrder.items.length ? matchOrder.items : [];
-    
+
     let realImg = orderItems[0]?.img || orderItems[0]?.image || matchOrder?.img || '';
     let realName = orderItems[0]?.name || matchOrder?.item || '';
-    
+
     if (!realImg) {
       if (numId.includes('383487') || numId.includes('861988')) {
         realImg = 'assets/zavora-dad-hat.png';
@@ -1113,7 +1113,7 @@ function renderAdminNotifications() {
             <img src="${p}" alt="Uploaded Defect Photo ${idx+1}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #050505;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
           </a>
         `).join('') +
-        `<span style="font-size:11px;color:#2e7d32;font-weight:700;">📸 ${req.photos.length} Customer Uploaded Photo(s)</span>` +
+        `<span style="font-size:11px;color:#2e7d32;font-weight:700;">ðŸ“¸ ${req.photos.length} Customer Uploaded Photo(s)</span>` +
         `</div>`;
     } else {
       photoHTML = `
@@ -1135,7 +1135,7 @@ function renderAdminNotifications() {
     } else {
       videoHTML = `
         <div style="margin-top:4px;font-size:11px;color:#1976d2;">
-          🎥 <strong>Video Clip:</strong> Attached by Customer (${req.videoName || 'product_inspection_video.mp4'})
+          ðŸŽ¥ <strong>Video Clip:</strong> Attached by Customer (${req.videoName || 'product_inspection_video.mp4'})
         </div>
       `;
     }
@@ -1215,7 +1215,7 @@ function renderAdminNotifications() {
       </td>
       <td>
         <strong style="font-size:12px;color:#333;">${n.customer}</strong>
-        <br><span style="font-size:11px;color:#1976d2;">✉️ ${n.email}</span>
+        <br><span style="font-size:11px;color:#1976d2;">âœ‰ï¸ ${n.email}</span>
       </td>
       <td style="vertical-align:top;padding:12px;">${n.detailHTML}</td>
       <td><span style="font-size:11px;color:#555;">${n.date}</span></td>
@@ -1338,7 +1338,7 @@ function renderAdminReports() {
           </td>
           <td>
             <strong style="font-size:13px;color:#050505;">${r.name}</strong>
-            <br><span style="font-size:12px;color:#1976d2;">✉️ ${r.email}</span>
+            <br><span style="font-size:12px;color:#1976d2;">âœ‰ï¸ ${r.email}</span>
           </td>
           <td><strong style="color:#333;font-size:13px;">${r.orderId || 'N/A'}</strong></td>
           <td><span style="font-size:12px;color:#444;max-width:300px;display:inline-block;">${r.description}</span></td>
@@ -1359,7 +1359,7 @@ function renderAdminReports() {
         <tr>
           <td>
             <strong style="color:#050505;font-size:13px;">${m.name || 'Visitor'}</strong>
-            <br><span style="font-size:12px;color:#1976d2;">✉️ ${m.email}</span>
+            <br><span style="font-size:12px;color:#1976d2;">âœ‰ï¸ ${m.email}</span>
           </td>
           <td><span class="pill green">${m.topic || 'General Support'}</span></td>
           <td><span style="font-size:12px;color:#444;max-width:300px;display:inline-block;">${m.message || m.description}</span></td>
@@ -1487,8 +1487,8 @@ function renderAdminEmails() {
   list.innerHTML = contacts.map((c) => `
     <tr>
       <td><strong style="color:#050505;font-size:14px;">${c.name}</strong></td>
-      <td><strong style="color:#1976d2;font-size:13px;">✉️ ${c.email}</strong></td>
-      <td><span style="font-size:12px;color:#333;font-weight:600;">📞 ${c.phone}</span></td>
+      <td><strong style="color:#1976d2;font-size:13px;">âœ‰ï¸ ${c.email}</strong></td>
+      <td><span style="font-size:12px;color:#333;font-weight:600;">ðŸ“ž ${c.phone}</span></td>
       <td><span class="pill gold">${c.orders} Orders Placed</span></td>
       <td><span class="pill green">${c.status}</span></td>
       <td>
@@ -1567,7 +1567,7 @@ function renderLiveOrders(stats) {
       searchWrap.className = 'admin-order-search-wrap';
       searchWrap.style.margin = '12px 0 16px 0';
       searchWrap.innerHTML = `
-        <input id="adminOrderSearchInput" type="search" placeholder="🔍 Search by Order ID (#ZVR-861988), Customer Name, Email, Phone, Address, or Item Name..." style="width:100%;padding:10px 14px;border-radius:6px;border:1px solid #ccc;font-size:14px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.05);">
+        <input id="adminOrderSearchInput" type="search" placeholder="ðŸ” Search by Order ID (#ZVR-861988), Customer Name, Email, Phone, Address, or Item Name..." style="width:100%;padding:10px 14px;border-radius:6px;border:1px solid #ccc;font-size:14px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.05);">
       `;
       cardHead.insertAdjacentElement('afterend', searchWrap);
       searchInput = document.querySelector('#adminOrderSearchInput');
@@ -1694,7 +1694,7 @@ function renderLiveOrders(stats) {
           <img src="${imgSrc}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'" style="width:42px;height:42px;object-fit:cover;border-radius:4px;border:1px solid #ddd;flex-shrink:0;">
           <div>
             <strong style="display:block;font-size:12px;line-height:1.2;color:#050505;">${item.name || 'Product'}</strong>
-            <span style="font-size:11px;color:#666;">Qty ${item.qty || 1} • ${item.color || 'Original'} / ${item.sizes?.[0] || item.size || 'M'}</span>
+            <span style="font-size:11px;color:#666;">Qty ${item.qty || 1} â€¢ ${item.color || 'Original'} / ${item.sizes?.[0] || item.size || 'M'}</span>
           </div>
         </div>
       `;
@@ -1712,9 +1712,9 @@ function renderLiveOrders(stats) {
         </td>
         <td>
           <strong style="font-size:13px;display:block;color:#050505;">${order.customer || 'Zavora Customer'}</strong>
-          <div style="font-size:12px;color:#333;margin-top:2px;">✉️ ${order.email || 'N/A'}</div>
-          <div style="font-size:11px;color:#555;margin-top:2px;">📞 ${order.phone || '+1 (555) 234-5678'}</div>
-          <div style="font-size:11px;color:#666;margin-top:2px;max-width:240px;line-height:1.3;">📍 ${order.address && !order.address.includes('Standard') ? order.address : (order.address || '123 USA Luxury Way, Suite 4B, New York, NY 10001')}</div>
+          <div style="font-size:12px;color:#333;margin-top:2px;">âœ‰ï¸ ${order.email || 'N/A'}</div>
+          <div style="font-size:11px;color:#555;margin-top:2px;">ðŸ“ž ${order.phone || '+1 (555) 234-5678'}</div>
+          <div style="font-size:11px;color:#666;margin-top:2px;max-width:240px;line-height:1.3;">ðŸ“ ${order.address && !order.address.includes('Standard') ? order.address : (order.address || '123 USA Luxury Way, Suite 4B, New York, NY 10001')}</div>
         </td>
         <td>
           <div style="max-height:130px;overflow-y:auto;padding-right:4px;">
@@ -2017,7 +2017,7 @@ function finishImportProgress(importedCount, message) {
 
   if (bar) bar.style.width = '100%';
   if (percentEl) percentEl.textContent = '100%';
-  if (titleEl) titleEl.textContent = 'Import Completed Successfully! 🎉';
+  if (titleEl) titleEl.textContent = 'Import Completed Successfully! ðŸŽ‰';
   if (logEl) logEl.textContent = message || `Successfully imported ${importedCount || 0} production products with full sync!`;
   if (closeBtn) {
     closeBtn.style.display = 'block';
@@ -2047,7 +2047,7 @@ async function rebuildStorefrontCatalogCache(productsArray) {
   try {
     const existingAdmin = getAdminProducts();
     const merged = [...productsArray, ...existingAdmin];
-    
+
     // Deduplicate by Product ID and SKU
     const seen = new Set();
     const cleanCatalog = merged.filter(p => {
@@ -2060,14 +2060,14 @@ async function rebuildStorefrontCatalogCache(productsArray) {
 
     localStorage.setItem('zavoraImportedCatalog', JSON.stringify(cleanCatalog));
     localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(cleanCatalog));
-    
+
     // Sync with backend API
     await fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'sync-cache', products: cleanCatalog })
     }).catch(() => {});
-    
+
     toast('Storefront catalog cache rebuilt & synced');
   } catch (error) {
     console.error('Cache rebuild failed:', error);
@@ -2357,7 +2357,7 @@ function renderPrintfulUrlPreview(products = [], errors = []) {
     <article style="border:1px solid #ddd;border-radius:12px;padding:12px;background:#fff;">
       <img src="${product.img || product.image || product.images?.[0] || ''}" alt="${product.name || ''}" style="width:100%;height:180px;object-fit:contain;background:#f7f7f7;border-radius:8px;">
       <h3 style="font-size:14px;margin:10px 0 4px;">${product.name || 'Printful Product'}</h3>
-      <p style="font-size:12px;color:#666;margin:0;">PF-${product.printfulId || product.id} • ${product.gender || 'Auto'} • ${product.category || 'auto'}</p>
+      <p style="font-size:12px;color:#666;margin:0;">PF-${product.printfulId || product.id} â€¢ ${product.gender || 'Auto'} â€¢ ${product.category || 'auto'}</p>
       <p style="font-size:13px;font-weight:800;margin:8px 0 0;">${money(product.price || 0)}</p>
     </article>
   `).join('');
@@ -2649,7 +2649,7 @@ document.addEventListener('click', async (event) => {
       })
     }).catch(() => null);
 
-    saveOrder.textContent = '✓ Saved';
+    saveOrder.textContent = 'âœ“ Saved';
     saveOrder.style.background = '#2e7d32';
     toast(`Order #${id} updated: ${status}`);
 
@@ -2704,7 +2704,7 @@ document.addEventListener('click', async (event) => {
     } catch(e) {}
     const userOrders = orders.filter(o => String(o.email).toLowerCase() === email.toLowerCase());
     if (userOrders.length) {
-      const summary = userOrders.map(o => `• Order #${o.id}: Total ${money(o.total)} (${o.status})`).join('\n');
+      const summary = userOrders.map(o => `â€¢ Order #${o.id}: Total ${money(o.total)} (${o.status})`).join('\n');
       alert(`Customer ${email} Order History:\n\n${summary}`);
     } else {
       alert(`Customer ${email} has placed 1 order via checkout flow.`);
@@ -2769,7 +2769,7 @@ document.addEventListener('submit', (event) => {
     const exp = shippingForm.querySelector('[name="expressRate"]')?.value;
     const est = shippingForm.querySelector('[name="deliveryEstimate"]')?.value;
     localStorage.setItem('zavoraShippingRules', JSON.stringify({ freeShippingMin: min, standardRate: std, expressRate: exp, deliveryEstimate: est }));
-    toast('✓ Shipping rules & delivery times updated!');
+    toast('âœ“ Shipping rules & delivery times updated!');
     return;
   }
 });
@@ -2836,7 +2836,7 @@ function renderAdminAnalytics() {
 
   const deviceStatEl = document.querySelector('[data-admin-analytics-device-stat]');
   const isMobile = window.innerWidth <= 768;
-  if (deviceStatEl) deviceStatEl.textContent = isMobile ? '📱 Mobile Device' : '💻 Desktop Browser';
+  if (deviceStatEl) deviceStatEl.textContent = isMobile ? 'ðŸ“± Mobile Device' : 'ðŸ’» Desktop Browser';
 
   const chartContainer = document.querySelector('[data-admin-analytics-chart]');
   if (chartContainer) {
@@ -2916,7 +2916,7 @@ async function bootAdminLegacyDisabled() {
     });
   }
 
-// ─── PRINTFUL PRODUCT IMPORT MANAGER & BULK EDITOR ───────────────────────
+// â”€â”€â”€ PRINTFUL PRODUCT IMPORT MANAGER & BULK EDITOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 }
 
@@ -2926,7 +2926,7 @@ async function fetchPrintfulStoreProducts() {
   const btnSync = document.getElementById('btnSyncPrintfulStore');
   const apiStatus = document.getElementById('printfulApiStatus');
   if (btnSync) btnSync.disabled = true;
-  if (apiStatus) apiStatus.innerHTML = '🔄 Syncing Printful Store...';
+  if (apiStatus) apiStatus.innerHTML = 'ðŸ”„ Syncing Printful Store...';
 
   toast('Connecting to Printful Store API...');
   showImportProgress('Connecting to Printful...', 'Fetching store sync products and variants...', 15);
@@ -2967,11 +2967,11 @@ async function fetchPrintfulStoreProducts() {
     updateImportProgress(100, 'Printful Store Sync Complete!');
     setTimeout(closeImportProgress, 800);
 
-    if (apiStatus) apiStatus.innerHTML = '🟢 Connected & Synced';
+    if (apiStatus) apiStatus.innerHTML = 'ðŸŸ¢ Connected & Synced';
     toast(`Successfully staged ${window.__printfulStagingProducts.length} Printful store products!`);
     renderPrintfulStagingTable();
   } catch (error) {
-    if (apiStatus) apiStatus.innerHTML = '🔴 Connection Error';
+    if (apiStatus) apiStatus.innerHTML = 'ðŸ”´ Connection Error';
     toast('Error connecting to Printful API: ' + error.message, 'error');
     closeImportProgress();
   } finally {
@@ -3075,7 +3075,7 @@ function renderPrintfulStagingTable() {
 
   if (!filtered.length) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:#888;">
-      ${stagingList.length ? 'No products match your search query.' : 'No Printful store items staged yet. Click <b>"⚡ Connect & Fetch Printful Store Products"</b> above.'}
+      ${stagingList.length ? 'No products match your search query.' : 'No Printful store items staged yet. Click <b>"âš¡ Connect & Fetch Printful Store Products"</b> above.'}
     </td></tr>`;
     return;
   }
@@ -3146,7 +3146,7 @@ function updateStagingSelectedCount() {
   const btnSelected = document.getElementById('btnImportSelectedDrafts');
 
   if (countText) countText.textContent = `${count} Products Selected`;
-  if (btnSelected) btnSelected.textContent = `📥 Import Selected (${count})`;
+  if (btnSelected) btnSelected.textContent = `ðŸ“¥ Import Selected (${count})`;
 }
 
 function selectedStagingIds() {
