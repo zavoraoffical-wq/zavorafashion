@@ -49,17 +49,18 @@ function redirectToAdminLogin() {
 async function requireAdminSession() {
   document.body.classList.add('admin-locked');
 
-  // Retry up to 3 times with increasing delay — cookie may need a moment
-  // to be stored by the browser after redirect from admin-login.
+  // Give the browser time to process the Set-Cookie from the login API
+  // before making the session check request.
+  await new Promise(function(resolve) { setTimeout(resolve, 300); });
+
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt > 0) {
-      await new Promise(function(resolve) { setTimeout(resolve, 600 * attempt); });
+      await new Promise(function(resolve) { setTimeout(resolve, 800 * attempt); });
     }
     try {
       const response = await nativeFetch('/api/admin?action=session', {
         credentials: 'include',
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-store' }
+        cache: 'no-store'
       });
       const data = await response.json().catch(() => ({}));
 
@@ -68,24 +69,24 @@ async function requireAdminSession() {
         return true;
       }
 
-      // Only redirect on definitive authentication failure (401/403 + ok:false)
-      if ((response.status === 401 || response.status === 403) && data && data.ok === false) {
-        console.warn('Admin session invalid, redirecting to login.');
+      // ONLY redirect on an unambiguous 401 or 403 from the server.
+      // A 200 with ok:false is a race condition (cookie not yet available)
+      // and must NOT trigger a redirect — just retry.
+      if (response.status === 401 || response.status === 403) {
+        console.warn('Admin: unauthenticated (', response.status, '). Redirecting to login.');
         redirectToAdminLogin();
         return false;
       }
 
-      // Any other status (200 with ok:false, 5xx, 429, etc.) — retry
-      console.warn('Admin session check returned non-auth response:', response.status, data);
-
-    } catch (error) {
-      console.warn('Admin session check network error (attempt ' + (attempt + 1) + '):', error);
+      console.warn('Admin session check non-definitive response:', response.status, data);
+    } catch (err) {
+      console.warn('Admin session network error (attempt ' + (attempt + 1) + '):', err);
     }
   }
 
-  // After 3 failed attempts that weren't definitive 401/403, allow admin to
-  // proceed — the server-side route protection is still active.
-  console.warn('Admin session check could not be confirmed after retries. Proceeding with caution.');
+  // All retries exhausted without a definitive 401/403 — allow admin.
+  // Each protected API endpoint enforces the session server-side anyway.
+  console.warn('Admin session could not be confirmed — allowing with server-side protection active.');
   document.body.classList.remove('admin-locked');
   return true;
 }
