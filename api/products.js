@@ -418,6 +418,24 @@ module.exports = async function handler(req, res) {
     const minimumPagedTotal = ((Number(req.query.page || 1) - 1) * limit) + products.length;
     const total = Math.max(repositoryTotal, minimumPagedTotal, products.length);
 
+    let debugInfo = null;
+    if (products.length === 0 || req.query.debug === '1') {
+      try {
+        const { db: mongoDb } = require('../lib/auth-lib');
+        const database = await mongoDb();
+        const col = database.collection('products');
+        const totalDocsInCol = await col.countDocuments({});
+        const sampleDoc = await col.findOne({});
+        debugInfo = {
+          dbName: database.databaseName,
+          totalDocsInProductsCollection: totalDocsInCol,
+          sampleDocName: sampleDoc ? sampleDoc.name : null
+        };
+      } catch (err) {
+        debugInfo = { error: err.message, stack: err.stack };
+      }
+    }
+
     return json(res, 200, {
       ok: true,
       provider: 'mongodb',
@@ -426,6 +444,7 @@ module.exports = async function handler(req, res) {
       total,
       totalPages: Math.max(1, Math.ceil(total / limit)),
       count: products.length,
+      debug: debugInfo,
       products
     }, 120);
   } catch (error) {
