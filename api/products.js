@@ -399,8 +399,8 @@ module.exports = async function handler(req, res) {
     const requestedGender = String(req.query.gender || '').toLowerCase();
     const requestedStatus = String(req.query.status || '').toLowerCase();
     const savedData = await ProductRepository.findProducts({ ...req.query, limit, page: req.query.page || 1 }).catch(() => ({ products: [], total: 0 }));
-    const supabaseProducts = await fetchProductsFromSupabase({ limit }).catch(() => []);
-    let products = filterProducts([...supabaseProducts, ...(savedData.products || [])]);
+    const supabaseProducts = (savedData.products && savedData.products.length > 0) ? [] : await fetchProductsFromSupabase({ limit }).catch(() => []);
+    let products = filterProducts([...(savedData.products || []), ...supabaseProducts]);
     const requestedCategory = String(req.query.category || '').toLowerCase();
     products = products
       .filter((product) => requestedStatus === 'all' || productIsLive(product))
