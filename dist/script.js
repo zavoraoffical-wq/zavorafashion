@@ -158,18 +158,10 @@ function uniqueHomeProducts(productsList = []) {
 }
 
 function isRealHomeProduct(product = {}) {
-  const text = `${product.name || ''} ${product.title || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
-  const images = [
-    product.img,
-    product.image,
-    product.thumbnail,
-    product.hoverImage,
-    ...(Array.isArray(product.images) ? product.images : [])
-  ].filter(Boolean).join(' ').toLowerCase();
-  const fakeName = /zavora\s+(women'?s|unisex)\s+(relaxed|baby rib|fleece|organic|high-waisted|tailored|staple|heavy blend|heavyweight vintage|luxury|crewneck|champion|embroidered|studio)|zavora\s+ultimate|zavora\s+recycled|zavora\s+classic/i;
-  const fakeAsset = /zavora-(women|men|hero-clean|premium-hero)|studio-wide-trouser/i;
-  const blockedProduct = /(napkin|placemat|place\s*mat|tablecloth|table\s*cloth|coaster|kitchen|dining|home\s*&?\s*living|home decor|wall art|towel|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|apron|pet|case|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|drinkware|water bottle|card|postcard|puzzle|flag)/i;
-  return !fakeName.test(text) && !fakeAsset.test(images) && !blockedProduct.test(`${text} ${images}`);
+  if (!product || !product.name) return false;
+  const text = `${product.name || ''} ${product.title || ''} ${product.category || ''}`.toLowerCase();
+  const blockedProduct = /(napkin|placemat|place\s*mat|tablecloth|table\s*cloth|coaster|towel|rug|ornament|poster|mug|canvas|sticker|phone|pillow|blanket|apron|pet|sleeve|laptop|bottle|mouse pad|notebook|journal|stationery|tumbler|cup|drinkware|water bottle|card|postcard|puzzle|flag)/i;
+  return !blockedProduct.test(text);
 }
 
 function isCapHatProduct(product = {}) {
