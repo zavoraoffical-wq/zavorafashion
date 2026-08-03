@@ -3868,8 +3868,23 @@ async function initDynamicRelatedProducts() {
     if (!Array.isArray(allProducts) || !allProducts.length) return;
     const isCapHatRelated = (item = {}) => /(cap|hat|beanie|dad\s*hat|snapback|trucker|bucket\s*hat|visor)/i.test(`${item.name || ''} ${item.category || ''} ${item.description || ''}`);
     const preferredCategories = similarCategoryList(current?.category || '').filter((category) => category !== 'accessories');
+    const currentGender = String(current?.gender || '').toLowerCase().trim();
+    const isUnisexProduct = currentGender === 'unisex' || !currentGender;
+
     const realProducts = allProducts
-      .filter((item) => String(item.id) !== String(current?.id))
+      .filter((item) => {
+        if (String(item.id) === String(current?.id)) return false;
+        if (isUnisexProduct) return true;
+        const itemGender = String(item.gender || '').toLowerCase().trim();
+        if (!itemGender || itemGender === 'unisex') return true;
+        if (currentGender.includes('women') || currentGender === 'w') {
+          return itemGender.includes('women') || itemGender === 'w';
+        }
+        if (currentGender.includes('men') || currentGender === 'm') {
+          return (itemGender.includes('men') || itemGender === 'm') && !itemGender.includes('women');
+        }
+        return true;
+      })
       .sort((a, b) => {
         const aPreferred = preferredCategories.includes(a.category) ? 0 : 1;
         const bPreferred = preferredCategories.includes(b.category) ? 0 : 1;
