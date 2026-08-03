@@ -55,11 +55,11 @@ module.exports = async function handler(req, res) {
             </a>
           </p>
           <p>This secure reset link is demo-ready for your website flow. If you did not request this, you can ignore this email.</p>
-          <p style="color:#666">Need help? Contact support@zavorafashion.com.</p>
+          <p style="color:#666">Need help? Contact supports@zavorafashion.com.</p>
           <p>Zavora Fashion Support</p>
         </div>
       `,
-      text: `Reset your Zavora Fashion password: ${resetUrl}\n\nIf you did not request this, ignore this email.\nNeed help? support@zavorafashion.com`
+      text: `Reset your Zavora Fashion password: ${resetUrl}\n\nIf you did not request this, ignore this email.\nNeed help? supports@zavorafashion.com`
     })
   });
 

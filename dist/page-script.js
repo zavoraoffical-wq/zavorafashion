@@ -73,7 +73,7 @@ const APPLIED_GIFT_KEY = 'zavoraAppliedGiftCard';
 const AUTH_OTP_PENDING_KEY = 'zavoraAuthOtpPending';
 const ORDER_HISTORY_KEY = 'zavoraOrders';
 const ADDRESS_BOOK_KEY = 'zavoraAddresses';
-const SUPPORT_EMAIL = 'support@zavorafashion.com';
+const SUPPORT_EMAIL = 'supports@zavorafashion.com';
 const NOREPLY_EMAIL = 'noreply@zavorafashion.com';
 const LEGAL_EMAIL = 'legal@zavorafashion.com';
 const OFFICIAL_EMAIL = 'zavoraofficial@zavorafashion.com';
@@ -4209,7 +4209,7 @@ function injectEmailContactCards() {
     <div>
       <p class="eyebrow">Zavora Contacts</p>
       <h2>Need help or legal support?</h2>
-      <p>For customer support use support@zavorafashion.com. For orders use orders@zavorafashion.com, shipping use shipping@zavorafashion.com, returns use returns@zavorafashion.com, and general enquiries use info@zavorafashion.com. For policy or legal questions use ${LEGAL_EMAIL}.</p>
+      <p>For customer support use supports@zavorafashion.com. For orders use orders@zavorafashion.com, shipping use shipping@zavorafashion.com, returns use returns@zavorafashion.com, and general enquiries use info@zavorafashion.com. For policy or legal questions use ${LEGAL_EMAIL}.</p>
     </div>
     <div class="email-contact-actions">
       <a class="secondary-btn" href="mailto:${SUPPORT_EMAIL}">Email Support</a>
