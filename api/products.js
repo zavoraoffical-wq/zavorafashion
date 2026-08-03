@@ -201,17 +201,10 @@ function productMatchesCategory(product = {}, requestedCategory = '') {
 }
 
 function isRealStorefrontProduct(product = {}) {
-  const text = `${product.name || ''} ${product.title || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
-  const images = [
-    product.img,
-    product.image,
-    product.thumbnail,
-    product.hoverImage,
-    ...(Array.isArray(product.images) ? product.images : [])
-  ].filter(Boolean).join(' ').toLowerCase();
+  if (!product || !product.name) return false;
+  const text = `${product.name || ''} ${product.title || ''} ${product.description || ''}`.toLowerCase();
   const fakeText = /\b(demo|sample product|placeholder|lorem ipsum)\b/i;
-  const fakeAsset = /zavora-(women|men|hero-clean|premium-hero)|studio-wide-trouser/i;
-  return !fakeText.test(text) && !fakeAsset.test(images);
+  return !fakeText.test(text);
 }
 
 async function callPrintfulHandler(req, query) {
@@ -405,35 +398,7 @@ module.exports = async function handler(req, res) {
       .filter((product) => requestedStatus === 'all' || productIsLive(product))
       .filter((product) => productMatchesGender(product, requestedGender))
       .filter((product) => productMatchesCategory(product, requestedCategory));
-    if (requestedGender === 'women' && (!requestedCategory || requestedCategory === 'all' || requestedCategory === 'oversized-tees' || requestedCategory === 'tees')) {
-      products = products.filter(isTshirtProduct).map((product) => ({
-        ...product,
-        category: ['heavyweight-tees', 'baby-tees', 'polo-shirts', 'crop-tops'].includes(product.category) ? product.category : 'oversized-tees',
-        categoryPath: product.categoryPath || 'Women > Oversized T-Shirts'
-      }));
-    }
-    products = products.slice(0, limit);
-    const repositoryTotal = Number(savedData.total || 0);
-    const minimumPagedTotal = ((Number(req.query.page || 1) - 1) * limit) + products.length;
-    const total = Math.max(repositoryTotal, minimumPagedTotal, products.length);
-
-    let debugInfo = null;
-    if (products.length === 0 || req.query.debug === '1') {
-      try {
-        const { db: mongoDb } = require('../lib/auth-lib');
-        const database = await mongoDb();
-        const col = database.collection('products');
-        const totalDocsInCol = await col.countDocuments({});
-        const sampleDoc = await col.findOne({});
-        debugInfo = {
-          dbName: database.databaseName,
-          totalDocsInProductsCollection: totalDocsInCol,
-          sampleDocName: sampleDoc ? sampleDoc.name : null
-        };
-      } catch (err) {
-        debugInfo = { error: err.message, stack: err.stack };
-      }
-    }
+    
 
     return json(res, 200, {
       ok: true,

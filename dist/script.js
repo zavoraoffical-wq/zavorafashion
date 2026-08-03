@@ -280,18 +280,16 @@ function renderDailyFeature() {
 }
 
 const homeShelfDefinitions = [
-  { title: 'New Arrivals', href: 'new-arrivals.html', match: (product) => product.collection.includes('new') || /new/i.test(product.badge || '') },
-  { title: 'Trending Now', href: 'trending.html', match: (product) => product.collection.includes('trending') || Number(product.popularity || 0) >= 84 },
-  { title: 'Best Sellers', href: 'best-sellers.html', match: (product) => product.collection.includes('best') || Number(product.popularity || 0) >= 88 },
-  { title: 'Premium Hoodies', href: 'shop.html?category=hoodies', match: (product) => ['hoodies', 'cropped-hoodies', 'zip-hoodies'].includes(product.category) },
-  { title: 'Premium Sweatshirts', href: 'shop.html?category=sweatshirts', match: (product) => product.category === 'sweatshirts' },
-  { title: 'Luxury T-Shirts', href: 'shop.html?category=tees', match: (product) => ['tees', 'oversized-tees', 'heavyweight-tees', 'baby-tees'].includes(product.category) },
-  { title: 'Staff Picks', href: 'shop.html?sort=popular', match: (product, index) => index % 3 === 0 },
-  { title: 'Recommended For You', href: 'recommended-products.html', match: (product) => Number(product.popularity || 0) >= 78 },
+  { title: 'New Arrivals', href: 'new-arrivals.html', match: (product, index) => index < 12 },
+  { title: 'Trending Now', href: 'trending.html', match: (product, index) => index >= 4 && index < 16 },
+  { title: 'Best Sellers', href: 'best-sellers.html', match: (product, index) => index >= 8 && index < 20 },
+  { title: 'Premium Hoodies', href: 'shop.html?category=hoodies', match: (product) => ['hoodies', 'cropped-hoodies', 'zip-hoodies'].includes(product.category) || /hoodie/i.test(product.name || '') },
+  { title: 'Premium Sweatshirts', href: 'shop.html?category=sweatshirts', match: (product) => product.category === 'sweatshirts' || /sweatshirt|crewneck/i.test(product.name || '') },
+  { title: 'Luxury T-Shirts', href: 'shop.html?category=tees', match: (product) => ['tees', 'oversized-tees', 'heavyweight-tees', 'baby-tees'].includes(product.category) || /tee|t-shirt/i.test(product.name || '') },
+  { title: 'Staff Picks', href: 'shop.html?sort=popular', match: (product, index) => index % 2 === 0 },
+  { title: 'Recommended For You', href: 'recommended-products.html', match: (product, index) => index < 24 },
   { title: 'Recently Added', href: 'new-arrivals.html', match: (product, index) => index < 24 },
-  { title: 'Limited Drop', href: 'limited.html', match: (product) => product.collection.includes('limited') || /limited/i.test(product.badge || '') },
-  { title: 'Under $100', href: 'shop.html?under=100', match: (product) => Number(product.price || 0) <= 100 },
-  { title: 'Premium Essentials', href: 'collections.html?collection=essentials', match: (product) => product.collection.includes('essentials') || product.collection.includes('streetwear') }
+  { title: 'Under $100', href: 'shop.html?under=100', match: (product) => Number(product.price || 0) <= 100 }
 ];
 
 function renderHomeProductSections() {
@@ -324,7 +322,7 @@ function renderHomeProductSections() {
       </section>
     `;
   }).filter(Boolean);
-  container.innerHTML = shelves.length ? shelves.join('') : '';
+  container.innerHTML = shelves.length ? shelves.join('') : (catalog.length ? '<div class="home-product-slider">' + catalog.slice(0, 12).map(productCard).join('') + '</div>' : '');
 }
 
 function renderProducts() {
