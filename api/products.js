@@ -411,15 +411,15 @@ module.exports = async function handler(req, res) {
       .filter((product) => productMatchesCategory(product, requestedCategory));
     
 
+    const totalCount = Number(savedData?.total || products.length || 0);
     return json(res, 200, {
       ok: true,
       provider: 'mongodb',
       page: Number(req.query.page || 1),
       limit,
-      total: (savedData?.total || products.length),
-      totalPages: Math.max(1, Math.ceil(total / limit)),
+      total: totalCount,
+      totalPages: Math.max(1, Math.ceil(totalCount / Math.max(limit, 1))),
       count: products.length,
-      debug: debugInfo,
       products
     }, 0);
   } catch (error) {
