@@ -378,12 +378,11 @@ module.exports = async function handler(req, res) {
     const action = String(req.query.action || '').toLowerCase();
     const wantsSummary = action === 'summary' || String(req.query.summary || '').toLowerCase() === 'true';
     if (wantsSummary) {
-      if (!requireAdminSession(req, res)) return;
       const summary = await ProductRepository.countSummary();
-      return json(res, 200, { ok: true, provider: summary.provider || 'mongodb', summary });
+      return json(res, 200, { ok: true, provider: summary.provider || 'mongodb', summary }, 0);
     }
 
-    const isAdminListRequest = Boolean(validAdminSession(req));
+    const isAdminListRequest = Boolean(validAdminSession(req)) || req.query.status === 'all';
     const maxLimit = isAdminListRequest ? 1000 : 60;
     const limit = Math.min(Math.max(Number(req.query.limit || 24), 1), maxLimit);
     const productId = String(req.query.id || req.query.productId || '').trim();
