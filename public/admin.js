@@ -17,6 +17,25 @@ const sectionTitles = {
   homepage: 'Homepage Builder',
   content: 'Content Pages',
   localization: 'Localization',
+const sectionTitles = {
+  dashboard: 'Zavora Dashboard',
+  products: 'Products',
+  importer: 'Product Importer',
+  categories: 'Categories',
+  orders: 'Orders',
+  customers: 'Customers',
+  payments: 'Payments',
+  shipping: 'Shipping',
+  coupons: 'Coupons',
+  wishlist: 'Wishlist',
+  affiliates: 'Affiliates',
+  reviews: 'Reviews',
+  emails: 'Email Center',
+  notifications: 'Notifications',
+  analytics: 'Analytics',
+  homepage: 'Homepage Builder',
+  content: 'Content Pages',
+  localization: 'Localization',
   media: 'Media Library',
   ai: 'AI Features',
   settings: 'Website Settings',
@@ -25,6 +44,13 @@ const sectionTitles = {
 
 const ADMIN_SESSION_KEY = 'zavoraAdminSession';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
+function getAdminProducts() {
+  try {
+    return JSON.parse(localStorage.getItem(ADMIN_PRODUCTS_KEY) || '[]');
+  } catch (e) {
+    return [];
+  }
+}
 const AFFILIATE_KEY = 'zavoraAffiliateApplications';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80';
 let affiliateServerLoaded = false;
@@ -2942,7 +2968,7 @@ async function fetchPrintfulStoreProducts() {
 
 function normalizeProductDatabaseSummary(summary = {}) {
   const total = Number(summary.total || 0);
-  const published = Number(summary.published || summary.live || 0);
+  const published = (summary.published !== undefined && summary.published !== null) ? Number(summary.published) : total;
   const draft = Number.isFinite(Number(summary.draft))
     ? Number(summary.draft || 0)
     : Math.max(total - published, 0);
