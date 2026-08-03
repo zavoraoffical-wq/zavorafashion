@@ -2051,14 +2051,9 @@ function isSafeProduct(p) {
   if (!p || !p.name) return false;
   const text = `${p.name} ${p.category || ''} ${p.productType || ''}`;
   const images = [p.img, p.image, p.thumbnail, p.hoverImage, ...(Array.isArray(p.images) ? p.images : [])].filter(Boolean).join(' ');
-  const FAKE_STOREFRONT_PRODUCT_NAMES = /zavora\s+(women'?s|unisex)\s+(relaxed|baby rib|fleece|organic|high-waisted|tailored|staple|heavy blend|heavyweight vintage|luxury|crewneck|champion|embroidered|studio)|zavora\s+ultimate|zavora\s+recycled|zavora\s+classic/i;
-  const FAKE_STOREFRONT_ASSETS = /zavora-(women|men|hero-clean|premium-hero)|studio-wide-trouser/i;
-  if (FAKE_STOREFRONT_PRODUCT_NAMES.test(text) || FAKE_STOREFRONT_ASSETS.test(images)) return false;
   if (BLOCKED_PRODUCT_NAMES.test(text)) return false;
   if (BLOCKED_HOME_PRODUCT_NAMES.test(`${text} ${images}`)) return false;
-  const ALLOWED_CATS = new Set(['oversized-tees','heavyweight-tees','baby-tees','hoodies','cropped-hoodies','zip-hoodies','sweatshirts','jackets','cargo-pants','sweatpants','shorts','accessories','sportswear','matching-sets','beachwear','tees','']);
-  const cat = String(p.category || '').toLowerCase();
-  return !cat || ALLOWED_CATS.has(cat);
+  return true;
 }
 
 function injectLargeCatalog() {
@@ -2069,7 +2064,7 @@ function injectLargeCatalog() {
   const genderTarget = pageName === 'women' ? 'women' : pageName === 'men' ? 'men' : 'all';
 
   // ── 1. Try sessionStorage (sub-second warm load) ─────────────────────
-  if (false && !window.__zavoraCatalogProducts?.length) {
+  if (!window.__zavoraCatalogProducts?.length) {
     try {
       const cacheKey = `zavoraCatalog_v2_${pageName}_${window.location.search || 'all'}`;
       const hit = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
@@ -2083,13 +2078,11 @@ function injectLargeCatalog() {
   }
 
   // ── 2. Try localStorage merged catalog (fallback) ────────────────────
-  if (false && !window.__zavoraCatalogProducts?.length) {
+  if (!window.__zavoraCatalogProducts?.length) {
     try {
-      let importedRaw = [];
-      let adminRaw = [];
-      try { importedRaw = JSON.parse(localStorage.getItem('zavoraImportedCatalog') || '[]'); } catch(e) {}
-      try { adminRaw = JSON.parse(localStorage.getItem('zavoraAdminProducts') || '[]'); } catch(e) {}
-      const cached = deduplicateProducts([...importedRaw, ...adminRaw]).filter(p => {
+      let cachedRaw = [];
+      try { cachedRaw = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]'); } catch(e) {}
+      const cached = deduplicateProducts(cachedRaw).filter(p => {
         if (!isSafeProduct(p)) return false;
         if (genderTarget !== 'all') {
           const pg = String(p.gender || '').toLowerCase();
