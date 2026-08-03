@@ -556,7 +556,7 @@ document.addEventListener('click', async (event) => {
   }
 });
 
-$('#clearFilters').addEventListener('click', () => {
+$('#clearFilters')?.addEventListener('click', () => {
   $('#categoryFilter').value = 'all';
   $('#collectionFilter').value = 'all';
   $('#colorFilter').value = 'all';
@@ -568,14 +568,14 @@ $('#clearFilters').addEventListener('click', () => {
   renderProducts();
 });
 
-$('#loadMore').addEventListener('click', () => {
+$('#loadMore')?.addEventListener('click', () => {
   state.visible += 4;
   renderProducts();
 });
 
-$('[data-cart]').addEventListener('click', () => $('#cartDrawer').classList.add('open'));
-$('[data-close-cart]').addEventListener('click', () => $('#cartDrawer').classList.remove('open'));
-$('[data-close-view]').addEventListener('click', () => $('#quickView').classList.remove('open'));
+$('[data-cart]')?.addEventListener('click', () => $('#cartDrawer').classList.add('open'));
+$('[data-close-cart]')?.addEventListener('click', () => $('#cartDrawer').classList.remove('open'));
+$('[data-close-view]')?.addEventListener('click', () => $('#quickView').classList.remove('open'));
 const panelButton = $('[data-panel]');
 if (panelButton) {
   panelButton.addEventListener('click', (event) => {
@@ -707,9 +707,9 @@ $$('[data-mega]').forEach(button => {
     $('#megaMenu').classList.add('open');
   });
 });
-$('#megaMenu').addEventListener('mouseleave', () => $('#megaMenu').classList.remove('open'));
+$('#megaMenu')?.addEventListener('mouseleave', () => $('#megaMenu').classList.remove('open'));
 
-$('[data-recommend]').addEventListener('click', () => {
+$('[data-recommend]')?.addEventListener('click', () => {
   $('#collectionFilter').value = 'best';
   $('#sortFilter').value = 'popular';
   location.hash = '#shop';

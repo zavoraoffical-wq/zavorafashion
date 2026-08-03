@@ -416,7 +416,7 @@ module.exports = async function handler(req, res) {
       provider: 'mongodb',
       page: Number(req.query.page || 1),
       limit,
-      total,
+      total: (savedData?.total || products.length),
       totalPages: Math.max(1, Math.ceil(total / limit)),
       count: products.length,
       debug: debugInfo,
