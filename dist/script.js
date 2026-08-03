@@ -17,7 +17,7 @@ const CART_KEY = 'zavoraCart';
 const ADMIN_PRODUCTS_KEY = 'zavoraAdminProducts';
 const SELECTED_PRODUCT_KEY = 'zavoraSelectedProduct';
 const WISHLIST_KEY = 'zavoraWishlist';
-const state = { cart: [], visible: 23, printfulProducts: [], printfulLoaded: false };
+const state = { cart: [], visible: 23, printfulProducts: (function() { try { return JSON.parse(localStorage.getItem('zavora_cached_products') || '[]'); } catch(e) { return []; } })(), printfulLoaded: false };
 let homeAuthUser = null;
 let homeAuthChecked = false;
 const $ = (selector) => document.querySelector(selector);
@@ -226,23 +226,30 @@ function getHomeProducts() {
 async function loadPrintfulProducts() {
   if (state.printfulLoaded) return;
   state.printfulLoaded = true;
+
   try {
-    const batches = await Promise.all(['men', 'women'].map(async (gender) => {
-      const res = await fetch(`/api/products?gender=${gender}&limit=30&page=1`, {
-        headers: { Accept: 'application/json' }
-      });
-      if (!res.ok) return [];
+    const cached = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]');
+    if (cached && cached.length) {
+      state.printfulProducts = cached;
+      renderHomeProductSections();
+      renderProducts();
+    }
+  } catch (e) {}
+
+  try {
+    const res = await fetch('/api/products?status=all&limit=100', {
+      headers: { Accept: 'application/json' }
+    });
+    if (res.ok) {
       const data = await res.json();
-      return Array.isArray(data.products) ? data.products : [];
-    }));
-    const prods = batches.flat();
-    if (prods.length) {
-      state.printfulProducts = prods;
+      if (Array.isArray(data.products) && data.products.length) {
+        state.printfulProducts = data.products;
+        try { localStorage.setItem('zavora_cached_products', JSON.stringify(data.products)); } catch(e) {}
+        renderHomeProductSections();
+        renderProducts();
+      }
     }
   } catch (error) {}
-
-  renderHomeProductSections();
-  renderProducts();
 }
 
 
@@ -301,8 +308,8 @@ function renderHomeProductSections() {
   const catalog = getHomeProducts();
   if (!catalog.length) {
     container.innerHTML = state.printfulLoaded
-      ? '<p class="catalog-loading">No products are live yet. New Printful products will appear here after import.</p>'
-      : '<p class="catalog-loading">Loading Zavora product edits...</p>';
+      ? '<p class="catalog-loading"></p>'
+      : '<p class="catalog-loading"></p>';
     return;
   }
   const used = new Set();
@@ -361,7 +368,7 @@ function renderProducts() {
   if (countBadge) countBadge.textContent = filtered.length;
 
   if (!state.printfulLoaded && !filtered.length) {
-    grid.innerHTML = '<p class="catalog-loading">Loading Printful products...</p>';
+    grid.innerHTML = '<p class="catalog-loading"></p>';
     return;
   }
   grid.innerHTML = filtered.length ? filtered.slice(0, state.visible).map(productCard).join('') : '<p class="catalog-loading">No products are live yet. Import a Printful product from admin to show it here.</p>';
