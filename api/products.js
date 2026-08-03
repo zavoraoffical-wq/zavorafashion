@@ -446,7 +446,7 @@ module.exports = async function handler(req, res) {
       count: products.length,
       debug: debugInfo,
       products
-    }, 120);
+    }, 0);
   } catch (error) {
     return json(res, 500, { ok: false, error: error.message || 'Could not load products' });
   }
