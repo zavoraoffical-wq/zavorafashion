@@ -1,3 +1,5 @@
+let globalApiProductCache = null;
+let globalApiProductCacheTime = 0;
 'use strict';
 
 const { ProductRepository } = require('../lib/local-product-engine');
@@ -382,7 +384,7 @@ module.exports = async function handler(req, res) {
 
     if (productId) {
       const saved = await ProductRepository.getProductById(productId).catch(() => null);
-      const supabaseProducts = await fetchProductsFromSupabase({ id: productId, limit: 1 }).catch(() => []);
+      const supabaseProducts = [];
       const product = saved || supabaseProducts[0];
       if (!product) return json(res, 404, { ok: false, error: 'Product not found' });
       return json(res, 200, { ok: true, provider: saved ? 'mongodb' : 'supabase', product }, 120);
@@ -390,8 +392,17 @@ module.exports = async function handler(req, res) {
 
     const requestedGender = String(req.query.gender || '').toLowerCase();
     const requestedStatus = String(req.query.status || '').toLowerCase();
-    const savedData = await ProductRepository.findProducts({ ...req.query, limit, page: req.query.page || 1 }).catch(() => ({ products: [], total: 0 }));
-    const supabaseProducts = (savedData.products && savedData.products.length > 0) ? [] : await fetchProductsFromSupabase({ limit }).catch(() => []);
+    let savedData = null;
+    if (globalApiProductCache && (Date.now() - globalApiProductCacheTime) < 120000 && !req.query.q && !req.query.search && !req.query.nocache) {
+      savedData = globalApiProductCache;
+    } else {
+      savedData = await ProductRepository.findProducts({ ...req.query, limit: 100, page: 1 }).catch(() => ({ products: [], total: 0 }));
+      if (savedData && Array.isArray(savedData.products) && savedData.products.length > 0) {
+        globalApiProductCache = savedData;
+        globalApiProductCacheTime = Date.now();
+      }
+    }
+    const supabaseProducts = [];
     let products = filterProducts([...(savedData.products || []), ...supabaseProducts]);
     const requestedCategory = String(req.query.category || '').toLowerCase();
     products = products
