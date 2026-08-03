@@ -541,7 +541,12 @@ document.addEventListener('click', async (event) => {
   if (add) addToCart(add.dataset.add);
   if (view) openQuickView(view.dataset.view);
   if (remove) {
-    state.cart = state.cart.filter(item => item.id !== Number(remove.dataset.remove));
+    const targetId = String(remove.dataset.remove || '').trim();
+    state.cart = state.cart.filter(item => {
+      const itemId = String(item.id || item.printfulId || item._id || '').trim();
+      const itemName = String(item.name || '').trim();
+      return itemId !== targetId && itemName !== targetId;
+    });
     saveCart();
     renderCart();
   }
