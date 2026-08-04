@@ -1,12 +1,35 @@
 /**
- * Zavora Fashion — Daily Automatic Product Journal Engine (20+ Stories)
- * Features: Auto-generates 20+ daily SEO product articles, Article JSON-LD Schema, direct product buy widgets & category filters.
+ * Zavora Fashion — Daily Automatic Product Journal Engine (Guaranteed 20+ Stories)
+ * Features: Auto-generates 20+ daily SEO product articles, Article JSON-LD Schema, direct product buy widgets & instant fallback catalog.
  */
 
 (function () {
   'use strict';
 
   const BASE_URL = 'https://www.zavorafashion.com';
+
+  const DEFAULT_JOURNAL_CATALOG = [
+    { id: 862, printfulId: 862, name: "Zavora Women's Heavyweight Boxy T-Shirt", price: 94.89, category: "oversized-tees", img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg" },
+    { id: 863, printfulId: 863, name: "Zavora Heavyweight Organic Hoodie", price: 118.00, category: "hoodies", img: "https://files.cdn.printful.com/products/832/21134_1736166484.jpg" },
+    { id: 864, printfulId: 864, name: "Zavora Unisex Studio Organic Sweatshirt", price: 103.08, category: "sweatshirts", img: "https://files.cdn.printful.com/products/832/21143_1736166493.jpg" },
+    { id: 865, printfulId: 865, name: "Zavora Relaxed Cargo Trousers", price: 125.00, category: "cargo-pants", img: "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?auto=format&fit=crop&w=800&q=80" },
+    { id: 866, printfulId: 866, name: "Zavora Minimal Boxy Crop Tee", price: 68.00, category: "crop-tops", img: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80" },
+    { id: 867, printfulId: 867, name: "Zavora Zip-Up Fleece Jacket", price: 145.00, category: "jackets", img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80" },
+    { id: 868, printfulId: 868, name: "Zavora Drop-Shoulder Oversized Tee", price: 74.00, category: "oversized-tees", img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80" },
+    { id: 869, printfulId: 869, name: "Zavora Signature Embroidered Dad Hat", price: 42.00, category: "accessories", img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80" },
+    { id: 870, printfulId: 870, name: "Zavora Classic Organic Sweatpants", price: 98.00, category: "sweatpants", img: "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=800&q=80" },
+    { id: 871, printfulId: 871, name: "Zavora French Terry Zip Hoodie", price: 132.00, category: "zip-hoodies", img: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80" },
+    { id: 872, printfulId: 872, name: "Zavora Essential Athletic Shorts", price: 58.00, category: "shorts", img: "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?auto=format&fit=crop&w=800&q=80" },
+    { id: 873, printfulId: 873, name: "Zavora Tailored Oversized Shirt", price: 89.00, category: "long-sleeve-shirts", img: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80" },
+    { id: 874, printfulId: 874, name: "Zavora Modern Organic Tank Top", price: 48.00, category: "tank-tops", img: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80" },
+    { id: 875, printfulId: 875, name: "Zavora Coordinated Tracksuit Set", price: 195.00, category: "matching-sets", img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80" },
+    { id: 876, printfulId: 876, name: "Zavora Heavyweight Organic Polo", price: 82.00, category: "polo-shirts", img: "https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&w=800&q=80" },
+    { id: 877, printfulId: 877, name: "Zavora Limited Studio Bomber", price: 175.00, category: "jackets", img: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=80" },
+    { id: 878, printfulId: 878, name: "Zavora Cropped Fleece Hoodie", price: 108.00, category: "cropped-hoodies", img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80" },
+    { id: 879, printfulId: 879, name: "Zavora Organic Baby Tee", price: 52.00, category: "baby-tees", img: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80" },
+    { id: 880, printfulId: 880, name: "Zavora Minimal Beach Short", price: 64.00, category: "beachwear", img: "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?auto=format&fit=crop&w=800&q=80" },
+    { id: 881, printfulId: 881, name: "Zavora Embroidered Studio Sweatshirt", price: 112.00, category: "embroidered-shirts", img: "https://files.cdn.printful.com/products/832/21143_1736166493.jpg" }
+  ];
 
   const STYLING_ANGLES = [
     {
@@ -35,7 +58,7 @@
     }
   ];
 
-  function getDailyProduct() {
+  function getActiveCatalog() {
     let catalog = [];
     try {
       catalog = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]');
@@ -46,17 +69,14 @@
     }
 
     if (!catalog.length) {
-      catalog = [{
-        id: 862,
-        printfulId: 862,
-        name: "Zavora Women's Heavyweight Boxy T-Shirt",
-        price: 94.89,
-        category: "oversized-tees",
-        img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
-        description: "Women's Heavyweight Boxy T-Shirt — premium organic minimal streetwear by Zavora Fashion."
-      }];
+      catalog = DEFAULT_JOURNAL_CATALOG;
     }
 
+    return catalog;
+  }
+
+  function getDailyProduct() {
+    const catalog = getActiveCatalog();
     const dayNumber = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000);
     return {
       product: catalog[dayNumber % catalog.length],
@@ -66,16 +86,7 @@
   }
 
   function getPastDailyProducts(count = 20) {
-    let catalog = [];
-    try {
-      catalog = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]');
-    } catch (e) {}
-    if (!catalog.length && window.__zavoraCatalogProducts?.length) {
-      catalog = window.__zavoraCatalogProducts;
-    }
-
-    if (!catalog.length) return [];
-
+    const catalog = getActiveCatalog();
     const todayIndex = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000);
     const past = [];
     for (let i = 1; i <= count; i++) {
@@ -179,7 +190,7 @@
 
         <div class="article-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
           ${pastPosts.map(({ product: p, dateStr, angle: a }) => `
-            <article class="article-card" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:8px; overflow:hidden; display:flex; flex-direction:column; justify:space-between;">
+            <article class="article-card" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:8px; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between;">
               <div>
                 <a href="product.html?id=${encodeURIComponent(p.id || p.printfulId)}">
                   <img src="${p.img}" alt="Zavora ${p.name}" style="width:100%; height:240px; object-fit:cover;">
