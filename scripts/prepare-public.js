@@ -103,6 +103,7 @@ function addBrandHeadTags() {
     html = html.replace(/src=["']admin-login\.js(\?v=[^"']*)?["']/gi, `src="admin-login.js?v=${jsVersion}"`);
     html = html.replace(/src=["']zavora-analytics\.js(\?v=[^"']*)?["']/gi, `src="zavora-analytics.js?v=${jsVersion}"`);
     html = html.replace(/src=["']zavora-schema\.js(\?v=[^"']*)?["']/gi, `src="zavora-schema.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']zavora-seo\.js(\?v=[^"']*)?["']/gi, `src="zavora-seo.js?v=${jsVersion}"`);
     html = optimizeImageTags(html);
     // Remove any existing Google Tag to avoid duplication
     html = html.replace(/\s*<!-- Google tag \(gtag\.js\) -->[\s\S]*?gtag\('config', 'G-8YGED71VN8'\);\s*<\/script>/gi, '');
@@ -123,6 +124,9 @@ function addBrandHeadTags() {
     }
     if (!html.includes('zavora-schema.js') && html.includes('</head>')) {
       html = html.replace('</head>', `    <script src="zavora-schema.js?v=${jsVersion}"></script>\n  </head>`);
+    }
+    if (!html.includes('zavora-seo.js') && html.includes('</head>')) {
+      html = html.replace('</head>', `    <script src="zavora-seo.js?v=${jsVersion}"></script>\n  </head>`);
     }
     if (!html.includes('rel="icon"') && html.includes('</head>')) {
       html = html.replace('</head>', `    ${faviconTags}\n  </head>`);
@@ -147,14 +151,23 @@ function writeSeoFiles() {
 
   const sitemap = [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...pages.map((page) => [
-      '  <url>',
-      `    <loc>${escapeXml(`${baseUrl}${page}`)}</loc>`,
-      '    <changefreq>weekly</changefreq>',
-      '    <priority>0.8</priority>',
-      '  </url>'
-    ].join('\n')),
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
+    ...pages.map((page) => {
+      const isHome = page === '/';
+      const priority = isHome ? '1.0' : (['/shop.html', '/women.html', '/men.html', '/new-arrivals.html'].includes(page) ? '0.9' : '0.8');
+      const changefreq = isHome ? 'daily' : 'weekly';
+      let imgXml = '';
+      if (isHome || page === '/shop.html') {
+        imgXml = `\n    <image:image>\n      <image:loc>${baseUrl}/assets/og-image.jpg</image:loc>\n      <image:title>Zavora Fashion Premium Organic Streetwear</image:title>\n    </image:image>`;
+      }
+      return [
+        '  <url>',
+        `    <loc>${escapeXml(`${baseUrl}${page}`)}</loc>`,
+        `    <changefreq>${changefreq}</changefreq>`,
+        `    <priority>${priority}</priority>${imgXml}`,
+        '  </url>'
+      ].join('\n');
+    }),
     '</urlset>',
     ''
   ].join('\n');
