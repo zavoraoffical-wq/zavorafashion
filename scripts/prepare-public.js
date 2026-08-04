@@ -144,12 +144,31 @@ function writeSeoFiles() {
   fs.writeFileSync(path.join(target, 'robots.txt'), robots);
 }
 
-if (!fs.existsSync(source)) {
-  throw new Error('dist folder is missing');
+async function writeFeedXml() {
+  try {
+    const { buildFeedXml } = require('../api/feed');
+    const xml = await buildFeedXml();
+    fs.writeFileSync(path.join(target, 'feed.xml'), xml, 'utf8');
+    console.log('Generated static public/feed.xml for Vercel CDN.');
+  } catch (err) {
+    console.error('Failed to generate static public/feed.xml:', err.message);
+  }
 }
 
-fs.rmSync(target, { recursive: true, force: true });
-copyDir(source, target);
-addBrandHeadTags();
-writeSeoFiles();
-console.log('Copied dist to public for Vercel static output.');
+async function buildAll() {
+  if (!fs.existsSync(source)) {
+    throw new Error('dist folder is missing');
+  }
+  fs.rmSync(target, { recursive: true, force: true });
+  copyDir(source, target);
+  addBrandHeadTags();
+  writeSeoFiles();
+  await writeFeedXml();
+  console.log('Copied dist to public for Vercel static output.');
+}
+
+buildAll().catch((err) => {
+  console.error('Build error:', err);
+  process.exit(1);
+});
+

@@ -448,3 +448,7 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports.invalidateFeedCache = invalidateFeedCache;
+module.exports.buildFeedXml = async function() {
+  const built = await buildFeed();
+  return built.xml;
+};
