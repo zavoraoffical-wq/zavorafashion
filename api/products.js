@@ -5,6 +5,17 @@ let globalApiProductCacheTime = 0;
 const { ProductRepository } = require('../lib/local-product-engine');
 const { requireAdminSession, validAdminSession } = require('../lib/admin-auth');
 
+// Lazily load feed cache invalidator to avoid circular deps
+function invalidateFeedCache() {
+  try {
+    const feed = require('./feed');
+    if (typeof feed.invalidateFeedCache === 'function') feed.invalidateFeedCache();
+  } catch (e) { /* feed module may not be loaded */ }
+  // Also bust product API cache
+  globalApiProductCache = null;
+  globalApiProductCacheTime = 0;
+}
+
 function envValue(...names) {
   for (const name of names) {
     const value = String(process.env[name] || '').trim().replace(/^['"]|['"]$/g, '');
@@ -306,6 +317,7 @@ module.exports = async function handler(req, res) {
         const body = parseBody(req);
         const ids = Array.isArray(body.ids) ? body.ids : [body.id || body.printfulId].filter(Boolean);
         const result = ids.length ? await ProductRepository.deleteByIds(ids) : { deleted: 0 };
+        invalidateFeedCache();
         return json(res, 200, { ok: true, deleted: result.deleted || 0, db: result });
       }
       const body = parseBody(req);
@@ -319,6 +331,7 @@ module.exports = async function handler(req, res) {
           });
         }
         const result = await ProductRepository.deleteAllProducts();
+        invalidateFeedCache();
         return json(res, 200, {
           ok: true,
           action,
@@ -359,6 +372,7 @@ module.exports = async function handler(req, res) {
         if (!db.saved) {
           return json(res, 500, { ok: false, saved: 0, error: 'Database save failed. Product was not published because no persistent database accepted it.', db, products: clean });
         }
+        invalidateFeedCache();
         return json(res, 200, { ok: true, saved: clean.length, db, products: clean });
       }
       return json(res, 400, { ok: false, error: 'No valid products supplied.' });

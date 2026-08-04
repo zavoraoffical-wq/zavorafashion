@@ -27,6 +27,10 @@
   ],
   "rewrites": [
     {
+      "source": "/feed.xml",
+      "destination": "/api/feed"
+    },
+    {
       "source": "/admin",
       "destination": "/admin.html"
     },
@@ -238,6 +242,19 @@
         {
           "key": "Expires",
           "value": "0"
+        }
+      ]
+    },
+    {
+      "source": "/feed.xml",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=300, stale-while-revalidate=600"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
         }
       ]
     },
