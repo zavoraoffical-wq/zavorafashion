@@ -69,6 +69,15 @@ function escapeXml(value) {
 }
 
 function addBrandHeadTags() {
+  const googleTagScript = `<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8YGED71VN8"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-8YGED71VN8');
+</script>`;
   const faviconTags = [
     '<link rel="icon" type="image/png" href="/assets/zavora-logo.png">',
     '<link rel="apple-touch-icon" href="/assets/zavora-logo.png">'
@@ -97,6 +106,9 @@ function addBrandHeadTags() {
     html = removeMetaByName(html, 'google-site-verification');
     html = ensureHeadTag(html, viewportTag);
     html = ensureHeadTag(html, googleVerificationTag);
+    if (!html.includes('gtag/js?id=G-8YGED71VN8') && html.includes('</head>')) {
+      html = html.replace('</head>', `    ${googleTagScript}\n  </head>`);
+    }
     if (!html.includes('rel="icon"') && html.includes('</head>')) {
       html = html.replace('</head>', `    ${faviconTags}\n  </head>`);
     }
