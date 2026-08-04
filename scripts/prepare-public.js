@@ -106,6 +106,7 @@ function addBrandHeadTags() {
     html = html.replace(/src=["']zavora-seo\.js(\?v=[^"']*)?["']/gi, `src="zavora-seo.js?v=${jsVersion}"`);
     html = html.replace(/src=["']zavora-journal-engine\.js(\?v=[^"']*)?["']/gi, `src="zavora-journal-engine.js?v=${jsVersion}"`);
     html = html.replace(/src=["']zavora-product-renderer\.js(\?v=[^"']*)?["']/gi, `src="zavora-product-renderer.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']zavora-currency-engine\.js(\?v=[^"']*)?["']/gi, `src="zavora-currency-engine.js?v=${jsVersion}"`);
     html = optimizeImageTags(html);
     // Remove any existing Google Tag to avoid duplication
     html = html.replace(/\s*<!-- Google tag \(gtag\.js\) -->[\s\S]*?gtag\('config', 'G-8YGED71VN8'\);\s*<\/script>/gi, '');
@@ -123,6 +124,9 @@ function addBrandHeadTags() {
     html = ensureHeadTag(html, bingVerificationTag);
     if (!html.includes('zavora-analytics.js') && html.includes('</head>')) {
       html = html.replace('</head>', `    <script src="zavora-analytics.js?v=${jsVersion}"></script>\n  </head>`);
+    }
+    if (!html.includes('zavora-currency-engine.js') && html.includes('</head>')) {
+      html = html.replace('</head>', `    <script src="zavora-currency-engine.js?v=${jsVersion}"></script>\n  </head>`);
     }
     if (!html.includes('zavora-schema.js') && html.includes('</head>')) {
       html = html.replace('</head>', `    <script src="zavora-schema.js?v=${jsVersion}"></script>\n  </head>`);
