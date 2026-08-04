@@ -105,6 +105,7 @@ function addBrandHeadTags() {
     html = html.replace(/src=["']zavora-schema\.js(\?v=[^"']*)?["']/gi, `src="zavora-schema.js?v=${jsVersion}"`);
     html = html.replace(/src=["']zavora-seo\.js(\?v=[^"']*)?["']/gi, `src="zavora-seo.js?v=${jsVersion}"`);
     html = html.replace(/src=["']zavora-journal-engine\.js(\?v=[^"']*)?["']/gi, `src="zavora-journal-engine.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']zavora-product-renderer\.js(\?v=[^"']*)?["']/gi, `src="zavora-product-renderer.js?v=${jsVersion}"`);
     html = optimizeImageTags(html);
     // Remove any existing Google Tag to avoid duplication
     html = html.replace(/\s*<!-- Google tag \(gtag\.js\) -->[\s\S]*?gtag\('config', 'G-8YGED71VN8'\);\s*<\/script>/gi, '');
@@ -131,6 +132,9 @@ function addBrandHeadTags() {
     }
     if (fileName.includes('journal') && !html.includes('zavora-journal-engine.js') && html.includes('</head>')) {
       html = html.replace('</head>', `    <script src="zavora-journal-engine.js?v=${jsVersion}"></script>\n  </head>`);
+    }
+    if (fileName.includes('product') && !html.includes('zavora-product-renderer.js') && html.includes('</head>')) {
+      html = html.replace('</head>', `    <script src="zavora-product-renderer.js?v=${jsVersion}"></script>\n  </head>`);
     }
     if (!html.includes('rel="icon"') && html.includes('</head>')) {
       html = html.replace('</head>', `    ${faviconTags}\n  </head>`);
