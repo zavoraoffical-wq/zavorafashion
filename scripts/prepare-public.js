@@ -101,6 +101,7 @@ function addBrandHeadTags() {
     html = html.replace(/src=["']admin\.js(\?v=[^"']*)?["']/gi, `src="admin.js?v=${jsVersion}"`);
     html = html.replace(/src=["']admin-login\.js(\?v=[^"']*)?["']/gi, `src="admin-login.js?v=${jsVersion}"`);
     html = html.replace(/src=["']zavora-analytics\.js(\?v=[^"']*)?["']/gi, `src="zavora-analytics.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']zavora-schema\.js(\?v=[^"']*)?["']/gi, `src="zavora-schema.js?v=${jsVersion}"`);
     html = optimizeImageTags(html);
     // Remove any existing Google Tag to avoid duplication
     html = html.replace(/\s*<!-- Google tag \(gtag\.js\) -->[\s\S]*?gtag\('config', 'G-8YGED71VN8'\);\s*<\/script>/gi, '');
@@ -114,8 +115,11 @@ function addBrandHeadTags() {
     html = removeMetaByName(html, 'google-site-verification');
     html = ensureHeadTag(html, viewportTag);
     html = ensureHeadTag(html, googleVerificationTag);
-        if (!html.includes('zavora-analytics.js') && html.includes('</head>')) {
+    if (!html.includes('zavora-analytics.js') && html.includes('</head>')) {
       html = html.replace('</head>', `    <script src="zavora-analytics.js?v=${jsVersion}"></script>\n  </head>`);
+    }
+    if (!html.includes('zavora-schema.js') && html.includes('</head>')) {
+      html = html.replace('</head>', `    <script src="zavora-schema.js?v=${jsVersion}"></script>\n  </head>`);
     }
     if (!html.includes('rel="icon"') && html.includes('</head>')) {
       html = html.replace('</head>', `    ${faviconTags}\n  </head>`);
