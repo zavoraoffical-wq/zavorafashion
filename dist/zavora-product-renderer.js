@@ -1,12 +1,10 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer
- * Handles URL parameter parsing (?id=...), API fallback, full interactive product page UI & SEO/Analytics updates.
+ * Zavora Fashion — Product Detail Page Renderer (Luxury Theme Matching)
+ * Renders URL parameter products (?id=...) using Zavora's exact design system & styling.
  */
 
 (function () {
   'use strict';
-
-  const BASE_URL = 'https://www.zavorafashion.com';
 
   const DEFAULT_FALLBACK_PRODUCTS = [
     {
@@ -16,8 +14,8 @@
       price: 94.89,
       compareAt: 120.00,
       category: "oversized-tees",
-      badge: "BESTSELLER",
-      colors: ["black", "white", "heather gray"],
+      badge: "NEW",
+      colors: ["black", "heather gray", "white"],
       sizes: ["XS", "S", "M", "L", "XL"],
       img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
       images: [
@@ -28,21 +26,21 @@
       description: "Crafted from 100% organic French Terry cotton (480 GSM), this boxy tee features drop shoulders, reinforced double-stitched collar, and a modern architectural silhouette. Pre-shrunk for maximum wash durability."
     },
     {
-      id: 869,
-      printfulId: 869,
-      name: "Zavora Signature Embroidered Dad Hat",
-      price: 42.00,
-      compareAt: 55.00,
-      category: "accessories",
-      badge: "NEW DROP",
-      colors: ["black", "navy", "khaki"],
-      sizes: ["One Size"],
-      img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85",
+      id: 1412,
+      printfulId: 1412,
+      name: "Zavora Women's Relax Hoodie",
+      price: 166.17,
+      compareAt: 198.00,
+      category: "hoodies",
+      badge: "NEW",
+      colors: ["black", "heather gray", "pink", "brown", "light pink"],
+      sizes: ["XS", "S", "M", "L", "XL"],
+      img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
       images: [
-        "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85",
-        "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
+        "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=85"
       ],
-      description: "Signature 6-panel unstructured dad cap featuring high-density gold crest logo embroidery, brass buckle closure, and 100% washed cotton twill construction."
+      description: "Zavora Women's Relax Hoodie is a premium hoodie designed for Zavora Fashion's minimal streetwear wardrobe. It balances clean proportions, everyday comfort, and USA-ready fulfillment."
     }
   ];
 
@@ -52,41 +50,46 @@
   }
 
   function swatchColor(color) {
-    const map = { black: '#050505', white: '#ffffff', gray: '#888888', 'heather gray': '#aaaaaa', navy: '#1b263b', khaki: '#c2b280', green: '#2d5a27', red: '#9b1c1c' };
+    const map = {
+      black: '#111111',
+      white: '#ffffff',
+      gray: '#888888',
+      'heather gray': '#aaaaaa',
+      navy: '#1b263b',
+      khaki: '#c2b280',
+      pink: '#ec4899',
+      brown: '#78350f',
+      'light pink': '#fbcfe8'
+    };
     return map[String(color).toLowerCase()] || '#333333';
   }
 
   function findProduct(id) {
     const targetId = String(id || '').trim();
 
-    // 1. Try selected product in localStorage
     try {
       const selected = JSON.parse(localStorage.getItem('zavoraSelectedProduct') || 'null');
       if (selected && String(selected.id || selected.printfulId) === targetId) return selected;
     } catch(e) {}
 
-    // 2. Try cached products array
     try {
       const cached = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]');
       const found = cached.find(p => String(p.id || p.printfulId) === targetId);
       if (found) return found;
     } catch(e) {}
 
-    // 3. Try in-memory catalog
     if (window.__zavoraCatalogProducts?.length) {
       const found = window.__zavoraCatalogProducts.find(p => String(p.id || p.printfulId) === targetId);
       if (found) return found;
     }
 
-    // 4. Default fallback list
     const fallback = DEFAULT_FALLBACK_PRODUCTS.find(p => String(p.id) === targetId);
     if (fallback) return fallback;
 
-    // 5. Default first product if ID exists but not found
     return {
       ...DEFAULT_FALLBACK_PRODUCTS[0],
       id: targetId || 862,
-      name: targetId ? `Zavora Studio Product #${targetId}` : DEFAULT_FALLBACK_PRODUCTS[0].name
+      name: targetId ? `Zavora Studio Item #${targetId}` : DEFAULT_FALLBACK_PRODUCTS[0].name
     };
   }
 
@@ -109,95 +112,99 @@
     const name = String(product.name || 'Zavora Product');
     const price = Number(product.price || 94.89);
     const compareAt = product.compareAt ? Number(product.compareAt) : null;
-    const badge = product.badge || 'BESTSELLER';
-    const category = String(product.category || 'streetwear');
-    const description = String(product.description || 'Premium organic streetwear by Zavora Fashion.');
+    const badge = product.badge || 'NEW';
+    const category = String(product.category || 'hoodies').toUpperCase();
+    const description = String(product.description || `${name} is a premium design for Zavora Fashion's minimal streetwear wardrobe. It balances clean proportions, everyday comfort, and USA-ready fulfillment.`);
 
     const images = Array.isArray(product.images) && product.images.length
       ? product.images
       : [product.img || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'];
 
-    const colors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'Black'];
-    const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL'];
+    const colors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'BLACK'];
+    const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['XS', 'S', 'M', 'L', 'XL'];
 
     main.innerHTML = `
-      <section class="section" style="max-width:1200px; margin: 20px auto 60px; padding:0 20px;">
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 50px; align-items: start;">
+      <section class="section" style="max-width: 1240px; margin: 30px auto 80px; padding: 0 24px;">
+        <!-- BREADCRUMBS -->
+        <p style="color: #c9a227; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 24px;">
+          ${category} • PREMIUM ORGANIC STREETWEAR
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 60px; align-items: start;">
           
-          <!-- IMAGE GALLERY -->
+          <!-- GALLERY SIDE -->
           <div>
-            <div style="position:relative; background:#111; border-radius:12px; overflow:hidden; margin-bottom:16px;">
-              <img id="zavoraMainImage" src="${images[0]}" alt="Zavora ${name}" style="width:100%; height:auto; display:block; object-fit:cover;">
-              ${badge ? `<span style="position:absolute; top:16px; left:16px; background:#fff; color:#000; padding:4px 12px; font-size:0.75rem; font-weight:700; border-radius:4px; text-transform:uppercase; letter-spacing:1px;">${badge}</span>` : ''}
+            <div style="position: relative; background: #0d0d0d; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
+              <img id="zavoraMainImage" src="${images[0]}" alt="Zavora ${name}" style="width: 100%; height: auto; display: block; object-fit: cover;">
+              ${badge ? `<span style="position: absolute; top: 16px; left: 16px; background: #000; color: #fff; border: 1px solid #fff; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${badge}</span>` : ''}
             </div>
 
             ${images.length > 1 ? `
-              <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px;">
+              <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
                 ${images.map((img, i) => `
-                  <button type="button" class="zavoraThumb" data-img="${img}" style="border:${i===0?'2px solid #fff':'1px solid rgba(255,255,255,0.2)'}; background:#111; border-radius:6px; overflow:hidden; width:80px; height:80px; padding:0; cursor:pointer; flex-shrink:0;">
-                    <img src="${img}" alt="Thumbnail ${i+1}" style="width:100%; height:100%; object-fit:cover;">
+                  <button type="button" class="zavoraThumb" data-img="${img}" style="border: ${i===0?'2px solid #fff':'1px solid rgba(255,255,255,0.2)'}; background: #0d0d0d; border-radius: 8px; overflow: hidden; width: 76px; height: 76px; padding: 0; cursor: pointer; flex-shrink: 0;">
+                    <img src="${img}" alt="Thumbnail ${i+1}" style="width: 100%; height: 100%; object-fit: cover;">
                   </button>
                 `).join('')}
               </div>
             ` : ''}
           </div>
 
-          <!-- PRODUCT DETAILS & BUY ACTIONS -->
-          <div style="padding-top:10px;">
-            <p style="color:#c9a227; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">${category} • Premium Organic Streetwear</p>
-            <h1 style="font-size:2.2rem; font-weight:700; margin-bottom:12px; line-height:1.2;">${name}</h1>
+          <!-- INFO & CTA SIDE -->
+          <div>
+            <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 14px; line-height: 1.15; letter-spacing: -0.5px;">${name}</h1>
 
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-              <span style="color:#f59e0b; font-size:1.1rem;">★★★★★</span>
-              <span style="font-size:0.9rem; opacity:0.8;">4.9 (34 customer reviews)</span>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+              <span style="color: #f59e0b; font-size: 1rem; letter-spacing: 2px;">★★★★★</span>
+              <span style="font-size: 0.9rem; opacity: 0.8; font-weight: 500;">4.9 (34 customer reviews)</span>
             </div>
 
-            <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:24px;">
-              <span style="font-size:1.8rem; font-weight:700; color:#fff;">$${price.toFixed(2)} USD</span>
-              ${compareAt ? `<s style="font-size:1.1rem; opacity:0.5;">$${compareAt.toFixed(2)}</s>` : ''}
-              <span style="background:rgba(34,197,94,0.15); color:#4ade80; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">In Stock • Ships in 24h</span>
+            <div style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 28px;">
+              <span class="sale-price" data-price="${price}" style="font-size: 1.8rem; font-weight: 700; color: #fff;">$${price.toFixed(2)}</span>
+              ${compareAt ? `<s style="font-size: 1.1rem; opacity: 0.5;">$${compareAt.toFixed(2)}</s>` : ''}
+              <span style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">In Stock • Ships in 24h</span>
             </div>
 
-            <p style="font-size:0.98rem; line-height:1.65; opacity:0.9; margin-bottom:28px;">${description}</p>
+            <p style="font-size: 0.98rem; line-height: 1.7; opacity: 0.85; margin-bottom: 32px;">${description}</p>
 
-            <!-- COLOR SELECTOR -->
-            <div style="margin-bottom:24px;">
-              <label style="display:block; font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">Color: <span id="zavoraSelectedColor">${colors[0]}</span></label>
-              <div style="display:flex; gap:10px;">
+            <!-- COLOR SELECTION -->
+            <div style="margin-bottom: 28px;">
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">COLOR: <span id="zavoraSelectedColor" style="color: #fff;">${String(colors[0]).toUpperCase()}</span></label>
+              <div style="display: flex; gap: 12px;">
                 ${colors.map((c, i) => `
-                  <button type="button" class="zavoraColorBtn" data-color="${c}" style="width:32px; height:32px; border-radius:50%; background:${swatchColor(c)}; border:${i===0?'2px solid #fff':'1px solid rgba(255,255,255,0.3)'}; cursor:pointer;" title="${c}"></button>
+                  <button type="button" class="zavoraColorBtn" data-color="${c}" style="width: 34px; height: 34px; border-radius: 50%; background: ${swatchColor(c)}; border: ${i===0?'2px solid #fff':'1px solid rgba(255,255,255,0.25)'}; cursor: pointer; transition: transform 0.15s;" title="${c}"></button>
                 `).join('')}
               </div>
             </div>
 
-            <!-- SIZE SELECTOR -->
-            <div style="margin-bottom:30px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <label style="font-size:0.85rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Size: <span id="zavoraSelectedSize">${sizes[0]}</span></label>
-                <a href="#size-guide" style="font-size:0.8rem; color:#aaa; text-decoration:underline;">Size Guide</a>
+            <!-- SIZE SELECTION -->
+            <div style="margin-bottom: 36px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <label style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">SIZE: <span id="zavoraSelectedSize" style="color: #fff;">${sizes[0]}</span></label>
+                <a href="#size-guide" style="font-size: 0.82rem; color: #aaa; text-decoration: underline;">Size Guide</a>
               </div>
-              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 ${sizes.map((s, i) => `
-                  <button type="button" class="zavoraSizeBtn" data-size="${s}" style="min-width:48px; padding:10px 16px; border-radius:6px; background:${i===0?'#fff':'rgba(255,255,255,0.05)'}; color:${i===0?'#000':'#fff'}; border:1px solid rgba(255,255,255,0.2); font-weight:600; cursor:pointer;">${s}</button>
+                  <button type="button" class="zavoraSizeBtn" data-size="${s}" style="min-width: 52px; padding: 12px 18px; border-radius: 6px; background: ${i===0?'#fff':'rgba(255,255,255,0.04)'}; color: ${i===0?'#000':'#fff'}; border: 1px solid ${i===0?'#fff':'rgba(255,255,255,0.2)'}; font-weight: 700; font-size: 0.9rem; cursor: pointer;">${s}</button>
                 `).join('')}
               </div>
             </div>
 
-            <!-- ADD TO CART & BUY NOW BUTTONS -->
-            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:30px;">
-              <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="width:100%; padding:16px; background:#fff; color:#000; border:none; border-radius:8px; font-weight:700; font-size:1.05rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px;">Add to Bag</button>
-              <button type="button" id="zavoraBuyNowBtn" style="width:100%; padding:16px; background:#c9a227; color:#000; border:none; border-radius:8px; font-weight:700; font-size:1.05rem; cursor:pointer; text-transform:uppercase; letter-spacing:1px;">Buy Now with Fast USA Checkout</button>
+            <!-- CTAS -->
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px;">
+              <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="width: 100%; padding: 18px; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px;">ADD TO BAG</button>
+              <button type="button" id="zavoraBuyNowBtn" style="width: 100%; padding: 18px; background: #c9a227; color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px;">BUY NOW WITH FAST USA CHECKOUT</button>
             </div>
 
-            <!-- USA SHIPPING & RETURNS BANNER -->
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:16px; display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+            <!-- GUARANTEES -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
               <div>
-                <strong style="display:block; font-size:0.9rem; margin-bottom:4px;">🚚 Free USA Shipping</strong>
-                <span style="font-size:0.8rem; opacity:0.75;">Orders $75+ receive free 2-3 day express delivery.</span>
+                <strong style="display: block; font-size: 0.92rem; margin-bottom: 4px; color: #fff;">🚚 Free USA Shipping</strong>
+                <span style="font-size: 0.82rem; opacity: 0.7;">Orders $75+ receive free 2-3 day express delivery.</span>
               </div>
               <div>
-                <strong style="display:block; font-size:0.9rem; margin-bottom:4px;">🔄 30-Day Easy Returns</strong>
-                <span style="font-size:0.8rem; opacity:0.75;">Hassle-free exchanges & returns guaranteed.</span>
+                <strong style="display: block; font-size: 0.92rem; margin-bottom: 4px; color: #fff;">🔄 30-Day Easy Returns</strong>
+                <span style="font-size: 0.82rem; opacity: 0.7;">Hassle-free exchanges & returns guaranteed.</span>
               </div>
             </div>
 
@@ -219,10 +226,10 @@
     // Bind Color Buttons
     document.querySelectorAll('.zavoraColorBtn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.zavoraColorBtn').forEach(b => b.style.border = '1px solid rgba(255,255,255,0.3)');
+        document.querySelectorAll('.zavoraColorBtn').forEach(b => b.style.border = '1px solid rgba(255,255,255,0.25)');
         btn.style.border = '2px solid #fff';
         const label = document.getElementById('zavoraSelectedColor');
-        if (label) label.textContent = btn.dataset.color;
+        if (label) label.textContent = String(btn.dataset.color).toUpperCase();
       });
     });
 
@@ -230,11 +237,13 @@
     document.querySelectorAll('.zavoraSizeBtn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.zavoraSizeBtn').forEach(b => {
-          b.style.background = 'rgba(255,255,255,0.05)';
+          b.style.background = 'rgba(255,255,255,0.04)';
           b.style.color = '#fff';
+          b.style.border = '1px solid rgba(255,255,255,0.2)';
         });
         btn.style.background = '#fff';
         btn.style.color = '#000';
+        btn.style.border = '1px solid #fff';
         const label = document.getElementById('zavoraSelectedSize');
         if (label) label.textContent = btn.dataset.size;
       });
@@ -257,6 +266,7 @@
           } catch(e) {}
         }
         if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackAddToCart(product, 1);
+        if (window.ZavoraCurrency) window.ZavoraCurrency.update();
       });
     }
 
@@ -269,7 +279,8 @@
       });
     }
 
-    // Update SEO & Analytics
+    // Trigger Currency & SEO Updates
+    if (window.ZavoraCurrency) window.ZavoraCurrency.update();
     if (window.ZavoraSEO && typeof window.ZavoraSEO.updateProductSEO === 'function') {
       window.ZavoraSEO.updateProductSEO(product);
     }
