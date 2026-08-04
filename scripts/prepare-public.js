@@ -85,6 +85,7 @@ function addBrandHeadTags() {
   const analyticsScript = '<script defer src="/_vercel/insights/script.js"></script>';
   const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">';
   const googleVerificationTag = '<meta name="google-site-verification" content="4AjlsEXnNoFfemeS-JvQk7talZoGEnLllMa-zfCByb8" />';
+  const bingVerificationTag = '<meta name="msvalidate.01" content="CC6B9BB912CA5CABD10A850C960AE1EC" />';
 
   const cssVersionTag = `href="styles.css?v=${Date.now()}"`;
   const jsVersion = Date.now();
@@ -113,8 +114,10 @@ function addBrandHeadTags() {
     
     html = removeMetaByName(html, 'viewport');
     html = removeMetaByName(html, 'google-site-verification');
+    html = removeMetaByName(html, 'msvalidate.01');
     html = ensureHeadTag(html, viewportTag);
     html = ensureHeadTag(html, googleVerificationTag);
+    html = ensureHeadTag(html, bingVerificationTag);
     if (!html.includes('zavora-analytics.js') && html.includes('</head>')) {
       html = html.replace('</head>', `    <script src="zavora-analytics.js?v=${jsVersion}"></script>\n  </head>`);
     }
