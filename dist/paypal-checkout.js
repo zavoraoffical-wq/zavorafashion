@@ -44,6 +44,7 @@ function initZavoraPayPal() {
       label: 'paypal'
     },
     async createOrder(data, actions) {
+      if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackBeginCheckout(typeof getSavedCart === 'function' ? getSavedCart() : [], zavoraCheckoutTotal());
       const cart = typeof getSavedCart === 'function' ? getSavedCart() : (JSON.parse(localStorage.getItem('zavora_cart')) || []);
       if (!cart || !cart.length) {
         alert('Your bag is empty. Add a product before checkout.');
@@ -60,6 +61,7 @@ function initZavoraPayPal() {
       });
     },
     onApprove(data, actions) {
+      if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackPurchase(data.orderID || data.payerID, typeof getSavedCart === 'function' ? getSavedCart() : [], zavoraCheckoutTotal());
       return actions.order.capture().then(async () => {
         const order = typeof createTestOrder === 'function' ? createTestOrder('PayPal') : null;
         if (!order) {

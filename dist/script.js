@@ -74,6 +74,7 @@ function saveCart() {
 
 function rememberSelectedProduct(product) {
   if (!product) return;
+  if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackViewItem(product);
   localStorage.setItem(SELECTED_PRODUCT_KEY, JSON.stringify(product));
 }
 
@@ -419,6 +420,7 @@ function addToCart(id) {
   if (found) found.qty += 1;
   else state.cart.push({ ...product, qty: 1 });
   saveCart();
+  if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackAddToCart(product, 1);
   renderCart();
   $('#cartDrawer').classList.add('open');
 }
@@ -469,6 +471,7 @@ function openQuickView(id) {
 }
 
 function renderSuggestions(term = '') {
+  if (term && term.length > 2 && window.ZavoraAnalytics) window.ZavoraAnalytics.trackSearch(term);
   const catalog = getHomeProducts();
   const matches = catalog
     .filter(product => homeProductMatchesSearch(product, term))
