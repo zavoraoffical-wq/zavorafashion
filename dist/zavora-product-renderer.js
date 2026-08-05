@@ -1,6 +1,6 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Theme Adaptive Clean High-Contrast)
- * Supports dynamic URL params (?id=...) with high contrast on white/dark backgrounds.
+ * Zavora Fashion — Product Detail Page Renderer (Ultra-Refined Luxury & Features)
+ * Renders URL params (?id=...), Interactive Size Guide Modal, Add to Wishlist, and Best Sellers Recommendations.
  */
 
 (function () {
@@ -14,7 +14,7 @@
       price: 94.89,
       compareAt: 120.00,
       category: "oversized-tees",
-      badge: "NEW",
+      badge: "BEST SELLER",
       colors: ["black", "heather gray", "white"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
       img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
@@ -32,7 +32,7 @@
       price: 166.17,
       compareAt: 198.00,
       category: "hoodies",
-      badge: "NEW",
+      badge: "BEST SELLER",
       colors: ["black", "heather gray", "pink", "brown", "light pink"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
       img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
@@ -41,6 +41,38 @@
         "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=85"
       ],
       description: "The Zavora Women's Relax Hoodie is a signature minimal streetwear silhouette. Crafted from 480 GSM heavyweight organic French Terry cotton for supreme warmth, structural drape, and everyday USA fulfillment."
+    },
+    {
+      id: 411,
+      printfulId: 411,
+      name: "Zavora Premium Organic Sweatshirt",
+      price: 129.73,
+      compareAt: 155.00,
+      category: "sweatshirts",
+      badge: "TRENDING",
+      colors: ["black", "white", "heather gray"],
+      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+      img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
+      images: [
+        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85"
+      ],
+      description: "Ultra-comfortable 480 GSM organic cotton crewneck sweatshirt built with reinforced ribbed cuffs, drop shoulders, and timeless streetwear proportions."
+    },
+    {
+      id: 604,
+      printfulId: 604,
+      name: "Zavora Wide-Leg Organic Pants",
+      price: 112.77,
+      compareAt: 135.00,
+      category: "pants",
+      badge: "NEW",
+      colors: ["white", "black", "khaki"],
+      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+      img: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=85",
+      images: [
+        "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=85"
+      ],
+      description: "Elevated wide-leg organic cotton sweatpants featuring deep side pockets, flexible drawstring waist, and relaxed architectural drape."
     }
   ];
 
@@ -139,8 +171,9 @@
 
     const rawColors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'Black'];
     const colors = rawColors.map(c => String(c).trim()).filter(Boolean);
-
     const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
+
+    const recommendedProducts = DEFAULT_FALLBACK_PRODUCTS.filter(p => String(p.id) !== id).slice(0, 4);
 
     main.innerHTML = `
       <section class="section" style="max-width: 1240px; margin: 0 auto 80px; padding: 90px 24px 0; color: #111111;">
@@ -200,7 +233,7 @@
             <div style="margin-bottom: 32px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <label style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #111111;">SIZE: <span id="zavoraSelectedSize" style="color: #111111; font-weight: 800; margin-left: 6px;">${sizes[0]}</span></label>
-                <a href="#size-guide" style="font-size: 0.85rem; color: #111111; font-weight: 700; text-decoration: underline;">Size Guide</a>
+                <button type="button" id="zavoraOpenSizeGuide" style="background: none; border: none; padding: 0; font-size: 0.88rem; color: #111111; font-weight: 700; text-decoration: underline; cursor: pointer;">Size Guide</button>
               </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 ${sizes.map((s, i) => `
@@ -213,6 +246,9 @@
             <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px;">
               <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="width: 100%; padding: 18px; background: #111111; color: #ffffff; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">ADD TO BAG</button>
               <button type="button" id="zavoraBuyNowBtn" style="width: 100%; padding: 18px; background: #c9a227; color: #111111; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">BUY NOW WITH FAST USA CHECKOUT</button>
+              <button type="button" id="zavoraWishlistBtn" data-wishlist-product="${id}" style="width: 100%; padding: 14px; background: #ffffff; color: #111111; border: 1px solid #111111; border-radius: 8px; font-weight: 700; font-size: 0.92rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
+                <span style="font-size: 1.2rem; color: #e11d48;">♡</span> ADD TO WISHLIST
+              </button>
             </div>
 
             <!-- GUARANTEES -->
@@ -229,6 +265,64 @@
 
           </div>
         </div>
+
+        <!-- RECOMMENDED PRODUCTS / BEST SELLERS SECTION -->
+        <div style="margin-top: 80px; padding-top: 50px; border-top: 1px solid #e5e7eb;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <p style="color: #c9a227; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">CURATED STREETWEAR</p>
+              <h2 style="font-size: 1.8rem; font-weight: 800; color: #111111; margin: 0;">You May Also Like & Best Sellers</h2>
+            </div>
+            <a href="best-sellers.html" style="font-size: 0.9rem; font-weight: 700; color: #111111; text-decoration: underline;">View All Best Sellers &rarr;</a>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px;">
+            ${recommendedProducts.map(p => `
+              <article style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #ffffff; transition: transform 0.2s, box-shadow 0.2s;">
+                <a href="product.html?id=${encodeURIComponent(p.id)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f8f8f8;">
+                  <img src="${p.img || p.images?.[0]}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                  ${p.badge ? `<span style="position: absolute; top: 12px; left: 12px; background: #111; color: #fff; padding: 4px 10px; font-size: 0.7rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${p.badge}</span>` : ''}
+                </a>
+                <div style="padding: 18px;">
+                  <h3 style="font-size: 1rem; font-weight: 800; margin: 0 0 8px; line-height: 1.3;"><a href="product.html?id=${encodeURIComponent(p.id)}" style="color: #111111; text-decoration: none;">${p.name}</a></h3>
+                  <p style="font-size: 0.82rem; color: #666666; margin: 0 0 12px; text-transform: uppercase; font-weight: 600;">${p.category || 'streetwear'}</p>
+                  <strong class="sale-price" data-price="${p.price}" style="font-size: 1.15rem; font-weight: 800; color: #111111;">$${Number(p.price || 89.99).toFixed(2)}</strong>
+                  <div style="margin-top: 14px;">
+                    <a href="product.html?id=${encodeURIComponent(p.id)}" style="display: block; text-align: center; padding: 10px; background: #f3f4f6; color: #111111; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">View Product</a>
+                  </div>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- SIZE GUIDE MODAL -->
+        <div id="zavoraSizeGuideModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; z-index: 999999; padding: 20px; backdrop-filter: blur(4px);">
+          <div style="background: #ffffff; color: #111111; border-radius: 12px; max-width: 560px; width: 100%; padding: 32px; position: relative; box-shadow: 0 24px 48px rgba(0,0,0,0.35);">
+            <button type="button" id="zavoraCloseSizeGuide" style="position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 1.8rem; font-weight: 700; cursor: pointer; color: #111111; line-height: 1;">&times;</button>
+            <h3 style="font-size: 1.5rem; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.5px;">Zavora Size Guide</h3>
+            <p style="font-size: 0.88rem; color: #666666; margin: 0 0 24px; line-height: 1.5;">All measurements in inches (and cm in brackets). Fits true to standard USA size with relaxed architectural streetwear drape.</p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+              <thead>
+                <tr style="border-bottom: 2px solid #111111; color: #111111;">
+                  <th style="padding: 12px 8px; font-weight: 800;">Size</th>
+                  <th style="padding: 12px 8px; font-weight: 800;">Chest (in)</th>
+                  <th style="padding: 12px 8px; font-weight: 800;">Length (in)</th>
+                  <th style="padding: 12px 8px; font-weight: 800;">Sleeve (in)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid #eeeeee;"><td style="padding: 10px 8px; font-weight: 800;">XS</td><td style="padding: 10px 8px;">34 - 36"</td><td style="padding: 10px 8px;">26.5"</td><td style="padding: 10px 8px;">32.5"</td></tr>
+                <tr style="border-bottom: 1px solid #eeeeee;"><td style="padding: 10px 8px; font-weight: 800;">S</td><td style="padding: 10px 8px;">36 - 38"</td><td style="padding: 10px 8px;">27.5"</td><td style="padding: 10px 8px;">33.5"</td></tr>
+                <tr style="border-bottom: 1px solid #eeeeee;"><td style="padding: 10px 8px; font-weight: 800;">M</td><td style="padding: 10px 8px;">38 - 40"</td><td style="padding: 10px 8px;">28.5"</td><td style="padding: 10px 8px;">34.5"</td></tr>
+                <tr style="border-bottom: 1px solid #eeeeee;"><td style="padding: 10px 8px; font-weight: 800;">L</td><td style="padding: 10px 8px;">41 - 43"</td><td style="padding: 10px 8px;">29.5"</td><td style="padding: 10px 8px;">35.5"</td></tr>
+                <tr style="border-bottom: 1px solid #eeeeee;"><td style="padding: 10px 8px; font-weight: 800;">XL</td><td style="padding: 10px 8px;">44 - 46"</td><td style="padding: 10px 8px;">30.5"</td><td style="padding: 10px 8px;">36.5"</td></tr>
+                <tr><td style="padding: 10px 8px; font-weight: 800;">2XL</td><td style="padding: 10px 8px;">47 - 49"</td><td style="padding: 10px 8px;">31.5"</td><td style="padding: 10px 8px;">37.5"</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </section>
     `;
 
@@ -267,6 +361,46 @@
         if (label) label.textContent = btn.dataset.size;
       });
     });
+
+    // Bind Size Guide Modal Popup
+    const openGuide = document.getElementById('zavoraOpenSizeGuide');
+    const closeGuide = document.getElementById('zavoraCloseSizeGuide');
+    const guideModal = document.getElementById('zavoraSizeGuideModal');
+    if (openGuide && guideModal) {
+      openGuide.addEventListener('click', (e) => {
+        e.preventDefault();
+        guideModal.style.display = 'flex';
+      });
+    }
+    if (closeGuide && guideModal) {
+      closeGuide.addEventListener('click', () => {
+        guideModal.style.display = 'none';
+      });
+      guideModal.addEventListener('click', (e) => {
+        if (e.target === guideModal) guideModal.style.display = 'none';
+      });
+    }
+
+    // Bind Add to Wishlist Button
+    const wishBtn = document.getElementById('zavoraWishlistBtn');
+    if (wishBtn) {
+      wishBtn.addEventListener('click', () => {
+        try {
+          let wishlist = JSON.parse(localStorage.getItem('zavoraWishlist') || '[]');
+          const found = wishlist.find(i => String(i.id) === id);
+          if (found) {
+            wishlist = wishlist.filter(i => String(i.id) !== id);
+            wishBtn.innerHTML = `<span style="font-size: 1.2rem; color: #e11d48;">♡</span> ADD TO WISHLIST`;
+            alert(`${name} removed from your wishlist!`);
+          } else {
+            wishlist.push({ id, name, price, img: images[0] });
+            wishBtn.innerHTML = `<span style="font-size: 1.2rem; color: #e11d48;">♥</span> IN WISHLIST`;
+            alert(`${name} saved to your wishlist!`);
+          }
+          localStorage.setItem('zavoraWishlist', JSON.stringify(wishlist));
+        } catch(e) {}
+      });
+    }
 
     // Bind Add to Cart
     const addBtn = document.getElementById('zavoraAddToCartBtn');
