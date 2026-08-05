@@ -1,6 +1,6 @@
 /**
  * Zavora Fashion — Product Detail Page Renderer (Ultra-Refined Luxury & Features)
- * Renders URL params (?id=...), Interactive Size Guide Modal, Add to Wishlist, and Best Sellers Recommendations.
+ * Clean URLs (?id=...), Premium Wishlist Button, Interactive Size Guide Modal, & Best Sellers Recommendations.
  */
 
 (function () {
@@ -245,9 +245,9 @@
             <!-- CTAS -->
             <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px;">
               <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="width: 100%; padding: 18px; background: #111111; color: #ffffff; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">ADD TO BAG</button>
-              <button type="button" id="zavoraBuyNowBtn" style="width: 100%; padding: 18px; background: #c9a227; color: #111111; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">BUY NOW WITH FAST USA CHECKOUT</button>
-              <button type="button" id="zavoraWishlistBtn" data-wishlist-product="${id}" style="width: 100%; padding: 14px; background: #ffffff; color: #111111; border: 1px solid #111111; border-radius: 8px; font-weight: 700; font-size: 0.92rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
-                <span style="font-size: 1.2rem; color: #e11d48;">♡</span> ADD TO WISHLIST
+              <button type="button" id="zavoraWishlistBtn" data-wishlist-product="${id}" style="width: 100%; padding: 16px; background: #ffffff; color: #111111; border: 1.5px solid #111111; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 1px; transition: all 0.2s; text-transform: uppercase;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #e11d48;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                ADD TO WISHLIST
               </button>
             </div>
 
@@ -279,16 +279,16 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px;">
             ${recommendedProducts.map(p => `
               <article style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #ffffff; transition: transform 0.2s, box-shadow 0.2s;">
-                <a href="product.html?id=${encodeURIComponent(p.id)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f8f8f8;">
+                <a href="product?id=${encodeURIComponent(p.id)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f8f8f8;">
                   <img src="${p.img || p.images?.[0]}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">
                   ${p.badge ? `<span style="position: absolute; top: 12px; left: 12px; background: #111; color: #fff; padding: 4px 10px; font-size: 0.7rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${p.badge}</span>` : ''}
                 </a>
                 <div style="padding: 18px;">
-                  <h3 style="font-size: 1rem; font-weight: 800; margin: 0 0 8px; line-height: 1.3;"><a href="product.html?id=${encodeURIComponent(p.id)}" style="color: #111111; text-decoration: none;">${p.name}</a></h3>
+                  <h3 style="font-size: 1rem; font-weight: 800; margin: 0 0 8px; line-height: 1.3;"><a href="product?id=${encodeURIComponent(p.id)}" style="color: #111111; text-decoration: none;">${p.name}</a></h3>
                   <p style="font-size: 0.82rem; color: #666666; margin: 0 0 12px; text-transform: uppercase; font-weight: 600;">${p.category || 'streetwear'}</p>
                   <strong class="sale-price" data-price="${p.price}" style="font-size: 1.15rem; font-weight: 800; color: #111111;">$${Number(p.price || 89.99).toFixed(2)}</strong>
                   <div style="margin-top: 14px;">
-                    <a href="product.html?id=${encodeURIComponent(p.id)}" style="display: block; text-align: center; padding: 10px; background: #f3f4f6; color: #111111; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">View Product</a>
+                    <a href="product?id=${encodeURIComponent(p.id)}" style="display: block; text-align: center; padding: 10px; background: #111111; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">View Product</a>
                   </div>
                 </div>
               </article>
@@ -390,11 +390,11 @@
           const found = wishlist.find(i => String(i.id) === id);
           if (found) {
             wishlist = wishlist.filter(i => String(i.id) !== id);
-            wishBtn.innerHTML = `<span style="font-size: 1.2rem; color: #e11d48;">♡</span> ADD TO WISHLIST`;
+            wishBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #e11d48;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> ADD TO WISHLIST`;
             alert(`${name} removed from your wishlist!`);
           } else {
             wishlist.push({ id, name, price, img: images[0] });
-            wishBtn.innerHTML = `<span style="font-size: 1.2rem; color: #e11d48;">♥</span> IN WISHLIST`;
+            wishBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#e11d48" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> IN WISHLIST`;
             alert(`${name} saved to your wishlist!`);
           }
           localStorage.setItem('zavoraWishlist', JSON.stringify(wishlist));
@@ -420,15 +420,6 @@
         }
         if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackAddToCart(product, 1);
         if (window.ZavoraCurrency) window.ZavoraCurrency.update();
-      });
-    }
-
-    // Bind Buy Now
-    const buyBtn = document.getElementById('zavoraBuyNowBtn');
-    if (buyBtn) {
-      buyBtn.addEventListener('click', () => {
-        if (typeof addToCart === 'function') addToCart(id);
-        window.location.href = 'checkout.html';
       });
     }
 
