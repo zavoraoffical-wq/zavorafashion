@@ -290,7 +290,10 @@
   }
 
   async function initProductRenderer() {
-    if (!window.location.pathname.includes('product')) return;
+    const isProductPage = window.location.pathname.includes('product') || 
+                          document.body.classList.contains('product-page-pending') || 
+                          (document.querySelector('main p')?.textContent || '').includes('No product selected');
+    if (!isProductPage) return;
 
     const id = getQueryParam('id') || getQueryParam('product') || getQueryParam('printfulId');
     let product = findProduct(id);
