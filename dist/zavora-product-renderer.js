@@ -1,6 +1,6 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Ultra-Refined Luxury Theme)
- * Renders URL parameter products (?id=...) using Zavora's exact design system & styling.
+ * Zavora Fashion — Product Detail Page Renderer (Theme Adaptive Clean High-Contrast)
+ * Supports dynamic URL params (?id=...) with high contrast on white/dark backgrounds.
  */
 
 (function () {
@@ -130,7 +130,7 @@
     
     let rawDesc = String(product.description || '');
     if (!rawDesc || rawDesc.includes('premium blocked') || rawDesc.length < 20) {
-      rawDesc = `${name} is a signature organic streetwear piece by Zavora Fashion. Designed with clean architectural proportions, 480 GSM organic cotton fabric, and everyday luxury comfort.`;
+      rawDesc = `${name} is a signature organic streetwear piece designed for Zavora Fashion's minimal streetwear wardrobe. It balances clean proportions, everyday comfort, and USA-ready fulfillment.`;
     }
 
     const images = Array.isArray(product.images) && product.images.length
@@ -140,30 +140,28 @@
     const rawColors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'Black'];
     const colors = rawColors.map(c => String(c).trim()).filter(Boolean);
 
-    const standardSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
-    const rawSizes = Array.isArray(product.sizes) && product.sizes.length > 1 ? product.sizes : standardSizes;
-    const sizes = rawSizes.map(s => String(s).trim()).filter(Boolean);
+    const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
 
     main.innerHTML = `
-      <section class="section" style="max-width: 1240px; margin: 0 auto 80px; padding: 100px 24px 0;">
+      <section class="section" style="max-width: 1240px; margin: 0 auto 80px; padding: 90px 24px 0; color: #111111;">
         <!-- BREADCRUMBS -->
-        <p style="color: #c9a227; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 24px;">
+        <p style="color: #c9a227; font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px;">
           ${categoryLabel}
         </p>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 60px; align-items: start;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 50px; align-items: start;">
           
           <!-- GALLERY SIDE -->
           <div>
-            <div style="position: relative; background: #0d0d0d; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="position: relative; background: #f8f8f8; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid #e5e5e5;">
               <img id="zavoraMainImage" src="${images[0]}" alt="Zavora ${name}" style="width: 100%; height: auto; display: block; object-fit: cover;">
-              ${badge ? `<span style="position: absolute; top: 16px; left: 16px; background: #000; color: #fff; border: 1px solid #fff; padding: 4px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${badge}</span>` : ''}
+              ${badge ? `<span style="position: absolute; top: 16px; left: 16px; background: #111; color: #fff; border: 1px solid #111; padding: 4px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${badge}</span>` : ''}
             </div>
 
             ${images.length > 1 ? `
               <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
                 ${images.map((img, i) => `
-                  <button type="button" class="zavoraThumb" data-img="${img}" style="border: ${i===0?'2px solid #fff':'1px solid rgba(255,255,255,0.2)'}; background: #0d0d0d; border-radius: 8px; overflow: hidden; width: 76px; height: 76px; padding: 0; cursor: pointer; flex-shrink: 0;">
+                  <button type="button" class="zavoraThumb" data-img="${img}" style="border: ${i===0?'2px solid #111':'1px solid #e0e0e0'}; background: #f8f8f8; border-radius: 8px; overflow: hidden; width: 76px; height: 76px; padding: 0; cursor: pointer; flex-shrink: 0;">
                     <img src="${img}" alt="Thumbnail ${i+1}" style="width: 100%; height: 100%; object-fit: cover;">
                   </button>
                 `).join('')}
@@ -173,59 +171,59 @@
 
           <!-- INFO & CTA SIDE -->
           <div>
-            <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 14px; line-height: 1.15; letter-spacing: -0.5px;">${name}</h1>
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 12px; line-height: 1.15; letter-spacing: -0.5px; color: #111111;">${name}</h1>
 
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
               <span style="color: #f59e0b; font-size: 1rem; letter-spacing: 2px;">★★★★★</span>
-              <span style="font-size: 0.9rem; opacity: 0.8; font-weight: 500;">4.9 (34 customer reviews)</span>
+              <span style="font-size: 0.9rem; color: #555555; font-weight: 600;">4.9 (34 customer reviews)</span>
             </div>
 
-            <div style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 28px;">
-              <span class="sale-price" data-price="${price}" style="font-size: 1.8rem; font-weight: 700; color: #fff;">$${price.toFixed(2)}</span>
-              ${compareAt ? `<s style="font-size: 1.1rem; opacity: 0.5;">$${compareAt.toFixed(2)}</s>` : ''}
-              <span style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">In Stock • Ships in 24h</span>
+            <div style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px;">
+              <span class="sale-price" data-price="${price}" style="font-size: 1.8rem; font-weight: 800; color: #111111;">$${price.toFixed(2)}</span>
+              ${compareAt ? `<s style="font-size: 1.1rem; color: #888888;">$${compareAt.toFixed(2)}</s>` : ''}
+              <span style="background: #e6f4ea; color: #137333; border: 1px solid #ceead6; padding: 4px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">In Stock • Ships in 24h</span>
             </div>
 
-            <p style="font-size: 0.98rem; line-height: 1.7; opacity: 0.85; margin-bottom: 32px;">${rawDesc}</p>
+            <p style="font-size: 0.98rem; line-height: 1.7; color: #444444; margin-bottom: 28px;">${rawDesc}</p>
 
             <!-- COLOR SELECTION -->
-            <div style="margin-bottom: 28px;">
-              <label style="display: block; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">COLOR: <span id="zavoraSelectedColor" style="color: #fff; font-weight:800;">${String(colors[0]).toUpperCase()}</span></label>
+            <div style="margin-bottom: 24px;">
+              <label style="display: block; font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: #111111;">COLOR: <span id="zavoraSelectedColor" style="color: #111111; font-weight: 800; margin-left: 6px;">${String(colors[0]).toUpperCase()}</span></label>
               <div style="display: flex; gap: 12px; flex-wrap:wrap;">
                 ${colors.map((c, i) => `
-                  <button type="button" class="zavoraColorBtn" data-color="${c}" style="width: 34px; height: 34px; border-radius: 50%; background: ${swatchColor(c)}; border: ${i===0?'2px solid #fff':'1px solid rgba(255,255,255,0.3)'}; cursor: pointer; transition: transform 0.15s;" title="${c}"></button>
+                  <button type="button" class="zavoraColorBtn" data-color="${c}" style="width: 36px; height: 36px; border-radius: 50%; background: ${swatchColor(c)}; border: ${i===0?'2px solid #111111':'1px solid #cccccc'}; cursor: pointer; transition: transform 0.15s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="${c}"></button>
                 `).join('')}
               </div>
             </div>
 
             <!-- SIZE SELECTION -->
-            <div style="margin-bottom: 36px;">
+            <div style="margin-bottom: 32px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <label style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">SIZE: <span id="zavoraSelectedSize" style="color: #fff; font-weight:800;">${sizes[0]}</span></label>
-                <a href="#size-guide" style="font-size: 0.82rem; color: #aaa; text-decoration: underline;">Size Guide</a>
+                <label style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #111111;">SIZE: <span id="zavoraSelectedSize" style="color: #111111; font-weight: 800; margin-left: 6px;">${sizes[0]}</span></label>
+                <a href="#size-guide" style="font-size: 0.85rem; color: #111111; font-weight: 700; text-decoration: underline;">Size Guide</a>
               </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 ${sizes.map((s, i) => `
-                  <button type="button" class="zavoraSizeBtn" data-size="${s}" style="min-width: 52px; padding: 12px 18px; border-radius: 6px; background: ${i===0?'#fff':'rgba(255,255,255,0.06)'}; color: ${i===0?'#000':'#fff'}; border: 1px solid ${i===0?'#fff':'rgba(255,255,255,0.2)'}; font-weight: 700; font-size: 0.9rem; cursor: pointer;">${s}</button>
+                  <button type="button" class="zavoraSizeBtn" data-size="${s}" style="min-width: 56px; padding: 12px 20px; border-radius: 6px; background: ${i===0?'#111111':'#ffffff'}; color: ${i===0?'#ffffff':'#111111'}; border: 1px solid ${i===0?'#111111':'#d1d5db'}; font-weight: 800; font-size: 0.92rem; cursor: pointer; transition: all 0.15s;">${s}</button>
                 `).join('')}
               </div>
             </div>
 
             <!-- CTAS -->
-            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px;">
-              <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="width: 100%; padding: 18px; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">ADD TO BAG</button>
-              <button type="button" id="zavoraBuyNowBtn" style="width: 100%; padding: 18px; background: #c9a227; color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">BUY NOW WITH FAST USA CHECKOUT</button>
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px;">
+              <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="width: 100%; padding: 18px; background: #111111; color: #ffffff; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">ADD TO BAG</button>
+              <button type="button" id="zavoraBuyNowBtn" style="width: 100%; padding: 18px; background: #c9a227; color: #111111; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">BUY NOW WITH FAST USA CHECKOUT</button>
             </div>
 
             <!-- GUARANTEES -->
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
               <div>
-                <strong style="display: block; font-size: 0.92rem; margin-bottom: 4px; color: #fff;">🚚 Free USA Shipping</strong>
-                <span style="font-size: 0.82rem; opacity: 0.7;">Orders $75+ receive free 2-3 day express delivery.</span>
+                <strong style="display: block; font-size: 0.92rem; margin-bottom: 4px; color: #111111;">🚚 Free USA Shipping</strong>
+                <span style="font-size: 0.82rem; color: #666666;">Orders $75+ receive free 2-3 day express delivery.</span>
               </div>
               <div>
-                <strong style="display: block; font-size: 0.92rem; margin-bottom: 4px; color: #fff;">🔄 30-Day Easy Returns</strong>
-                <span style="font-size: 0.82rem; opacity: 0.7;">Hassle-free exchanges & returns guaranteed.</span>
+                <strong style="display: block; font-size: 0.92rem; margin-bottom: 4px; color: #111111;">🔄 30-Day Easy Returns</strong>
+                <span style="font-size: 0.82rem; color: #666666;">Hassle-free exchanges & returns guaranteed.</span>
               </div>
             </div>
 
@@ -239,16 +237,16 @@
       btn.addEventListener('click', () => {
         const mainImg = document.getElementById('zavoraMainImage');
         if (mainImg) mainImg.src = btn.dataset.img;
-        document.querySelectorAll('.zavoraThumb').forEach(b => b.style.border = '1px solid rgba(255,255,255,0.2)');
-        btn.style.border = '2px solid #fff';
+        document.querySelectorAll('.zavoraThumb').forEach(b => b.style.border = '1px solid #e0e0e0');
+        btn.style.border = '2px solid #111111';
       });
     });
 
     // Bind Color Buttons
     document.querySelectorAll('.zavoraColorBtn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.zavoraColorBtn').forEach(b => b.style.border = '1px solid rgba(255,255,255,0.3)');
-        btn.style.border = '2px solid #fff';
+        document.querySelectorAll('.zavoraColorBtn').forEach(b => b.style.border = '1px solid #cccccc');
+        btn.style.border = '2px solid #111111';
         const label = document.getElementById('zavoraSelectedColor');
         if (label) label.textContent = String(btn.dataset.color).toUpperCase();
       });
@@ -258,13 +256,13 @@
     document.querySelectorAll('.zavoraSizeBtn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.zavoraSizeBtn').forEach(b => {
-          b.style.background = 'rgba(255,255,255,0.06)';
-          b.style.color = '#fff';
-          b.style.border = '1px solid rgba(255,255,255,0.2)';
+          b.style.background = '#ffffff';
+          b.style.color = '#111111';
+          b.style.border = '1px solid #d1d5db';
         });
-        btn.style.background = '#fff';
-        btn.style.color = '#000';
-        btn.style.border = '1px solid #fff';
+        btn.style.background = '#111111';
+        btn.style.color = '#ffffff';
+        btn.style.border = '1px solid #111111';
         const label = document.getElementById('zavoraSelectedSize');
         if (label) label.textContent = btn.dataset.size;
       });
