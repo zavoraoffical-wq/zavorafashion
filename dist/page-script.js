@@ -84,35 +84,6 @@ const SELECTED_PRODUCT_KEY = 'zavoraSelectedProduct';
 const PRODUCT_STOCK_KEY = 'zavoraProductStock';
 const PENDING_COMMERCE_ACTION_KEY = 'zavoraPendingCommerceAction';
 const accountRedirects = {
-  'my-account.html': 'dashboard',
-  'wishlist.html': 'wishlist',
-  'order-history.html': 'orders',
-  'saved-addresses.html': 'addresses',
-  'change-password.html': 'change-password'
-};
-const CURRENCY_KEY = 'zavoraCurrency';
-const COUNTRY_KEY = 'zavoraCountry';
-const currencyRates = {
-  USD: { symbol: '$', rate: 1, locale: 'en-US' },
-  EUR: { symbol: '€', rate: 0.92, locale: 'de-DE' },
-  INR: { symbol: '₹', rate: 83.5, locale: 'en-IN' }
-};
-
-function initLaunchGate() {
-  return false;
-}
-
-function money(value) {
-  const code = localStorage.getItem(CURRENCY_KEY) || 'USD';
-  const currency = currencyRates[code] || currencyRates.USD;
-  const converted = Number(value || 0) * currency.rate;
-  const digits = code === 'INR' ? 0 : 2;
-  return `${currency.symbol}${converted.toLocaleString(currency.locale, { maximumFractionDigits: digits, minimumFractionDigits: digits })}`;
-}
-
-const DEMO_PRODUCT_NAMES = new Set([
-  'studio wide trouser',
-  'monogram cap',
   'noir oversized hoodie',
   'gold label tee',
   'avenue cargo pant',
@@ -1854,6 +1825,86 @@ function collectionShowcase(activeCollection = '') {
       </div>
     </div>
   `;
+
+const catalogData = [...getAdminProducts()];
+
+function swatch(color) {
+  return {
+    black: '#050505',
+    white: '#fff',
+    gray: '#aaa',
+    blue: '#2d5f9a',
+    green: '#4f6f52',
+    red: '#9b1c1c',
+    pink: '#e6a4b4',
+    purple: '#6a4c93',
+    brown: '#8b6f47',
+    default: 'linear-gradient(135deg,#111 0 50%,#fff 50% 100%)',
+    gold: '#c9a227'
+  }[color] || color || '#111';
+}
+
+function catalogCard(item) {
+  const image = item.images?.[0] || item.image || item.img || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80';
+  const hoverImage = item.images?.[1] || item.alt || item.hoverImage || image;
+  const size = item.size || item.sizes?.[0] || 'M';
+  const colors = Array.isArray(item.colors) && item.colors.length ? item.colors : [item.color || 'default'];
+  const collections = Array.isArray(item.collection) ? item.collection.join(' ') : String(item.collection || '');
+  const stock = getProductStock(item);
+  const isLimited = String(item.badge || '').toLowerCase().includes('limited') || (item.collection || []).includes('limited');
+  const rating = Number(item.rating || (4.6 + ((Number(item.id) || 1) % 4) / 10)).toFixed(1);
+  return `
+    <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-gender="${String(item.gender || '').toLowerCase()}" data-category="${item.category}" data-collection="${collections}" data-color="${colors.join(' ')}" data-size="${(item.sizes || [size]).join(' ')}" data-price="${item.price}">
+      <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" aria-label="Open ${item.name} detail page">
+        <img class="card-img-primary" src="${image}" alt="${item.name}" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80'">
+        <img class="card-img-hover" src="${hoverImage}" alt="${item.name} hover view" loading="lazy" onerror="this.style.display='none'">
+        ${item.badge && item.badge !== 'null' && item.badge !== 'undefined' && item.badge !== 'NULL' ? `<span class="badge">${item.badge}</span>` : ''}
+        <button class="wish" type="button" data-wishlist-product="${item.id}" aria-label="Add ${item.name} to wishlist">♡</button>
+      </a>
+      <div>
+        <h3><a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}">${item.name}</a></h3>
+        <p>${item.category} / ${colors.map((color) => color === 'default' ? 'original' : color).join(', ')}${item.category === 'accessories' ? '' : ` / ${size}`}</p>
+        <div class="swatches" aria-label="Color variants">${colors.map((color) => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}</div>
+        <strong class="sale-price">${item.compareAt ? `<s>${money(item.compareAt)}</s> ` : ''}${money(item.price)}</strong>
+        <span class="catalog-rating">★ ${rating}</span>
+        <div class="catalog-card-actions">
+          <button type="button" data-card-add="${item.id}">Add to Cart</button>
+          <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}">Quick View</a>
+        </div>
+        ${isLimited ? `<span class="catalog-stock">${stock > 0 ? `${stock} available` : 'Out of stock'}</span>` : ''}
+      </div>
+    </article>
+  `;
+}
+
+const collectionLinks = [
+  ['sportswear', 'Sportswear', 'Performance layers, active fits, and movement-ready essentials.'],
+  ['streetwear', 'Streetwear', 'Premium hoodies, tees, caps, and everyday city silhouettes.'],
+  ['beachwear', 'Beachwear', 'Shorts, slides, summer pieces, and clean warm-weather styling.'],
+  ['gifts', 'Gifts', 'Giftable accessories, caps, and easy premium add-ons.'],
+  ['style-trends', 'Style Trends', 'Modern silhouettes, seasonal colors, and trending edits.'],
+  ['matching-sets', 'Matching Sets', 'Coordinated sweats, tracksuits, and complete outfit energy.'],
+  ['summer-hats-bags', 'Summer Hats & Bags', 'Caps, hats, bags, and sunny-day essentials.'],
+  ['holiday-season', 'Holiday Season', 'Gift-season layers, cozy fleece, and limited picks.']
+];
+
+function collectionShowcase(activeCollection = '') {
+  return `
+    <div class="collection-showcase">
+      <div>
+        <p class="eyebrow">Printful Collections</p>
+        <h2>Shop by collection</h2>
+      </div>
+      <div class="collection-tile-grid">
+        ${collectionLinks.map(([slug, title, copy]) => `
+          <a class="collection-tile ${activeCollection === slug ? 'is-active' : ''}" href="collections.html?collection=${slug}&label=${encodeURIComponent(title)}">
+            <span>${title}</span>
+            <small>${copy}</small>
+          </a>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
 function collectionLabel(slug = '') {
@@ -1862,33 +1913,39 @@ function collectionLabel(slug = '') {
 }
 
 function categoryMatches(productCategory, requestedCategory) {
-  const requested = String(requestedCategory || '').toLowerCase();
-  const category = String(productCategory || '').toLowerCase();
+  const requested = String(requestedCategory || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const category = String(productCategory || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   if (!requested || requested === 'all') return true;
+  if (category.includes(requested) || requested.includes(category)) return true;
+  
   const groups = {
-    'oversized-tees': ['oversized-tees'],
-    'heavyweight-tees': ['heavyweight-tees'],
-    'baby-tees': ['baby-tees'],
-    tees: ['oversized-tees', 'heavyweight-tees', 'baby-tees'],
-    hoodies: ['hoodies'],
-    'cropped-hoodies': ['cropped-hoodies'],
-    'zip-hoodies': ['zip-hoodies'],
-    'cargo-pants': ['cargo-pants'],
-    sweatpants: ['sweatpants'],
-    joggers: ['sweatpants'],
-    pants: ['pants', 'cargo-pants', 'sweatpants'],
-    shorts: ['shorts'],
-    jackets: ['jackets'],
-    outerwear: ['jackets'],
-    accessories: ['accessories'],
-    shoes: ['accessories']
+    oversizedtees: ['oversizedtees', 'heavyweighttees', 'babytees', 'tees', 'tshirts', 'tops', 'oversized'],
+    heavyweighttees: ['heavyweighttees', 'oversizedtees', 'babytees', 'tees', 'tshirts', 'tops'],
+    babytees: ['babytees', 'oversizedtees', 'heavyweighttees', 'tees', 'tshirts', 'tops'],
+    tees: ['oversizedtees', 'heavyweighttees', 'babytees', 'tees', 'tshirts', 'tops'],
+    hoodies: ['hoodies', 'croppedhoodies', 'ziphoodies', 'sweatshirts', 'fleece'],
+    croppedhoodies: ['croppedhoodies', 'hoodies', 'sweatshirts'],
+    ziphoodies: ['ziphoodies', 'hoodies', 'sweatshirts'],
+    cargopants: ['cargopants', 'sweatpants', 'joggers', 'pants', 'trousers'],
+    sweatpants: ['sweatpants', 'cargopants', 'joggers', 'pants', 'trousers'],
+    joggers: ['joggers', 'sweatpants', 'cargopants', 'pants', 'trousers'],
+    pants: ['pants', 'cargopants', 'sweatpants', 'joggers', 'trousers'],
+    shorts: ['shorts', 'beachwear', 'swimshorts'],
+    jackets: ['jackets', 'outerwear', 'bomber', 'fleece'],
+    outerwear: ['jackets', 'outerwear', 'bomber', 'fleece'],
+    accessories: ['accessories', 'hats', 'caps', 'bags', 'gifts'],
+    shoes: ['accessories', 'slides', 'shoes']
   };
-  return (groups[requested] || [requested]).includes(category);
+  
+  const matchGroup = groups[requested] || [requested];
+  return matchGroup.some(g => category.includes(g) || g.includes(category));
 }
 
 function productsForCatalogPage(products, pageName) {
   products = deduplicateProducts(products);
   const norm = normalizePageName(pageName);
+  const initialPool = products;
+  
   products = products.filter((product) => {
     const targetPages = Array.isArray(product.targetPages) ? product.targetPages.map((item) => String(item).toLowerCase()) : [];
     if (!targetPages.length) return true;
@@ -1897,30 +1954,11 @@ function productsForCatalogPage(products, pageName) {
     }
     return true;
   });
+  
   const urlCategory = new URLSearchParams(window.location.search).get('category');
   if (urlCategory) {
-    products = products.filter((product) => {
+    const filtered = products.filter((product) => {
       const targetPages = Array.isArray(product.targetPages) ? product.targetPages.map((item) => String(item).toLowerCase()) : [];
-      return categoryMatches(product.category, urlCategory) || targetPages.includes(`category:${String(urlCategory).toLowerCase()}`);
-    });
-  }
-  if (norm === 'new-arrivals') {
-    return products.filter((product) => product.collection?.includes('new'));
-  }
-  if (norm === 'limited') {
-    return products
-      .filter((product) => product.collection?.includes('limited'))
-      .map((product, index) => ({ ...product, stock: Math.min(getProductStock(product), 1 + (index % 10)), badge: 'Limited' }));
-  }
-  if (norm === 'best-sellers') {
-    return products.filter((product) => product.collection?.includes('best') || product.popularity >= 84);
-  }
-  return products;
-}
-
-const REAL_PRINTFUL_APPAREL_CATALOG = [];
-
-const EXPANDED_REAL_PRINTFUL_CATALOG = [];
 
 function generateExpandedApparelCatalog(gender = 'all') {
   const admin = getAdminProducts();

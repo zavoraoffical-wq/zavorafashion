@@ -125,9 +125,6 @@ function addBrandHeadTags() {
     if (!html.includes('zavora-analytics.js') && html.includes('</head>')) {
       html = html.replace('</head>', `    <script src="zavora-analytics.js?v=${jsVersion}"></script>\n  </head>`);
     }
-    if (!html.includes('zavora-currency-engine.js') && html.includes('</head>')) {
-      html = html.replace('</head>', `    <script src="zavora-currency-engine.js?v=${jsVersion}"></script>\n  </head>`);
-    }
     if (!html.includes('zavora-schema.js') && html.includes('</head>')) {
       html = html.replace('</head>', `    <script src="zavora-schema.js?v=${jsVersion}"></script>\n  </head>`);
     }

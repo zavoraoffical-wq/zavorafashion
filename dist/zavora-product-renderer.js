@@ -124,7 +124,7 @@
     const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['XS', 'S', 'M', 'L', 'XL'];
 
     main.innerHTML = `
-      <section class="section" style="max-width: 1240px; margin: 30px auto 80px; padding: 0 24px;">
+      <section class="section" style="max-width: 1240px; margin: 0 auto 80px; padding: 100px 24px 0;">
         <!-- BREADCRUMBS -->
         <p style="color: #c9a227; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 24px;">
           ${category} • PREMIUM ORGANIC STREETWEAR
