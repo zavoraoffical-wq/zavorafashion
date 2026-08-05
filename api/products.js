@@ -396,7 +396,79 @@ module.exports = async function handler(req, res) {
     const limit = Math.min(Math.max(Number(req.query.limit || 24), 1), maxLimit);
     const productId = String(req.query.id || req.query.productId || '').trim();
 
-    if (productId) {
+    if (action === 'recommendations' || req.query.recommendations === 'true') {
+      const targetId = String(req.query.id || req.query.productId || '').trim();
+      const recLimit = Math.min(Math.max(Number(req.query.limit || 8), 4), 8);
+
+      let dbData = await ProductRepository.findProducts({ limit: 200, page: 1 }).catch(() => ({ products: [] }));
+      let allProducts = filterProducts([...(dbData?.products || []), ...REAL_PRINTFUL_IMPORTED_PRODUCTS]);
+
+      const targetProduct = targetId ? allProducts.find(p => String(p.id || p.printfulId) === targetId) : null;
+      const targetCategory = String(targetProduct?.category || req.query.category || '').toLowerCase();
+      const targetGender = String(targetProduct?.gender || req.query.gender || '').toLowerCase();
+      const targetCollections = Array.isArray(targetProduct?.collection) ? targetProduct.collection.map(c => String(c).toLowerCase()) : [String(targetProduct?.collection || '').toLowerCase()].filter(Boolean);
+      const targetPrice = Number(targetProduct?.price || 100);
+      const targetColor = String(targetProduct?.color || '').toLowerCase();
+
+      const candidates = allProducts.filter(p => {
+        const pId = String(p.id || p.printfulId || '');
+        return pId !== targetId && productIsLive(p);
+      });
+
+      const scored = candidates.map(p => {
+        let score = 0;
+        const pCat = String(p.category || '').toLowerCase();
+        const pGender = String(p.gender || '').toLowerCase();
+        const pCols = Array.isArray(p.collection) ? p.collection.map(c => String(c).toLowerCase()) : [String(p.collection || '').toLowerCase()].filter(Boolean);
+        const pColor = String(p.color || '').toLowerCase();
+        const pPrice = Number(p.price || 0);
+
+        if (pCat && targetCategory && (pCat.includes(targetCategory) || targetCategory.includes(pCat))) score += 100;
+        if (pGender && targetGender && (pGender === targetGender || pGender === 'unisex' || targetGender === 'unisex')) score += 50;
+        if (pCols.some(c => targetCollections.includes(c))) score += 30;
+        if (pColor && targetColor && pColor === targetColor) score += 20;
+        if (targetPrice > 0 && pPrice > 0) {
+          const diffRatio = Math.abs(pPrice - targetPrice) / targetPrice;
+          if (diffRatio < 0.5) score += Math.round((1 - diffRatio) * 15);
+        }
+
+        return { product: p, score };
+      });
+
+      scored.sort((a, b) => b.score - a.score);
+
+      const grouped = {};
+      scored.forEach(item => {
+        const tier = Math.floor(item.score / 20) * 20;
+        if (!grouped[tier]) grouped[tier] = [];
+        grouped[tier].push(item.product);
+      });
+
+      const finalRecs = [];
+      const seenIds = new Set();
+      const tiers = Object.keys(grouped).map(Number).sort((a, b) => b - a);
+
+      for (const tier of tiers) {
+        const tierItems = grouped[tier].sort(() => 0.5 - Math.random());
+        for (const p of tierItems) {
+          const pId = String(p.id || p.printfulId || p.name);
+          if (!seenIds.has(pId) && finalRecs.length < recLimit) {
+            seenIds.add(pId);
+            finalRecs.push(p);
+          }
+        }
+      }
+
+      return json(res, 200, {
+        ok: true,
+        action: 'recommendations',
+        targetId,
+        count: finalRecs.length,
+        recommendations: finalRecs
+      }, 60);
+    }
+
+    if (productId && action !== 'recommendations') {
       const saved = await ProductRepository.getProductById(productId).catch(() => null);
       const supabaseProducts = [];
       const product = saved || supabaseProducts[0];
