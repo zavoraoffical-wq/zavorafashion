@@ -1,6 +1,6 @@
 /**
  * Zavora Fashion — Product Detail Page Renderer (H&M-Style Multi-Section Luxury Edition)
- * Includes 4 Dedicated Product Discovery Sections:
+ * Features 4 Full-Width Active Carousel Sections with Pure Apparel Studio Cutout Images:
  * 1. SIMILAR ITEMS
  * 2. OTHERS ALSO BOUGHT
  * 3. TRENDING NOW
@@ -10,6 +10,7 @@
 (function () {
   'use strict';
 
+  // 100% Clean Apparel Studio Mockups & Cutouts
   const REAL_APPAREL_CATALOG = [
     // Hoodies & Sweatshirts
     { id: 1412, printfulId: 1412, name: "Zavora Women's Relax Hoodie", price: 166.17, compareAt: 198.00, category: "hoodies", badge: "BEST SELLER", img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=85" },
@@ -29,9 +30,9 @@
     { id: 605, printfulId: 605, name: "Zavora Relaxed Fit Denim Trouser", price: 158.00, compareAt: 190.00, category: "pants", badge: "BEST SELLER", img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=800&q=85" },
     { id: 1104, printfulId: 1104, name: "Zavora Gold Label Fleece Joggers", price: 118.00, compareAt: 140.00, category: "pants", badge: "TRENDING", img: "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?auto=format&fit=crop&w=800&q=85" },
 
-    // Outerwear & Accessories
+    // Outerwear, Footwear & Accessories
     { id: 934, printfulId: 934, name: "Zavora Cropped Minimalist Jacket", price: 189.00, compareAt: 220.00, category: "jackets", badge: "LIMITED", img: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=85" },
-    { id: 935, printfulId: 935, name: "Zavora Oversized Puffer Outerwear", price: 240.00, compareAt: 285.00, category: "jackets", badge: "NEW", img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=85" },
+    { id: 801, printfulId: 801, name: "Zavora Minimalist Leather Loafers", price: 195.00, compareAt: 240.00, category: "footwear", badge: "NEW", img: "https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&w=800&q=85" },
     { id: 205, printfulId: 205, name: "Zavora Monogram Embroidered Cap", price: 48.00, compareAt: 60.00, category: "accessories", badge: "MUST HAVE", img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=85" },
     { id: 206, printfulId: 206, name: "Zavora Minimalist Canvas Tote Bag", price: 56.00, compareAt: 70.00, category: "accessories", badge: "ESSENTIAL", img: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=85" }
   ];
@@ -118,27 +119,24 @@
       pool = [...window.__zavoraCatalogProducts, ...REAL_APPAREL_CATALOG];
     }
 
-    // Filter out current product
     const poolFiltered = pool.filter(p => String(p.id || p.printfulId) !== currentId);
     const seen = new Set();
     const result = [];
 
     if (type === 'similar') {
-      // Pick same category items first
       const matches = poolFiltered.filter(p => String(p.category || '').toLowerCase().includes(category) || category.includes(String(p.category || '').toLowerCase()));
       for (const item of matches) {
         const key = String(item.id || item.printfulId);
-        if (!seen.has(key) && result.length < 4) {
+        if (!seen.has(key) && result.length < 5) {
           seen.add(key);
           result.push(item);
         }
       }
     } else if (type === 'others_bought') {
-      // Pick complementary category items (e.g., if current is hoodie/tee, pick pants/cargo)
       const matches = poolFiltered.filter(p => !String(p.category || '').toLowerCase().includes(category));
       for (const item of matches) {
         const key = String(item.id || item.printfulId);
-        if (!seen.has(key) && result.length < 4) {
+        if (!seen.has(key) && result.length < 5) {
           seen.add(key);
           result.push(item);
         }
@@ -147,7 +145,7 @@
       const matches = poolFiltered.filter(p => String(p.badge || '').toLowerCase().includes('trend') || String(p.badge || '').toLowerCase().includes('popular') || String(p.badge || '').toLowerCase().includes('best'));
       for (const item of matches) {
         const key = String(item.id || item.printfulId);
-        if (!seen.has(key) && result.length < 4) {
+        if (!seen.has(key) && result.length < 5) {
           seen.add(key);
           result.push(item);
         }
@@ -156,18 +154,17 @@
       const matches = poolFiltered.filter(p => String(p.badge || '').toLowerCase().includes('new') || String(p.badge || '').toLowerCase().includes('essential') || String(p.badge || '').toLowerCase().includes('limited'));
       for (const item of matches) {
         const key = String(item.id || item.printfulId);
-        if (!seen.has(key) && result.length < 4) {
+        if (!seen.has(key) && result.length < 5) {
           seen.add(key);
           result.push(item);
         }
       }
     }
 
-    // Top off from REAL_APPAREL_CATALOG if needed
-    if (result.length < 4) {
+    if (result.length < 5) {
       for (const item of REAL_APPAREL_CATALOG) {
         const key = String(item.id);
-        if (key !== currentId && !seen.has(key) && result.length < 4) {
+        if (key !== currentId && !seen.has(key) && result.length < 5) {
           seen.add(key);
           result.push(item);
         }
@@ -177,31 +174,33 @@
     return result;
   }
 
-  function renderHMStyleSection(title, products) {
+  function renderHMStyleSection(sectionId, title, products) {
     return `
-      <div style="margin-top: 60px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #000000; color: #ffffff; border-radius: 4px; margin-bottom: 24px;">
-          <h3 style="font-size: 0.95rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin: 0; color: #ffffff;">${title}</h3>
-          <div style="display: flex; gap: 8px;">
-            <button type="button" style="background: none; border: 1px solid rgba(255,255,255,0.4); color: #fff; width: 28px; height: 28px; border-radius: 50%; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">&larr;</button>
-            <button type="button" style="background: none; border: 1px solid rgba(255,255,255,0.4); color: #fff; width: 28px; height: 28px; border-radius: 50%; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">&rarr;</button>
+      <div style="margin-top: 60px; width: 100%;">
+        <!-- HEADER BAR WITH NAV ARROWS -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: #000000; color: #ffffff; border-radius: 6px; margin-bottom: 24px;">
+          <h3 style="font-size: 0.95rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin: 0; color: #ffffff;">${title}</h3>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="hmNavPrev" data-sec="${sectionId}" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;">&larr;</button>
+            <button type="button" class="hmNavNext" data-sec="${sectionId}" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;">&rarr;</button>
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px;">
+        <!-- SCROLLABLE CAROUSEL TRACK -->
+        <div id="hmCarouselTrack_${sectionId}" style="display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 12px;">
           ${products.map(p => `
-            <article style="background: #ffffff; border-radius: 4px; overflow: hidden; position: relative;">
-              <a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f5f5f5;">
+            <article style="flex: 0 0 240px; min-width: 240px; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #eeeeee; position: relative;">
+              <a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #ffffff;">
                 <img src="${p.img || p.images?.[0] || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">
-                <button type="button" class="hmWishBtn" data-wish-id="${p.id || p.printfulId}" style="position: absolute; bottom: 12px; right: 12px; background: #ffffff; border: none; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.12);" aria-label="Add to wishlist">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <button type="button" class="hmWishBtn" data-wish-id="${p.id || p.printfulId}" style="position: absolute; bottom: 12px; right: 12px; background: #ffffff; border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" aria-label="Add to wishlist">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                 </button>
               </a>
-              <div style="padding: 12px 4px 6px;">
-                <h4 style="font-size: 0.88rem; font-weight: 800; text-transform: uppercase; margin: 0 0 4px; line-height: 1.25; letter-spacing: 0.5px;">
+              <div style="padding: 14px 12px 10px;">
+                <h4 style="font-size: 0.88rem; font-weight: 800; text-transform: uppercase; margin: 0 0 6px; line-height: 1.3; letter-spacing: 0.5px; height: 36px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                   <a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="color: #111111; text-decoration: none;">${p.name}</a>
                 </h4>
-                <span class="sale-price" data-price="${p.price}" style="font-size: 0.92rem; font-weight: 700; color: #111111;">$${Number(p.price || 89.99).toFixed(2)}</span>
+                <span class="sale-price" data-price="${p.price}" style="font-size: 0.95rem; font-weight: 800; color: #111111;">$${Number(p.price || 89.99).toFixed(2)}</span>
               </div>
             </article>
           `).join('')}
@@ -241,7 +240,7 @@
     const newArrivalsProducts = getSectionProducts(product, 'new');
 
     main.innerHTML = `
-      <section class="section" style="max-width: 1240px; margin: 0 auto 80px; padding: 90px 24px 0; color: #111111;">
+      <section class="section" style="max-width: 1340px; margin: 0 auto 80px; padding: 90px 24px 0; color: #111111;">
         <!-- BREADCRUMBS -->
         <p style="color: #c9a227; font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px;">
           ${categoryLabel}
@@ -331,12 +330,12 @@
           </div>
         </div>
 
-        <!-- 4 H&M-STYLE DISCOVERY SECTIONS -->
-        <div style="margin-top: 80px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
-          ${renderHMStyleSection('SIMILAR ITEMS', similarProducts)}
-          ${renderHMStyleSection('OTHERS ALSO BOUGHT', othersBoughtProducts)}
-          ${renderHMStyleSection('TRENDING NOW', trendingProducts)}
-          ${renderHMStyleSection('NEW ARRIVALS', newArrivalsProducts)}
+        <!-- 4 FULL-WIDTH H&M-STYLE DISCOVERY SECTIONS -->
+        <div style="margin-top: 80px; border-top: 1px solid #e5e7eb; padding-top: 20px; width: 100%;">
+          ${renderHMStyleSection('similar', 'SIMILAR ITEMS', similarProducts)}
+          ${renderHMStyleSection('others', 'OTHERS ALSO BOUGHT', othersBoughtProducts)}
+          ${renderHMStyleSection('trending', 'TRENDING NOW', trendingProducts)}
+          ${renderHMStyleSection('new', 'NEW ARRIVALS', newArrivalsProducts)}
         </div>
 
         <!-- SIZE GUIDE MODAL -->
@@ -402,6 +401,21 @@
         btn.style.border = '1px solid #111111';
         const label = document.getElementById('zavoraSelectedSize');
         if (label) label.textContent = btn.dataset.size;
+      });
+    });
+
+    // Bind Carousel Navigation Controls (< & >)
+    document.querySelectorAll('.hmNavPrev').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const track = document.getElementById(`hmCarouselTrack_${btn.dataset.sec}`);
+        if (track) track.scrollBy({ left: -260, behavior: 'smooth' });
+      });
+    });
+
+    document.querySelectorAll('.hmNavNext').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const track = document.getElementById(`hmCarouselTrack_${btn.dataset.sec}`);
+        if (track) track.scrollBy({ left: 260, behavior: 'smooth' });
       });
     });
 
