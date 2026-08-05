@@ -1,141 +1,39 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Ultra-Refined Luxury & Features)
- * Clean URLs (?id=...), Premium Wishlist Button, Interactive Size Guide Modal, & Category-Aware Recommendations.
+ * Zavora Fashion — Product Detail Page Renderer (H&M-Style Multi-Section Luxury Edition)
+ * Includes 4 Dedicated Product Discovery Sections:
+ * 1. SIMILAR ITEMS
+ * 2. OTHERS ALSO BOUGHT
+ * 3. TRENDING NOW
+ * 4. NEW ARRIVALS
  */
 
 (function () {
   'use strict';
 
-  const DEFAULT_FALLBACK_PRODUCTS = [
-    {
-      id: 862,
-      printfulId: 862,
-      name: "Zavora Women's Heavyweight Boxy T-Shirt",
-      price: 94.89,
-      compareAt: 120.00,
-      category: "oversized-tees",
-      badge: "BEST SELLER",
-      colors: ["black", "heather gray", "white"],
-      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
-      images: [
-        "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
-        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85"
-      ],
-      description: "Crafted from 100% organic French Terry cotton (480 GSM), this boxy tee features drop shoulders, reinforced double-stitched collar, and a modern architectural silhouette."
-    },
-    {
-      id: 1412,
-      printfulId: 1412,
-      name: "Zavora Women's Relax Hoodie",
-      price: 166.17,
-      compareAt: 198.00,
-      category: "hoodies",
-      badge: "BEST SELLER",
-      colors: ["black", "heather gray", "pink", "brown"],
-      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85"
-      ],
-      description: "The Zavora Women's Relax Hoodie is a signature minimal streetwear silhouette. Crafted from 480 GSM heavyweight organic French Terry cotton for supreme warmth."
-    },
-    {
-      id: 411,
-      printfulId: 411,
-      name: "Zavora Premium Organic Sweatshirt",
-      price: 129.73,
-      compareAt: 155.00,
-      category: "sweatshirts",
-      badge: "TRENDING",
-      colors: ["black", "white", "heather gray"],
-      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1000&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1000&q=85"
-      ],
-      description: "Ultra-comfortable 480 GSM organic cotton crewneck sweatshirt built with reinforced ribbed cuffs, drop shoulders, and timeless streetwear proportions."
-    },
-    {
-      id: 604,
-      printfulId: 604,
-      name: "Zavora Wide-Leg Organic Sweatpants",
-      price: 112.77,
-      compareAt: 135.00,
-      category: "pants",
-      badge: "NEW",
-      colors: ["white", "black", "khaki"],
-      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1000&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1000&q=85"
-      ],
-      description: "Elevated wide-leg organic cotton sweatpants featuring deep side pockets, flexible drawstring waist, and relaxed architectural drape."
-    },
-    {
-      id: 329,
-      printfulId: 329,
-      name: "Zavora Avenue Cargo Streetwear Pant",
-      price: 145.00,
-      compareAt: 170.00,
-      category: "cargo-pants",
-      badge: "POPULAR",
-      colors: ["khaki", "black", "olive"],
-      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85"
-      ],
-      description: "Heavy-duty organic cotton twill cargo pant built with tactical utility pockets, adjustable ankle cinch cords, and tailored urban fit."
-    },
-    {
-      id: 512,
-      printfulId: 512,
-      name: "Zavora Ivory Heavyweight Organic Tee",
-      price: 78.50,
-      compareAt: 95.00,
-      category: "tees",
-      badge: "ESSENTIAL",
-      colors: ["white", "ivory", "black"],
-      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85"
-      ],
-      description: "Pure combed organic jersey cotton t-shirt with classic crew neck and clean minimal branding."
-    },
-    {
-      id: 934,
-      printfulId: 934,
-      name: "Zavora Cropped Minimalist Jacket",
-      price: 189.00,
-      compareAt: 220.00,
-      category: "jackets",
-      badge: "LIMITED",
-      colors: ["black", "navy"],
-      sizes: ["XS", "S", "M", "L", "XL"],
-      img: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1000&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1000&q=85"
-      ],
-      description: "Structured cropped streetwear jacket featuring matte silver hardware, weather-resistant organic canvas, and silky inner lining."
-    },
-    {
-      id: 205,
-      printfulId: 205,
-      name: "Zavora Monogram Embroidered Cap",
-      price: 48.00,
-      compareAt: 60.00,
-      category: "accessories",
-      badge: "MUST HAVE",
-      colors: ["black", "washed black", "khaki"],
-      sizes: ["ONE SIZE"],
-      img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85"
-      ],
-      description: "Classic 6-panel dad cap crafted from 100% organic cotton twill featuring high-density 3D Zavora monogram embroidery."
-    }
+  const REAL_APPAREL_CATALOG = [
+    // Hoodies & Sweatshirts
+    { id: 1412, printfulId: 1412, name: "Zavora Women's Relax Hoodie", price: 166.17, compareAt: 198.00, category: "hoodies", badge: "BEST SELLER", img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=85" },
+    { id: 411, printfulId: 411, name: "Zavora Premium Organic Sweatshirt", price: 129.73, compareAt: 155.00, category: "sweatshirts", badge: "TRENDING", img: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=800&q=85" },
+    { id: 701, printfulId: 701, name: "Zavora Noir Oversized Zip Hoodie", price: 175.00, compareAt: 210.00, category: "hoodies", badge: "POPULAR", img: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=85" },
+    { id: 702, printfulId: 702, name: "Zavora Heavyweight French Terry Pullover", price: 149.00, compareAt: 180.00, category: "sweatshirts", badge: "NEW", img: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=800&q=85" },
+
+    // Tees & Tops
+    { id: 862, printfulId: 862, name: "Zavora Women's Heavyweight Boxy Tee", price: 94.89, compareAt: 120.00, category: "oversized-tees", badge: "BEST SELLER", img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg" },
+    { id: 512, printfulId: 512, name: "Zavora Ivory Minimalist Organic Tee", price: 78.50, compareAt: 95.00, category: "tees", badge: "ESSENTIAL", img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=85" },
+    { id: 513, printfulId: 513, name: "Zavora Vintage Black Graphic Tee", price: 82.00, compareAt: 100.00, category: "tees", badge: "TRENDING", img: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=85" },
+    { id: 514, printfulId: 514, name: "Zavora Cropped Organic Ribbed Tank", price: 64.00, compareAt: 80.00, category: "tees", badge: "NEW", img: "https://images.unsplash.com/photo-1503342394128-c104d54dba01?auto=format&fit=crop&w=800&q=85" },
+
+    // Pants & Cargos
+    { id: 604, printfulId: 604, name: "Zavora Wide-Leg Organic Sweatpants", price: 112.77, compareAt: 135.00, category: "pants", badge: "NEW", img: "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=800&q=85" },
+    { id: 329, printfulId: 329, name: "Zavora Avenue Cargo Tactical Pant", price: 145.00, compareAt: 170.00, category: "cargo-pants", badge: "POPULAR", img: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=85" },
+    { id: 605, printfulId: 605, name: "Zavora Relaxed Fit Denim Trouser", price: 158.00, compareAt: 190.00, category: "pants", badge: "BEST SELLER", img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=800&q=85" },
+    { id: 1104, printfulId: 1104, name: "Zavora Gold Label Fleece Joggers", price: 118.00, compareAt: 140.00, category: "pants", badge: "TRENDING", img: "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?auto=format&fit=crop&w=800&q=85" },
+
+    // Outerwear & Accessories
+    { id: 934, printfulId: 934, name: "Zavora Cropped Minimalist Jacket", price: 189.00, compareAt: 220.00, category: "jackets", badge: "LIMITED", img: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=800&q=85" },
+    { id: 935, printfulId: 935, name: "Zavora Oversized Puffer Outerwear", price: 240.00, compareAt: 285.00, category: "jackets", badge: "NEW", img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=85" },
+    { id: 205, printfulId: 205, name: "Zavora Monogram Embroidered Cap", price: 48.00, compareAt: 60.00, category: "accessories", badge: "MUST HAVE", img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=85" },
+    { id: 206, printfulId: 206, name: "Zavora Minimalist Canvas Tote Bag", price: 56.00, compareAt: 70.00, category: "accessories", badge: "ESSENTIAL", img: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=85" }
   ];
 
   function getQueryParam(key) {
@@ -190,13 +88,13 @@
       if (found) return found;
     }
 
-    const fallback = DEFAULT_FALLBACK_PRODUCTS.find(p => String(p.id) === targetId);
+    const fallback = REAL_APPAREL_CATALOG.find(p => String(p.id) === targetId);
     if (fallback) return fallback;
 
     return {
-      ...DEFAULT_FALLBACK_PRODUCTS[0],
+      ...REAL_APPAREL_CATALOG[0],
       id: targetId || 862,
-      name: targetId ? `Zavora Premium Item #${targetId}` : DEFAULT_FALLBACK_PRODUCTS[0].name
+      name: targetId ? `Zavora Premium Item #${targetId}` : REAL_APPAREL_CATALOG[0].name
     };
   }
 
@@ -211,48 +109,105 @@
     return null;
   }
 
-  function getRecommendedProducts(currentProduct) {
+  function getSectionProducts(currentProduct, type) {
     const currentId = String(currentProduct?.id || currentProduct?.printfulId || '');
-    let pool = [];
+    const category = String(currentProduct?.category || '').toLowerCase();
 
+    let pool = REAL_APPAREL_CATALOG;
     if (window.__zavoraCatalogProducts?.length) {
-      pool = window.__zavoraCatalogProducts;
-    } else {
-      try {
-        pool = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]');
-      } catch(e) {}
-    }
-
-    if (!pool.length) {
-      pool = DEFAULT_FALLBACK_PRODUCTS;
+      pool = [...window.__zavoraCatalogProducts, ...REAL_APPAREL_CATALOG];
     }
 
     // Filter out current product
-    const filtered = pool.filter(p => String(p.id || p.printfulId) !== currentId);
-    
-    // Pick 4 unique products
+    const poolFiltered = pool.filter(p => String(p.id || p.printfulId) !== currentId);
     const seen = new Set();
     const result = [];
-    for (const item of filtered) {
-      const idKey = String(item.id || item.printfulId || item.name);
-      if (!seen.has(idKey) && result.length < 4) {
-        seen.add(idKey);
-        result.push(item);
+
+    if (type === 'similar') {
+      // Pick same category items first
+      const matches = poolFiltered.filter(p => String(p.category || '').toLowerCase().includes(category) || category.includes(String(p.category || '').toLowerCase()));
+      for (const item of matches) {
+        const key = String(item.id || item.printfulId);
+        if (!seen.has(key) && result.length < 4) {
+          seen.add(key);
+          result.push(item);
+        }
+      }
+    } else if (type === 'others_bought') {
+      // Pick complementary category items (e.g., if current is hoodie/tee, pick pants/cargo)
+      const matches = poolFiltered.filter(p => !String(p.category || '').toLowerCase().includes(category));
+      for (const item of matches) {
+        const key = String(item.id || item.printfulId);
+        if (!seen.has(key) && result.length < 4) {
+          seen.add(key);
+          result.push(item);
+        }
+      }
+    } else if (type === 'trending') {
+      const matches = poolFiltered.filter(p => String(p.badge || '').toLowerCase().includes('trend') || String(p.badge || '').toLowerCase().includes('popular') || String(p.badge || '').toLowerCase().includes('best'));
+      for (const item of matches) {
+        const key = String(item.id || item.printfulId);
+        if (!seen.has(key) && result.length < 4) {
+          seen.add(key);
+          result.push(item);
+        }
+      }
+    } else if (type === 'new') {
+      const matches = poolFiltered.filter(p => String(p.badge || '').toLowerCase().includes('new') || String(p.badge || '').toLowerCase().includes('essential') || String(p.badge || '').toLowerCase().includes('limited'));
+      for (const item of matches) {
+        const key = String(item.id || item.printfulId);
+        if (!seen.has(key) && result.length < 4) {
+          seen.add(key);
+          result.push(item);
+        }
       }
     }
 
-    // Top off from fallback if needed
+    // Top off from REAL_APPAREL_CATALOG if needed
     if (result.length < 4) {
-      for (const item of DEFAULT_FALLBACK_PRODUCTS) {
-        const idKey = String(item.id);
-        if (idKey !== currentId && !seen.has(idKey) && result.length < 4) {
-          seen.add(idKey);
+      for (const item of REAL_APPAREL_CATALOG) {
+        const key = String(item.id);
+        if (key !== currentId && !seen.has(key) && result.length < 4) {
+          seen.add(key);
           result.push(item);
         }
       }
     }
 
     return result;
+  }
+
+  function renderHMStyleSection(title, products) {
+    return `
+      <div style="margin-top: 60px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #000000; color: #ffffff; border-radius: 4px; margin-bottom: 24px;">
+          <h3 style="font-size: 0.95rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin: 0; color: #ffffff;">${title}</h3>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" style="background: none; border: 1px solid rgba(255,255,255,0.4); color: #fff; width: 28px; height: 28px; border-radius: 50%; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">&larr;</button>
+            <button type="button" style="background: none; border: 1px solid rgba(255,255,255,0.4); color: #fff; width: 28px; height: 28px; border-radius: 50%; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">&rarr;</button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px;">
+          ${products.map(p => `
+            <article style="background: #ffffff; border-radius: 4px; overflow: hidden; position: relative;">
+              <a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f5f5f5;">
+                <img src="${p.img || p.images?.[0] || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                <button type="button" class="hmWishBtn" data-wish-id="${p.id || p.printfulId}" style="position: absolute; bottom: 12px; right: 12px; background: #ffffff; border: none; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.12);" aria-label="Add to wishlist">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                </button>
+              </a>
+              <div style="padding: 12px 4px 6px;">
+                <h4 style="font-size: 0.88rem; font-weight: 800; text-transform: uppercase; margin: 0 0 4px; line-height: 1.25; letter-spacing: 0.5px;">
+                  <a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="color: #111111; text-decoration: none;">${p.name}</a>
+                </h4>
+                <span class="sale-price" data-price="${p.price}" style="font-size: 0.92rem; font-weight: 700; color: #111111;">$${Number(p.price || 89.99).toFixed(2)}</span>
+              </div>
+            </article>
+          `).join('')}
+        </div>
+      </div>
+    `;
   }
 
   function renderProductPageUI(product) {
@@ -279,7 +234,11 @@
     const colors = rawColors.map(c => String(c).trim()).filter(Boolean);
     const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
 
-    const recommendedProducts = getRecommendedProducts(product);
+    // 4 H&M-style Discovery Sections
+    const similarProducts = getSectionProducts(product, 'similar');
+    const othersBoughtProducts = getSectionProducts(product, 'others_bought');
+    const trendingProducts = getSectionProducts(product, 'trending');
+    const newArrivalsProducts = getSectionProducts(product, 'new');
 
     main.innerHTML = `
       <section class="section" style="max-width: 1240px; margin: 0 auto 80px; padding: 90px 24px 0; color: #111111;">
@@ -372,34 +331,12 @@
           </div>
         </div>
 
-        <!-- RECOMMENDED PRODUCTS / BEST SELLERS SECTION -->
-        <div style="margin-top: 80px; padding-top: 50px; border-top: 1px solid #e5e7eb;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
-            <div>
-              <p style="color: #c9a227; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">CURATED STREETWEAR</p>
-              <h2 style="font-size: 1.8rem; font-weight: 800; color: #111111; margin: 0;">You May Also Like & Best Sellers</h2>
-            </div>
-            <a href="best-sellers.html" style="font-size: 0.9rem; font-weight: 700; color: #111111; text-decoration: underline;">View All Best Sellers &rarr;</a>
-          </div>
-
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px;">
-            ${recommendedProducts.map(p => `
-              <article style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #ffffff; transition: transform 0.2s, box-shadow 0.2s;">
-                <a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f8f8f8;">
-                  <img src="${p.img || p.images?.[0] || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">
-                  ${p.badge ? `<span style="position: absolute; top: 12px; left: 12px; background: #111; color: #fff; padding: 4px 10px; font-size: 0.7rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${p.badge}</span>` : ''}
-                </a>
-                <div style="padding: 18px;">
-                  <h3 style="font-size: 1rem; font-weight: 800; margin: 0 0 8px; line-height: 1.3;"><a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="color: #111111; text-decoration: none;">${p.name}</a></h3>
-                  <p style="font-size: 0.82rem; color: #666666; margin: 0 0 12px; text-transform: uppercase; font-weight: 600;">${p.category || 'streetwear'}</p>
-                  <strong class="sale-price" data-price="${p.price}" style="font-size: 1.15rem; font-weight: 800; color: #111111;">$${Number(p.price || 89.99).toFixed(2)}</strong>
-                  <div style="margin-top: 14px;">
-                    <a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="display: block; text-align: center; padding: 10px; background: #111111; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">View Product</a>
-                  </div>
-                </div>
-              </article>
-            `).join('')}
-          </div>
+        <!-- 4 H&M-STYLE DISCOVERY SECTIONS -->
+        <div style="margin-top: 80px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+          ${renderHMStyleSection('SIMILAR ITEMS', similarProducts)}
+          ${renderHMStyleSection('OTHERS ALSO BOUGHT', othersBoughtProducts)}
+          ${renderHMStyleSection('TRENDING NOW', trendingProducts)}
+          ${renderHMStyleSection('NEW ARRIVALS', newArrivalsProducts)}
         </div>
 
         <!-- SIZE GUIDE MODAL -->
@@ -486,6 +423,31 @@
         if (e.target === guideModal) guideModal.style.display = 'none';
       });
     }
+
+    // Bind H&M-style Wishlist Buttons on cards
+    document.querySelectorAll('.hmWishBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const pId = btn.dataset.wishId;
+        const targetP = REAL_APPAREL_CATALOG.find(x => String(x.id) === String(pId)) || { id: pId, name: 'Zavora Item' };
+        try {
+          let wishlist = JSON.parse(localStorage.getItem('zavoraWishlist') || '[]');
+          const found = wishlist.find(i => String(i.id) === String(pId));
+          if (found) {
+            wishlist = wishlist.filter(i => String(i.id) !== String(pId));
+            btn.querySelector('svg').setAttribute('fill', 'none');
+            btn.querySelector('svg').setAttribute('stroke', '#111');
+            alert(`${targetP.name} removed from your wishlist!`);
+          } else {
+            wishlist.push({ id: pId, name: targetP.name, price: targetP.price, img: targetP.img });
+            btn.querySelector('svg').setAttribute('fill', '#e11d48');
+            btn.querySelector('svg').setAttribute('stroke', '#e11d48');
+            alert(`${targetP.name} saved to your wishlist!`);
+          }
+          localStorage.setItem('zavoraWishlist', JSON.stringify(wishlist));
+        } catch(err) {}
+      });
+    });
 
     // Bind Add to Wishlist Button
     const wishBtn = document.getElementById('zavoraWishlistBtn');
