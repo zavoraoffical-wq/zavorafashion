@@ -1,5 +1,5 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Luxury Theme Matching)
+ * Zavora Fashion — Product Detail Page Renderer (Ultra-Refined Luxury Theme)
  * Renders URL parameter products (?id=...) using Zavora's exact design system & styling.
  */
 
@@ -16,7 +16,7 @@
       category: "oversized-tees",
       badge: "NEW",
       colors: ["black", "heather gray", "white"],
-      sizes: ["XS", "S", "M", "L", "XL"],
+      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
       img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
       images: [
         "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
@@ -34,13 +34,13 @@
       category: "hoodies",
       badge: "NEW",
       colors: ["black", "heather gray", "pink", "brown", "light pink"],
-      sizes: ["XS", "S", "M", "L", "XL"],
+      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
       img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
       images: [
         "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
         "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=85"
       ],
-      description: "Zavora Women's Relax Hoodie is a premium hoodie designed for Zavora Fashion's minimal streetwear wardrobe. It balances clean proportions, everyday comfort, and USA-ready fulfillment."
+      description: "The Zavora Women's Relax Hoodie is a signature minimal streetwear silhouette. Crafted from 480 GSM heavyweight organic French Terry cotton for supreme warmth, structural drape, and everyday USA fulfillment."
     }
   ];
 
@@ -59,9 +59,22 @@
       khaki: '#c2b280',
       pink: '#ec4899',
       brown: '#78350f',
-      'light pink': '#fbcfe8'
+      'light pink': '#fbcfe8',
+      red: '#9b1c1c',
+      green: '#2d5a27'
     };
     return map[String(color).toLowerCase()] || '#333333';
+  }
+
+  function formatCategoryLabel(catRaw, nameRaw) {
+    const cat = String(catRaw || '').toLowerCase();
+    const name = String(nameRaw || '').toLowerCase();
+    if (cat.includes('hoodie') || name.includes('hoodie')) return 'HOODIES • PREMIUM ORGANIC STREETWEAR';
+    if (cat.includes('sweatshirt') || name.includes('sweatshirt')) return 'SWEATSHIRTS • PREMIUM ORGANIC STREETWEAR';
+    if (cat.includes('pant') || cat.includes('cargo') || name.includes('pant') || name.includes('trouser')) return 'PANTS & CARGOS • PREMIUM ORGANIC STREETWEAR';
+    if (cat.includes('tee') || name.includes('tee') || name.includes('t-shirt')) return 'OVERSIZED TEES • PREMIUM ORGANIC STREETWEAR';
+    if (cat.includes('accessories') || name.includes('cap') || name.includes('hat')) return 'ACCESSORIES • PREMIUM ORGANIC STREETWEAR';
+    return 'MINIMAL STREETWEAR • PREMIUM ORGANIC APPAREL';
   }
 
   function findProduct(id) {
@@ -89,7 +102,7 @@
     return {
       ...DEFAULT_FALLBACK_PRODUCTS[0],
       id: targetId || 862,
-      name: targetId ? `Zavora Studio Item #${targetId}` : DEFAULT_FALLBACK_PRODUCTS[0].name
+      name: targetId ? `Zavora Premium Item #${targetId}` : DEFAULT_FALLBACK_PRODUCTS[0].name
     };
   }
 
@@ -109,25 +122,33 @@
     if (!main) return;
 
     const id = String(product.id || product.printfulId || '862');
-    const name = String(product.name || 'Zavora Product');
+    const name = String(product.name || 'Zavora Premium Streetwear');
     const price = Number(product.price || 94.89);
     const compareAt = product.compareAt ? Number(product.compareAt) : null;
     const badge = product.badge || 'NEW';
-    const category = String(product.category || 'hoodies').toUpperCase();
-    const description = String(product.description || `${name} is a premium design for Zavora Fashion's minimal streetwear wardrobe. It balances clean proportions, everyday comfort, and USA-ready fulfillment.`);
+    const categoryLabel = formatCategoryLabel(product.category, name);
+    
+    let rawDesc = String(product.description || '');
+    if (!rawDesc || rawDesc.includes('premium blocked') || rawDesc.length < 20) {
+      rawDesc = `${name} is a signature organic streetwear piece by Zavora Fashion. Designed with clean architectural proportions, 480 GSM organic cotton fabric, and everyday luxury comfort.`;
+    }
 
     const images = Array.isArray(product.images) && product.images.length
       ? product.images
       : [product.img || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'];
 
-    const colors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'BLACK'];
-    const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['XS', 'S', 'M', 'L', 'XL'];
+    const rawColors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'Black'];
+    const colors = rawColors.map(c => String(c).trim()).filter(Boolean);
+
+    const standardSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
+    const rawSizes = Array.isArray(product.sizes) && product.sizes.length > 1 ? product.sizes : standardSizes;
+    const sizes = rawSizes.map(s => String(s).trim()).filter(Boolean);
 
     main.innerHTML = `
       <section class="section" style="max-width: 1240px; margin: 0 auto 80px; padding: 100px 24px 0;">
         <!-- BREADCRUMBS -->
-        <p style="color: #c9a227; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 24px;">
-          ${category} • PREMIUM ORGANIC STREETWEAR
+        <p style="color: #c9a227; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 24px;">
+          ${categoryLabel}
         </p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 60px; align-items: start;">
@@ -136,7 +157,7 @@
           <div>
             <div style="position: relative; background: #0d0d0d; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
               <img id="zavoraMainImage" src="${images[0]}" alt="Zavora ${name}" style="width: 100%; height: auto; display: block; object-fit: cover;">
-              ${badge ? `<span style="position: absolute; top: 16px; left: 16px; background: #000; color: #fff; border: 1px solid #fff; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${badge}</span>` : ''}
+              ${badge ? `<span style="position: absolute; top: 16px; left: 16px; background: #000; color: #fff; border: 1px solid #fff; padding: 4px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${badge}</span>` : ''}
             </div>
 
             ${images.length > 1 ? `
@@ -165,14 +186,14 @@
               <span style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">In Stock • Ships in 24h</span>
             </div>
 
-            <p style="font-size: 0.98rem; line-height: 1.7; opacity: 0.85; margin-bottom: 32px;">${description}</p>
+            <p style="font-size: 0.98rem; line-height: 1.7; opacity: 0.85; margin-bottom: 32px;">${rawDesc}</p>
 
             <!-- COLOR SELECTION -->
             <div style="margin-bottom: 28px;">
-              <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">COLOR: <span id="zavoraSelectedColor" style="color: #fff;">${String(colors[0]).toUpperCase()}</span></label>
-              <div style="display: flex; gap: 12px;">
+              <label style="display: block; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">COLOR: <span id="zavoraSelectedColor" style="color: #fff; font-weight:800;">${String(colors[0]).toUpperCase()}</span></label>
+              <div style="display: flex; gap: 12px; flex-wrap:wrap;">
                 ${colors.map((c, i) => `
-                  <button type="button" class="zavoraColorBtn" data-color="${c}" style="width: 34px; height: 34px; border-radius: 50%; background: ${swatchColor(c)}; border: ${i===0?'2px solid #fff':'1px solid rgba(255,255,255,0.25)'}; cursor: pointer; transition: transform 0.15s;" title="${c}"></button>
+                  <button type="button" class="zavoraColorBtn" data-color="${c}" style="width: 34px; height: 34px; border-radius: 50%; background: ${swatchColor(c)}; border: ${i===0?'2px solid #fff':'1px solid rgba(255,255,255,0.3)'}; cursor: pointer; transition: transform 0.15s;" title="${c}"></button>
                 `).join('')}
               </div>
             </div>
@@ -180,20 +201,20 @@
             <!-- SIZE SELECTION -->
             <div style="margin-bottom: 36px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <label style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">SIZE: <span id="zavoraSelectedSize" style="color: #fff;">${sizes[0]}</span></label>
+                <label style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">SIZE: <span id="zavoraSelectedSize" style="color: #fff; font-weight:800;">${sizes[0]}</span></label>
                 <a href="#size-guide" style="font-size: 0.82rem; color: #aaa; text-decoration: underline;">Size Guide</a>
               </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 ${sizes.map((s, i) => `
-                  <button type="button" class="zavoraSizeBtn" data-size="${s}" style="min-width: 52px; padding: 12px 18px; border-radius: 6px; background: ${i===0?'#fff':'rgba(255,255,255,0.04)'}; color: ${i===0?'#000':'#fff'}; border: 1px solid ${i===0?'#fff':'rgba(255,255,255,0.2)'}; font-weight: 700; font-size: 0.9rem; cursor: pointer;">${s}</button>
+                  <button type="button" class="zavoraSizeBtn" data-size="${s}" style="min-width: 52px; padding: 12px 18px; border-radius: 6px; background: ${i===0?'#fff':'rgba(255,255,255,0.06)'}; color: ${i===0?'#000':'#fff'}; border: 1px solid ${i===0?'#fff':'rgba(255,255,255,0.2)'}; font-weight: 700; font-size: 0.9rem; cursor: pointer;">${s}</button>
                 `).join('')}
               </div>
             </div>
 
             <!-- CTAS -->
             <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px;">
-              <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="width: 100%; padding: 18px; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px;">ADD TO BAG</button>
-              <button type="button" id="zavoraBuyNowBtn" style="width: 100%; padding: 18px; background: #c9a227; color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px;">BUY NOW WITH FAST USA CHECKOUT</button>
+              <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="width: 100%; padding: 18px; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">ADD TO BAG</button>
+              <button type="button" id="zavoraBuyNowBtn" style="width: 100%; padding: 18px; background: #c9a227; color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: opacity 0.2s;">BUY NOW WITH FAST USA CHECKOUT</button>
             </div>
 
             <!-- GUARANTEES -->
@@ -226,7 +247,7 @@
     // Bind Color Buttons
     document.querySelectorAll('.zavoraColorBtn').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.zavoraColorBtn').forEach(b => b.style.border = '1px solid rgba(255,255,255,0.25)');
+        document.querySelectorAll('.zavoraColorBtn').forEach(b => b.style.border = '1px solid rgba(255,255,255,0.3)');
         btn.style.border = '2px solid #fff';
         const label = document.getElementById('zavoraSelectedColor');
         if (label) label.textContent = String(btn.dataset.color).toUpperCase();
@@ -237,7 +258,7 @@
     document.querySelectorAll('.zavoraSizeBtn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.zavoraSizeBtn').forEach(b => {
-          b.style.background = 'rgba(255,255,255,0.04)';
+          b.style.background = 'rgba(255,255,255,0.06)';
           b.style.color = '#fff';
           b.style.border = '1px solid rgba(255,255,255,0.2)';
         });
