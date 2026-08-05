@@ -1,6 +1,6 @@
 /**
  * Zavora Fashion — Product Detail Page Renderer (Ultra-Refined Luxury & Features)
- * Clean URLs (?id=...), Premium Wishlist Button, Interactive Size Guide Modal, & Best Sellers Recommendations.
+ * Clean URLs (?id=...), Premium Wishlist Button, Interactive Size Guide Modal, & Category-Aware Recommendations.
  */
 
 (function () {
@@ -20,10 +20,9 @@
       img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
       images: [
         "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
-        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85",
-        "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85"
       ],
-      description: "Crafted from 100% organic French Terry cotton (480 GSM), this boxy tee features drop shoulders, reinforced double-stitched collar, and a modern architectural silhouette. Pre-shrunk for maximum wash durability."
+      description: "Crafted from 100% organic French Terry cotton (480 GSM), this boxy tee features drop shoulders, reinforced double-stitched collar, and a modern architectural silhouette."
     },
     {
       id: 1412,
@@ -33,14 +32,13 @@
       compareAt: 198.00,
       category: "hoodies",
       badge: "BEST SELLER",
-      colors: ["black", "heather gray", "pink", "brown", "light pink"],
+      colors: ["black", "heather gray", "pink", "brown"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
       img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
       images: [
-        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
-        "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85"
       ],
-      description: "The Zavora Women's Relax Hoodie is a signature minimal streetwear silhouette. Crafted from 480 GSM heavyweight organic French Terry cotton for supreme warmth, structural drape, and everyday USA fulfillment."
+      description: "The Zavora Women's Relax Hoodie is a signature minimal streetwear silhouette. Crafted from 480 GSM heavyweight organic French Terry cotton for supreme warmth."
     },
     {
       id: 411,
@@ -52,27 +50,91 @@
       badge: "TRENDING",
       colors: ["black", "white", "heather gray"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
+      img: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1000&q=85",
       images: [
-        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1000&q=85"
       ],
       description: "Ultra-comfortable 480 GSM organic cotton crewneck sweatshirt built with reinforced ribbed cuffs, drop shoulders, and timeless streetwear proportions."
     },
     {
       id: 604,
       printfulId: 604,
-      name: "Zavora Wide-Leg Organic Pants",
+      name: "Zavora Wide-Leg Organic Sweatpants",
       price: 112.77,
       compareAt: 135.00,
       category: "pants",
       badge: "NEW",
       colors: ["white", "black", "khaki"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=85",
+      img: "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1000&q=85",
       images: [
-        "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1000&q=85"
       ],
       description: "Elevated wide-leg organic cotton sweatpants featuring deep side pockets, flexible drawstring waist, and relaxed architectural drape."
+    },
+    {
+      id: 329,
+      printfulId: 329,
+      name: "Zavora Avenue Cargo Streetwear Pant",
+      price: 145.00,
+      compareAt: 170.00,
+      category: "cargo-pants",
+      badge: "POPULAR",
+      colors: ["khaki", "black", "olive"],
+      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+      img: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85",
+      images: [
+        "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85"
+      ],
+      description: "Heavy-duty organic cotton twill cargo pant built with tactical utility pockets, adjustable ankle cinch cords, and tailored urban fit."
+    },
+    {
+      id: 512,
+      printfulId: 512,
+      name: "Zavora Ivory Heavyweight Organic Tee",
+      price: 78.50,
+      compareAt: 95.00,
+      category: "tees",
+      badge: "ESSENTIAL",
+      colors: ["white", "ivory", "black"],
+      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+      img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85",
+      images: [
+        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85"
+      ],
+      description: "Pure combed organic jersey cotton t-shirt with classic crew neck and clean minimal branding."
+    },
+    {
+      id: 934,
+      printfulId: 934,
+      name: "Zavora Cropped Minimalist Jacket",
+      price: 189.00,
+      compareAt: 220.00,
+      category: "jackets",
+      badge: "LIMITED",
+      colors: ["black", "navy"],
+      sizes: ["XS", "S", "M", "L", "XL"],
+      img: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1000&q=85",
+      images: [
+        "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1000&q=85"
+      ],
+      description: "Structured cropped streetwear jacket featuring matte silver hardware, weather-resistant organic canvas, and silky inner lining."
+    },
+    {
+      id: 205,
+      printfulId: 205,
+      name: "Zavora Monogram Embroidered Cap",
+      price: 48.00,
+      compareAt: 60.00,
+      category: "accessories",
+      badge: "MUST HAVE",
+      colors: ["black", "washed black", "khaki"],
+      sizes: ["ONE SIZE"],
+      img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85",
+      images: [
+        "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85"
+      ],
+      description: "Classic 6-panel dad cap crafted from 100% organic cotton twill featuring high-density 3D Zavora monogram embroidery."
     }
   ];
 
@@ -149,6 +211,50 @@
     return null;
   }
 
+  function getRecommendedProducts(currentProduct) {
+    const currentId = String(currentProduct?.id || currentProduct?.printfulId || '');
+    let pool = [];
+
+    if (window.__zavoraCatalogProducts?.length) {
+      pool = window.__zavoraCatalogProducts;
+    } else {
+      try {
+        pool = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]');
+      } catch(e) {}
+    }
+
+    if (!pool.length) {
+      pool = DEFAULT_FALLBACK_PRODUCTS;
+    }
+
+    // Filter out current product
+    const filtered = pool.filter(p => String(p.id || p.printfulId) !== currentId);
+    
+    // Pick 4 unique products
+    const seen = new Set();
+    const result = [];
+    for (const item of filtered) {
+      const idKey = String(item.id || item.printfulId || item.name);
+      if (!seen.has(idKey) && result.length < 4) {
+        seen.add(idKey);
+        result.push(item);
+      }
+    }
+
+    // Top off from fallback if needed
+    if (result.length < 4) {
+      for (const item of DEFAULT_FALLBACK_PRODUCTS) {
+        const idKey = String(item.id);
+        if (idKey !== currentId && !seen.has(idKey) && result.length < 4) {
+          seen.add(idKey);
+          result.push(item);
+        }
+      }
+    }
+
+    return result;
+  }
+
   function renderProductPageUI(product) {
     const main = document.querySelector('main');
     if (!main) return;
@@ -173,7 +279,7 @@
     const colors = rawColors.map(c => String(c).trim()).filter(Boolean);
     const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
 
-    const recommendedProducts = DEFAULT_FALLBACK_PRODUCTS.filter(p => String(p.id) !== id).slice(0, 4);
+    const recommendedProducts = getRecommendedProducts(product);
 
     main.innerHTML = `
       <section class="section" style="max-width: 1240px; margin: 0 auto 80px; padding: 90px 24px 0; color: #111111;">
@@ -279,16 +385,16 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px;">
             ${recommendedProducts.map(p => `
               <article style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #ffffff; transition: transform 0.2s, box-shadow 0.2s;">
-                <a href="product?id=${encodeURIComponent(p.id)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f8f8f8;">
-                  <img src="${p.img || p.images?.[0]}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                <a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f8f8f8;">
+                  <img src="${p.img || p.images?.[0] || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">
                   ${p.badge ? `<span style="position: absolute; top: 12px; left: 12px; background: #111; color: #fff; padding: 4px 10px; font-size: 0.7rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${p.badge}</span>` : ''}
                 </a>
                 <div style="padding: 18px;">
-                  <h3 style="font-size: 1rem; font-weight: 800; margin: 0 0 8px; line-height: 1.3;"><a href="product?id=${encodeURIComponent(p.id)}" style="color: #111111; text-decoration: none;">${p.name}</a></h3>
+                  <h3 style="font-size: 1rem; font-weight: 800; margin: 0 0 8px; line-height: 1.3;"><a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="color: #111111; text-decoration: none;">${p.name}</a></h3>
                   <p style="font-size: 0.82rem; color: #666666; margin: 0 0 12px; text-transform: uppercase; font-weight: 600;">${p.category || 'streetwear'}</p>
                   <strong class="sale-price" data-price="${p.price}" style="font-size: 1.15rem; font-weight: 800; color: #111111;">$${Number(p.price || 89.99).toFixed(2)}</strong>
                   <div style="margin-top: 14px;">
-                    <a href="product?id=${encodeURIComponent(p.id)}" style="display: block; text-align: center; padding: 10px; background: #111111; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">View Product</a>
+                    <a href="product?id=${encodeURIComponent(p.id || p.printfulId)}" style="display: block; text-align: center; padding: 10px; background: #111111; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">View Product</a>
                   </div>
                 </div>
               </article>
