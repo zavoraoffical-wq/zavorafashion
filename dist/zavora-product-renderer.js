@@ -12,7 +12,7 @@
 
   function sanitizeApparelImg(url) {
     if (!url || typeof url !== 'string') return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
-    if (url.includes('photo-1544441893') || url.includes('photo-1515886657613') || url.includes('photo-1556821840') || url.includes('photo-1578632767115') || url.includes('photo-1541099649105') || url.includes('photo-1521572267360')) {
+    if (url.includes('unsplash.com') || url.includes('photo-')) {
       return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
     }
     return url;

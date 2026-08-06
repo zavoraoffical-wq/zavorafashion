@@ -32,6 +32,26 @@ function getAdminProducts() {
     return [];
   }
 }
+
+function getAdminOrderProductImg(item) {
+  const img = item?.img || item?.image || item?.thumbnail || '';
+  if (img && !img.includes('assets/studio') && !img.includes('unsplash.com') && !img.includes('photo-')) return img;
+
+  const name = String(item?.name || '').toLowerCase();
+  if (name.includes('hat') || name.includes('cap')) {
+    return 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80';
+  }
+  if (name.includes('hoodie')) {
+    return 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=800&q=80';
+  }
+  if (name.includes('trouser') || name.includes('pant') || name.includes('sweatpant')) {
+    return 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80';
+  }
+  if (name.includes('sweatshirt') || name.includes('pullover')) {
+    return 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=800&q=80';
+  }
+  return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
+}
 const AFFILIATE_KEY = 'zavoraAffiliateApplications';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80';
 let affiliateServerLoaded = false;
@@ -1652,30 +1672,6 @@ function renderLiveOrders(stats) {
       : (currentOrderStatusFilter !== 'all' ? `No orders found with status "${currentOrderStatusFilter}".` : 'No live orders yet. New checkout orders will appear here automatically.');
     body.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">${msg}</td></tr>`;
     return;
-  }
-
-  body.innerHTML = allOrders.map((order) => {
-    const items = Array.isArray(order.items) && order.items.length ? order.items : [];
-    const itemCount = items.reduce((sum, i) => sum + Number(i.qty || 1), 0);
-    const totalVal = typeof order.total === 'number' ? `$${order.total.toFixed(2)}` : (order.total || '$0.00');
-
-    const itemThumbnails = items.length ? items.map((item) => {
-      const imgSrc = item.img || item.image || 'assets/studio-wide-trouser.png';
-      return `
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <img src="${imgSrc}" alt="${item.name}" onerror="this.src='assets/studio-wide-trouser.png'" style="width:42px;height:42px;object-fit:cover;border-radius:4px;border:1px solid #ddd;flex-shrink:0;">
-          <div>
-            <strong style="display:block;font-size:12px;line-height:1.2;color:#050505;">${item.name || 'Product'}</strong>
-            <span style="font-size:11px;color:#666;">Qty ${item.qty || 1} • ${item.color || 'Original'} / ${item.sizes?.[0] || item.size || 'M'}</span>
-          </div>
-        </div>
-      `;
-    }).join('') : `<span style="font-size:12px;">${order.item || 'Zavora item'}</span>`;
-
-    const formattedDate = order.createdAt ? new Date(order.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }) : 'Today';
-
-    const isCancelled = String(order.status || '').toLowerCase().includes('cancel');
-
     return `
       <tr data-admin-order="${order.id}">
         <td>
