@@ -1,6 +1,6 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Luxury Full-Width 6-Product Slider Edition)
- * Features 4 Discovery Sections with High-Class Luxury Headers, Studio Cutouts, & 6 Products Each:
+ * Zavora Fashion — Product Detail Page Renderer (Luxury Full-Bleed Studio Cutout Edition)
+ * Features 4 Discovery Sections with High-Class Luxury Headers, Pure Apparel Studio Cutouts, & 6 Products Each:
  * 1. SIMILAR PRODUCTS
  * 2. RECOMMENDED FOR YOU
  * 3. TRENDING NOW
@@ -10,6 +10,7 @@
 (function () {
   'use strict';
 
+  // 100% Pure Studio Apparel Cutouts — Zero Model Faces, Zero Anime Figures, Zero Lifestyle Backgrounds
   const DEFAULT_CATALOG_FALLBACK = [
     {
       id: 862,
@@ -34,22 +35,22 @@
     {
       id: 1412,
       printfulId: 1412,
-      name: "Zavora Women's Relax Hoodie",
+      name: "Zavora Minimal Organic Streetwear Hoodie",
       price: 166.17,
       compareAt: 198.00,
       category: "hoodies",
-      gender: "Women",
+      gender: "Unisex",
       collection: ["streetwear", "best-sellers"],
       color: "heather gray",
       badge: "BEST SELLER",
       rating: 4.9,
       colors: ["black", "heather gray", "pink"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
+      img: "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1000&q=85",
       images: [
-        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1000&q=85"
       ],
-      description: "The Zavora Women's Relax Hoodie is a signature minimal streetwear silhouette. Crafted from 480 GSM heavyweight organic French Terry cotton for supreme warmth."
+      description: "The Zavora Organic Hoodie is a signature minimal streetwear silhouette. Crafted from 480 GSM heavyweight organic French Terry cotton for supreme warmth."
     },
     {
       id: 411,
@@ -60,14 +61,14 @@
       category: "sweatshirts",
       gender: "Unisex",
       collection: ["streetwear", "trending"],
-      color: "gray",
+      color: "black",
       badge: "TRENDING",
       rating: 4.8,
       colors: ["black", "white", "heather gray"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1000&q=85",
+      img: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=85",
       images: [
-        "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=85"
       ],
       description: "Ultra-comfortable 480 GSM organic cotton crewneck sweatshirt built with reinforced ribbed cuffs, drop shoulders, and timeless streetwear proportions."
     },
@@ -92,24 +93,24 @@
       description: "Signature French Terry pullover with structured ribbed trims and clean minimalist aesthetic."
     },
     {
-      id: 605,
-      printfulId: 605,
-      name: "Zavora Relaxed Fit Denim Trouser",
-      price: 158.00,
-      compareAt: 190.00,
-      category: "pants",
+      id: 512,
+      printfulId: 512,
+      name: "Zavora Essential Ivory Organic Tee",
+      price: 78.50,
+      compareAt: 95.00,
+      category: "tees",
       gender: "Unisex",
-      collection: ["pants", "best-sellers"],
-      color: "indigo",
-      badge: "BEST SELLER",
-      rating: 5.0,
-      colors: ["indigo", "black", "washed blue"],
+      collection: ["essentials"],
+      color: "white",
+      badge: "ESSENTIAL",
+      rating: 4.7,
+      colors: ["white", "ivory", "black"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1000&q=85",
+      img: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=1000&q=85",
       images: [
-        "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=1000&q=85"
       ],
-      description: "Premium Japanese selvedge denim trouser engineered with relaxed taper and clean architectural lines."
+      description: "Pure combed organic jersey cotton t-shirt with classic crew neck and clean minimal branding."
     },
     {
       id: 329,
@@ -132,24 +133,24 @@
       description: "Heavy-duty organic cotton twill cargo pant built with tactical utility pockets, adjustable ankle cinch cords, and tailored urban fit."
     },
     {
-      id: 512,
-      printfulId: 512,
-      name: "Zavora Ivory Minimalist Organic Tee",
-      price: 78.50,
-      compareAt: 95.00,
-      category: "tees",
+      id: 934,
+      printfulId: 934,
+      name: "Zavora Cropped Minimalist Bomber Jacket",
+      price: 189.00,
+      compareAt: 220.00,
+      category: "jackets",
       gender: "Unisex",
-      collection: ["essentials"],
-      color: "ivory",
-      badge: "ESSENTIAL",
-      rating: 4.7,
-      colors: ["white", "ivory", "black"],
-      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85",
+      collection: ["outerwear", "limited"],
+      color: "black",
+      badge: "LIMITED",
+      rating: 4.9,
+      colors: ["black", "navy"],
+      sizes: ["XS", "S", "M", "L", "XL"],
+      img: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=85",
       images: [
-        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=85"
       ],
-      description: "Pure combed organic jersey cotton t-shirt with classic crew neck and clean minimal branding."
+      description: "Structured cropped streetwear jacket featuring matte silver hardware, weather-resistant organic canvas, and silky inner lining."
     },
     {
       id: 205,
@@ -353,7 +354,7 @@
             const mainImg = p.img || p.image || p.thumbnail || (Array.isArray(p.images) ? p.images[0] : '');
 
             return `
-              <article class="zavoraProductCard" style="flex: 0 0 280px; min-width: 280px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; position: relative; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; display: flex; flex-direction: column;">
+              <article class="zavoraProductCard" style="flex: 0 0 290px; min-width: 290px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; position: relative; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; display: flex; flex-direction: column;">
                 
                 ${badgeText ? `<span style="position: absolute; top: 14px; left: 14px; background: #111111; color: #ffffff; border: 1px solid #111111; padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; z-index: 2;">${badgeText}</span>` : ''}
                 
@@ -419,7 +420,7 @@
     const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
 
     main.innerHTML = `
-      <section class="section" style="max-width: 1440px; margin: 0 auto 80px; padding: 90px 24px 0; color: #111111;">
+      <section class="section" style="width: 100%; max-width: 100%; margin: 0 auto 80px; padding: 90px 40px 0; color: #111111; box-sizing: border-box;">
         <!-- BREADCRUMBS -->
         <p style="color: #c9a227; font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px;">
           ${categoryLabel}
@@ -509,7 +510,7 @@
           </div>
         </div>
 
-        <!-- 4 DISCOVERY CAROUSEL SECTIONS (LUXURY HEADERS, 6 PRODUCTS EACH) -->
+        <!-- 4 DISCOVERY CAROUSEL SECTIONS (FULL-WIDTH, LUXURY HEADERS, PURE STUDIO CUTOUTS) -->
         <div id="zavoraRecContainer"></div>
 
         <!-- SIZE GUIDE MODAL -->

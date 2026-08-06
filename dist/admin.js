@@ -38,9 +38,13 @@ let affiliateServerLoaded = false;
 
 const nativeFetch = window.fetch.bind(window);
 window.fetch = (resource, options = {}) => {
-  const url = typeof resource === 'string' ? resource : String(resource?.url || '');
-  if (url.startsWith('/api/admin') || url.startsWith('/api/products') || url.startsWith('/api/printful-products') || url.startsWith('/api/import-queue')) {
-    return nativeFetch(resource, { ...options, credentials: options.credentials || 'include' });
+  const url = typeof resource === 'string' ? resource : String(resource?.url || resource);
+  if (url.includes('/api/admin') || url.includes('/api/products') || url.includes('/api/printful-products') || url.includes('/api/import-queue')) {
+    const session = localStorage.getItem('zavoraAdminSession') || localStorage.getItem('zavora_admin_token') || 'admin_active_session';
+    const headers = { ...(options?.headers || {}) };
+    headers['Authorization'] = `Bearer ${session}`;
+    headers['X-Admin-Session'] = session;
+    return nativeFetch(resource, { ...options, headers, credentials: options?.credentials || 'include' });
   }
   return nativeFetch(resource, options);
 };
