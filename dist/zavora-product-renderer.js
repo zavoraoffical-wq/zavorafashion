@@ -2,8 +2,9 @@
  * Zavora Fashion — Product Detail Page Renderer (100% Pure Printful Studio Cutouts & Dynamic Swatches)
  * Features:
  * 1. 100% Pure Printful studio apparel cutouts — Zero human models / girls on any product card
- * 2. Real-time cart & header Bag badge sync
- * 3. Instant 0ms discovery carousels
+ * 2. Guaranteed image error handler (onerror) — Zero broken image icons
+ * 3. Real-time cart & header Bag badge sync
+ * 4. Instant 0ms discovery carousels
  */
 
 (function () {
@@ -12,6 +13,9 @@
   function sanitizeApparelImg(url, category = '', name = '') {
     if (!url || typeof url !== 'string') return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
     
+    // Replace broken Printful 386 URL if present
+    if (url.includes('386/10456')) return 'https://files.cdn.printful.com/products/411/10777_1627993077.jpg';
+
     // Keep official Printful product studio cutouts
     if (url.includes('files.cdn.printful.com/products/')) return url;
 
@@ -101,9 +105,9 @@
       rating: 4.9,
       colors: ["slate", "black", "ivory"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://files.cdn.printful.com/products/386/10456_1626269225.jpg",
+      img: "https://files.cdn.printful.com/products/411/10777_1627993077.jpg",
       images: [
-        "https://files.cdn.printful.com/products/386/10456_1626269225.jpg"
+        "https://files.cdn.printful.com/products/411/10777_1627993077.jpg"
       ],
       description: "Signature French Terry pullover with structured ribbed trims and clean minimalist aesthetic."
     },
@@ -372,7 +376,7 @@
                 </button>
 
                 <a href="product?id=${encodeURIComponent(pId)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #ffffff;">
-                  <img class="zavoraCardImg" src="${mainImg}" alt="${pName}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
+                  <img class="zavoraCardImg" src="${mainImg}" alt="${pName}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
                 </a>
 
                 <div style="padding: 16px; display: flex; flex-direction: column; flex-grow: 1;">
@@ -443,7 +447,7 @@
           <!-- GALLERY SIDE -->
           <div>
             <div style="position: relative; background: #f8f8f8; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid #e5e5e5;">
-              <img id="zavoraMainImage" src="${images[0]}" alt="Zavora ${name}" style="width: 100%; height: auto; display: block; object-fit: cover;">
+              <img id="zavoraMainImage" src="${images[0]}" alt="Zavora ${name}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width: 100%; height: auto; display: block; object-fit: cover;">
               ${badge ? `<span style="position: absolute; top: 16px; left: 16px; background: #111; color: #fff; border: 1px solid #111; padding: 4px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">${badge}</span>` : ''}
             </div>
 
@@ -451,7 +455,7 @@
               <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
                 ${images.map((img, i) => `
                   <button type="button" class="zavoraThumb" data-img="${img}" style="border: ${i===0?'2px solid #111':'1px solid #e0e0e0'}; background: #f8f8f8; border-radius: 8px; overflow: hidden; width: 76px; height: 76px; padding: 0; cursor: pointer; flex-shrink: 0;">
-                    <img src="${img}" alt="Thumbnail ${i+1}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="${img}" alt="Thumbnail ${i+1}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width: 100%; height: 100%; object-fit: cover;">
                   </button>
                 `).join('')}
               </div>
@@ -751,7 +755,7 @@
         qvContent.innerHTML = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; align-items: start;">
             <div style="background: #f8f8f8; border-radius: 10px; overflow: hidden; aspect-ratio: 4/5;">
-              <img src="${img}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">
+              <img src="${img}" alt="${p.name}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
               <p style="color: #c9a227; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">${p.category || 'STREETWEAR'}</p>
