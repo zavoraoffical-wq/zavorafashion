@@ -866,7 +866,7 @@
     // If API ID is present, attempt background fetch to get full fresh DB data
     if (id) {
       const dbProduct = await fetchProductFromAPI(id);
-      if (dbProduct) {
+      if (dbProduct && dbProduct.name && !dbProduct.name.includes('Zavora Premium Streetwear #') && dbProduct.img) {
         renderProductPageUI(dbProduct);
         if (typeof updateHeaderCartBadges === 'function') updateHeaderCartBadges();
       }
