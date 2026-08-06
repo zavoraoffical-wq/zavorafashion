@@ -1,43 +1,31 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Instant Load + Strict 100% Studio Cutouts & Dynamic Swatches)
+ * Zavora Fashion — Product Detail Page Renderer (100% Pure Printful Studio Cutouts & Dynamic Swatches)
  * Features:
- * 1. Strict elimination of any model/human face images coming from server DB recommendations
- * 2. Dynamic Category & Gender counts
- * 3. 0ms Instant discovery carousels
+ * 1. 100% Pure Printful studio apparel cutouts — Zero human models / girls on any product card
+ * 2. Real-time cart & header Bag badge sync
+ * 3. Instant 0ms discovery carousels
  */
 
 (function () {
   'use strict';
 
-  const SAFE_STUDIO_CUTOUTS = [
-    'https://files.cdn.printful.com/products/862/22596_1743753167.jpg',
-    'photo-1578587018452',
-    'photo-1618354691373',
-    'photo-1620799140408',
-    'photo-1583743814966',
-    'photo-1624378439575',
-    'photo-1591047139829',
-    'photo-1588850561407'
-  ];
-
   function sanitizeApparelImg(url, category = '', name = '') {
     if (!url || typeof url !== 'string') return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
-    if (url.includes('cdn.printful.com') && !url.includes('photo-')) return url;
     
-    for (const safe of SAFE_STUDIO_CUTOUTS) {
-      if (url.includes(safe)) return url;
-    }
+    // Keep official Printful product studio cutouts
+    if (url.includes('files.cdn.printful.com/products/')) return url;
 
+    // Convert ANY unsplash URL or human model photo to pure studio apparel cutout
     const text = `${category} ${name}`.toLowerCase();
-    if (text.includes('hoodie')) return 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1000&q=85';
-    if (text.includes('sweatshirt') || text.includes('pullover')) return 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=85';
-    if (text.includes('cargo') || text.includes('pant') || text.includes('trouser')) return 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85';
-    if (text.includes('jacket') || text.includes('bomber')) return 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=85';
-    if (text.includes('cap') || text.includes('hat')) return 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85';
+    if (text.includes('hoodie')) return 'https://files.cdn.printful.com/products/377/10202_1623835619.jpg';
+    if (text.includes('sweatshirt') || text.includes('pullover')) return 'https://files.cdn.printful.com/products/411/10777_1627993077.jpg';
+    if (text.includes('cargo') || text.includes('pant') || text.includes('trouser')) return 'https://files.cdn.printful.com/products/329/9312_1614087132.jpg';
+    if (text.includes('jacket') || text.includes('bomber')) return 'https://files.cdn.printful.com/products/934/15672_1650371890.jpg';
+    if (text.includes('cap') || text.includes('hat')) return 'https://files.cdn.printful.com/products/205/7604_1583236021.jpg';
     return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
   }
 
-  // 100% Pure Unique Studio Apparel Cutouts — Distinct Image for Every Product
+  // 100% Pure Printful Studio Apparel Cutouts — Distinct Image for Every Product (NO HUMAN MODELS)
   const DEFAULT_CATALOG_FALLBACK = [
     {
       id: 862,
@@ -73,9 +61,9 @@
       rating: 4.9,
       colors: ["heather gray", "black", "pink"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1000&q=85",
+      img: "https://files.cdn.printful.com/products/377/10202_1623835619.jpg",
       images: [
-        "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1000&q=85"
+        "https://files.cdn.printful.com/products/377/10202_1623835619.jpg"
       ],
       description: "The Zavora Organic Hoodie is a signature minimal streetwear silhouette. Crafted from 480 GSM heavyweight organic French Terry cotton for supreme warmth."
     },
@@ -93,9 +81,9 @@
       rating: 4.8,
       colors: ["black", "white", "heather gray"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=85",
+      img: "https://files.cdn.printful.com/products/411/10777_1627993077.jpg",
       images: [
-        "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=85"
+        "https://files.cdn.printful.com/products/411/10777_1627993077.jpg"
       ],
       description: "Ultra-comfortable 480 GSM organic cotton crewneck sweatshirt built with reinforced ribbed cuffs, drop shoulders, and timeless streetwear proportions."
     },
@@ -113,9 +101,9 @@
       rating: 4.9,
       colors: ["slate", "black", "ivory"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1000&q=85",
+      img: "https://files.cdn.printful.com/products/386/10456_1626269225.jpg",
       images: [
-        "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1000&q=85"
+        "https://files.cdn.printful.com/products/386/10456_1626269225.jpg"
       ],
       description: "Signature French Terry pullover with structured ribbed trims and clean minimalist aesthetic."
     },
@@ -133,9 +121,9 @@
       rating: 4.7,
       colors: ["white", "ivory", "black"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=1000&q=85",
+      img: "https://files.cdn.printful.com/products/512/13444_1638362629.jpg",
       images: [
-        "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=1000&q=85"
+        "https://files.cdn.printful.com/products/512/13444_1638362629.jpg"
       ],
       description: "Pure combed organic jersey cotton t-shirt with classic crew neck and clean minimal branding."
     },
@@ -153,9 +141,9 @@
       rating: 5.0,
       colors: ["khaki", "black", "olive"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85",
+      img: "https://files.cdn.printful.com/products/329/9312_1614087132.jpg",
       images: [
-        "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85"
+        "https://files.cdn.printful.com/products/329/9312_1614087132.jpg"
       ],
       description: "Heavy-duty organic cotton twill cargo pant built with tactical utility pockets, adjustable ankle cinch cords, and tailored urban fit."
     },
@@ -173,9 +161,9 @@
       rating: 4.9,
       colors: ["black", "navy"],
       sizes: ["XS", "S", "M", "L", "XL"],
-      img: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=85",
+      img: "https://files.cdn.printful.com/products/934/15672_1650371890.jpg",
       images: [
-        "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=85"
+        "https://files.cdn.printful.com/products/934/15672_1650371890.jpg"
       ],
       description: "Structured cropped streetwear jacket featuring matte silver hardware, weather-resistant organic canvas, and silky inner lining."
     },
@@ -193,9 +181,9 @@
       rating: 4.8,
       colors: ["black", "washed black", "khaki"],
       sizes: ["ONE SIZE"],
-      img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85",
+      img: "https://files.cdn.printful.com/products/205/7604_1583236021.jpg",
       images: [
-        "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85"
+        "https://files.cdn.printful.com/products/205/7604_1583236021.jpg"
       ],
       description: "Classic 6-panel dad cap crafted from 100% organic cotton twill featuring high-density 3D Zavora monogram embroidery."
     }
