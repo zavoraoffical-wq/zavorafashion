@@ -1,6 +1,6 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Production-Ready 6-Product Slider Edition)
- * Features 4 Discovery Sections with Active Carousel Navigation (← & → Arrows) & 6 Products Each:
+ * Zavora Fashion — Product Detail Page Renderer (Luxury Full-Width 6-Product Slider Edition)
+ * Features 4 Discovery Sections with High-Class Luxury Headers, Studio Cutouts, & 6 Products Each:
  * 1. SIMILAR PRODUCTS
  * 2. RECOMMENDED FOR YOU
  * 3. TRENDING NOW
@@ -20,15 +20,14 @@
       category: "oversized-tees",
       gender: "Women",
       collection: ["streetwear", "new"],
-      color: "black",
+      color: "orchid",
       badge: "BEST SELLER",
       rating: 4.9,
-      colors: ["black", "heather gray", "white"],
+      colors: ["orchid", "black", "white"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
       img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
       images: [
-        "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
-        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85"
+        "https://files.cdn.printful.com/products/862/22596_1743753167.jpg"
       ],
       description: "Crafted from 100% organic French Terry cotton (480 GSM), this boxy tee features drop shoulders, reinforced double-stitched collar, and a modern architectural silhouette."
     },
@@ -44,7 +43,7 @@
       color: "heather gray",
       badge: "BEST SELLER",
       rating: 4.9,
-      colors: ["black", "heather gray", "pink", "brown"],
+      colors: ["black", "heather gray", "pink"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
       img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1000&q=85",
       images: [
@@ -73,24 +72,44 @@
       description: "Ultra-comfortable 480 GSM organic cotton crewneck sweatshirt built with reinforced ribbed cuffs, drop shoulders, and timeless streetwear proportions."
     },
     {
-      id: 604,
-      printfulId: 604,
-      name: "Zavora Wide-Leg Organic Sweatpants",
-      price: 112.77,
-      compareAt: 135.00,
-      category: "pants",
+      id: 702,
+      printfulId: 702,
+      name: "Zavora Heavyweight French Terry Pullover",
+      price: 149.00,
+      compareAt: 180.00,
+      category: "sweatshirts",
       gender: "Unisex",
-      collection: ["pants", "new"],
-      color: "khaki",
+      collection: ["new", "sweatshirts"],
+      color: "slate",
       badge: "NEW",
       rating: 4.9,
-      colors: ["white", "black", "khaki"],
+      colors: ["slate", "black", "ivory"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
-      img: "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1000&q=85",
+      img: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1000&q=85",
       images: [
-        "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1000&q=85"
+        "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1000&q=85"
       ],
-      description: "Elevated wide-leg organic cotton sweatpants featuring deep side pockets, flexible drawstring waist, and relaxed architectural drape."
+      description: "Signature French Terry pullover with structured ribbed trims and clean minimalist aesthetic."
+    },
+    {
+      id: 605,
+      printfulId: 605,
+      name: "Zavora Relaxed Fit Denim Trouser",
+      price: 158.00,
+      compareAt: 190.00,
+      category: "pants",
+      gender: "Unisex",
+      collection: ["pants", "best-sellers"],
+      color: "indigo",
+      badge: "BEST SELLER",
+      rating: 5.0,
+      colors: ["indigo", "black", "washed blue"],
+      sizes: ["XS", "S", "M", "L", "XL", "2XL"],
+      img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1000&q=85",
+      images: [
+        "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1000&q=85"
+      ],
+      description: "Premium Japanese selvedge denim trouser engineered with relaxed taper and clean architectural lines."
     },
     {
       id: 329,
@@ -131,26 +150,6 @@
         "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=85"
       ],
       description: "Pure combed organic jersey cotton t-shirt with classic crew neck and clean minimal branding."
-    },
-    {
-      id: 934,
-      printfulId: 934,
-      name: "Zavora Cropped Minimalist Jacket",
-      price: 189.00,
-      compareAt: 220.00,
-      category: "jackets",
-      gender: "Women",
-      collection: ["outerwear", "limited"],
-      color: "black",
-      badge: "LIMITED",
-      rating: 4.9,
-      colors: ["black", "navy"],
-      sizes: ["XS", "S", "M", "L", "XL"],
-      img: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1000&q=85",
-      images: [
-        "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=1000&q=85"
-      ],
-      description: "Structured cropped streetwear jacket featuring matte silver hardware, weather-resistant organic canvas, and silky inner lining."
     },
     {
       id: 205,
@@ -328,21 +327,21 @@
     const items6 = products.slice(0, 6);
 
     return `
-      <div style="margin-top: 54px; width: 100%;">
-        <!-- HEADER BAR WITH NAV ARROWS -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; background: #000000; color: #ffffff; border-radius: 8px; margin-bottom: 22px;">
+      <div style="margin-top: 64px; width: 100%;">
+        <!-- LUXURY HIGH-CLASS HEADER (BLACK BG REMOVED) -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 0 16px; margin-bottom: 24px; border-bottom: 2px solid #111111;">
           <div>
-            <span style="color: #c9a227; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 2px;">${tag}</span>
-            <h3 style="font-size: 1rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin: 0; color: #ffffff;">${title}</h3>
+            <span style="color: #c9a227; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2.5px; display: block; margin-bottom: 4px;">${tag}</span>
+            <h3 style="font-size: 1.45rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin: 0; color: #111111;">${title}</h3>
           </div>
           <div style="display: flex; gap: 10px;">
-            <button type="button" class="zavoraNavPrev" data-sec="${sectionId}" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" aria-label="Previous slide">&larr;</button>
-            <button type="button" class="zavoraNavNext" data-sec="${sectionId}" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" aria-label="Next slide">&rarr;</button>
+            <button type="button" class="zavoraNavPrev" data-sec="${sectionId}" style="background: #ffffff; border: 1.5px solid #111111; color: #111111; width: 38px; height: 38px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" aria-label="Previous slide">&larr;</button>
+            <button type="button" class="zavoraNavNext" data-sec="${sectionId}" style="background: #111111; border: 1.5px solid #111111; color: #ffffff; width: 38px; height: 38px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" aria-label="Next slide">&rarr;</button>
           </div>
         </div>
 
-        <!-- SCROLLABLE CAROUSEL TRACK (6 PRODUCTS) -->
-        <div id="zavoraTrack_${sectionId}" style="display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 14px;">
+        <!-- SCROLLABLE CAROUSEL TRACK (FULL-WIDTH 6 PRODUCTS) -->
+        <div id="zavoraTrack_${sectionId}" style="display: flex; gap: 24px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 16px;">
           ${items6.map(p => {
             const pId = String(p.id || p.printfulId);
             const pName = String(p.name || 'Zavora Product');
@@ -354,11 +353,11 @@
             const mainImg = p.img || p.image || p.thumbnail || (Array.isArray(p.images) ? p.images[0] : '');
 
             return `
-              <article class="zavoraProductCard" style="flex: 0 0 250px; min-width: 250px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 10px; overflow: hidden; position: relative; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; display: flex; flex-direction: column;">
+              <article class="zavoraProductCard" style="flex: 0 0 280px; min-width: 280px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; position: relative; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; display: flex; flex-direction: column;">
                 
-                ${badgeText ? `<span style="position: absolute; top: 12px; left: 12px; background: #111111; color: #ffffff; border: 1px solid #111111; padding: 4px 10px; font-size: 0.7rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; z-index: 2;">${badgeText}</span>` : ''}
+                ${badgeText ? `<span style="position: absolute; top: 14px; left: 14px; background: #111111; color: #ffffff; border: 1px solid #111111; padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; z-index: 2;">${badgeText}</span>` : ''}
                 
-                <button type="button" class="zavoraRecWishBtn" data-rec-id="${pId}" style="position: absolute; top: 12px; right: 12px; background: #ffffff; border: none; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 2;" aria-label="Add to wishlist">
+                <button type="button" class="zavoraRecWishBtn" data-rec-id="${pId}" style="position: absolute; top: 14px; right: 14px; background: #ffffff; border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 2;" aria-label="Add to wishlist">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                 </button>
 
@@ -366,24 +365,24 @@
                   <img class="zavoraCardImg" src="${mainImg}" alt="${pName}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
                 </a>
 
-                <div style="padding: 14px; display: flex; flex-direction: column; flex-grow: 1;">
+                <div style="padding: 16px; display: flex; flex-direction: column; flex-grow: 1;">
                   <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                    <span style="color: #f59e0b; font-size: 0.82rem;">★★★★★</span>
-                    <span style="font-size: 0.78rem; color: #666666; font-weight: 700;">${ratingStars}</span>
+                    <span style="color: #f59e0b; font-size: 0.85rem;">★★★★★</span>
+                    <span style="font-size: 0.8rem; color: #666666; font-weight: 700;">${ratingStars}</span>
                   </div>
 
-                  <h4 style="font-size: 0.9rem; font-weight: 800; margin: 0 0 8px; line-height: 1.3; height: 36px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                  <h4 style="font-size: 0.95rem; font-weight: 800; margin: 0 0 8px; line-height: 1.35; height: 40px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                     <a href="product?id=${encodeURIComponent(pId)}" style="color: #111111; text-decoration: none;">${pName}</a>
                   </h4>
 
-                  <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px;">
-                    <strong class="sale-price" data-price="${pPrice}" style="font-size: 1.1rem; font-weight: 800; color: #111111;">$${pPrice.toFixed(2)}</strong>
-                    ${pCompareAt > pPrice ? `<s style="font-size: 0.85rem; color: #888888;">$${pCompareAt.toFixed(2)}</s>` : ''}
+                  <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px;">
+                    <strong class="sale-price" data-price="${pPrice}" style="font-size: 1.2rem; font-weight: 800; color: #111111;">$${pPrice.toFixed(2)}</strong>
+                    ${pCompareAt > pPrice ? `<s style="font-size: 0.9rem; color: #888888;">$${pCompareAt.toFixed(2)}</s>` : ''}
                   </div>
 
                   <div style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button type="button" class="zavoraQuickViewBtn" data-qv-id="${pId}" style="padding: 8px; background: #ffffff; color: #111111; border: 1.5px solid #111111; border-radius: 6px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">QUICK VIEW</button>
-                    <button type="button" class="zavoraRecAddToCartBtn" data-rec-cart-id="${pId}" style="padding: 8px; background: #111111; color: #ffffff; border: none; border-radius: 6px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">ADD TO BAG</button>
+                    <button type="button" class="zavoraQuickViewBtn" data-qv-id="${pId}" style="padding: 10px; background: #ffffff; color: #111111; border: 1.5px solid #111111; border-radius: 6px; font-weight: 800; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">QUICK VIEW</button>
+                    <button type="button" class="zavoraRecAddToCartBtn" data-rec-cart-id="${pId}" style="padding: 10px; background: #111111; color: #ffffff; border: none; border-radius: 6px; font-weight: 800; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">ADD TO BAG</button>
                   </div>
                 </div>
 
@@ -420,7 +419,7 @@
     const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
 
     main.innerHTML = `
-      <section class="section" style="max-width: 1340px; margin: 0 auto 80px; padding: 90px 24px 0; color: #111111;">
+      <section class="section" style="max-width: 1440px; margin: 0 auto 80px; padding: 90px 24px 0; color: #111111;">
         <!-- BREADCRUMBS -->
         <p style="color: #c9a227; font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px;">
           ${categoryLabel}
@@ -510,7 +509,7 @@
           </div>
         </div>
 
-        <!-- 4 DISCOVERY CAROUSEL SECTIONS (6 PRODUCTS EACH) -->
+        <!-- 4 DISCOVERY CAROUSEL SECTIONS (LUXURY HEADERS, 6 PRODUCTS EACH) -->
         <div id="zavoraRecContainer"></div>
 
         <!-- SIZE GUIDE MODAL -->
@@ -552,7 +551,7 @@
       const container = document.getElementById('zavoraRecContainer');
       if (container) {
         container.innerHTML = `
-          <div style="margin-top: 80px; border-top: 1px solid #e5e7eb; padding-top: 20px; width: 100%;">
+          <div style="margin-top: 60px; border-top: 1px solid #e5e7eb; padding-top: 20px; width: 100%;">
             ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', similarProducts)}
             ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', recommendedProducts)}
             ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', trendingProducts)}
@@ -685,14 +684,14 @@
     document.querySelectorAll('.zavoraNavPrev').forEach(btn => {
       btn.addEventListener('click', () => {
         const track = document.getElementById(`zavoraTrack_${btn.dataset.sec}`);
-        if (track) track.scrollBy({ left: -270, behavior: 'smooth' });
+        if (track) track.scrollBy({ left: -304, behavior: 'smooth' });
       });
     });
 
     document.querySelectorAll('.zavoraNavNext').forEach(btn => {
       btn.addEventListener('click', () => {
         const track = document.getElementById(`zavoraTrack_${btn.dataset.sec}`);
-        if (track) track.scrollBy({ left: 270, behavior: 'smooth' });
+        if (track) track.scrollBy({ left: 304, behavior: 'smooth' });
       });
     });
 
