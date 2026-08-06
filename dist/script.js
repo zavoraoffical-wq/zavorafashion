@@ -413,16 +413,133 @@ function swatch(color) {
   return { black: '#050505', white: '#fff', gray: '#aaa', blue: '#2d5f9a', green: '#4f6f52', red: '#9b1c1c', pink: '#e6a4b4', purple: '#6a4c93', brown: '#8b6f47', default: 'linear-gradient(135deg,#111 0 50%,#fff 50% 100%)', gold: '#c9a227' }[color] || color || '#111';
 }
 
-function addToCart(id) {
-  const product = getHomeProducts().find(item => String(item.id) === String(id));
-  if (!product) return;
-  const found = state.cart.find(item => item.id === product.id);
-  if (found) found.qty += 1;
-  else state.cart.push({ ...product, qty: 1 });
-  saveCart();
-  if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackAddToCart(product, 1);
-  renderCart();
-  $('#cartDrawer').classList.add('open');
+function updateHeaderCartBadges() {
+  let cart = [];
+  try {
+    cart = JSON.parse(localStorage.getItem('zavoraCart') || localStorage.getItem('zavora_cart') || '[]');
+  } catch(e) {}
+
+  const totalQty = Array.isArray(cart) ? cart.reduce((sum, item) => sum + Number(item.qty || 1), 0) : 0;
+
+  document.querySelectorAll('[data-page-cart], .cart-button, #cartCount').forEach(el => {
+    if (el.tagName === 'A' || el.tagName === 'BUTTON') {
+      el.textContent = `Bag ${totalQty}`;
+    } else {
+      el.textContent = String(totalQty);
+    }
+  });
+}
+
+function showCartToast(item) {
+  let toast = document.getElementById('zavoraCartToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'zavoraCartToast';
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #111111;
+      color: #ffffff;
+      padding: 16px 22px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: inherit;
+      font-size: 14px;
+      border: 1px solid #333;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `
+    <img src="${item.img}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #444;">
+    <div>
+      <strong style="display:block;color:#fff;font-weight:700;font-size:13px;">Added to Bag!</strong>
+      <span style="color:#aaa;font-size:12px;">${item.name} (${item.color || 'Original'} / ${item.size || 'M'})</span>
+    </div>
+    <a href="checkout.html" style="background:#ffffff;color:#111;padding:6px 14px;border-radius:6px;font-weight:800;font-size:12px;text-decoration:none;margin-left:8px;text-transform:uppercase;letter-spacing:0.5px;">Checkout &rarr;</a>
+  `;
+
+  setTimeout(() => {
+    toast.style.transform = 'translateY(0)';
+    toast.style.opacity = '1';
+  }, 10);
+
+  setTimeout(() => {
+    toast.style.transform = 'translateY(100px)';
+    toast.style.opacity = '0';
+  }, 4000);
+}
+
+function addToCart(id, color, size, qty = 1) {
+  let itemToAdd = null;
+
+  const homeProd = getHomeProducts().find(item => String(item.id) === String(id));
+  if (homeProd) {
+    itemToAdd = {
+      id: String(homeProd.id),
+      name: homeProd.name,
+      price: homeProd.price,
+      img: homeProd.img,
+      color: color || homeProd.color || 'Black',
+      size: size || homeProd.sizes?.[0] || 'M',
+      qty: Number(qty) || 1
+    };
+  } else {
+    const mainName = document.querySelector('h1')?.textContent?.trim();
+    const mainPriceEl = document.querySelector('.sale-price');
+    const mainPrice = mainPriceEl ? Number(mainPriceEl.dataset.price || mainPriceEl.textContent.replace(/[^0-9.]/g, '')) : 94.89;
+    const mainImg = document.querySelector('#zavoraMainImage')?.src || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
+    const selColor = color || document.getElementById('zavoraSelectedColor')?.textContent?.trim() || 'Black';
+    const selSize = size || document.getElementById('zavoraSelectedSize')?.textContent?.trim() || 'M';
+
+    itemToAdd = {
+      id: String(id || '862'),
+      name: mainName || `Zavora Product #${id}`,
+      price: mainPrice,
+      img: mainImg,
+      color: selColor,
+      size: selSize,
+      qty: Number(qty) || 1
+    };
+  }
+
+  try {
+    let cart = JSON.parse(localStorage.getItem('zavoraCart') || '[]');
+    const existingIdx = cart.findIndex(i => String(i.id) === String(itemToAdd.id) && String(i.color || '').toLowerCase() === String(itemToAdd.color || '').toLowerCase() && String(i.size || '').toLowerCase() === String(itemToAdd.size || '').toLowerCase());
+    if (existingIdx > -1) {
+      cart[existingIdx].qty += itemToAdd.qty;
+    } else {
+      cart.push(itemToAdd);
+    }
+    localStorage.setItem('zavoraCart', JSON.stringify(cart));
+    localStorage.setItem('zavora_cart', JSON.stringify(cart));
+
+    if (Array.isArray(state?.cart)) {
+      const stateIdx = state.cart.findIndex(i => String(i.id) === String(itemToAdd.id));
+      if (stateIdx > -1) state.cart[stateIdx].qty += itemToAdd.qty;
+      else state.cart.push(itemToAdd);
+    }
+  } catch(e) {}
+
+  updateHeaderCartBadges();
+
+  if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackAddToCart(itemToAdd, 1);
+
+  const cartDrawer = document.getElementById('cartDrawer');
+  if (cartDrawer) {
+    if (typeof renderCart === 'function') renderCart();
+    cartDrawer.classList.add('open');
+  } else {
+    showCartToast(itemToAdd);
+  }
 }
 
 function renderCart() {

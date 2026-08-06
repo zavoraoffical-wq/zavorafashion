@@ -4257,7 +4257,24 @@ initHomepageRecommendationRails();
 injectProductRails();
 cleanAuthPageFooter();
 initCheckoutGiftUi();
-initRewardsPage();
+function updateHeaderCartBadges() {
+  let cart = [];
+  try {
+    cart = JSON.parse(localStorage.getItem('zavoraCart') || localStorage.getItem('zavora_cart') || '[]');
+  } catch(e) {}
+
+  const totalQty = Array.isArray(cart) ? cart.reduce((sum, item) => sum + Number(item.qty || 1), 0) : 0;
+
+  document.querySelectorAll('[data-page-cart], .cart-button, #cartCount').forEach(el => {
+    if (el.tagName === 'A' || el.tagName === 'BUTTON') {
+      el.textContent = `Bag ${totalQty}`;
+    } else {
+      el.textContent = String(totalQty);
+    }
+  });
+}
+
+updateHeaderCartBadges();
 hydrateCheckoutSummary();
 initRealtimeTracking();
 initTrackOrderLookup();

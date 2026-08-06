@@ -858,6 +858,10 @@
     const isProductPage = window.location.pathname.includes('product') || 
                           document.body.classList.contains('product-page-pending') || 
                           (document.querySelector('main p')?.textContent || '').includes('No product selected');
+    
+    // Always sync header cart badge on any page load
+    if (typeof updateHeaderCartBadges === 'function') updateHeaderCartBadges();
+    
     if (!isProductPage) return;
 
     const id = getQueryParam('id') || getQueryParam('product') || getQueryParam('printfulId');
@@ -865,12 +869,14 @@
 
     // Initial render
     renderProductPageUI(product);
+    if (typeof updateHeaderCartBadges === 'function') updateHeaderCartBadges();
 
     // If API ID is present, attempt background fetch to get full fresh DB data
     if (id) {
       const dbProduct = await fetchProductFromAPI(id);
       if (dbProduct) {
         renderProductPageUI(dbProduct);
+        if (typeof updateHeaderCartBadges === 'function') updateHeaderCartBadges();
       }
     }
   }
