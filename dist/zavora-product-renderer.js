@@ -1,7 +1,7 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (100% Pure Printful Studio Cutouts & Dynamic Swatches)
+ * Zavora Fashion — Product Detail Page Renderer (100% Distinct Printful Studio Cutouts & Dynamic Swatches)
  * Features:
- * 1. 100% Pure Printful studio apparel cutouts — Zero human models / girls on any product card
+ * 1. 100% Distinct Printful studio apparel cutouts for every category (Hoodies, Sweatshirts, Cargo Pants, Jackets, Caps, Boxy Tees, Essential Tees)
  * 2. Guaranteed image error handler (onerror) — Zero broken image icons
  * 3. Real-time cart & header Bag badge sync
  * 4. Instant 0ms discovery carousels
@@ -11,21 +11,35 @@
   'use strict';
 
   function sanitizeApparelImg(url, category = '', name = '') {
-    if (!url || typeof url !== 'string') return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
-    
-    // Replace broken Printful 386 URL if present
-    if (url.includes('386/10456')) return 'https://files.cdn.printful.com/products/411/10777_1627993077.jpg';
-
-    // Keep official Printful product studio cutouts
-    if (url.includes('files.cdn.printful.com/products/')) return url;
-
-    // Convert ANY unsplash URL or human model photo to pure studio apparel cutout
     const text = `${category} ${name}`.toLowerCase();
-    if (text.includes('hoodie')) return 'https://files.cdn.printful.com/products/377/10202_1623835619.jpg';
-    if (text.includes('sweatshirt') || text.includes('pullover')) return 'https://files.cdn.printful.com/products/411/10777_1627993077.jpg';
-    if (text.includes('cargo') || text.includes('pant') || text.includes('trouser')) return 'https://files.cdn.printful.com/products/329/9312_1614087132.jpg';
-    if (text.includes('jacket') || text.includes('bomber')) return 'https://files.cdn.printful.com/products/934/15672_1650371890.jpg';
-    if (text.includes('cap') || text.includes('hat')) return 'https://files.cdn.printful.com/products/205/7604_1583236021.jpg';
+
+    // 100% DISTINCT HIGH-RES PRINTFUL STUDIO CUTOUTS FOR EVERY PRODUCT TYPE
+    if (text.includes('hoodie')) {
+      return 'https://files.cdn.printful.com/products/377/10202_1623835619.jpg';
+    }
+    if (text.includes('sweatshirt') || text.includes('pullover') || text.includes('crewneck')) {
+      return 'https://files.cdn.printful.com/products/411/10777_1627993077.jpg';
+    }
+    if (text.includes('cargo') || text.includes('pant') || text.includes('trouser') || text.includes('denim')) {
+      return 'https://files.cdn.printful.com/products/329/9312_1614087132.jpg';
+    }
+    if (text.includes('jacket') || text.includes('bomber') || text.includes('outerwear')) {
+      return 'https://files.cdn.printful.com/products/934/15672_1650371890.jpg';
+    }
+    if (text.includes('cap') || text.includes('hat') || text.includes('accessory')) {
+      return 'https://files.cdn.printful.com/products/205/7604_1583236021.jpg';
+    }
+    if (text.includes('ivory') || text.includes('essential tee') || text.includes('short sleeve') || text.includes('512')) {
+      return 'https://files.cdn.printful.com/products/512/13444_1638362629.jpg';
+    }
+    if (text.includes('boxy') || text.includes("women's heavyweight") || text.includes('862')) {
+      return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
+    }
+
+    if (url && typeof url === 'string' && url.includes('files.cdn.printful.com/products/') && !url.includes('/862/22596_1743753167')) {
+      return url;
+    }
+
     return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
   }
 
