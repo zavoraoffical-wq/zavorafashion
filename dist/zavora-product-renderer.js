@@ -1,7 +1,10 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Production-Ready Edition)
- * Includes Server-Side Powered Recommended & Similar Products Section with 4-per-row Desktop Grid,
- * Quick View Modal, Add to Cart, Wishlist, Ratings, & Discount Badges.
+ * Zavora Fashion — Product Detail Page Renderer (Production-Ready 6-Product Slider Edition)
+ * Features 4 Discovery Sections with Active Carousel Navigation (← & → Arrows) & 6 Products Each:
+ * 1. SIMILAR PRODUCTS
+ * 2. RECOMMENDED FOR YOU
+ * 3. TRENDING NOW
+ * 4. NEW ARRIVALS
  */
 
 (function () {
@@ -244,31 +247,10 @@
     return null;
   }
 
-  /**
-   * Server-Side & Client Fallback Recommendation Engine
-   * Strictly enforces Priority:
-   * 1. Same category
-   * 2. Same gender
-   * 3. Same collection
-   * 4. Similar tags/style/color
-   * 5. Price range
-   * Never fake, never dummy, never duplicate current product.
-   */
-  async function fetchServerRecommendations(currentProduct, limit = 8) {
-    const targetId = String(currentProduct?.id || currentProduct?.printfulId || '');
-    
-    // Attempt Server API Call
-    try {
-      const res = await fetch(`/api/products?action=recommendations&id=${encodeURIComponent(targetId)}&limit=${limit}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ok && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
-          return data.recommendations;
-        }
-      }
-    } catch(e) {}
+  function getSectionProducts(currentProduct, type, count = 6) {
+    const currentId = String(currentProduct?.id || currentProduct?.printfulId || '');
+    const category = String(currentProduct?.category || '').toLowerCase();
 
-    // Client-side Priority Scored Recommendation Engine (Fallback when offline or fast hydrate)
     let pool = DEFAULT_CATALOG_FALLBACK;
     if (window.__zavoraCatalogProducts?.length) {
       pool = [...window.__zavoraCatalogProducts, ...DEFAULT_CATALOG_FALLBACK];
@@ -279,153 +261,137 @@
       } catch(e) {}
     }
 
-    const targetCategory = String(currentProduct?.category || '').toLowerCase();
-    const targetGender = String(currentProduct?.gender || '').toLowerCase();
-    const targetCollections = Array.isArray(currentProduct?.collection)
-      ? currentProduct.collection.map(c => String(c).toLowerCase())
-      : [String(currentProduct?.collection || '').toLowerCase()].filter(Boolean);
-    const targetPrice = Number(currentProduct?.price || 100);
+    const poolFiltered = pool.filter(p => String(p.id || p.printfulId) !== currentId);
+    const seen = new Set();
+    const result = [];
 
-    const candidates = pool.filter(p => {
-      const pId = String(p.id || p.printfulId || '');
-      return pId !== targetId;
-    });
-
-    const scored = candidates.map(p => {
-      let score = 0;
-      const pCat = String(p.category || '').toLowerCase();
-      const pGender = String(p.gender || '').toLowerCase();
-      const pCols = Array.isArray(p.collection) ? p.collection.map(c => String(c).toLowerCase()) : [String(p.collection || '').toLowerCase()].filter(Boolean);
-      const pPrice = Number(p.price || 0);
-
-      // Priority 1: Same category (+100)
-      if (pCat && targetCategory && (pCat.includes(targetCategory) || targetCategory.includes(pCat))) score += 100;
-      // Priority 2: Same gender (+50)
-      if (pGender && targetGender && (pGender === targetGender || pGender === 'unisex' || targetGender === 'unisex')) score += 50;
-      // Priority 3: Same collection (+30)
-      if (pCols.some(c => targetCollections.includes(c))) score += 30;
-      // Priority 4: Price proximity (+15)
-      if (targetPrice > 0 && pPrice > 0) {
-        const diffRatio = Math.abs(pPrice - targetPrice) / targetPrice;
-        if (diffRatio < 0.5) score += Math.round((1 - diffRatio) * 15);
+    if (type === 'similar') {
+      const matches = poolFiltered.filter(p => String(p.category || '').toLowerCase().includes(category) || category.includes(String(p.category || '').toLowerCase()));
+      for (const item of matches) {
+        const key = String(item.id || item.printfulId);
+        if (!seen.has(key) && result.length < count) {
+          seen.add(key);
+          result.push(item);
+        }
       }
-
-      return { product: p, score };
-    });
-
-    scored.sort((a, b) => b.score - a.score);
-
-    // Group into score tiers & randomize within tier on each visit
-    const grouped = {};
-    scored.forEach(item => {
-      const tier = Math.floor(item.score / 20) * 20;
-      if (!grouped[tier]) grouped[tier] = [];
-      grouped[tier].push(item.product);
-    });
-
-    const finalRecs = [];
-    const seenIds = new Set();
-    const tiers = Object.keys(grouped).map(Number).sort((a, b) => b - a);
-
-    for (const tier of tiers) {
-      const tierItems = grouped[tier].sort(() => 0.5 - Math.random());
-      for (const p of tierItems) {
-        const pId = String(p.id || p.printfulId || p.name);
-        if (!seenIds.has(pId) && finalRecs.length < limit) {
-          seenIds.add(pId);
-          finalRecs.push(p);
+    } else if (type === 'trending') {
+      const matches = poolFiltered.filter(p => String(p.badge || '').toLowerCase().includes('trend') || String(p.badge || '').toLowerCase().includes('popular') || String(p.badge || '').toLowerCase().includes('best'));
+      for (const item of matches) {
+        const key = String(item.id || item.printfulId);
+        if (!seen.has(key) && result.length < count) {
+          seen.add(key);
+          result.push(item);
+        }
+      }
+    } else if (type === 'new') {
+      const matches = poolFiltered.filter(p => String(p.badge || '').toLowerCase().includes('new') || String(p.badge || '').toLowerCase().includes('essential') || String(p.badge || '').toLowerCase().includes('limited'));
+      for (const item of matches) {
+        const key = String(item.id || item.printfulId);
+        if (!seen.has(key) && result.length < count) {
+          seen.add(key);
+          result.push(item);
         }
       }
     }
 
-    return finalRecs;
+    if (result.length < count) {
+      for (const item of poolFiltered) {
+        const key = String(item.id || item.printfulId);
+        if (!seen.has(key) && result.length < count) {
+          seen.add(key);
+          result.push(item);
+        }
+      }
+    }
+
+    return result.slice(0, count);
   }
 
-  function renderSimilarProductsSection(products) {
+  async function fetchServerRecommendations(currentProduct, limit = 6) {
+    const targetId = String(currentProduct?.id || currentProduct?.printfulId || '');
+    
+    try {
+      const res = await fetch(`/api/products?action=recommendations&id=${encodeURIComponent(targetId)}&limit=${limit}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+          return data.recommendations.slice(0, limit);
+        }
+      }
+    } catch(e) {}
+
+    return getSectionProducts(currentProduct, 'similar', limit);
+  }
+
+  function renderDiscoverySection(sectionId, tag, title, products) {
     if (!products || !products.length) return '';
+    const items6 = products.slice(0, 6);
 
     return `
-      <section id="zavoraSimilarProductsSection" style="margin-top: 90px; border-top: 1px solid #e5e7eb; padding-top: 60px; width: 100%;">
-        
-        <!-- SECTION HEADER -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 36px; flex-wrap: wrap; gap: 16px;">
+      <div style="margin-top: 54px; width: 100%;">
+        <!-- HEADER BAR WITH NAV ARROWS -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; background: #000000; color: #ffffff; border-radius: 8px; margin-bottom: 22px;">
           <div>
-            <span style="color: #c9a227; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 6px;">RECOMMENDED FOR YOU</span>
-            <h2 style="font-size: 2rem; font-weight: 800; color: #111111; margin: 0; letter-spacing: -0.5px;">Similar Products & Curated Streetwear</h2>
+            <span style="color: #c9a227; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 2px;">${tag}</span>
+            <h3 style="font-size: 1rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin: 0; color: #ffffff;">${title}</h3>
           </div>
-          <a href="best-sellers.html" style="font-size: 0.9rem; font-weight: 800; color: #111111; text-decoration: underline; text-transform: uppercase; letter-spacing: 1px;">Explore Collection &rarr;</a>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="zavoraNavPrev" data-sec="${sectionId}" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" aria-label="Previous slide">&larr;</button>
+            <button type="button" class="zavoraNavNext" data-sec="${sectionId}" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" aria-label="Next slide">&rarr;</button>
+          </div>
         </div>
 
-        <!-- 4 PRODUCTS PER ROW DESKTOP GRID -->
-        <div class="zavoraRecGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 28px;">
-          ${products.map(p => {
+        <!-- SCROLLABLE CAROUSEL TRACK (6 PRODUCTS) -->
+        <div id="zavoraTrack_${sectionId}" style="display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 14px;">
+          ${items6.map(p => {
             const pId = String(p.id || p.printfulId);
             const pName = String(p.name || 'Zavora Product');
             const pPrice = Number(p.price || 89.99);
             const pCompareAt = p.compareAt ? Number(p.compareAt) : (pPrice * 1.25);
             const discountPct = pCompareAt > pPrice ? Math.round(((pCompareAt - pPrice) / pCompareAt) * 100) : 0;
-            const badgeText = p.badge || (discountPct > 0 ? `${discountPct}% OFF` : 'RECOMMENDED');
+            const badgeText = p.badge || (discountPct > 0 ? `${discountPct}% OFF` : 'NEW');
             const ratingStars = p.rating || 4.9;
-            const mainImg = p.img || p.image || p.thumbnail || (Array.isArray(p.images) ? p.images[0] : 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg');
+            const mainImg = p.img || p.image || p.thumbnail || (Array.isArray(p.images) ? p.images[0] : '');
 
             return `
-              <article class="zavoraProductCard" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; position: relative; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease; display: flex; flex-direction: column;">
+              <article class="zavoraProductCard" style="flex: 0 0 250px; min-width: 250px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 10px; overflow: hidden; position: relative; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; display: flex; flex-direction: column;">
                 
-                <!-- BADGE -->
-                ${badgeText ? `<span style="position: absolute; top: 14px; left: 14px; background: #111111; color: #ffffff; border: 1px solid #111111; padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; z-index: 2;">${badgeText}</span>` : ''}
+                ${badgeText ? `<span style="position: absolute; top: 12px; left: 12px; background: #111111; color: #ffffff; border: 1px solid #111111; padding: 4px 10px; font-size: 0.7rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; z-index: 2;">${badgeText}</span>` : ''}
                 
-                <!-- WISHLIST HEART BUTTON -->
-                <button type="button" class="zavoraRecWishBtn" data-rec-id="${pId}" style="position: absolute; top: 14px; right: 14px; background: #ffffff; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 2; transition: transform 0.2s;" aria-label="Add to wishlist">
+                <button type="button" class="zavoraRecWishBtn" data-rec-id="${pId}" style="position: absolute; top: 12px; right: 12px; background: #ffffff; border: none; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 2;" aria-label="Add to wishlist">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                 </button>
 
-                <!-- PRODUCT IMAGE -->
                 <a href="product?id=${encodeURIComponent(pId)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #ffffff;">
                   <img class="zavoraCardImg" src="${mainImg}" alt="${pName}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
                 </a>
 
-                <!-- CARD DETAILS -->
-                <div style="padding: 20px; display: flex; flex-direction: column; flex-grow: 1;">
-                  
-                  <!-- RATING -->
-                  <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-                    <span style="color: #f59e0b; font-size: 0.88rem; letter-spacing: 1px;">★★★★★</span>
-                    <span style="font-size: 0.8rem; color: #666666; font-weight: 700;">${ratingStars}</span>
+                <div style="padding: 14px; display: flex; flex-direction: column; flex-grow: 1;">
+                  <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                    <span style="color: #f59e0b; font-size: 0.82rem;">★★★★★</span>
+                    <span style="font-size: 0.78rem; color: #666666; font-weight: 700;">${ratingStars}</span>
                   </div>
 
-                  <!-- TITLE -->
-                  <h3 style="font-size: 1.02rem; font-weight: 800; margin: 0 0 8px; line-height: 1.35; height: 44px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                  <h4 style="font-size: 0.9rem; font-weight: 800; margin: 0 0 8px; line-height: 1.3; height: 36px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                     <a href="product?id=${encodeURIComponent(pId)}" style="color: #111111; text-decoration: none;">${pName}</a>
-                  </h3>
+                  </h4>
 
-                  <!-- PRICE -->
-                  <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px;">
-                    <strong class="sale-price" data-price="${pPrice}" style="font-size: 1.25rem; font-weight: 800; color: #111111;">$${pPrice.toFixed(2)}</strong>
-                    ${pCompareAt > pPrice ? `<s style="font-size: 0.95rem; color: #888888;">$${pCompareAt.toFixed(2)}</s>` : ''}
+                  <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px;">
+                    <strong class="sale-price" data-price="${pPrice}" style="font-size: 1.1rem; font-weight: 800; color: #111111;">$${pPrice.toFixed(2)}</strong>
+                    ${pCompareAt > pPrice ? `<s style="font-size: 0.85rem; color: #888888;">$${pCompareAt.toFixed(2)}</s>` : ''}
                   </div>
 
-                  <!-- ACTION BUTTONS (QUICK VIEW & ADD TO CART) -->
-                  <div style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <button type="button" class="zavoraQuickViewBtn" data-qv-id="${pId}" style="padding: 10px; background: #ffffff; color: #111111; border: 1.5px solid #111111; border-radius: 6px; font-weight: 800; font-size: 0.78rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: background 0.2s;">QUICK VIEW</button>
-                    <button type="button" class="zavoraRecAddToCartBtn" data-rec-cart-id="${pId}" style="padding: 10px; background: #111111; color: #ffffff; border: none; border-radius: 6px; font-weight: 800; font-size: 0.78rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: opacity 0.2s;">ADD TO BAG</button>
+                  <div style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" class="zavoraQuickViewBtn" data-qv-id="${pId}" style="padding: 8px; background: #ffffff; color: #111111; border: 1.5px solid #111111; border-radius: 6px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">QUICK VIEW</button>
+                    <button type="button" class="zavoraRecAddToCartBtn" data-rec-cart-id="${pId}" style="padding: 8px; background: #111111; color: #ffffff; border: none; border-radius: 6px; font-weight: 800; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">ADD TO BAG</button>
                   </div>
-
                 </div>
 
               </article>
             `;
           }).join('')}
         </div>
-
-        <!-- QUICK VIEW OVERLAY MODAL -->
-        <div id="zavoraQuickViewModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 999999; padding: 20px; backdrop-filter: blur(5px);">
-          <div style="background: #ffffff; color: #111111; border-radius: 14px; max-width: 780px; width: 100%; padding: 36px; position: relative; box-shadow: 0 24px 60px rgba(0,0,0,0.4); max-height: 90vh; overflow-y: auto;">
-            <button type="button" id="zavoraCloseQuickView" style="position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 2rem; font-weight: 700; cursor: pointer; color: #111111; line-height: 1;">&times;</button>
-            <div id="zavoraQuickViewContent"></div>
-          </div>
-        </div>
-
-      </section>
+      </div>
     `;
   }
 
@@ -544,7 +510,7 @@
           </div>
         </div>
 
-        <!-- SIMILAR / RECOMMENDED PRODUCTS SECTION CONTAINER -->
+        <!-- 4 DISCOVERY CAROUSEL SECTIONS (6 PRODUCTS EACH) -->
         <div id="zavoraRecContainer"></div>
 
         <!-- SIZE GUIDE MODAL -->
@@ -577,12 +543,32 @@
       </section>
     `;
 
-    // Async Fetch Server Recommendations & Hydrate
-    fetchServerRecommendations(product, 8).then(recProducts => {
+    // Hydrate 4 Sections (6 Products Each) with Active Arrow Sliders
+    const similarProducts = getSectionProducts(product, 'similar', 6);
+    const trendingProducts = getSectionProducts(product, 'trending', 6);
+    const newArrivalsProducts = getSectionProducts(product, 'new', 6);
+
+    fetchServerRecommendations(product, 6).then(recommendedProducts => {
       const container = document.getElementById('zavoraRecContainer');
       if (container) {
-        container.innerHTML = renderSimilarProductsSection(recProducts);
-        bindRecommendationEvents(recProducts);
+        container.innerHTML = `
+          <div style="margin-top: 80px; border-top: 1px solid #e5e7eb; padding-top: 20px; width: 100%;">
+            ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', similarProducts)}
+            ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', recommendedProducts)}
+            ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', trendingProducts)}
+            ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', newArrivalsProducts)}
+
+            <!-- QUICK VIEW OVERLAY MODAL -->
+            <div id="zavoraQuickViewModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 999999; padding: 20px; backdrop-filter: blur(5px);">
+              <div style="background: #ffffff; color: #111111; border-radius: 14px; max-width: 780px; width: 100%; padding: 36px; position: relative; box-shadow: 0 24px 60px rgba(0,0,0,0.4); max-height: 90vh; overflow-y: auto;">
+                <button type="button" id="zavoraCloseQuickView" style="position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 2rem; font-weight: 700; cursor: pointer; color: #111111; line-height: 1;">&times;</button>
+                <div id="zavoraQuickViewContent"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        const allPool = [...similarProducts, ...recommendedProducts, ...trendingProducts, ...newArrivalsProducts];
+        bindRecommendationEvents(allPool);
         if (window.ZavoraCurrency) window.ZavoraCurrency.update();
       }
     });
@@ -695,7 +681,22 @@
   }
 
   function bindRecommendationEvents(products = []) {
-    // 1. Bind Quick View Modal
+    // 1. Carousel Arrow Navigation (< & >)
+    document.querySelectorAll('.zavoraNavPrev').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const track = document.getElementById(`zavoraTrack_${btn.dataset.sec}`);
+        if (track) track.scrollBy({ left: -270, behavior: 'smooth' });
+      });
+    });
+
+    document.querySelectorAll('.zavoraNavNext').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const track = document.getElementById(`zavoraTrack_${btn.dataset.sec}`);
+        if (track) track.scrollBy({ left: 270, behavior: 'smooth' });
+      });
+    });
+
+    // 2. Bind Quick View Modal
     const qvModal = document.getElementById('zavoraQuickViewModal');
     const qvContent = document.getElementById('zavoraQuickViewContent');
     const qvClose = document.getElementById('zavoraCloseQuickView');
@@ -754,7 +755,7 @@
       });
     });
 
-    // 2. Bind Rec Add to Cart
+    // 3. Bind Rec Add to Cart
     document.querySelectorAll('.zavoraRecAddToCartBtn').forEach(btn => {
       btn.addEventListener('click', () => {
         const pId = String(btn.dataset.recCartId);
@@ -780,7 +781,7 @@
       });
     });
 
-    // 3. Bind Rec Wishlist
+    // 4. Bind Rec Wishlist
     document.querySelectorAll('.zavoraRecWishBtn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
