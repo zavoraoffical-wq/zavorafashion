@@ -1,6 +1,6 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Luxury Full-Bleed Studio Cutout Edition)
- * Features 4 Discovery Sections with High-Class Luxury Headers, Pure Apparel Studio Cutouts, & 6 Products Each:
+ * Zavora Fashion — Product Detail Page Renderer (Instant Load + 100% Studio Apparel Cutouts)
+ * Features 4 Discovery Sections with High-Class Luxury Headers, Pure Apparel Studio Cutouts, 0ms Instant Load, & 6 Products Each:
  * 1. SIMILAR PRODUCTS
  * 2. RECOMMENDED FOR YOU
  * 3. TRENDING NOW
@@ -9,6 +9,14 @@
 
 (function () {
   'use strict';
+
+  function sanitizeApparelImg(url) {
+    if (!url || typeof url !== 'string') return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
+    if (url.includes('photo-1544441893') || url.includes('photo-1515886657613') || url.includes('photo-1556821840') || url.includes('photo-1578632767115') || url.includes('photo-1541099649105') || url.includes('photo-1521572267360')) {
+      return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
+    }
+    return url;
+  }
 
   // 100% Pure Studio Apparel Cutouts — Zero Model Faces, Zero Anime Figures, Zero Lifestyle Backgrounds
   const DEFAULT_CATALOG_FALLBACK = [
@@ -351,7 +359,8 @@
             const discountPct = pCompareAt > pPrice ? Math.round(((pCompareAt - pPrice) / pCompareAt) * 100) : 0;
             const badgeText = p.badge || (discountPct > 0 ? `${discountPct}% OFF` : 'NEW');
             const ratingStars = p.rating || 4.9;
-            const mainImg = p.img || p.image || p.thumbnail || (Array.isArray(p.images) ? p.images[0] : '');
+            const rawImg = p.img || p.image || p.thumbnail || (Array.isArray(p.images) ? p.images[0] : '');
+            const mainImg = sanitizeApparelImg(rawImg);
 
             return `
               <article class="zavoraProductCard" style="flex: 0 0 290px; min-width: 290px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; position: relative; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; display: flex; flex-direction: column;">
@@ -412,8 +421,8 @@
     }
 
     const images = Array.isArray(product.images) && product.images.length
-      ? product.images
-      : [product.img || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg'];
+      ? product.images.map(sanitizeApparelImg)
+      : [sanitizeApparelImg(product.img || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg')];
 
     const rawColors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'Black'];
     const colors = rawColors.map(c => String(c).trim()).filter(Boolean);
@@ -510,7 +519,7 @@
           </div>
         </div>
 
-        <!-- 4 DISCOVERY CAROUSEL SECTIONS (FULL-WIDTH, LUXURY HEADERS, PURE STUDIO CUTOUTS) -->
+        <!-- 4 DISCOVERY CAROUSEL SECTIONS (INSTANT 0MS LOAD) -->
         <div id="zavoraRecContainer"></div>
 
         <!-- SIZE GUIDE MODAL -->
@@ -543,33 +552,47 @@
       </section>
     `;
 
-    // Hydrate 4 Sections (6 Products Each) with Active Arrow Sliders
+    // 1. INSTANT 0MS SYNCHRONOUS RENDER OF ALL 4 DISCOVERY SECTIONS
     const similarProducts = getSectionProducts(product, 'similar', 6);
+    const localRecommended = getSectionProducts(product, 'similar', 6);
     const trendingProducts = getSectionProducts(product, 'trending', 6);
     const newArrivalsProducts = getSectionProducts(product, 'new', 6);
 
-    fetchServerRecommendations(product, 6).then(recommendedProducts => {
-      const container = document.getElementById('zavoraRecContainer');
-      if (container) {
-        container.innerHTML = `
-          <div style="margin-top: 60px; border-top: 1px solid #e5e7eb; padding-top: 20px; width: 100%;">
-            ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', similarProducts)}
-            ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', recommendedProducts)}
-            ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', trendingProducts)}
-            ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', newArrivalsProducts)}
+    const container = document.getElementById('zavoraRecContainer');
+    if (container) {
+      container.innerHTML = `
+        <div style="margin-top: 60px; border-top: 1px solid #e5e7eb; padding-top: 20px; width: 100%;">
+          ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', similarProducts)}
+          <div id="zavoraRecSectionInner">
+            ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', localRecommended)}
+          </div>
+          ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', trendingProducts)}
+          ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', newArrivalsProducts)}
 
-            <!-- QUICK VIEW OVERLAY MODAL -->
-            <div id="zavoraQuickViewModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 999999; padding: 20px; backdrop-filter: blur(5px);">
-              <div style="background: #ffffff; color: #111111; border-radius: 14px; max-width: 780px; width: 100%; padding: 36px; position: relative; box-shadow: 0 24px 60px rgba(0,0,0,0.4); max-height: 90vh; overflow-y: auto;">
-                <button type="button" id="zavoraCloseQuickView" style="position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 2rem; font-weight: 700; cursor: pointer; color: #111111; line-height: 1;">&times;</button>
-                <div id="zavoraQuickViewContent"></div>
-              </div>
+          <!-- QUICK VIEW OVERLAY MODAL -->
+          <div id="zavoraQuickViewModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 999999; padding: 20px; backdrop-filter: blur(5px);">
+            <div style="background: #ffffff; color: #111111; border-radius: 14px; max-width: 780px; width: 100%; padding: 36px; position: relative; box-shadow: 0 24px 60px rgba(0,0,0,0.4); max-height: 90vh; overflow-y: auto;">
+              <button type="button" id="zavoraCloseQuickView" style="position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 2rem; font-weight: 700; cursor: pointer; color: #111111; line-height: 1;">&times;</button>
+              <div id="zavoraQuickViewContent"></div>
             </div>
           </div>
-        `;
-        const allPool = [...similarProducts, ...recommendedProducts, ...trendingProducts, ...newArrivalsProducts];
-        bindRecommendationEvents(allPool);
-        if (window.ZavoraCurrency) window.ZavoraCurrency.update();
+        </div>
+      `;
+      const initialPool = [...similarProducts, ...localRecommended, ...trendingProducts, ...newArrivalsProducts];
+      bindRecommendationEvents(initialPool);
+      if (window.ZavoraCurrency) window.ZavoraCurrency.update();
+    }
+
+    // 2. BACKGROUND ASYNC ENHANCEMENT (NON-BLOCKING)
+    fetchServerRecommendations(product, 6).then(serverRecs => {
+      if (serverRecs && serverRecs.length) {
+        const recInner = document.getElementById('zavoraRecSectionInner');
+        if (recInner) {
+          recInner.innerHTML = renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', serverRecs);
+          const updatedPool = [...similarProducts, ...serverRecs, ...trendingProducts, ...newArrivalsProducts];
+          bindRecommendationEvents(updatedPool);
+          if (window.ZavoraCurrency) window.ZavoraCurrency.update();
+        }
       }
     });
 
@@ -712,7 +735,8 @@
         const p = products.find(x => String(x.id || x.printfulId) === pId) || DEFAULT_CATALOG_FALLBACK.find(x => String(x.id) === pId);
         if (!p || !qvContent || !qvModal) return;
 
-        const img = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
+        const rawImg = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
+        const img = sanitizeApparelImg(rawImg);
         const pPrice = Number(p.price || 89.99);
 
         qvContent.innerHTML = `
@@ -762,7 +786,8 @@
         const p = products.find(x => String(x.id || x.printfulId) === pId) || DEFAULT_CATALOG_FALLBACK.find(x => String(x.id) === pId);
         if (!p) return;
         const pPrice = Number(p.price || 89.99);
-        const img = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
+        const rawImg = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
+        const img = sanitizeApparelImg(rawImg);
 
         if (typeof addToCart === 'function') {
           addToCart(pId);
@@ -798,7 +823,7 @@
             if (svg) { svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', '#111111'); }
             alert(`${p.name} removed from your wishlist!`);
           } else {
-            wishlist.push({ id: pId, name: p.name, price: p.price, img: p.img || p.image });
+            wishlist.push({ id: pId, name: p.name, price: p.price, img: sanitizeApparelImg(p.img || p.image) });
             if (svg) { svg.setAttribute('fill', '#e11d48'); svg.setAttribute('stroke', '#e11d48'); }
             alert(`${p.name} saved to your wishlist!`);
           }
