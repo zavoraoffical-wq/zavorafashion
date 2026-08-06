@@ -651,6 +651,9 @@ function getProductStorefrontPages(product) {
   return Array.from(new Set(pages));
 }
 
+let currentAdminCategoryFilter = 'all';
+let currentAdminGenderFilter = 'all';
+
 async function renderAdminProducts() {
   const list = document.querySelector('[data-admin-product-list]');
   if (!list) return;
@@ -681,7 +684,101 @@ async function renderAdminProducts() {
     return true;
   });
 
+  // Calculate Category & Gender Live Counts
+  const totalCount = allProducts.length;
+  const womenCount = allProducts.filter(p => String(p.gender || '').toLowerCase().includes('women')).length;
+  const menCount = allProducts.filter(p => String(p.gender || '').toLowerCase().includes('men') && !String(p.gender || '').toLowerCase().includes('women')).length;
+  const unisexCount = allProducts.filter(p => String(p.gender || '').toLowerCase().includes('unisex') || !p.gender).length;
+
+  const teesCount = allProducts.filter(p => String(p.category || '').toLowerCase().includes('tee')).length;
+  const hoodiesCount = allProducts.filter(p => String(p.category || '').toLowerCase().includes('hoodie')).length;
+  const sweatshirtsCount = allProducts.filter(p => String(p.category || '').toLowerCase().includes('sweatshirt')).length;
+  const cargosCount = allProducts.filter(p => String(p.category || '').toLowerCase().includes('cargo') || String(p.category || '').toLowerCase().includes('pant')).length;
+  const jacketsCount = allProducts.filter(p => String(p.category || '').toLowerCase().includes('jacket')).length;
+  const accessoriesCount = allProducts.filter(p => String(p.category || '').toLowerCase().includes('accessories') || String(p.category || '').toLowerCase().includes('cap')).length;
+
+  // Render or Update Admin Product Filter Bar
+  let filterBarWrap = document.querySelector('#adminProductFilterBarWrap');
+  if (!filterBarWrap) {
+    const cardHead = document.querySelector('[data-panel="products"] .card-head') || document.querySelector('[data-panel="products"] h2')?.parentElement;
+    if (cardHead) {
+      filterBarWrap = document.createElement('div');
+      filterBarWrap.id = 'adminProductFilterBarWrap';
+      filterBarWrap.style.margin = '14px 0 16px 0';
+      filterBarWrap.style.padding = '14px';
+      filterBarWrap.style.background = '#f9fafb';
+      filterBarWrap.style.border = '1px solid #e5e7eb';
+      filterBarWrap.style.borderRadius = '8px';
+      cardHead.insertAdjacentElement('afterend', filterBarWrap);
+    }
+  }
+
+  if (filterBarWrap) {
+    filterBarWrap.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <!-- GENDER FILTERS -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <strong style="font-size:12px;color:#111;text-transform:uppercase;letter-spacing:0.5px;min-width:70px;">Gender:</strong>
+          <button type="button" class="adminGenderFilterBtn ${currentAdminGenderFilter==='all'?'active':''}" data-gender="all" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminGenderFilter==='all'?'#111':'#fff'};color:${currentAdminGenderFilter==='all'?'#fff':'#333'};cursor:pointer;font-weight:600;">All (${totalCount})</button>
+          <button type="button" class="adminGenderFilterBtn ${currentAdminGenderFilter==='women'?'active':''}" data-gender="women" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminGenderFilter==='women'?'#111':'#fff'};color:${currentAdminGenderFilter==='women'?'#fff':'#333'};cursor:pointer;font-weight:600;">Women (${womenCount})</button>
+          <button type="button" class="adminGenderFilterBtn ${currentAdminGenderFilter==='men'?'active':''}" data-gender="men" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminGenderFilter==='men'?'#111':'#fff'};color:${currentAdminGenderFilter==='men'?'#fff':'#333'};cursor:pointer;font-weight:600;">Men (${menCount})</button>
+          <button type="button" class="adminGenderFilterBtn ${currentAdminGenderFilter==='unisex'?'active':''}" data-gender="unisex" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminGenderFilter==='unisex'?'#111':'#fff'};color:${currentAdminGenderFilter==='unisex'?'#fff':'#333'};cursor:pointer;font-weight:600;">Unisex (${unisexCount})</button>
+        </div>
+
+        <!-- CATEGORY FILTERS -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <strong style="font-size:12px;color:#111;text-transform:uppercase;letter-spacing:0.5px;min-width:70px;">Category:</strong>
+          <button type="button" class="adminCategoryFilterBtn ${currentAdminCategoryFilter==='all'?'active':''}" data-cat="all" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminCategoryFilter==='all'?'#111':'#fff'};color:${currentAdminCategoryFilter==='all'?'#fff':'#333'};cursor:pointer;font-weight:600;">All (${totalCount})</button>
+          <button type="button" class="adminCategoryFilterBtn ${currentAdminCategoryFilter==='tee'?'active':''}" data-cat="tee" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminCategoryFilter==='tee'?'#111':'#fff'};color:${currentAdminCategoryFilter==='tee'?'#fff':'#333'};cursor:pointer;font-weight:600;">Tees (${teesCount})</button>
+          <button type="button" class="adminCategoryFilterBtn ${currentAdminCategoryFilter==='hoodie'?'active':''}" data-cat="hoodie" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminCategoryFilter==='hoodie'?'#111':'#fff'};color:${currentAdminCategoryFilter==='hoodie'?'#fff':'#333'};cursor:pointer;font-weight:600;">Hoodies (${hoodiesCount})</button>
+          <button type="button" class="adminCategoryFilterBtn ${currentAdminCategoryFilter==='sweatshirt'?'active':''}" data-cat="sweatshirt" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminCategoryFilter==='sweatshirt'?'#111':'#fff'};color:${currentAdminCategoryFilter==='sweatshirt'?'#fff':'#333'};cursor:pointer;font-weight:600;">Sweatshirts (${sweatshirtsCount})</button>
+          <button type="button" class="adminCategoryFilterBtn ${currentAdminCategoryFilter==='cargo'?'active':''}" data-cat="cargo" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminCategoryFilter==='cargo'?'#111':'#fff'};color:${currentAdminCategoryFilter==='cargo'?'#fff':'#333'};cursor:pointer;font-weight:600;">Cargos/Pants (${cargosCount})</button>
+          <button type="button" class="adminCategoryFilterBtn ${currentAdminCategoryFilter==='jacket'?'active':''}" data-cat="jacket" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminCategoryFilter==='jacket'?'#111':'#fff'};color:${currentAdminCategoryFilter==='jacket'?'#fff':'#333'};cursor:pointer;font-weight:600;">Jackets (${jacketsCount})</button>
+          <button type="button" class="adminCategoryFilterBtn ${currentAdminCategoryFilter==='accessories'?'active':''}" data-cat="accessories" style="padding:4px 10px;font-size:12px;border-radius:14px;border:1px solid #ccc;background:${currentAdminCategoryFilter==='accessories'?'#111':'#fff'};color:${currentAdminCategoryFilter==='accessories'?'#fff':'#333'};cursor:pointer;font-weight:600;">Caps/Accessories (${accessoriesCount})</button>
+        </div>
+      </div>
+    `;
+
+    // Bind Gender Click Events
+    filterBarWrap.querySelectorAll('.adminGenderFilterBtn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentAdminGenderFilter = btn.dataset.gender;
+        renderAdminProducts();
+      });
+    });
+
+    // Bind Category Click Events
+    filterBarWrap.querySelectorAll('.adminCategoryFilterBtn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentAdminCategoryFilter = btn.dataset.cat;
+        renderAdminProducts();
+      });
+    });
+  }
+
   let filtered = allProducts;
+
+  // 1. Filter by Gender
+  if (currentAdminGenderFilter !== 'all') {
+    filtered = filtered.filter(p => {
+      const g = String(p.gender || '').toLowerCase();
+      if (currentAdminGenderFilter === 'women') return g.includes('women');
+      if (currentAdminGenderFilter === 'men') return g.includes('men') && !g.includes('women');
+      if (currentAdminGenderFilter === 'unisex') return g.includes('unisex') || !p.gender;
+      return true;
+    });
+  }
+
+  // 2. Filter by Category
+  if (currentAdminCategoryFilter !== 'all') {
+    filtered = filtered.filter(p => {
+      const c = String(p.category || '').toLowerCase();
+      const n = String(p.name || '').toLowerCase();
+      return c.includes(currentAdminCategoryFilter) || n.includes(currentAdminCategoryFilter);
+    });
+  }
+
+  // 3. Filter by Search input query
   if (currentProductSearchQuery) {
     const q = currentProductSearchQuery.toLowerCase();
     filtered = filtered.filter(p => String(p.name || '').toLowerCase().includes(q) || String(p.category || '').toLowerCase().includes(q) || String(p.id || '').toLowerCase().includes(q));
@@ -689,8 +786,7 @@ async function renderAdminProducts() {
 
   const badge = document.querySelector('[data-admin-product-count]');
   if (badge) {
-    const publishedTotal = Number(latestProductDatabaseSummary?.published);
-    badge.textContent = `${Number.isFinite(publishedTotal) ? publishedTotal : filtered.filter((product) => product.published !== false && String(product.status || '').toLowerCase() !== 'draft').length} Products Live`;
+    badge.textContent = `${filtered.length} / ${totalCount} Products Shown`;
   }
 
   if (!filtered.length) {

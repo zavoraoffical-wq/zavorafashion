@@ -1,24 +1,40 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Instant Load + Unique 100% Studio Cutouts & Dynamic Swatches)
+ * Zavora Fashion — Product Detail Page Renderer (Instant Load + Strict 100% Studio Cutouts & Dynamic Swatches)
  * Features:
- * 1. Unique studio apparel cutouts for every single product (No duplicate pink tees)
- * 2. Dynamic Color & Size selection synced directly with Cart & Checkout
+ * 1. Strict elimination of any model/human face images coming from server DB recommendations
+ * 2. Dynamic Category & Gender counts
  * 3. 0ms Instant discovery carousels
  */
 
 (function () {
   'use strict';
 
-  function sanitizeApparelImg(url, category = '') {
+  const SAFE_STUDIO_CUTOUTS = [
+    'https://files.cdn.printful.com/products/862/22596_1743753167.jpg',
+    'photo-1578587018452',
+    'photo-1618354691373',
+    'photo-1620799140408',
+    'photo-1583743814966',
+    'photo-1624378439575',
+    'photo-1591047139829',
+    'photo-1588850561407'
+  ];
+
+  function sanitizeApparelImg(url, category = '', name = '') {
     if (!url || typeof url !== 'string') return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
-    if (url.includes('photo-1544441893') || url.includes('photo-1515886657613') || url.includes('photo-1556821840') || url.includes('photo-1541099649105')) {
-      const cat = String(category).toLowerCase();
-      if (cat.includes('hoodie')) return 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1000&q=85';
-      if (cat.includes('sweatshirt')) return 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=85';
-      if (cat.includes('pant') || cat.includes('cargo')) return 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85';
-      return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
+    if (url.includes('cdn.printful.com') && !url.includes('photo-')) return url;
+    
+    for (const safe of SAFE_STUDIO_CUTOUTS) {
+      if (url.includes(safe)) return url;
     }
-    return url;
+
+    const text = `${category} ${name}`.toLowerCase();
+    if (text.includes('hoodie')) return 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1000&q=85';
+    if (text.includes('sweatshirt') || text.includes('pullover')) return 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=85';
+    if (text.includes('cargo') || text.includes('pant') || text.includes('trouser')) return 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85';
+    if (text.includes('jacket') || text.includes('bomber')) return 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1000&q=85';
+    if (text.includes('cap') || text.includes('hat')) return 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=85';
+    return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
   }
 
   // 100% Pure Unique Studio Apparel Cutouts — Distinct Image for Every Product
@@ -356,7 +372,7 @@
             const badgeText = p.badge || (discountPct > 0 ? `${discountPct}% OFF` : 'NEW');
             const ratingStars = p.rating || 4.9;
             const rawImg = p.img || p.image || p.thumbnail || (Array.isArray(p.images) ? p.images[0] : '');
-            const mainImg = sanitizeApparelImg(rawImg, p.category);
+            const mainImg = sanitizeApparelImg(rawImg, p.category, p.name);
 
             return `
               <article class="zavoraProductCard" style="flex: 0 0 290px; min-width: 290px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; position: relative; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; display: flex; flex-direction: column;">
@@ -417,8 +433,8 @@
     }
 
     const images = Array.isArray(product.images) && product.images.length
-      ? product.images.map(img => sanitizeApparelImg(img, product.category))
-      : [sanitizeApparelImg(product.img || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg', product.category)];
+      ? product.images.map(img => sanitizeApparelImg(img, product.category, name))
+      : [sanitizeApparelImg(product.img || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg', product.category, name)];
 
     const rawColors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'Black'];
     const colors = rawColors.map(c => String(c).trim()).filter(Boolean);
@@ -741,7 +757,7 @@
         if (!p || !qvContent || !qvModal) return;
 
         const rawImg = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
-        const img = sanitizeApparelImg(rawImg, p.category);
+        const img = sanitizeApparelImg(rawImg, p.category, p.name);
         const pPrice = Number(p.price || 89.99);
 
         qvContent.innerHTML = `
@@ -792,7 +808,7 @@
         if (!p) return;
         const pPrice = Number(p.price || 89.99);
         const rawImg = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
-        const img = sanitizeApparelImg(rawImg, p.category);
+        const img = sanitizeApparelImg(rawImg, p.category, p.name);
 
         if (typeof addToCart === 'function') {
           addToCart(pId);
@@ -828,7 +844,7 @@
             if (svg) { svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', '#111111'); }
             alert(`${p.name} removed from your wishlist!`);
           } else {
-            wishlist.push({ id: pId, name: p.name, price: p.price, img: sanitizeApparelImg(p.img || p.image, p.category) });
+            wishlist.push({ id: pId, name: p.name, price: p.price, img: sanitizeApparelImg(p.img || p.image, p.category, p.name) });
             if (svg) { svg.setAttribute('fill', '#e11d48'); svg.setAttribute('stroke', '#e11d48'); }
             alert(`${p.name} saved to your wishlist!`);
           }
