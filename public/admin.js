@@ -1672,6 +1672,29 @@ function renderLiveOrders(stats) {
       : (currentOrderStatusFilter !== 'all' ? `No orders found with status "${currentOrderStatusFilter}".` : 'No live orders yet. New checkout orders will appear here automatically.');
     body.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#666;">${msg}</td></tr>`;
     return;
+  }
+
+  body.innerHTML = allOrders.map((order) => {
+    const items = Array.isArray(order.items) && order.items.length ? order.items : [];
+    const itemCount = items.reduce((sum, i) => sum + Number(i.qty || 1), 0);
+    const totalVal = typeof order.total === 'number' ? `$${order.total.toFixed(2)}` : (order.total || '$0.00');
+
+    const itemThumbnails = items.length ? items.map((item) => {
+      const imgSrc = getAdminOrderProductImg(item);
+      return `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <img src="${imgSrc}" alt="${item.name || 'Product'}" style="width:42px;height:42px;object-fit:cover;border-radius:4px;border:1px solid #ddd;flex-shrink:0;">
+          <div>
+            <strong style="display:block;font-size:12px;line-height:1.2;color:#050505;">${item.name || 'Product'}</strong>
+            <span style="font-size:11px;color:#666;">Qty ${item.qty || 1} • ${item.color || 'Original'} / ${item.sizes?.[0] || item.size || 'M'}</span>
+          </div>
+        </div>
+      `;
+    }).join('') : `<span style="font-size:12px;">${order.item || 'Zavora item'}</span>`;
+
+    const formattedDate = order.createdAt ? new Date(order.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }) : 'Today';
+    const isCancelled = String(order.status || '').toLowerCase().includes('cancel');
+
     return `
       <tr data-admin-order="${order.id}">
         <td>

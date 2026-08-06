@@ -1,24 +1,27 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Instant Load + 100% Studio Apparel Cutouts)
- * Features 4 Discovery Sections with High-Class Luxury Headers, Pure Apparel Studio Cutouts, 0ms Instant Load, & 6 Products Each:
- * 1. SIMILAR PRODUCTS
- * 2. RECOMMENDED FOR YOU
- * 3. TRENDING NOW
- * 4. NEW ARRIVALS
+ * Zavora Fashion — Product Detail Page Renderer (Instant Load + Unique 100% Studio Cutouts & Dynamic Swatches)
+ * Features:
+ * 1. Unique studio apparel cutouts for every single product (No duplicate pink tees)
+ * 2. Dynamic Color & Size selection synced directly with Cart & Checkout
+ * 3. 0ms Instant discovery carousels
  */
 
 (function () {
   'use strict';
 
-  function sanitizeApparelImg(url) {
+  function sanitizeApparelImg(url, category = '') {
     if (!url || typeof url !== 'string') return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
-    if (url.includes('unsplash.com') || url.includes('photo-')) {
+    if (url.includes('photo-1544441893') || url.includes('photo-1515886657613') || url.includes('photo-1556821840') || url.includes('photo-1541099649105')) {
+      const cat = String(category).toLowerCase();
+      if (cat.includes('hoodie')) return 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1000&q=85';
+      if (cat.includes('sweatshirt')) return 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=85';
+      if (cat.includes('pant') || cat.includes('cargo')) return 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=1000&q=85';
       return 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg';
     }
     return url;
   }
 
-  // 100% Pure Studio Apparel Cutouts — Zero Model Faces, Zero Anime Figures, Zero Lifestyle Backgrounds
+  // 100% Pure Unique Studio Apparel Cutouts — Distinct Image for Every Product
   const DEFAULT_CATALOG_FALLBACK = [
     {
       id: 862,
@@ -52,7 +55,7 @@
       color: "heather gray",
       badge: "BEST SELLER",
       rating: 4.9,
-      colors: ["black", "heather gray", "pink"],
+      colors: ["heather gray", "black", "pink"],
       sizes: ["XS", "S", "M", "L", "XL", "2XL"],
       img: "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1000&q=85",
       images: [
@@ -192,6 +195,7 @@
       black: '#111111',
       white: '#ffffff',
       gray: '#888888',
+      grey: '#888888',
       'heather gray': '#aaaaaa',
       navy: '#1b263b',
       khaki: '#c2b280',
@@ -199,7 +203,10 @@
       brown: '#78350f',
       'light pink': '#fbcfe8',
       red: '#9b1c1c',
-      green: '#2d5a27'
+      blue: '#1d4ed8',
+      green: '#2d5a27',
+      orchid: '#d8b4fe',
+      slate: '#475569'
     };
     return map[String(color).toLowerCase()] || '#333333';
   }
@@ -260,21 +267,11 @@
     const category = String(currentProduct?.category || '').toLowerCase();
 
     let pool = DEFAULT_CATALOG_FALLBACK;
-    if (window.__zavoraCatalogProducts?.length) {
-      pool = [...window.__zavoraCatalogProducts, ...DEFAULT_CATALOG_FALLBACK];
-    } else {
-      try {
-        const cached = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]');
-        if (cached.length) pool = [...cached, ...DEFAULT_CATALOG_FALLBACK];
-      } catch(e) {}
-    }
-
-    const poolFiltered = pool.filter(p => String(p.id || p.printfulId) !== currentId);
     const seen = new Set();
     const result = [];
 
     if (type === 'similar') {
-      const matches = poolFiltered.filter(p => String(p.category || '').toLowerCase().includes(category) || category.includes(String(p.category || '').toLowerCase()));
+      const matches = pool.filter(p => String(p.id || p.printfulId) !== currentId && (String(p.category || '').toLowerCase().includes(category) || category.includes(String(p.category || '').toLowerCase())));
       for (const item of matches) {
         const key = String(item.id || item.printfulId);
         if (!seen.has(key) && result.length < count) {
@@ -283,7 +280,7 @@
         }
       }
     } else if (type === 'trending') {
-      const matches = poolFiltered.filter(p => String(p.badge || '').toLowerCase().includes('trend') || String(p.badge || '').toLowerCase().includes('popular') || String(p.badge || '').toLowerCase().includes('best'));
+      const matches = pool.filter(p => String(p.id || p.printfulId) !== currentId && (String(p.badge || '').toLowerCase().includes('trend') || String(p.badge || '').toLowerCase().includes('popular') || String(p.badge || '').toLowerCase().includes('best')));
       for (const item of matches) {
         const key = String(item.id || item.printfulId);
         if (!seen.has(key) && result.length < count) {
@@ -292,7 +289,7 @@
         }
       }
     } else if (type === 'new') {
-      const matches = poolFiltered.filter(p => String(p.badge || '').toLowerCase().includes('new') || String(p.badge || '').toLowerCase().includes('essential') || String(p.badge || '').toLowerCase().includes('limited'));
+      const matches = pool.filter(p => String(p.id || p.printfulId) !== currentId && (String(p.badge || '').toLowerCase().includes('new') || String(p.badge || '').toLowerCase().includes('essential') || String(p.badge || '').toLowerCase().includes('limited')));
       for (const item of matches) {
         const key = String(item.id || item.printfulId);
         if (!seen.has(key) && result.length < count) {
@@ -302,13 +299,12 @@
       }
     }
 
-    if (result.length < count) {
-      for (const item of poolFiltered) {
-        const key = String(item.id || item.printfulId);
-        if (!seen.has(key) && result.length < count) {
-          seen.add(key);
-          result.push(item);
-        }
+    for (const item of pool) {
+      if (String(item.id || item.printfulId) === currentId) continue;
+      const key = String(item.id || item.printfulId);
+      if (!seen.has(key) && result.length < count) {
+        seen.add(key);
+        result.push(item);
       }
     }
 
@@ -337,7 +333,7 @@
 
     return `
       <div style="margin-top: 64px; width: 100%;">
-        <!-- LUXURY HIGH-CLASS HEADER (BLACK BG REMOVED) -->
+        <!-- LUXURY HIGH-CLASS HEADER -->
         <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 0 16px; margin-bottom: 24px; border-bottom: 2px solid #111111;">
           <div>
             <span style="color: #c9a227; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2.5px; display: block; margin-bottom: 4px;">${tag}</span>
@@ -349,7 +345,7 @@
           </div>
         </div>
 
-        <!-- SCROLLABLE CAROUSEL TRACK (FULL-WIDTH 6 PRODUCTS) -->
+        <!-- SCROLLABLE CAROUSEL TRACK -->
         <div id="zavoraTrack_${sectionId}" style="display: flex; gap: 24px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 16px;">
           ${items6.map(p => {
             const pId = String(p.id || p.printfulId);
@@ -360,7 +356,7 @@
             const badgeText = p.badge || (discountPct > 0 ? `${discountPct}% OFF` : 'NEW');
             const ratingStars = p.rating || 4.9;
             const rawImg = p.img || p.image || p.thumbnail || (Array.isArray(p.images) ? p.images[0] : '');
-            const mainImg = sanitizeApparelImg(rawImg);
+            const mainImg = sanitizeApparelImg(rawImg, p.category);
 
             return `
               <article class="zavoraProductCard" style="flex: 0 0 290px; min-width: 290px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; position: relative; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; display: flex; flex-direction: column;">
@@ -421,12 +417,15 @@
     }
 
     const images = Array.isArray(product.images) && product.images.length
-      ? product.images.map(sanitizeApparelImg)
-      : [sanitizeApparelImg(product.img || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg')];
+      ? product.images.map(img => sanitizeApparelImg(img, product.category))
+      : [sanitizeApparelImg(product.img || 'https://files.cdn.printful.com/products/862/22596_1743753167.jpg', product.category)];
 
     const rawColors = Array.isArray(product.colors) && product.colors.length ? product.colors : [product.color || 'Black'];
     const colors = rawColors.map(c => String(c).trim()).filter(Boolean);
     const sizes = ['XS', 'S', 'M', 'L', 'XL', '2XL'];
+
+    let activeColor = colors[0] || 'Black';
+    let activeSize = sizes[0] || 'M';
 
     main.innerHTML = `
       <section class="section" style="width: 100%; max-width: 100%; margin: 0 auto 80px; padding: 90px 40px 0; color: #111111; box-sizing: border-box;">
@@ -474,7 +473,7 @@
 
             <!-- COLOR SELECTION -->
             <div style="margin-bottom: 24px;">
-              <label style="display: block; font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: #111111;">COLOR: <span id="zavoraSelectedColor" style="color: #111111; font-weight: 800; margin-left: 6px;">${String(colors[0]).toUpperCase()}</span></label>
+              <label style="display: block; font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: #111111;">COLOR: <span id="zavoraSelectedColor" style="color: #111111; font-weight: 800; margin-left: 6px;">${String(activeColor).toUpperCase()}</span></label>
               <div style="display: flex; gap: 12px; flex-wrap:wrap;">
                 ${colors.map((c, i) => `
                   <button type="button" class="zavoraColorBtn" data-color="${c}" style="width: 36px; height: 36px; border-radius: 50%; background: ${swatchColor(c)}; border: ${i===0?'2px solid #111111':'1px solid #cccccc'}; cursor: pointer; transition: transform 0.15s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="${c}"></button>
@@ -485,7 +484,7 @@
             <!-- SIZE SELECTION -->
             <div style="margin-bottom: 32px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <label style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #111111;">SIZE: <span id="zavoraSelectedSize" style="color: #111111; font-weight: 800; margin-left: 6px;">${sizes[0]}</span></label>
+                <label style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #111111;">SIZE: <span id="zavoraSelectedSize" style="color: #111111; font-weight: 800; margin-left: 6px;">${activeSize}</span></label>
                 <button type="button" id="zavoraOpenSizeGuide" style="background: none; border: none; padding: 0; font-size: 0.88rem; color: #111111; font-weight: 700; text-decoration: underline; cursor: pointer;">Size Guide</button>
               </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -611,8 +610,9 @@
       btn.addEventListener('click', () => {
         document.querySelectorAll('.zavoraColorBtn').forEach(b => b.style.border = '1px solid #cccccc');
         btn.style.border = '2px solid #111111';
+        activeColor = btn.dataset.color;
         const label = document.getElementById('zavoraSelectedColor');
-        if (label) label.textContent = String(btn.dataset.color).toUpperCase();
+        if (label) label.textContent = String(activeColor).toUpperCase();
       });
     });
 
@@ -627,8 +627,9 @@
         btn.style.background = '#111111';
         btn.style.color = '#ffffff';
         btn.style.border = '1px solid #111111';
+        activeSize = btn.dataset.size;
         const label = document.getElementById('zavoraSelectedSize');
-        if (label) label.textContent = btn.dataset.size;
+        if (label) label.textContent = activeSize;
       });
     });
 
@@ -663,7 +664,7 @@
             wishBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #e11d48;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> ADD TO WISHLIST`;
             alert(`${name} removed from your wishlist!`);
           } else {
-            wishlist.push({ id, name, price, img: images[0] });
+            wishlist.push({ id, name, price, img: images[0], color: activeColor, size: activeSize });
             wishBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="#e11d48" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> IN WISHLIST`;
             alert(`${name} saved to your wishlist!`);
           }
@@ -676,19 +677,23 @@
     const addBtn = document.getElementById('zavoraAddToCartBtn');
     if (addBtn) {
       addBtn.addEventListener('click', () => {
+        const itemToAdd = { id, name, price, img: images[0], color: activeColor, size: activeSize, qty: 1 };
         if (typeof addToCart === 'function') {
-          addToCart(id);
+          addToCart(id, activeColor, activeSize);
         } else {
           try {
             let cart = JSON.parse(localStorage.getItem('zavoraCart') || '[]');
-            const found = cart.find(i => String(i.id) === id);
-            if (found) found.qty += 1;
-            else cart.push({ id, name, price, img: images[0], qty: 1 });
+            const existingIdx = cart.findIndex(i => String(i.id) === String(id) && String(i.color).toLowerCase() === String(activeColor).toLowerCase() && String(i.size).toLowerCase() === String(activeSize).toLowerCase());
+            if (existingIdx > -1) {
+              cart[existingIdx].qty += 1;
+            } else {
+              cart.push(itemToAdd);
+            }
             localStorage.setItem('zavoraCart', JSON.stringify(cart));
-            alert(`${name} added to your bag!`);
+            alert(`${name} (${activeColor} / ${activeSize}) added to your bag!`);
           } catch(e) {}
         }
-        if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackAddToCart(product, 1);
+        if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackAddToCart(itemToAdd, 1);
         if (window.ZavoraCurrency) window.ZavoraCurrency.update();
       });
     }
@@ -736,7 +741,7 @@
         if (!p || !qvContent || !qvModal) return;
 
         const rawImg = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
-        const img = sanitizeApparelImg(rawImg);
+        const img = sanitizeApparelImg(rawImg, p.category);
         const pPrice = Number(p.price || 89.99);
 
         qvContent.innerHTML = `
@@ -787,7 +792,7 @@
         if (!p) return;
         const pPrice = Number(p.price || 89.99);
         const rawImg = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
-        const img = sanitizeApparelImg(rawImg);
+        const img = sanitizeApparelImg(rawImg, p.category);
 
         if (typeof addToCart === 'function') {
           addToCart(pId);
@@ -823,7 +828,7 @@
             if (svg) { svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', '#111111'); }
             alert(`${p.name} removed from your wishlist!`);
           } else {
-            wishlist.push({ id: pId, name: p.name, price: p.price, img: sanitizeApparelImg(p.img || p.image) });
+            wishlist.push({ id: pId, name: p.name, price: p.price, img: sanitizeApparelImg(p.img || p.image, p.category) });
             if (svg) { svg.setAttribute('fill', '#e11d48'); svg.setAttribute('stroke', '#e11d48'); }
             alert(`${p.name} saved to your wishlist!`);
           }
