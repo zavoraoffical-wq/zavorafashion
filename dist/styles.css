@@ -5262,3 +5262,109 @@ body.product-page-pending main {
     font-size: 11px !important;
   }
 }
+
+/* ==========================================================================
+   ULTIMATE PRIORITY OVERRIDES FOR ZAVORA FASHION
+   - High z-index (2500+) so drawers, search overlays, wishlist, quick-views,
+     and mobile menus ALWAYS sit ABOVE the 72px sticky header!
+   - Bold, prominent black/gold [X] Close button (44px) visible at top right
+   - Full 100vw viewport width footer on all pages
+   ========================================================================== */
+
+.drawer,
+#cartDrawer,
+#pageCartDrawer,
+#wishlistDrawer,
+#pageWishlistDrawer,
+.search-overlay,
+#pageSearchOverlay,
+#searchPanel,
+.quick-view,
+#quickView,
+.account-panel,
+#accountPanel,
+.mobile-panel,
+#mobilePanel,
+.login-required-modal {
+  z-index: 2500 !important;
+}
+
+.drawer,
+.quick-view,
+.account-panel {
+  padding-top: 24px !important;
+}
+
+.drawer-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  position: relative !important;
+  margin-bottom: 20px !important;
+  padding-right: 50px !important;
+}
+
+.drawer-head h2 {
+  margin: 0 !important;
+  font-size: 28px !important;
+}
+
+.close,
+button.close,
+.drawer .close,
+.drawer-head .close,
+.search-overlay .close,
+.quick-view .close,
+.account-panel .close,
+.mobile-panel .close {
+  position: absolute !important;
+  top: 18px !important;
+  right: 18px !important;
+  width: 44px !important;
+  height: 44px !important;
+  border: 2px solid #050505 !important;
+  background: #050505 !important;
+  color: #ffffff !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 2600 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.close:hover,
+button.close:hover,
+.drawer .close:hover,
+.search-overlay .close:hover {
+  background: #c9a227 !important;
+  border-color: #c9a227 !important;
+  color: #000000 !important;
+}
+
+.close svg,
+button.close svg {
+  width: 20px !important;
+  height: 20px !important;
+  stroke: currentColor !important;
+  stroke-width: 2.8 !important;
+  fill: none !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  pointer-events: none !important;
+}
+
+footer.footer,
+.footer {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  display: block !important;
+  background: var(--white) !important;
+  color: var(--text) !important;
+}
