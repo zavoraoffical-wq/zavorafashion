@@ -44,78 +44,30 @@
   }
 
   const DEFAULT_CATALOG_FALLBACK = [
-    {
-      id: 674,
-      printfulId: 674,
-      name: "Zavora Men's Crewneck Sweatshirt",
-      price: 112.18,
-      compareAt: 204.74,
-      category: "sweatshirts",
-      badge: "NEW",
-      rating: 4.9,
-      img: "https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80",
-      description: "Zavora Men's Crewneck Sweatshirt is a premium fleece sweatshirt designed for Zavora Fashion's minimal streetwear wardrobe."
-    },
-    {
-      id: 826,
-      printfulId: 826,
-      name: "Zavora Organic Oversized Raddler 2.0 Sweatshirt",
-      price: 127.99,
-      compareAt: 239.36,
-      category: "sweatshirts",
-      badge: "BEST SELLER",
-      rating: 4.9,
-      img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg",
-      description: "Crafted from 100% organic French Terry cotton (480 GSM), this boxy pullover features drop shoulders and a modern architectural silhouette."
-    },
-    {
-      id: 1412,
-      printfulId: 1412,
-      name: "Zavora Minimal Organic Streetwear Hoodie",
-      price: 166.17,
-      compareAt: 198.00,
-      category: "hoodies",
-      badge: "BEST SELLER",
-      rating: 4.9,
-      img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=80",
-      description: "The Zavora Organic Hoodie is a signature minimal streetwear silhouette crafted from 480 GSM heavyweight organic French Terry cotton."
-    },
-    {
-      id: 411,
-      printfulId: 411,
-      name: "Zavora Premium Organic Sweatshirt",
-      price: 129.73,
-      compareAt: 155.00,
-      category: "sweatshirts",
-      badge: "TRENDING",
-      rating: 4.8,
-      img: "https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80",
-      description: "Ultra-comfortable 480 GSM organic cotton crewneck sweatshirt built with reinforced ribbed cuffs and drop shoulders."
-    },
-    {
-      id: 329,
-      printfulId: 329,
-      name: "Zavora Avenue Cargo Tactical Pant",
-      price: 145.00,
-      compareAt: 170.00,
-      category: "cargo-pants",
-      badge: "POPULAR",
-      rating: 5.0,
-      img: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=700&q=80",
-      description: "Heavy-duty organic cotton twill cargo pant built with tactical utility pockets and adjustable ankle cinch cords."
-    },
-    {
-      id: 934,
-      printfulId: 934,
-      name: "Zavora Cropped Minimalist Bomber Jacket",
-      price: 189.00,
-      compareAt: 220.00,
-      category: "jackets",
-      badge: "LIMITED",
-      rating: 4.9,
-      img: "https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=700&q=80",
-      description: "Structured cropped streetwear jacket featuring matte silver hardware and weather-resistant organic canvas."
-    }
+    { id: 674, printfulId: 674, name: "Zavora Men's Crewneck Sweatshirt", price: 112.18, compareAt: 204.74, category: "sweatshirts", badge: "NEW", rating: 4.9, img: "https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80", description: "Zavora Men's Crewneck Sweatshirt is a premium fleece sweatshirt designed for Zavora Fashion's minimal streetwear wardrobe." },
+    { id: 826, printfulId: 826, name: "Zavora Organic Oversized Raddler 2.0 Sweatshirt", price: 127.99, compareAt: 239.36, category: "sweatshirts", badge: "BEST SELLER", rating: 4.9, img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg", description: "Crafted from 100% organic French Terry cotton (480 GSM), this boxy pullover features drop shoulders and a modern architectural silhouette." },
+    { id: 1412, printfulId: 1412, name: "Zavora Minimal Organic Streetwear Hoodie", price: 166.17, compareAt: 198.00, category: "hoodies", badge: "BEST SELLER", rating: 4.9, img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=80", description: "The Zavora Organic Hoodie is a signature minimal streetwear silhouette crafted from 480 GSM heavyweight organic French Terry cotton." },
+    { id: 411, printfulId: 411, name: "Zavora Premium Organic Sweatshirt", price: 129.73, compareAt: 155.00, category: "sweatshirts", badge: "TRENDING", rating: 4.8, img: "https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80", description: "Ultra-comfortable 480 GSM organic cotton crewneck sweatshirt built with reinforced ribbed cuffs and drop shoulders." },
+    { id: 329, printfulId: 329, name: "Zavora Avenue Cargo Tactical Pant", price: 145.00, compareAt: 170.00, category: "cargo-pants", badge: "POPULAR", rating: 5.0, img: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=700&q=80", description: "Heavy-duty organic cotton twill cargo pant built with tactical utility pockets and adjustable ankle cinch cords." },
+    { id: 934, printfulId: 934, name: "Zavora Cropped Minimalist Bomber Jacket", price: 189.00, compareAt: 220.00, category: "jackets", badge: "LIMITED", rating: 4.9, img: "https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=700&q=80", description: "Structured cropped streetwear jacket featuring matte silver hardware and weather-resistant organic canvas." },
+    { id: 501, printfulId: 501, name: "Zavora Gold Crest Oversized Tee", price: 78.50, compareAt: 95.00, category: "oversized-tees", badge: "NEW", rating: 4.9, img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=700&q=80", description: "Heavyweight 240 GSM organic combed cotton tee with signature high-density gold logo crest embroidery." },
+    { id: 502, printfulId: 502, name: "Zavora Noir Heavyweight Zip Hoodie", price: 175.00, compareAt: 210.00, category: "hoodies", badge: "MUST HAVE", rating: 5.0, img: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=700&q=80", description: "Double-layered 500 GSM fleece full-zip hoodie with custom YKK silver zipper hardware and deep lined hood." },
+    { id: 503, printfulId: 503, name: "Zavora Studio Pleated Wide Trouser", price: 155.00, compareAt: 185.00, category: "pants", badge: "TRENDING", rating: 4.8, img: "https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=700&q=80", description: "Tailored architectural wide-leg trousers with front pleats, hidden elastic waistband, and side welt pockets." },
+    { id: 504, printfulId: 504, name: "Zavora Signature Twill Dad Cap", price: 48.00, compareAt: 60.00, category: "accessories", badge: "BEST SELLER", rating: 4.9, img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=700&q=80", description: "6-panel washed cotton twill cap featuring metallic gold crest embroidery and custom antique brass buckle closure." },
+    { id: 505, printfulId: 505, name: "Zavora Luxury French Terry Sweatpant", price: 135.00, compareAt: 160.00, category: "sweatpants", badge: "NEW", rating: 4.9, img: "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=700&q=80", description: "Relaxed-fit 450 GSM organic French Terry sweatpants with deep zipping pockets and heavy cotton drawstrings." },
+    { id: 506, printfulId: 506, name: "Zavora Monogram Leather Crossbody Bag", price: 120.00, compareAt: 150.00, category: "accessories", badge: "LIMITED", rating: 5.0, img: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=700&q=80", description: "Compact pebbled leather crossbody pouch with engraved gold hardware and adjustable jacquard logo strap." },
+    { id: 507, printfulId: 507, name: "Zavora Boxy Vintage Wash Graphic Tee", price: 82.00, compareAt: 98.00, category: "oversized-tees", badge: "POPULAR", rating: 4.8, img: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=700&q=80", description: "Garment-dyed acid wash streetwear tee with distressed ribbing and back typographic graphic print." },
+    { id: 508, printfulId: 508, name: "Zavora Insulated Utility Puffer Vest", price: 165.00, compareAt: 195.00, category: "jackets", badge: "NEW ARRIVAL", rating: 4.9, img: "https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=700&q=80", description: "Sleeveless down-alternative puffer vest with water-repellent shell and dual chest flap utility pockets." },
+    { id: 509, printfulId: 509, name: "Zavora Oversized Heavyweight Longsleeve", price: 92.00, compareAt: 110.00, category: "oversized-tees", badge: "BEST SELLER", rating: 4.9, img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=700&q=80", description: "Drop-shoulder long sleeve top crafted from 280 GSM premium organic jersey cotton." },
+    { id: 510, printfulId: 510, name: "Zavora Essential Athletic Training Short", price: 68.00, compareAt: 85.00, category: "shorts", badge: "SALE", rating: 4.7, img: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=700&q=80", description: "5-inch inseam lightweight double-layer mesh athletic shorts with interior phone compression pocket." },
+    { id: 511, printfulId: 511, name: "Zavora Ribbed Knit Minimalist Beanie", price: 42.00, compareAt: 52.00, category: "accessories", badge: "ESSENTIAL", rating: 4.9, img: "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?auto=format&fit=crop&w=700&q=80", description: "100% merino wool rib-knit watch cap with subtle woven Zavora crest tab." },
+    { id: 512, printfulId: 512, name: "Zavora Oversized Denim Trucker Jacket", price: 210.00, compareAt: 260.00, category: "jackets", badge: "LIMITED DROP", rating: 5.0, img: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=700&q=80", description: "14oz rigid selvedge denim trucker jacket with custom branded brass shank buttons and fleece collar accent." },
+    { id: 513, printfulId: 513, name: "Zavora Minimal Organic Crop Hoodie", price: 148.00, compareAt: 175.00, category: "hoodies", badge: "TRENDING", rating: 4.9, img: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=700&q=80", description: "Raw-edge cropped organic cotton pullover hoodie with ribbed cuffs and relaxed dropped sleeves." },
+    { id: 514, printfulId: 514, name: "Zavora Tactical Nylon Shell Track Pant", price: 138.00, compareAt: 165.00, category: "pants", badge: "NEW", rating: 4.8, img: "https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=700&q=80", description: "Matte crinkle nylon track pant featuring mesh lining, zipper leg openings, and reflective piping." },
+    { id: 515, printfulId: 515, name: "Zavora Heavyweight Oversized Fleece Crew", price: 132.00, compareAt: 158.00, category: "sweatshirts", badge: "POPULAR", rating: 4.9, img: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=700&q=80", description: "Ultra-plush 480 GSM fleece crewneck with architectural seam detailing and reinforced neckline." },
+    { id: 516, printfulId: 516, name: "Zavora Crest Embroidered Socks (3-Pack)", price: 32.00, compareAt: 40.00, category: "accessories", badge: "BUNDLE", rating: 4.9, img: "https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?auto=format&fit=crop&w=700&q=80", description: "Cushioned ribbed crew socks made from combed organic cotton with gold Zavora crest embroidery." },
+    { id: 517, printfulId: 517, name: "Zavora Lightweight Summer Linen Shirt", price: 115.00, compareAt: 140.00, category: "shirts", badge: "SUMMER EDIT", rating: 4.8, img: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=700&q=80", description: "Breathable 100% European flax linen button-down short sleeve shirt with Cuban collar." },
+    { id: 518, printfulId: 518, name: "Zavora Heritage Fleece Zip Track Jacket", price: 178.00, compareAt: 215.00, category: "jackets", badge: "HOT", rating: 5.0, img: "https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=700&q=80", description: "Stand-collar fleece track jacket featuring contrast raglan striping and secure zip pockets." }
   ];
 
   function getQueryParam(key) {
@@ -218,7 +170,7 @@
 
   function renderDiscoverySection(sectionId, tag, title, products) {
     if (!products || !products.length) return '';
-    const items6 = products.slice(0, 6);
+    const items = products.slice(0, 8);
 
     return `
       <div style="margin-top: 54px; width: 100%;">
@@ -234,7 +186,7 @@
         </div>
 
         <div id="zavoraTrack_${sectionId}" style="display: flex; gap: 24px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 16px;">
-          ${items6.map(p => {
+          ${items.map(p => {
             const pId = String(p.id || p.printfulId);
             const pName = String(p.name || 'Zavora Product');
             const pPrice = Number(p.price || 89.99);
@@ -285,6 +237,37 @@
         </div>
       </div>
     `;
+  }
+
+  function partitionProductsIntoSections(allProducts, currentProductId) {
+    const cleanId = String(currentProductId || '').trim();
+    const seen = new Set();
+    if (cleanId) seen.add(cleanId);
+
+    const fullPool = [];
+
+    (Array.isArray(allProducts) ? allProducts : []).forEach(p => {
+      const pId = String(p.id || p.printfulId);
+      if (pId && !seen.has(pId)) {
+        seen.add(pId);
+        fullPool.push(p);
+      }
+    });
+
+    DEFAULT_CATALOG_FALLBACK.forEach(fb => {
+      const fbId = String(fb.id || fb.printfulId);
+      if (fbId && !seen.has(fbId)) {
+        seen.add(fbId);
+        fullPool.push(fb);
+      }
+    });
+
+    const sim = fullPool.slice(0, 6);
+    const rec = fullPool.slice(6, 12);
+    const tre = fullPool.slice(12, 18);
+    const arr = fullPool.slice(18, 24);
+
+    return { sim, rec, tre, arr };
   }
 
   function bindRecommendationEvents(products = []) {
@@ -767,43 +750,37 @@
 
     document.body.appendChild(footerElem);
 
-    // Initial fallback pool with unique ID-mapped photos
-    const fallbackSim = DEFAULT_CATALOG_FALLBACK.slice(0, 6);
-    const fallbackRec = DEFAULT_CATALOG_FALLBACK.slice(1, 6);
-    const fallbackTre = DEFAULT_CATALOG_FALLBACK.slice(2, 6);
-    const fallbackArr = DEFAULT_CATALOG_FALLBACK.slice(0, 5);
+    // Initial fallback pool with unique 24-item catalog (no duplicates across sections)
+    const initialPools = partitionProductsIntoSections([], id);
 
     const container = document.getElementById('zavoraRecContainer');
     if (container) {
       container.innerHTML = `
-        ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', fallbackSim)}
+        ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', initialPools.sim)}
         <div id="zavoraRecSectionInner">
-          ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', fallbackRec)}
+          ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', initialPools.rec)}
         </div>
-        ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', fallbackTre)}
-        ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', fallbackArr)}
+        ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', initialPools.tre)}
+        ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', initialPools.arr)}
       `;
-      bindRecommendationEvents([...fallbackSim, ...fallbackRec, ...fallbackTre, ...fallbackArr]);
+      bindRecommendationEvents([...initialPools.sim, ...initialPools.rec, ...initialPools.tre, ...initialPools.arr]);
     }
 
     // DYNAMIC FETCH OF UNIQUE REAL STORE PRODUCTS FROM API (/api/products?limit=24)
     fetchServerRecommendations(product, 24).then(serverProducts => {
-      if (serverProducts && serverProducts.length >= 6) {
-        const pool1 = serverProducts.slice(0, 6);
-        const pool2 = serverProducts.slice(6, 12).length >= 4 ? serverProducts.slice(6, 12) : serverProducts.slice(0, 6);
-        const pool3 = serverProducts.slice(12, 18).length >= 4 ? serverProducts.slice(12, 18) : serverProducts.slice(0, 6);
-        const pool4 = serverProducts.slice(18, 24).length >= 4 ? serverProducts.slice(18, 24) : serverProducts.slice(0, 6);
+      if (serverProducts && serverProducts.length >= 4) {
+        const dynamicPools = partitionProductsIntoSections(serverProducts, id);
 
         if (container) {
           container.innerHTML = `
-            ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', pool1)}
+            ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', dynamicPools.sim)}
             <div id="zavoraRecSectionInner">
-              ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', pool2)}
+              ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', dynamicPools.rec)}
             </div>
-            ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', pool3)}
-            ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', pool4)}
+            ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', dynamicPools.tre)}
+            ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', dynamicPools.arr)}
           `;
-          const allUniquePool = [...pool1, ...pool2, ...pool3, ...pool4];
+          const allUniquePool = [...dynamicPools.sim, ...dynamicPools.rec, ...dynamicPools.tre, ...dynamicPools.arr];
           bindRecommendationEvents(allUniquePool);
         }
       }
