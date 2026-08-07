@@ -220,7 +220,7 @@ function productUrl(product) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return id ? `${base}/product/${id}` : `${base}/products/${slug}`;
+  return id ? `${base}/product.html?id=${encodeURIComponent(id)}` : `${base}/products/${slug}`;
 }
 
 function absoluteImage(url) {

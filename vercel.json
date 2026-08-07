@@ -31,6 +31,10 @@
       "destination": "/api/feed"
     },
     {
+      "source": "/product/:id",
+      "destination": "/product.html?id=:id"
+    },
+    {
       "source": "/admin",
       "destination": "/admin.html"
     },

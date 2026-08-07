@@ -106,7 +106,7 @@
       `${name} — premium minimal streetwear designed for modern wardrobes by Zavora Fashion.`
     ).trim();
 
-    const productUrl = `${BASE_URL}/product.html?id=${encodeURIComponent(id)}`;
+    const productUrl = `${BASE_URL}/product?id=${encodeURIComponent(id)}`;
 
     return {
       '@context': 'https://schema.org/',
