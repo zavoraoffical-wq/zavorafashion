@@ -1,14 +1,15 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Fixes Duplicate Footer & Populates Real Store Products From Database API)
+ * Zavora Fashion — Product Detail Page Renderer (Deletes Old Upper Template Footer & Ensures Single Clean 4-Column Footer At Bottom)
  * Features:
- * 1. FIXES DUPLICATE FOOTER: Eliminates redundant lower footer so exactly 1 clean 4-column footer is displayed!
- * 2. REAL STORE PRODUCTS FETCH: Dynamically fetches 24 real store products from /api/products?limit=24 and populates all 4 carousels (Similar, Recommended, Trending, New) with real products!
- * 3. Full-Width Carousel Layout (width: 100%) matching user's exact prior design screenshot
- * 4. Top-Left Badge Pills (BEST SELLER, TRENDING, NEW, ESSENTIAL)
- * 5. Top-Right Heart Wishlist Buttons on all product cards
- * 6. Star Ratings (★★★★★ 4.9) on all product cards
- * 7. Dual Buttons (QUICK VIEW & ADD TO BAG) on all product cards with interactive Quick View Overlay Modal
- * 8. All 5 Middle Content Sections (Info Cards, Split-Band Details, Spec Grid, Size Guide Table, Customer Reviews)
+ * 1. REMOVES OLD UPPER FOOTER: Deletes <footer class="footer"> (upper footer) completely so NO upper footer shows!
+ * 2. SINGLE LOWER 4-COLUMN FOOTER: Renders 1 single clean 4-column footer (CONTACT SUPPORT, COMPANY, LEGAL, ACCOUNT) at the very bottom!
+ * 3. REAL STORE PRODUCTS FETCH: Dynamically fetches 24 real store products from /api/products?limit=24 and populates all 4 carousels (Similar, Recommended, Trending, New) with real products!
+ * 4. Full-Width Carousel Layout (width: 100%) matching user's exact prior design screenshot
+ * 5. Top-Left Badge Pills (BEST SELLER, TRENDING, NEW, ESSENTIAL)
+ * 6. Top-Right Heart Wishlist Buttons on all product cards
+ * 7. Star Ratings (★★★★★ 4.9) on all product cards
+ * 8. Dual Buttons (QUICK VIEW & ADD TO BAG) on all product cards with interactive Quick View Overlay Modal
+ * 9. All 5 Middle Content Sections (Info Cards, Split-Band Details, Spec Grid, Size Guide Table, Customer Reviews)
  */
 
 (function () {
@@ -721,85 +722,89 @@
       </div>
     `;
 
-    // FIX DUPLICATE FOOTER ISSUE (UPDATING 1 SINGLE FOOTER AT BOTTOM)
-    const existingFooters = document.querySelectorAll('footer');
-    existingFooters.forEach((foot, index) => {
-      if (index > 0) {
-        foot.remove(); // Remove duplicate footer tags
-      }
+    // REMOVE OLD UPPER TEMPLATE FOOTER COMPLETELY FROM DOM
+    const oldFooters = document.querySelectorAll('footer:not(#zavoraSingle4ColFooter), footer.footer');
+    oldFooters.forEach(foot => {
+      foot.style.display = 'none';
+      foot.remove();
     });
 
-    let singleFooter = document.querySelector('footer');
-    if (singleFooter) {
+    // RENDER ONLY 1 SINGLE CLEAN 4-COLUMN FOOTER AT THE VERY BOTTOM OF BODY
+    let singleFooter = document.getElementById('zavoraSingle4ColFooter');
+    if (!singleFooter) {
+      singleFooter = document.createElement('footer');
+      singleFooter.id = 'zavoraSingle4ColFooter';
       singleFooter.className = 'footer-4col';
-      singleFooter.style.cssText = 'background:#fff; border-top:1px solid #eee; padding:60px 0 30px; margin-top:80px; width:100%;';
-      singleFooter.innerHTML = `
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:40px; max-width:1200px; margin:0 auto; padding:0 20px;">
-          <div>
-            <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">CONTACT SUPPORT</h4>
-            <p style="font-size:0.85rem; color:#555; margin-bottom:12px;">supports@zavorafashion.com</p>
-            <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
-              <a href="contact.html" style="color:#666; text-decoration:none;">Contact Us</a>
-              <a href="help.html" style="color:#666; text-decoration:none;">Help Center</a>
-              <a href="faq.html" style="color:#666; text-decoration:none;">FAQ</a>
-              <a href="track-order.html" style="color:#666; text-decoration:none;">Track Order</a>
-              <a href="shipping.html" style="color:#666; text-decoration:none;">Shipping Information</a>
-              <a href="returns.html" style="color:#666; text-decoration:none;">Return & Refund Policy</a>
-              <a href="exchange.html" style="color:#666; text-decoration:none;">Exchange Policy</a>
-            </nav>
-          </div>
+      singleFooter.style.cssText = 'background:#fff; border-top:1px solid #eee; padding:60px 0 30px; margin-top:80px; width:100%; display:block;';
+      document.body.appendChild(singleFooter);
+    }
 
-          <div>
-            <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">COMPANY</h4>
-            <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
-              <a href="about.html" style="color:#666; text-decoration:none;">About Us</a>
-              <a href="our-story.html" style="color:#666; text-decoration:none;">Our Story</a>
-              <a href="sustainability.html" style="color:#666; text-decoration:none;">Sustainability</a>
-              <a href="careers.html" style="color:#666; text-decoration:none;">Careers</a>
-              <a href="press.html" style="color:#666; text-decoration:none;">Press</a>
-              <a href="journal.html" style="color:#666; text-decoration:none;">Journal</a>
-              <a href="affiliate.html" style="color:#666; text-decoration:none;">Affiliate Program</a>
-            </nav>
-            <div style="display:flex; gap:10px; margin-top:16px;">
-              <button style="padding:6px 12px; border:1px solid #ddd; background:#fff; font-size:0.75rem; border-radius:4px; font-weight:700; cursor:pointer;">📷 Instagram</button>
-              <button style="padding:6px 12px; border:1px solid #ddd; background:#fff; font-size:0.75rem; border-radius:4px; font-weight:700; cursor:pointer;">f Facebook</button>
-            </div>
-          </div>
+    singleFooter.innerHTML = `
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:40px; max-width:1200px; margin:0 auto; padding:0 20px;">
+        <div>
+          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">CONTACT SUPPORT</h4>
+          <p style="font-size:0.85rem; color:#555; margin-bottom:12px;">supports@zavorafashion.com</p>
+          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
+            <a href="contact.html" style="color:#666; text-decoration:none;">Contact Us</a>
+            <a href="help.html" style="color:#666; text-decoration:none;">Help Center</a>
+            <a href="faq.html" style="color:#666; text-decoration:none;">FAQ</a>
+            <a href="track-order.html" style="color:#666; text-decoration:none;">Track Order</a>
+            <a href="shipping.html" style="color:#666; text-decoration:none;">Shipping Information</a>
+            <a href="returns.html" style="color:#666; text-decoration:none;">Return & Refund Policy</a>
+            <a href="exchange.html" style="color:#666; text-decoration:none;">Exchange Policy</a>
+          </nav>
+        </div>
 
-          <div>
-            <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">LEGAL</h4>
-            <p style="font-size:0.85rem; color:#555; margin-bottom:12px;">legal@zavorafashion.com</p>
-            <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
-              <a href="privacy-policy.html" style="color:#666; text-decoration:none;">Privacy Policy</a>
-              <a href="terms-conditions.html" style="color:#666; text-decoration:none;">Terms & Conditions</a>
-              <a href="cookie-policy.html" style="color:#666; text-decoration:none;">Cookie Policy</a>
-              <a href="refund-policy.html" style="color:#666; text-decoration:none;">Refund Policy</a>
-              <a href="shipping-policy.html" style="color:#666; text-decoration:none;">Shipping Policy</a>
-            </nav>
-            <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
-              <span style="border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; color:#003087;">PayPal</span>
-              <span style="border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; color:#1a1f71;">VISA</span>
-              <span style="border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; color:#eb001b;">Mastercard</span>
-            </div>
-          </div>
-
-          <div>
-            <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">ACCOUNT</h4>
-            <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
-              <a href="account.html" style="color:#666; text-decoration:none;">Login</a>
-              <a href="account.html" style="color:#666; text-decoration:none;">Register</a>
-              <a href="account.html" style="color:#666; text-decoration:none;">My Account</a>
-              <a href="wishlist.html" style="color:#666; text-decoration:none;">Wishlist</a>
-              <a href="account.html" style="color:#666; text-decoration:none;">Order History</a>
-              <a href="account.html" style="color:#666; text-decoration:none;">Saved Addresses</a>
-              <a href="rewards.html" style="color:#666; text-decoration:none;">Rewards</a>
-              <a href="account.html" style="color:#666; text-decoration:none;">Change Password</a>
-              <a href="newsletter.html" style="color:#666; text-decoration:none;">Newsletter</a>
-            </nav>
+        <div>
+          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">COMPANY</h4>
+          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
+            <a href="about.html" style="color:#666; text-decoration:none;">About Us</a>
+            <a href="our-story.html" style="color:#666; text-decoration:none;">Our Story</a>
+            <a href="sustainability.html" style="color:#666; text-decoration:none;">Sustainability</a>
+            <a href="careers.html" style="color:#666; text-decoration:none;">Careers</a>
+            <a href="press.html" style="color:#666; text-decoration:none;">Press</a>
+            <a href="journal.html" style="color:#666; text-decoration:none;">Journal</a>
+            <a href="affiliate.html" style="color:#666; text-decoration:none;">Affiliate Program</a>
+          </nav>
+          <div style="display:flex; gap:10px; margin-top:16px;">
+            <button style="padding:6px 12px; border:1px solid #ddd; background:#fff; font-size:0.75rem; border-radius:4px; font-weight:700; cursor:pointer;">📷 Instagram</button>
+            <button style="padding:6px 12px; border:1px solid #ddd; background:#fff; font-size:0.75rem; border-radius:4px; font-weight:700; cursor:pointer;">f Facebook</button>
           </div>
         </div>
-      `;
-    }
+
+        <div>
+          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">LEGAL</h4>
+          <p style="font-size:0.85rem; color:#555; margin-bottom:12px;">legal@zavorafashion.com</p>
+          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
+            <a href="privacy-policy.html" style="color:#666; text-decoration:none;">Privacy Policy</a>
+            <a href="terms-conditions.html" style="color:#666; text-decoration:none;">Terms & Conditions</a>
+            <a href="cookie-policy.html" style="color:#666; text-decoration:none;">Cookie Policy</a>
+            <a href="refund-policy.html" style="color:#666; text-decoration:none;">Refund Policy</a>
+            <a href="shipping-policy.html" style="color:#666; text-decoration:none;">Shipping Policy</a>
+          </nav>
+          <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
+            <span style="border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; color:#003087;">PayPal</span>
+            <span style="border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; color:#1a1f71;">VISA</span>
+            <span style="border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; color:#eb001b;">Mastercard</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">ACCOUNT</h4>
+          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
+            <a href="account.html" style="color:#666; text-decoration:none;">Login</a>
+            <a href="account.html" style="color:#666; text-decoration:none;">Register</a>
+            <a href="account.html" style="color:#666; text-decoration:none;">My Account</a>
+            <a href="wishlist.html" style="color:#666; text-decoration:none;">Wishlist</a>
+            <a href="account.html" style="color:#666; text-decoration:none;">Order History</a>
+            <a href="account.html" style="color:#666; text-decoration:none;">Saved Addresses</a>
+            <a href="rewards.html" style="color:#666; text-decoration:none;">Rewards</a>
+            <a href="account.html" style="color:#666; text-decoration:none;">Change Password</a>
+            <a href="newsletter.html" style="color:#666; text-decoration:none;">Newsletter</a>
+          </nav>
+        </div>
+      </div>
+    `;
 
     // Render Discovery Sections (SIMILAR PRODUCTS, RECOMMENDED PRODUCTS, TRENDING NOW, NEW ARRIVALS)
     const similarProducts = getSectionProducts(product, 'similar', 6);
