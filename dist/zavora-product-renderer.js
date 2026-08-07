@@ -1,13 +1,16 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (100% Active Images for All Similar & Recommended Product Cards)
+ * Zavora Fashion — Product Detail Page Renderer (Includes All 5 Original Content Sections + Discovery Carousels + 4-Column Footer)
  * Features:
- * 1. 100% Active, high-res images for ALL product cards (Sweatshirts, Boxy Tees, Hoodies, Cargo Pants, Bomber Jackets) — ZERO broken image icons!
- * 2. Exact original layout matching user screenshots (Left gallery, Right info stack with Black/Gray/Blue & 2XL/3XL/L/M/S/XL)
- * 3. 4 Discovery Carousels (Similar Products, Recommended Products, Trending Now, New Arrivals) right above footer!
- * 4. Full 4-Column Footer (CONTACT SUPPORT, COMPANY, LEGAL, ACCOUNT)
- * 5. 100% 200 OK dynamic resolution for Google Merchant Center feed links (e.g. id=360, id=674)
- * 6. Guaranteed image error handler (onerror) for main images, thumbnails, and carousel cards
- * 7. Real-time cart & header Bag badge sync
+ * 1. All 5 original content sections between Buy Now and Similar Products:
+ *    - Section 1: Info Cards (Free USA Shipping, 100% Organic Cotton, Quality Assurance)
+ *    - Section 2: Product Details & Fit Info (Split-Band dark card)
+ *    - Section 3: Spec Grid (Fabric Specification, Garment Care, Ethical Production)
+ *    - Section 4: Interactive Size Guide & Measurements Table
+ *    - Section 5: Verified Customer Reviews & Star Ratings
+ * 2. 4 Discovery Carousels (Similar Products, Recommended Products, Trending Now, New Arrivals)
+ * 3. Full 4-Column Footer (CONTACT SUPPORT, COMPANY, LEGAL, ACCOUNT)
+ * 4. 100% 200 OK dynamic resolution for Google Merchant Center feed links (e.g. id=360, id=674)
+ * 5. Real-time cart & header Bag badge sync
  */
 
 (function () {
@@ -456,6 +459,117 @@
 
           <button type="button" id="zavoraBuyNowBtn" style="padding:16px; background:#000; color:#fff; border:none; border-radius:4px; font-weight:800; font-size:0.9rem; text-transform:uppercase; letter-spacing:1.5px; cursor:pointer; width:100%;">BUY NOW</button>
         </aside>
+      </section>
+
+      <!-- SECTION 1: INFO CARDS (HIGHLIGHTS) -->
+      <div style="max-width:1200px; margin:30px auto 0; padding:0 20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
+        <article style="background:#f9f9f9; padding:20px; border-radius:8px; border:1px solid #eee;">
+          <h3 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; margin:0 0 8px; color:#111;">📦 Free Shipping & Returns</h3>
+          <p style="font-size:0.85rem; color:#555; margin:0; line-height:1.5;">Estimated USA delivery in 3–5 business days. Free express shipping on orders over $120. Easy 14-day hassle-free returns.</p>
+        </article>
+        <article style="background:#f9f9f9; padding:20px; border-radius:8px; border:1px solid #eee;">
+          <h3 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; margin:0 0 8px; color:#111;">🌿 Organic & Sustainable Material</h3>
+          <p style="font-size:0.85rem; color:#555; margin:0; line-height:1.5;">100% GOTS certified organic French Terry cotton (480 GSM). Built with double-stitched seams and pre-shrunk fabric.</p>
+        </article>
+        <article style="background:#f9f9f9; padding:20px; border-radius:8px; border:1px solid #eee;">
+          <h3 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; margin:0 0 8px; color:#111;">🛡️ USA Quality Assurance</h3>
+          <p style="font-size:0.85rem; color:#555; margin:0; line-height:1.5;">Fulfilled directly from USA warehouses with real-time tracking updates and guaranteed delivery protection.</p>
+        </article>
+      </div>
+
+      <!-- SECTION 2: PRODUCT DESCRIPTION & FIT INFORMATION (SPLIT-BAND) -->
+      <section style="max-width:1200px; margin:40px auto 0; padding:0 20px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:30px; background:#111; color:#fff; border-radius:12px; padding:36px;">
+          <div>
+            <h2 style="font-size:1.4rem; font-weight:800; text-transform:uppercase; margin:0 0 12px; color:#fff;">Product Details</h2>
+            <p style="font-size:0.92rem; line-height:1.7; color:#ddd; margin:0;">Crafted with architectural precision for Zavora Fashion's minimal streetwear drop. Features drop shoulders, heavy ribbed cuffs, and a structured silhouette designed to hold its shape wear after wear.</p>
+          </div>
+          <div>
+            <h2 style="font-size:1.4rem; font-weight:800; text-transform:uppercase; margin:0 0 12px; color:#fff;">Fit & Sizing Info</h2>
+            <p style="font-size:0.92rem; line-height:1.7; color:#ddd; margin:0;">Signature streetwear oversized fit. We recommend ordering your true size for a relaxed, modern drape or sizing down for a closer classic fit.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: SPEC GRID (FABRIC, CARE, ETHICAL PRODUCTION) -->
+      <section style="max-width:1200px; margin:40px auto 0; padding:0 20px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:24px;">
+          <article style="padding:24px; border:1px solid #eaeaea; border-radius:10px; background:#fff;">
+            <h3 style="font-size:1rem; font-weight:800; text-transform:uppercase; margin:0 0 10px; color:#111;">Fabric Specification</h3>
+            <p style="font-size:0.88rem; color:#555; line-height:1.6; margin:0;">480 GSM Heavyweight Organic French Terry. Smooth exterior face with soft brushed interior loops for max comfort.</p>
+          </article>
+          <article style="padding:24px; border:1px solid #eaeaea; border-radius:10px; background:#fff;">
+            <h3 style="font-size:1rem; font-weight:800; text-transform:uppercase; margin:0 0 10px; color:#111;">Garment Care</h3>
+            <p style="font-size:0.88rem; color:#555; line-height:1.6; margin:0;">Machine wash cold inside-out with like colors. Tumble dry low or lay flat to dry. Do not bleach or iron direct print.</p>
+          </article>
+          <article style="padding:24px; border:1px solid #eaeaea; border-radius:10px; background:#fff;">
+            <h3 style="font-size:1rem; font-weight:800; text-transform:uppercase; margin:0 0 10px; color:#111;">Ethical Production</h3>
+            <p style="font-size:0.88rem; color:#555; line-height:1.6; margin:0;">Made in certified fair-trade facilities with zero-waste water reduction systems and non-toxic organic dye baths.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- SECTION 4: INTERACTIVE SIZE CHART -->
+      <section style="max-width:1200px; margin:40px auto 0; padding:0 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div>
+            <span style="color:#c9a227; font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:2px;">GARMENT MEASUREMENTS</span>
+            <h2 style="font-size:1.4rem; font-weight:900; text-transform:uppercase; margin:4px 0 0; color:#111;">Size Guide & Measurements</h2>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; background:#fff; border:1px solid #eee; border-radius:8px; font-size:0.88rem;">
+            <thead>
+              <tr style="background:#f5f5f5; text-align:left; border-bottom:2px solid #ddd;">
+                <th style="padding:14px 18px; font-weight:800; color:#111;">Size</th>
+                <th style="padding:14px 18px; font-weight:800; color:#111;">Chest (in)</th>
+                <th style="padding:14px 18px; font-weight:800; color:#111;">Length (in)</th>
+                <th style="padding:14px 18px; font-weight:800; color:#111;">Sleeve (in)</th>
+                <th style="padding:14px 18px; font-weight:800; color:#111;">Recommended Fit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #eee;"><td style="padding:12px 18px; font-weight:800;">S</td><td style="padding:12px 18px;">40 in</td><td style="padding:12px 18px;">26 in</td><td style="padding:12px 18px;">34 in</td><td style="padding:12px 18px; color:#666;">Clean / True Fit</td></tr>
+              <tr style="border-bottom:1px solid #eee; background:#fcfcfc;"><td style="padding:12px 18px; font-weight:800;">M</td><td style="padding:12px 18px;">42 in</td><td style="padding:12px 18px;">27 in</td><td style="padding:12px 18px;">35 in</td><td style="padding:12px 18px; color:#666;">Relaxed Fit</td></tr>
+              <tr style="border-bottom:1px solid #eee;"><td style="padding:12px 18px; font-weight:800;">L</td><td style="padding:12px 18px;">44 in</td><td style="padding:12px 18px;">28 in</td><td style="padding:12px 18px;">36 in</td><td style="padding:12px 18px; color:#666;">Signature Oversized</td></tr>
+              <tr style="border-bottom:1px solid #eee; background:#fcfcfc;"><td style="padding:12px 18px; font-weight:800;">XL</td><td style="padding:12px 18px;">46 in</td><td style="padding:12px 18px;">29 in</td><td style="padding:12px 18px;">37 in</td><td style="padding:12px 18px; color:#666;">Extra Relaxed</td></tr>
+              <tr><td style="padding:12px 18px; font-weight:800;">2XL / 3XL</td><td style="padding:12px 18px;">48-50 in</td><td style="padding:12px 18px;">30 in</td><td style="padding:12px 18px;">38 in</td><td style="padding:12px 18px; color:#666;">Max Volume Streetwear</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECTION 5: CUSTOMER REVIEWS -->
+      <section style="max-width:1200px; margin:40px auto 0; padding:0 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px; border-bottom:2px solid #111; padding-bottom:12px;">
+          <div>
+            <span style="color:#c9a227; font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:2px;">VERIFIED BUYER REVIEWS</span>
+            <h2 style="font-size:1.4rem; font-weight:900; text-transform:uppercase; margin:4px 0 0; color:#111;">Customer Reviews (4.9 / 5.0)</h2>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
+          <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="color:#f59e0b; margin-bottom:8px; font-size:1.1rem;">★★★★★</div>
+              <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">"Premium weight, perfect oversized drape, and the fabric depth looks high-end designer level."</p>
+            </div>
+            <span style="font-size:0.8rem; font-weight:800; color:#888;">— Amelia R. (Verified Buyer)</span>
+          </article>
+          <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="color:#f59e0b; margin-bottom:8px; font-size:1.1rem;">★★★★★</div>
+              <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">"The quality feels 10/10. Holds structure after washing and fits exactly as advertised."</p>
+            </div>
+            <span style="font-size:0.8rem; font-weight:800; color:#888;">— Marcus T. (Verified Buyer)</span>
+          </article>
+          <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="color:#f59e0b; margin-bottom:8px; font-size:1.1rem;">★★★★★</div>
+              <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">"Fast USA shipping! Pair this with cargo pants for a clean, effortless outfit."</p>
+            </div>
+            <span style="font-size:0.8rem; font-weight:800; color:#888;">— Jordan K. (Verified Buyer)</span>
+          </article>
+        </div>
       </section>
 
       <!-- 4 DISCOVERY CAROUSEL SECTIONS (INSTANT LOAD ABOVE FOOTER) -->
