@@ -1,8 +1,6 @@
 /**
  * Zavora Fashion — Product Detail Page Renderer
- * Fixes:
- * 1. UNIQUE PRODUCTS PER CAROUSEL: Slices serverProducts (0-5, 6-11, 12-17, 18-23) so Similar Products, Recommended Products, Trending Now, and New Arrivals ALL have DIFFERENT, UNIQUE real store items!
- * 2. FULL RICH 100% FULL-WIDTH FOOTER: Restores the complete Zavora Fashion Footer with Brand Banner, Instagram 12-photo Grid, 4-Column Links, Payment Badges, and Newsletter Signup!
+ * Restores the EXACT ORIGINAL Site Template Footer (<footer class="footer">) matching all other pages on Zavora Fashion!
  */
 
 (function () {
@@ -227,7 +225,6 @@
     return null;
   }
 
-  // Real Store Database Products Fetch (Fetches 24 real store products from MongoDB API)
   async function fetchServerRecommendations(product, limit = 24) {
     const id = product?.id || product?.printfulId;
     try {
@@ -498,7 +495,7 @@
           ` : ''}
         </div>
 
-        <!-- INFO SIDE (EXACT MATCH TO USER SCREENSHOT 1) -->
+        <!-- INFO SIDE -->
         <aside class="product-buy" style="display:flex; flex-direction:column; gap:18px;">
           <p class="eyebrow" style="color:#c9a227; font-weight:800; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin:0;">${badge}</p>
           <h1 style="font-size:2.6rem; font-family:serif; font-weight:700; line-height:1.1; margin:0; color:#111;">${name}</h1>
@@ -654,7 +651,7 @@
         </div>
       </section>
 
-      <!-- 4 FULL-WIDTH DISCOVERY CAROUSEL SECTIONS (WIDTH 100% WITH BADGES, HEARTS, QUICK VIEW & UNIQUE REAL PRODUCTS) -->
+      <!-- 4 FULL-WIDTH DISCOVERY CAROUSEL SECTIONS -->
       <div id="zavoraRecContainer" style="width:100%; margin:40px auto 0; padding:0 20px;"></div>
 
       <!-- QUICK VIEW OVERLAY MODAL -->
@@ -666,116 +663,49 @@
       </div>
     `;
 
-    // REMOVE ALL OLD TEMPLATE FOOTERS FROM DOM
-    const oldFooters = document.querySelectorAll('footer:not(#zavoraSingle4ColFooter), footer.footer');
-    oldFooters.forEach(foot => {
-      foot.style.display = 'none';
-      foot.remove();
-    });
-
-    // RENDER THE COMPLETE RICH FULL-WIDTH ZAVORA FOOTER AT THE VERY BOTTOM OF BODY
-    let singleFooter = document.getElementById('zavoraSingle4ColFooter');
-    if (!singleFooter) {
-      singleFooter = document.createElement('footer');
-      singleFooter.id = 'zavoraSingle4ColFooter';
-      singleFooter.className = 'footer-4col';
-      singleFooter.style.cssText = 'background:#ffffff; border-top:1px solid #eeeeee; padding:60px 0 30px; margin-top:80px; width:100%; display:block;';
-      document.body.appendChild(singleFooter);
+    // ENSURE THE ORIGINAL TEMPLATE FOOTER (<footer class="footer">) IS PRESENT & SHOWN AT THE BOTTOM OF BODY
+    let footerElem = document.querySelector('footer.footer');
+    if (!footerElem) {
+      footerElem = document.createElement('footer');
+      footerElem.className = 'footer';
+      document.body.appendChild(footerElem);
     }
+    footerElem.style.display = 'block';
 
-    singleFooter.innerHTML = `
-      <!-- FOOTER TOP BRAND BANNER -->
-      <div style="max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid #eee; padding-bottom: 30px;">
-        <div>
-          <strong style="font-size: 1.4rem; letter-spacing: 2px; font-weight: 900; color: #111; display: block; margin-bottom: 6px;">ZAVORA FASHION</strong>
-          <p style="font-size: 0.88rem; color: #666; margin: 0; line-height: 1.5;">Premium Streetwear.<br>Designed for the USA.</p>
-        </div>
-        <div style="max-width: 600px; width: 100%; border-radius: 8px; overflow: hidden;">
-          <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80" alt="Zavora Fashion Campaign" style="width: 100%; height: 120px; object-fit: cover; display: block;">
-        </div>
-      </div>
-
-      <!-- INSTAGRAM PHOTOSHOOT GRID -->
-      <div style="max-width: 1200px; margin: 0 auto 50px; padding: 0 20px;">
-        <span style="color: #c9a227; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 12px; text-align: center;">FOLLOW @ZAVORAFASHION ON INSTAGRAM</span>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; border-radius: 8px; overflow: hidden;">
-          <img src="https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=300&q=80" alt="Zavora 1" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
-          <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=300&q=80" alt="Zavora 2" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
-          <img src="https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=300&q=80" alt="Zavora 3" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
-          <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=300&q=80" alt="Zavora 4" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
-          <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=300&q=80" alt="Zavora 5" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
-          <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=300&q=80" alt="Zavora 6" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
-        </div>
-      </div>
-
-      <!-- 4-COLUMN LINKS & NEWSLETTER -->
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:40px; max-width:1200px; margin:0 auto; padding:0 20px;">
-        <div>
-          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">CONTACT SUPPORT</h4>
-          <p style="font-size:0.85rem; color:#555; margin-bottom:12px;">supports@zavorafashion.com</p>
-          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
-            <a href="contact.html" style="color:#666; text-decoration:none;">Contact Us</a>
-            <a href="help.html" style="color:#666; text-decoration:none;">Help Center</a>
-            <a href="faq.html" style="color:#666; text-decoration:none;">FAQ</a>
-            <a href="track-order.html" style="color:#666; text-decoration:none;">Track Order</a>
-            <a href="shipping.html" style="color:#666; text-decoration:none;">Shipping Information</a>
-            <a href="returns.html" style="color:#666; text-decoration:none;">Return & Refund Policy</a>
-            <a href="exchange.html" style="color:#666; text-decoration:none;">Exchange Policy</a>
-          </nav>
-        </div>
-
-        <div>
-          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">COMPANY</h4>
-          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
-            <a href="about.html" style="color:#666; text-decoration:none;">About Us</a>
-            <a href="our-story.html" style="color:#666; text-decoration:none;">Our Story</a>
-            <a href="sustainability.html" style="color:#666; text-decoration:none;">Sustainability</a>
-            <a href="careers.html" style="color:#666; text-decoration:none;">Careers</a>
-            <a href="press.html" style="color:#666; text-decoration:none;">Press</a>
-            <a href="journal.html" style="color:#666; text-decoration:none;">Journal</a>
-            <a href="affiliate.html" style="color:#666; text-decoration:none;">Affiliate Program</a>
-          </nav>
-          <div style="display:flex; gap:10px; margin-top:16px;">
-            <button style="padding:6px 12px; border:1px solid #ddd; background:#fff; font-size:0.75rem; border-radius:4px; font-weight:700; cursor:pointer;">📷 Instagram</button>
-            <button style="padding:6px 12px; border:1px solid #ddd; background:#fff; font-size:0.75rem; border-radius:4px; font-weight:700; cursor:pointer;">f Facebook</button>
-          </div>
-        </div>
-
-        <div>
-          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">LEGAL</h4>
-          <p style="font-size:0.85rem; color:#555; margin-bottom:12px;">legal@zavorafashion.com</p>
-          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
-            <a href="privacy-policy.html" style="color:#666; text-decoration:none;">Privacy Policy</a>
-            <a href="terms-conditions.html" style="color:#666; text-decoration:none;">Terms & Conditions</a>
-            <a href="cookie-policy.html" style="color:#666; text-decoration:none;">Cookie Policy</a>
-            <a href="refund-policy.html" style="color:#666; text-decoration:none;">Refund Policy</a>
-            <a href="shipping-policy.html" style="color:#666; text-decoration:none;">Shipping Policy</a>
-          </nav>
-          <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap;">
-            <span style="border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; color:#003087;">PayPal</span>
-            <span style="border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; color:#1a1f71;">VISA</span>
-            <span style="border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; color:#eb001b;">Mastercard</span>
-          </div>
-        </div>
-
-        <div>
-          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">ACCOUNT & NEWSLETTER</h4>
-          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666; margin-bottom:16px;">
-            <a href="account.html" style="color:#666; text-decoration:none;">Login / Register</a>
-            <a href="wishlist.html" style="color:#666; text-decoration:none;">Wishlist</a>
-            <a href="account.html" style="color:#666; text-decoration:none;">Order History</a>
-          </nav>
-          <form style="display:flex; gap:6px;">
-            <input type="email" placeholder="Your Email" style="padding:10px; border:1px solid #ddd; border-radius:4px; font-size:0.8rem; flex-grow:1;">
-            <button type="button" style="padding:10px 16px; background:#111; color:#fff; border:none; border-radius:4px; font-weight:800; font-size:0.75rem; cursor:pointer;">JOIN</button>
-          </form>
-        </div>
-      </div>
-
-      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.78rem; color: #888;">
-        &copy; 2026 Zavora Fashion. All Rights Reserved. Designed for minimal streetwear wardrobe.
-      </div>
+    footerElem.innerHTML = `
+      <section class="footer-top">
+        <div class="footer-brand"><strong>ZAVORA FASHION</strong><p>Premium Streetwear.<br>Designed for the USA.</p></div>
+        <img class="footer-hero-img" src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80" alt="Zavora premium fashion campaign">
+      </section>
+      <section class="footer-gallery" aria-label="Zavora premium lifestyle images">
+        <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle one"><span>Shop Now</span></a>
+        <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle two"><span>Shop Now</span></a>
+        <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle three"><span>Shop Now</span></a>
+        <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle four"><span>Shop Now</span></a>
+      </section>
+      <section class="instagram-grid" aria-label="Follow Zavora Fashion">
+        <img src="https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 1">
+        <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 2">
+        <img src="https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 3">
+        <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 4">
+        <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 5">
+        <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 6">
+        <img src="https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 7">
+        <img src="https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 8">
+        <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 9">
+        <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 10">
+        <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 11">
+        <img src="https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 12">
+      </section>
+      <section class="footer-bottom">
+        <nav class="footer-links" aria-label="Footer navigation"><a href="shop.html">Shop</a><a href="about.html">About</a><a href="journal.html">Journal</a><a href="track-order.html">Track Order</a><a href="return-refund-policy.html">Returns</a><a href="privacy-policy.html">Privacy</a><a href="terms-conditions.html">Terms</a><a href="contact.html">Contact</a></nav>
+        <p class="footer-copy">Follow @ZavoraFashion<br>&copy; 2026 Zavora Fashion</p>
+        <form class="footer-newsletter"><input type="email" placeholder="Email" aria-label="Newsletter email"><button type="button">Join</button></form>
+      </section>
     `;
+
+    // Move footer to the end of document.body so it appears below carousels
+    document.body.appendChild(footerElem);
 
     // Render Discovery Sections initially with fallback
     const fallbackSim = DEFAULT_CATALOG_FALLBACK.slice(0, 6);
