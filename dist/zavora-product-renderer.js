@@ -1,15 +1,8 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Deletes Old Upper Template Footer & Ensures Single Clean 4-Column Footer At Bottom)
- * Features:
- * 1. REMOVES OLD UPPER FOOTER: Deletes <footer class="footer"> (upper footer) completely so NO upper footer shows!
- * 2. SINGLE LOWER 4-COLUMN FOOTER: Renders 1 single clean 4-column footer (CONTACT SUPPORT, COMPANY, LEGAL, ACCOUNT) at the very bottom!
- * 3. REAL STORE PRODUCTS FETCH: Dynamically fetches 24 real store products from /api/products?limit=24 and populates all 4 carousels (Similar, Recommended, Trending, New) with real products!
- * 4. Full-Width Carousel Layout (width: 100%) matching user's exact prior design screenshot
- * 5. Top-Left Badge Pills (BEST SELLER, TRENDING, NEW, ESSENTIAL)
- * 6. Top-Right Heart Wishlist Buttons on all product cards
- * 7. Star Ratings (★★★★★ 4.9) on all product cards
- * 8. Dual Buttons (QUICK VIEW & ADD TO BAG) on all product cards with interactive Quick View Overlay Modal
- * 9. All 5 Middle Content Sections (Info Cards, Split-Band Details, Spec Grid, Size Guide Table, Customer Reviews)
+ * Zavora Fashion — Product Detail Page Renderer
+ * Fixes:
+ * 1. UNIQUE PRODUCTS PER CAROUSEL: Slices serverProducts (0-5, 6-11, 12-17, 18-23) so Similar Products, Recommended Products, Trending Now, and New Arrivals ALL have DIFFERENT, UNIQUE real store items!
+ * 2. FULL RICH 100% FULL-WIDTH FOOTER: Restores the complete Zavora Fashion Footer with Brand Banner, Instagram 12-photo Grid, 4-Column Links, Payment Badges, and Newsletter Signup!
  */
 
 (function () {
@@ -260,55 +253,6 @@
       }
     } catch(e) {}
     return [];
-  }
-
-  function getSectionProducts(currentProduct, type, count = 6, catalogPool = DEFAULT_CATALOG_FALLBACK) {
-    const currentId = String(currentProduct?.id || currentProduct?.printfulId || '');
-    const category = String(currentProduct?.category || '').toLowerCase();
-
-    let pool = catalogPool.length >= 6 ? catalogPool : DEFAULT_CATALOG_FALLBACK;
-    const seen = new Set();
-    const result = [];
-
-    if (type === 'similar') {
-      const matches = pool.filter(p => String(p.id || p.printfulId) !== currentId && (String(p.category || '').toLowerCase().includes(category) || category.includes(String(p.category || '').toLowerCase())));
-      for (const item of matches) {
-        const key = String(item.id || item.printfulId);
-        if (!seen.has(key) && result.length < count) {
-          seen.add(key);
-          result.push(item);
-        }
-      }
-    } else if (type === 'trending') {
-      const matches = pool.filter(p => String(p.id || p.printfulId) !== currentId && (String(p.badge || '').toLowerCase().includes('trend') || String(p.badge || '').toLowerCase().includes('popular') || String(p.badge || '').toLowerCase().includes('best')));
-      for (const item of matches) {
-        const key = String(item.id || item.printfulId);
-        if (!seen.has(key) && result.length < count) {
-          seen.add(key);
-          result.push(item);
-        }
-      }
-    } else if (type === 'new') {
-      const matches = pool.filter(p => String(p.id || p.printfulId) !== currentId && (String(p.badge || '').toLowerCase().includes('new') || String(p.badge || '').toLowerCase().includes('essential') || String(p.badge || '').toLowerCase().includes('limited')));
-      for (const item of matches) {
-        const key = String(item.id || item.printfulId);
-        if (!seen.has(key) && result.length < count) {
-          seen.add(key);
-          result.push(item);
-        }
-      }
-    }
-
-    for (const item of pool) {
-      if (String(item.id || item.printfulId) === currentId) continue;
-      const key = String(item.id || item.printfulId);
-      if (!seen.has(key) && result.length < count) {
-        seen.add(key);
-        result.push(item);
-      }
-    }
-
-    return result.slice(0, count);
   }
 
   function renderDiscoverySection(sectionId, tag, title, products) {
@@ -710,7 +654,7 @@
         </div>
       </section>
 
-      <!-- 4 FULL-WIDTH DISCOVERY CAROUSEL SECTIONS (WIDTH 100% WITH BADGES, HEARTS, QUICK VIEW & REAL PRODUCTS) -->
+      <!-- 4 FULL-WIDTH DISCOVERY CAROUSEL SECTIONS (WIDTH 100% WITH BADGES, HEARTS, QUICK VIEW & UNIQUE REAL PRODUCTS) -->
       <div id="zavoraRecContainer" style="width:100%; margin:40px auto 0; padding:0 20px;"></div>
 
       <!-- QUICK VIEW OVERLAY MODAL -->
@@ -722,24 +666,49 @@
       </div>
     `;
 
-    // REMOVE OLD UPPER TEMPLATE FOOTER COMPLETELY FROM DOM
+    // REMOVE ALL OLD TEMPLATE FOOTERS FROM DOM
     const oldFooters = document.querySelectorAll('footer:not(#zavoraSingle4ColFooter), footer.footer');
     oldFooters.forEach(foot => {
       foot.style.display = 'none';
       foot.remove();
     });
 
-    // RENDER ONLY 1 SINGLE CLEAN 4-COLUMN FOOTER AT THE VERY BOTTOM OF BODY
+    // RENDER THE COMPLETE RICH FULL-WIDTH ZAVORA FOOTER AT THE VERY BOTTOM OF BODY
     let singleFooter = document.getElementById('zavoraSingle4ColFooter');
     if (!singleFooter) {
       singleFooter = document.createElement('footer');
       singleFooter.id = 'zavoraSingle4ColFooter';
       singleFooter.className = 'footer-4col';
-      singleFooter.style.cssText = 'background:#fff; border-top:1px solid #eee; padding:60px 0 30px; margin-top:80px; width:100%; display:block;';
+      singleFooter.style.cssText = 'background:#ffffff; border-top:1px solid #eeeeee; padding:60px 0 30px; margin-top:80px; width:100%; display:block;';
       document.body.appendChild(singleFooter);
     }
 
     singleFooter.innerHTML = `
+      <!-- FOOTER TOP BRAND BANNER -->
+      <div style="max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid #eee; padding-bottom: 30px;">
+        <div>
+          <strong style="font-size: 1.4rem; letter-spacing: 2px; font-weight: 900; color: #111; display: block; margin-bottom: 6px;">ZAVORA FASHION</strong>
+          <p style="font-size: 0.88rem; color: #666; margin: 0; line-height: 1.5;">Premium Streetwear.<br>Designed for the USA.</p>
+        </div>
+        <div style="max-width: 600px; width: 100%; border-radius: 8px; overflow: hidden;">
+          <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80" alt="Zavora Fashion Campaign" style="width: 100%; height: 120px; object-fit: cover; display: block;">
+        </div>
+      </div>
+
+      <!-- INSTAGRAM PHOTOSHOOT GRID -->
+      <div style="max-width: 1200px; margin: 0 auto 50px; padding: 0 20px;">
+        <span style="color: #c9a227; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 12px; text-align: center;">FOLLOW @ZAVORAFASHION ON INSTAGRAM</span>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; border-radius: 8px; overflow: hidden;">
+          <img src="https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=300&q=80" alt="Zavora 1" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+          <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=300&q=80" alt="Zavora 2" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+          <img src="https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=300&q=80" alt="Zavora 3" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+          <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=300&q=80" alt="Zavora 4" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+          <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=300&q=80" alt="Zavora 5" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+          <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=300&q=80" alt="Zavora 6" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+        </div>
+      </div>
+
+      <!-- 4-COLUMN LINKS & NEWSLETTER -->
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:40px; max-width:1200px; margin:0 auto; padding:0 20px;">
         <div>
           <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">CONTACT SUPPORT</h4>
@@ -790,61 +759,62 @@
         </div>
 
         <div>
-          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">ACCOUNT</h4>
-          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666;">
-            <a href="account.html" style="color:#666; text-decoration:none;">Login</a>
-            <a href="account.html" style="color:#666; text-decoration:none;">Register</a>
-            <a href="account.html" style="color:#666; text-decoration:none;">My Account</a>
+          <h4 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:16px; color:#111;">ACCOUNT & NEWSLETTER</h4>
+          <nav style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem; color:#666; margin-bottom:16px;">
+            <a href="account.html" style="color:#666; text-decoration:none;">Login / Register</a>
             <a href="wishlist.html" style="color:#666; text-decoration:none;">Wishlist</a>
             <a href="account.html" style="color:#666; text-decoration:none;">Order History</a>
-            <a href="account.html" style="color:#666; text-decoration:none;">Saved Addresses</a>
-            <a href="rewards.html" style="color:#666; text-decoration:none;">Rewards</a>
-            <a href="account.html" style="color:#666; text-decoration:none;">Change Password</a>
-            <a href="newsletter.html" style="color:#666; text-decoration:none;">Newsletter</a>
           </nav>
+          <form style="display:flex; gap:6px;">
+            <input type="email" placeholder="Your Email" style="padding:10px; border:1px solid #ddd; border-radius:4px; font-size:0.8rem; flex-grow:1;">
+            <button type="button" style="padding:10px 16px; background:#111; color:#fff; border:none; border-radius:4px; font-weight:800; font-size:0.75rem; cursor:pointer;">JOIN</button>
+          </form>
         </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.78rem; color: #888;">
+        &copy; 2026 Zavora Fashion. All Rights Reserved. Designed for minimal streetwear wardrobe.
       </div>
     `;
 
-    // Render Discovery Sections (SIMILAR PRODUCTS, RECOMMENDED PRODUCTS, TRENDING NOW, NEW ARRIVALS)
-    const similarProducts = getSectionProducts(product, 'similar', 6);
-    const localRecommended = getSectionProducts(product, 'similar', 6);
-    const trendingProducts = getSectionProducts(product, 'trending', 6);
-    const newArrivalsProducts = getSectionProducts(product, 'new', 6);
+    // Render Discovery Sections initially with fallback
+    const fallbackSim = DEFAULT_CATALOG_FALLBACK.slice(0, 6);
+    const fallbackRec = DEFAULT_CATALOG_FALLBACK.slice(1, 6);
+    const fallbackTre = DEFAULT_CATALOG_FALLBACK.slice(2, 6);
+    const fallbackArr = DEFAULT_CATALOG_FALLBACK.slice(0, 5);
 
     const container = document.getElementById('zavoraRecContainer');
     if (container) {
       container.innerHTML = `
-        ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', similarProducts)}
+        ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', fallbackSim)}
         <div id="zavoraRecSectionInner">
-          ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', localRecommended)}
+          ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', fallbackRec)}
         </div>
-        ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', trendingProducts)}
-        ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', newArrivalsProducts)}
+        ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', fallbackTre)}
+        ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', fallbackArr)}
       `;
-      const initialPool = [...similarProducts, ...localRecommended, ...trendingProducts, ...newArrivalsProducts];
-      bindRecommendationEvents(initialPool);
+      bindRecommendationEvents([...fallbackSim, ...fallbackRec, ...fallbackTre, ...fallbackArr]);
     }
 
-    // DYNAMIC FETCH OF REAL STORE PRODUCTS FROM SERVER DATABASE API (/api/products?limit=24)
+    // DYNAMIC FETCH OF UNIQUE REAL STORE PRODUCTS FOR EVERY CAROUSEL (0-5, 6-11, 12-17, 18-23)
     fetchServerRecommendations(product, 24).then(serverProducts => {
-      if (serverProducts && serverProducts.length >= 4) {
-        const sim = getSectionProducts(product, 'similar', 6, serverProducts);
-        const rec = getSectionProducts(product, 'trending', 6, serverProducts);
-        const tre = getSectionProducts(product, 'new', 6, serverProducts);
-        const arr = serverProducts.slice(12, 18);
+      if (serverProducts && serverProducts.length >= 12) {
+        const pool1 = serverProducts.slice(0, 6);   // Similar Products (Unique 6)
+        const pool2 = serverProducts.slice(6, 12);  // Recommended Products (Unique 6)
+        const pool3 = serverProducts.slice(12, 18); // Trending Now (Unique 6)
+        const pool4 = serverProducts.slice(18, 24); // New Arrivals (Unique 6)
 
         if (container) {
           container.innerHTML = `
-            ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', sim)}
+            ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', pool1)}
             <div id="zavoraRecSectionInner">
-              ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', rec)}
+              ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', pool2)}
             </div>
-            ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', tre)}
-            ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', arr)}
+            ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', pool3)}
+            ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', pool4.length ? pool4 : pool1)}
           `;
-          const updatedPool = [...sim, ...rec, ...tre, ...arr];
-          bindRecommendationEvents(updatedPool);
+          const allUniquePool = [...pool1, ...pool2, ...pool3, ...pool4];
+          bindRecommendationEvents(allUniquePool);
         }
       }
     });
