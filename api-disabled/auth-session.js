@@ -8,14 +8,14 @@ module.exports = async function handler(req, res) {
   try {
     const cookies = req.headers.cookie || '';
     const sessionMatch = cookies.match(/zavora_session=([^;]+)/);
-    if (!sessionMatch) return json(res, 401, { ok: false });
+    if (!sessionMatch) return json(res, 200, { ok: true, loggedIn: false, user: null });
 
     const cookieValue = Buffer.from(decodeURIComponent(sessionMatch[1]), 'base64').toString('utf8');
     const session = JSON.parse(cookieValue);
-    if (!session || !session.user) return json(res, 401, { ok: false });
+    if (!session || !session.user) return json(res, 200, { ok: true, loggedIn: false, user: null });
 
-    return json(res, 200, { ok: true, session: true, user: session.user });
+    return json(res, 200, { ok: true, loggedIn: true, session: true, user: session.user });
   } catch (error) {
-    return json(res, 401, { ok: false });
+    return json(res, 200, { ok: true, loggedIn: false, user: null });
   }
 };
