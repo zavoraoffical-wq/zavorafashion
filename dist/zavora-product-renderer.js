@@ -1,16 +1,14 @@
 /**
- * Zavora Fashion — Product Detail Page Renderer (Includes All 5 Original Content Sections + Discovery Carousels + 4-Column Footer)
+ * Zavora Fashion — Product Detail Page Renderer (Full-Width Carousels + Badges + Hearts + Quick View + Real Server API Products + 5 Middle Sections + 4-Column Footer)
  * Features:
- * 1. All 5 original content sections between Buy Now and Similar Products:
- *    - Section 1: Info Cards (Free USA Shipping, 100% Organic Cotton, Quality Assurance)
- *    - Section 2: Product Details & Fit Info (Split-Band dark card)
- *    - Section 3: Spec Grid (Fabric Specification, Garment Care, Ethical Production)
- *    - Section 4: Interactive Size Guide & Measurements Table
- *    - Section 5: Verified Customer Reviews & Star Ratings
- * 2. 4 Discovery Carousels (Similar Products, Recommended Products, Trending Now, New Arrivals)
- * 3. Full 4-Column Footer (CONTACT SUPPORT, COMPANY, LEGAL, ACCOUNT)
- * 4. 100% 200 OK dynamic resolution for Google Merchant Center feed links (e.g. id=360, id=674)
- * 5. Real-time cart & header Bag badge sync
+ * 1. Full-Width Carousel Layout (width: 100%) matching user's exact prior design screenshot
+ * 2. Top-Left Badge Pills (BEST SELLER, TRENDING, NEW, ESSENTIAL)
+ * 3. Top-Right Heart Wishlist Buttons on all product cards
+ * 4. Star Ratings (★★★★★ 4.9) on all product cards
+ * 5. Dual Buttons (QUICK VIEW & ADD TO BAG) on all product cards with interactive Quick View Overlay Modal
+ * 6. Dynamic Fetch of Real Store Products from Server API (/api/products?action=recommendations)
+ * 7. All 5 Middle Content Sections (Info Cards, Split-Band Details, Spec Grid, Size Guide Table, Customer Reviews)
+ * 8. Full 4-Column Footer (CONTACT SUPPORT, COMPANY, LEGAL, ACCOUNT)
  */
 
 (function () {
@@ -234,6 +232,20 @@
     return null;
   }
 
+  async function fetchServerRecommendations(product, limit = 6) {
+    const id = product?.id || product?.printfulId;
+    if (!id) return [];
+    try {
+      const res = await fetch(`/api/products?action=recommendations&id=${encodeURIComponent(id)}&limit=${limit}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+        return data.recommendations;
+      }
+    } catch(e) {}
+    return [];
+  }
+
   function getSectionProducts(currentProduct, type, count = 6) {
     const currentId = String(currentProduct?.id || currentProduct?.printfulId || '');
     const category = String(currentProduct?.category || '').toLowerCase();
@@ -288,42 +300,64 @@
     const items6 = products.slice(0, 6);
 
     return `
-      <div style="margin-top: 48px; width: 100%;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 0 12px; margin-bottom: 20px; border-bottom: 2px solid #111111;">
+      <div style="margin-top: 54px; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 0 14px; margin-bottom: 24px; border-bottom: 2px solid #111111;">
           <div>
-            <span style="color: #c9a227; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 4px;">${tag}</span>
-            <h3 style="font-size: 1.35rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin: 0; color: #111111;">${title}</h3>
+            <span style="color: #c9a227; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2.5px; display: block; margin-bottom: 4px;">${tag}</span>
+            <h3 style="font-size: 1.45rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin: 0; color: #111111;">${title}</h3>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button type="button" class="zavoraNavPrev" data-sec="${sectionId}" style="background: #ffffff; border: 1.5px solid #111111; color: #111111; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;" aria-label="Previous slide">&larr;</button>
-            <button type="button" class="zavoraNavNext" data-sec="${sectionId}" style="background: #111111; border: 1.5px solid #111111; color: #ffffff; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;" aria-label="Next slide">&rarr;</button>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="zavoraNavPrev" data-sec="${sectionId}" style="background: #ffffff; border: 1.5px solid #111111; color: #111111; width: 38px; height: 38px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" aria-label="Previous slide">&larr;</button>
+            <button type="button" class="zavoraNavNext" data-sec="${sectionId}" style="background: #111111; border: 1.5px solid #111111; color: #ffffff; width: 38px; height: 38px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" aria-label="Next slide">&rarr;</button>
           </div>
         </div>
 
-        <div id="zavoraTrack_${sectionId}" style="display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 12px;">
+        <div id="zavoraTrack_${sectionId}" style="display: flex; gap: 24px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; padding-bottom: 16px;">
           ${items6.map(p => {
             const pId = String(p.id || p.printfulId);
             const pName = String(p.name || 'Zavora Product');
             const pPrice = Number(p.price || 89.99);
             const pCompareAt = p.compareAt ? Number(p.compareAt) : (pPrice * 1.25);
+            const discountPct = pCompareAt > pPrice ? Math.round(((pCompareAt - pPrice) / pCompareAt) * 100) : 0;
+            const badgeText = p.badge || (discountPct > 0 ? `${discountPct}% OFF` : 'NEW');
+            const ratingStars = p.rating || 4.9;
             const rawImg = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
             const mainImg = sanitizeApparelImg(rawImg, p.category, p.name, pId);
 
             return `
-              <article class="zavoraProductCard" style="flex: 0 0 260px; min-width: 260px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 10px; overflow: hidden; position: relative; display: flex; flex-direction: column;">
+              <article class="zavoraProductCard" style="flex: 0 0 280px; min-width: 280px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                
+                ${badgeText ? `<span style="position: absolute; top: 14px; left: 14px; background: #111111; color: #ffffff; border: 1px solid #111111; padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; z-index: 2;">${badgeText}</span>` : ''}
+                
+                <button type="button" class="zavoraRecWishBtn" data-rec-id="${pId}" style="position: absolute; top: 14px; right: 14px; background: #ffffff; border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 2;" aria-label="Add to wishlist">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                </button>
+
                 <a href="product?id=${encodeURIComponent(pId)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f9f9f9;">
                   <img class="zavoraCardImg" src="${mainImg}" alt="${pName}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width: 100%; height: 100%; object-fit: cover;">
                 </a>
-                <div style="padding: 14px; display: flex; flex-direction: column; flex-grow: 1;">
-                  <h4 style="font-size: 0.9rem; font-weight: 800; margin: 0 0 6px; height: 38px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+
+                <div style="padding: 16px; display: flex; flex-direction: column; flex-grow: 1;">
+                  <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                    <span style="color: #f59e0b; font-size: 0.85rem;">★★★★★</span>
+                    <span style="font-size: 0.8rem; color: #666666; font-weight: 700;">${ratingStars}</span>
+                  </div>
+
+                  <h4 style="font-size: 0.95rem; font-weight: 800; margin: 0 0 8px; line-height: 1.35; height: 40px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                     <a href="product?id=${encodeURIComponent(pId)}" style="color: #111111; text-decoration: none;">${pName}</a>
                   </h4>
-                  <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
-                    <strong style="font-size: 1.1rem; font-weight: 800; color: #111111;">$${pPrice.toFixed(2)}</strong>
-                    ${pCompareAt > pPrice ? `<s style="font-size: 0.85rem; color: #888888;">$${pCompareAt.toFixed(2)}</s>` : ''}
+
+                  <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px;">
+                    <strong style="font-size: 1.2rem; font-weight: 800; color: #111111;">$${pPrice.toFixed(2)}</strong>
+                    ${pCompareAt > pPrice ? `<s style="font-size: 0.9rem; color: #888888;">$${pCompareAt.toFixed(2)}</s>` : ''}
                   </div>
-                  <button type="button" class="zavoraRecAddToCartBtn" data-rec-cart-id="${pId}" style="width: 100%; padding: 10px; background: #111111; color: #ffffff; border: none; border-radius: 4px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">ADD TO BAG</button>
+
+                  <div style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" class="zavoraQuickViewBtn" data-qv-id="${pId}" style="padding: 10px; background: #ffffff; color: #111111; border: 1.5px solid #111111; border-radius: 6px; font-weight: 800; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">QUICK VIEW</button>
+                    <button type="button" class="zavoraRecAddToCartBtn" data-rec-cart-id="${pId}" style="padding: 10px; background: #111111; color: #ffffff; border: none; border-radius: 6px; font-weight: 800; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">ADD TO BAG</button>
+                  </div>
                 </div>
+
               </article>
             `;
           }).join('')}
@@ -336,17 +370,78 @@
     document.querySelectorAll('.zavoraNavPrev').forEach(btn => {
       btn.addEventListener('click', () => {
         const track = document.getElementById(`zavoraTrack_${btn.dataset.sec}`);
-        if (track) track.scrollBy({ left: -280, behavior: 'smooth' });
+        if (track) track.scrollBy({ left: -300, behavior: 'smooth' });
       });
     });
 
     document.querySelectorAll('.zavoraNavNext').forEach(btn => {
       btn.addEventListener('click', () => {
         const track = document.getElementById(`zavoraTrack_${btn.dataset.sec}`);
-        if (track) track.scrollBy({ left: 280, behavior: 'smooth' });
+        if (track) track.scrollBy({ left: 300, behavior: 'smooth' });
       });
     });
 
+    // Bind Quick View Modal
+    const qvModal = document.getElementById('zavoraQuickViewModal');
+    const qvContent = document.getElementById('zavoraQuickViewContent');
+    const qvClose = document.getElementById('zavoraCloseQuickView');
+
+    if (qvClose && qvModal) {
+      qvClose.addEventListener('click', () => qvModal.style.display = 'none');
+      qvModal.addEventListener('click', (e) => { if (e.target === qvModal) qvModal.style.display = 'none'; });
+    }
+
+    document.querySelectorAll('.zavoraQuickViewBtn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pId = String(btn.dataset.qvId);
+        const p = products.find(x => String(x.id || x.printfulId) === pId) || findProduct(pId);
+        if (!p || !qvContent || !qvModal) return;
+
+        const rawImg = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
+        const img = sanitizeApparelImg(rawImg, p.category, p.name, pId);
+        const pPrice = Number(p.price || 89.99);
+
+        qvContent.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; align-items: start;">
+            <div style="background: #f8f8f8; border-radius: 10px; overflow: hidden; aspect-ratio: 4/5;">
+              <img src="${img}" alt="${p.name}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div>
+              <p style="color: #c9a227; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">${p.category || 'STREETWEAR'}</p>
+              <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0 0 12px; color: #111111;">${p.name}</h2>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                <span style="color: #f59e0b;">★★★★★</span>
+                <span style="font-size: 0.85rem; color: #555555; font-weight: 700;">${p.rating || 4.9}</span>
+              </div>
+              <p style="font-size: 1.6rem; font-weight: 800; color: #111111; margin: 0 0 20px;">$${pPrice.toFixed(2)}</p>
+              <p style="font-size: 0.9rem; line-height: 1.6; color: #555555; margin-bottom: 24px;">${p.description || 'Signature organic streetwear piece designed for Zavora Fashion.'}</p>
+              <button type="button" class="qvModalAddBtn" style="width: 100%; padding: 16px; background: #111111; color: #ffffff; border: none; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">ADD TO BAG</button>
+              <a href="product?id=${encodeURIComponent(pId)}" style="display: block; text-align: center; margin-top: 14px; color: #111111; font-weight: 700; font-size: 0.88rem; text-decoration: underline;">View Full Product Details &rarr;</a>
+            </div>
+          </div>
+        `;
+
+        const qvAdd = qvContent.querySelector('.qvModalAddBtn');
+        if (qvAdd) {
+          qvAdd.addEventListener('click', () => {
+            if (typeof addToCart === 'function') addToCart(pId);
+            else {
+              let cart = JSON.parse(localStorage.getItem('zavoraCart') || '[]');
+              const found = cart.find(i => String(i.id) === pId);
+              if (found) found.qty += 1;
+              else cart.push({ id: pId, name: p.name, price: pPrice, img, qty: 1 });
+              localStorage.setItem('zavoraCart', JSON.stringify(cart));
+              alert(`${p.name} added to your bag!`);
+            }
+            qvModal.style.display = 'none';
+          });
+        }
+
+        qvModal.style.display = 'flex';
+      });
+    });
+
+    // Bind Rec Add to Cart
     document.querySelectorAll('.zavoraRecAddToCartBtn').forEach(btn => {
       btn.addEventListener('click', () => {
         const pId = String(btn.dataset.recCartId);
@@ -369,6 +464,32 @@
           } catch(e) {}
         }
         if (typeof updateHeaderCartBadges === 'function') updateHeaderCartBadges();
+      });
+    });
+
+    // Bind Rec Wishlist Hearts
+    document.querySelectorAll('.zavoraRecWishBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const pId = String(btn.dataset.recId);
+        const p = products.find(x => String(x.id || x.printfulId) === pId) || findProduct(pId);
+        if (!p) return;
+
+        try {
+          let wishlist = JSON.parse(localStorage.getItem('zavoraWishlist') || '[]');
+          const found = wishlist.find(i => String(i.id) === pId);
+          const svg = btn.querySelector('svg');
+          if (found) {
+            wishlist = wishlist.filter(i => String(i.id) !== pId);
+            if (svg) { svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', '#111111'); }
+            alert(`${p.name} removed from your wishlist!`);
+          } else {
+            wishlist.push({ id: pId, name: p.name, price: p.price, img: sanitizeApparelImg(p.img || p.image, p.category, p.name, pId) });
+            if (svg) { svg.setAttribute('fill', '#e11d48'); svg.setAttribute('stroke', '#e11d48'); }
+            alert(`${p.name} saved to your wishlist!`);
+          }
+          localStorage.setItem('zavoraWishlist', JSON.stringify(wishlist));
+        } catch(err) {}
       });
     });
   }
@@ -548,21 +669,21 @@
           </div>
         </div>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
-          <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-content:space-between;">
+          <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-space-between;">
             <div>
               <div style="color:#f59e0b; margin-bottom:8px; font-size:1.1rem;">★★★★★</div>
               <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">"Premium weight, perfect oversized drape, and the fabric depth looks high-end designer level."</p>
             </div>
             <span style="font-size:0.8rem; font-weight:800; color:#888;">— Amelia R. (Verified Buyer)</span>
           </article>
-          <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-content:space-between;">
+          <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-space-between;">
             <div>
               <div style="color:#f59e0b; margin-bottom:8px; font-size:1.1rem;">★★★★★</div>
               <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">"The quality feels 10/10. Holds structure after washing and fits exactly as advertised."</p>
             </div>
             <span style="font-size:0.8rem; font-weight:800; color:#888;">— Marcus T. (Verified Buyer)</span>
           </article>
-          <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-content:space-between;">
+          <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-space-between;">
             <div>
               <div style="color:#f59e0b; margin-bottom:8px; font-size:1.1rem;">★★★★★</div>
               <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">"Fast USA shipping! Pair this with cargo pants for a clean, effortless outfit."</p>
@@ -572,8 +693,16 @@
         </div>
       </section>
 
-      <!-- 4 DISCOVERY CAROUSEL SECTIONS (INSTANT LOAD ABOVE FOOTER) -->
-      <div id="zavoraRecContainer" style="max-width:1200px; margin:40px auto 0; padding:0 20px;"></div>
+      <!-- 4 FULL-WIDTH DISCOVERY CAROUSEL SECTIONS (WIDTH 100% WITH BADGES, HEARTS, QUICK VIEW & REAL PRODUCTS) -->
+      <div id="zavoraRecContainer" style="width:100%; margin:40px auto 0; padding:0 20px;"></div>
+
+      <!-- QUICK VIEW OVERLAY MODAL -->
+      <div id="zavoraQuickViewModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 999999; padding: 20px; backdrop-filter: blur(5px);">
+        <div style="background: #ffffff; color: #111111; border-radius: 14px; max-width: 780px; width: 100%; padding: 36px; position: relative; box-shadow: 0 24px 60px rgba(0,0,0,0.4); max-height: 90vh; overflow-y: auto;">
+          <button type="button" id="zavoraCloseQuickView" style="position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 2rem; font-weight: 700; cursor: pointer; color: #111111; line-height: 1;">&times;</button>
+          <div id="zavoraQuickViewContent"></div>
+        </div>
+      </div>
 
       <!-- 4-COLUMN FOOTER STRUCTURE AS SHOWN IN SCREENSHOT 2 -->
       <footer class="footer-4col" style="background:#fff; border-top:1px solid #eee; padding:60px 0 30px; margin-top:80px; width:100%;">
@@ -654,13 +783,27 @@
     if (container) {
       container.innerHTML = `
         ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', similarProducts)}
-        ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', localRecommended)}
+        <div id="zavoraRecSectionInner">
+          ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', localRecommended)}
+        </div>
         ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', trendingProducts)}
         ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', newArrivalsProducts)}
       `;
       const initialPool = [...similarProducts, ...localRecommended, ...trendingProducts, ...newArrivalsProducts];
       bindRecommendationEvents(initialPool);
     }
+
+    // Dynamic Fetch of Real Store Products from Server API
+    fetchServerRecommendations(product, 6).then(serverRecs => {
+      if (serverRecs && serverRecs.length) {
+        const recInner = document.getElementById('zavoraRecSectionInner');
+        if (recInner) {
+          recInner.innerHTML = renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', serverRecs);
+          const updatedPool = [...similarProducts, ...serverRecs, ...trendingProducts, ...newArrivalsProducts];
+          bindRecommendationEvents(updatedPool);
+        }
+      }
+    });
 
     // Bind Color buttons
     document.querySelectorAll('.zavoraColorBtn').forEach(btn => {
