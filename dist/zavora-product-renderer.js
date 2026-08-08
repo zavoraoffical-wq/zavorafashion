@@ -425,17 +425,17 @@
 
     // RENDER MAIN PRODUCT & ALL 5 MIDDLE CONTENT SECTIONS
     main.innerHTML = `
-      <section class="section product-detail" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 40px; padding: 40px 0; max-width: 1200px; margin: 0 auto;">
+      <section class="section product-detail" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 40px; padding: 110px 20px 40px; max-width: 1200px; margin: 0 auto;">
         <!-- GALLERY SIDE -->
-        <div class="product-gallery">
-          <div class="zoom-frame" style="background:#f9f9f9; border-radius:8px; overflow:hidden; border:1px solid #eee;">
-            <img id="zavoraMainImage" src="${images[0]}" alt="${name}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width:100%; height:auto; display:block; object-fit:cover;">
+        <div class="product-gallery" style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
+          <div class="zoom-frame" style="background:#f7f7f7; border-radius:12px; overflow:hidden; border:1px solid #e5e5e5; aspect-ratio:4/5; width:100%; display:flex; align-items:center; justify-content:center;">
+            <img id="zavoraMainImage" src="${images[0]}" alt="${name}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width:100%; height:100%; max-height:600px; display:block; object-fit:contain; object-position:center;">
           </div>
           ${images.length > 1 ? `
-            <div style="display: flex; gap: 10px; margin-top: 12px; overflow-x: auto;">
+            <div class="zavoraThumbTrack" style="display: flex; gap: 12px; margin-top: 4px; overflow-x: auto; padding-bottom: 4px;">
               ${images.map((img, i) => `
-                <button type="button" class="zavoraThumb" data-img="${img}" style="border:${i===0?'2px solid #000':'1px solid #ddd'}; background:#f9f9f9; border-radius:6px; overflow:hidden; width:64px; height:64px; padding:0; cursor:pointer; flex-shrink:0;">
-                  <img src="${img}" alt="Thumbnail ${i+1}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width:100%; height:100%; object-fit:cover;">
+                <button type="button" class="zavoraThumb" data-img="${img}" style="border:${i===0?'2.5px solid #111':'1px solid #ddd'}; background:#ffffff; border-radius:8px; overflow:hidden; width:80px; height:80px; padding:0; cursor:pointer; flex-shrink:0; transition: all 0.2s ease;">
+                  <img src="${img}" alt="Thumbnail ${i+1}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width:100%; height:100%; object-fit:contain; object-position:center;">
                 </button>
               `).join('')}
             </div>
@@ -784,6 +784,21 @@
           bindRecommendationEvents(allUniquePool);
         }
       }
+    });
+
+    // Bind Thumbnail Click Handler
+    document.querySelectorAll('.zavoraThumb').forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        const newSrc = thumb.dataset.img;
+        const mainImg = document.getElementById('zavoraMainImage');
+        if (mainImg && newSrc) {
+          mainImg.src = newSrc;
+        }
+        document.querySelectorAll('.zavoraThumb').forEach(t => {
+          t.style.border = '1px solid #ddd';
+        });
+        thumb.style.border = '2.5px solid #111';
+      });
     });
 
     // Bind Color buttons

@@ -5368,3 +5368,76 @@ footer.footer,
   background: var(--white) !important;
   color: var(--text) !important;
 }
+
+/* ==========================================================================
+   PRODUCT DETAIL GALLERY & THUMBNAIL LAYOUT OVERRIDES
+   - Ensures main image is centered on top with 4/5 aspect ratio & object-fit contain
+   - Ensures thumbnails sit cleanly UNDERNEATH the main image (never top-right)
+   - Ensures padding-top (110px) so image & title never overlap sticky header
+   ========================================================================== */
+
+.product-detail {
+  padding-top: 110px !important;
+}
+
+.product-gallery {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  width: 100% !important;
+  grid-template-columns: none !important;
+}
+
+.product-gallery .zoom-frame,
+.zoom-frame {
+  width: 100% !important;
+  max-width: 100% !important;
+  aspect-ratio: 4 / 5 !important;
+  background: #f7f7f7 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid #e5e5e5 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  grid-column: auto !important;
+}
+
+.product-gallery .zoom-frame img,
+.zoom-frame img,
+#zavoraMainImage {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 600px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  display: block !important;
+}
+
+.zavoraThumbTrack,
+.product-thumbs {
+  display: flex !important;
+  gap: 12px !important;
+  margin-top: 4px !important;
+  overflow-x: auto !important;
+  grid-column: auto !important;
+  grid-template-columns: none !important;
+  width: 100% !important;
+}
+
+.zavoraThumb {
+  flex-shrink: 0 !important;
+  width: 80px !important;
+  height: 80px !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  cursor: pointer !important;
+}
+
+.instagram-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
