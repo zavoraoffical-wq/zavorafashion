@@ -200,7 +200,60 @@ if (!fs.existsSync(source)) {
 fs.rmSync(target, { recursive: true, force: true });
 copyDir(source, target);
 addBrandHeadTags();
+injectFullFooter();
 writeSeoFiles();
 console.log('Copied dist to public for Vercel static output.');
 
+// ============================================================
+// INJECT FULL HOMEPAGE FOOTER INTO EVERY PAGE
+// Replaces <footer class="footer"> on every page (except index.html
+// and admin pages) with the exact full footer from the homepage.
+// ============================================================
+function injectFullFooter() {
+  const FULL_FOOTER_HTML = `<footer class="footer">
+  <section class="footer-top">
+    <div class="footer-brand"><strong>ZAVORA FASHION</strong><p>Premium Streetwear.<br>Designed for the USA.</p></div>
+    <img class="footer-hero-img" src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80" alt="Zavora premium fashion campaign" loading="lazy">
+  </section>
+  <section class="footer-gallery" aria-label="Zavora premium lifestyle images">
+    <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle one" loading="lazy"><span>Shop Now</span></a>
+    <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle two" loading="lazy"><span>Shop Now</span></a>
+    <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle three" loading="lazy"><span>Shop Now</span></a>
+    <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle four" loading="lazy"><span>Shop Now</span></a>
+  </section>
+  <section class="instagram-grid" aria-label="Follow Zavora Fashion">
+    <img src="https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 1" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 2" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 3" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 4" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 5" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 6" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 7" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 8" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 9" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 10" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 11" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 12" loading="lazy">
+  </section>
+  <section class="footer-bottom">
+    <nav class="footer-links" aria-label="Footer navigation"><a href="shop.html">Shop</a><a href="about.html">About</a><a href="journal.html">Journal</a><a href="track-order.html">Track Order</a><a href="return-refund-policy.html">Returns</a><a href="privacy-policy.html">Privacy</a><a href="terms-conditions.html">Terms</a><a href="contact.html">Contact</a></nav>
+    <p class="footer-copy">Follow Us: <a href="https://www.facebook.com/profile.php/?id=61579777109389" target="_blank" rel="noopener" style="margin-right:8px;color:inherit;text-decoration:none;opacity:0.8;">Facebook</a> <a href="https://www.instagram.com/zavora_fashion/" target="_blank" rel="noopener" style="margin-right:8px;color:inherit;text-decoration:none;opacity:0.8;">Instagram</a> <a href="https://x.com/zavoraoffical" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;opacity:0.8;">X</a><br>&copy; 2026 Zavora Fashion</p>
+    <form class="footer-newsletter"><input type="email" placeholder="Email" aria-label="Newsletter email"><button type="button">Join</button></form>
+  </section>
+</footer>`;
 
+  const skipPages = new Set(['admin.html', 'admin-login.html', 'index.html']);
+  const FOOTER_REGEX = /<footer\b[^>]*class="[^"]*\bfooter\b[^"]*"[^>]*>[\s\S]*?<\/footer>/i;
+
+  let count = 0;
+  for (const file of walkHtmlFiles(target)) {
+    const fileName = path.basename(file);
+    if (skipPages.has(fileName)) continue;
+    let html = fs.readFileSync(file, 'utf8');
+    if (!FOOTER_REGEX.test(html)) continue;
+    html = html.replace(FOOTER_REGEX, FULL_FOOTER_HTML);
+    fs.writeFileSync(file, html);
+    count++;
+  }
+  console.log(`Injected full homepage footer into ${count} pages.`);
+}
