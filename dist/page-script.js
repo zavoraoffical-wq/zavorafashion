@@ -4563,3 +4563,128 @@ document.addEventListener('submit', (event) => {
     form.reset();
   }
 });
+
+/* ============================================================
+   ZAVORA GLOBAL FOOTER INJECTION
+   Replaces every page's <footer class="footer"> with the full
+   homepage footer (footer-top, gallery, instagram grid, links).
+   ============================================================ */
+(function injectGlobalFooter() {
+  const footer = document.querySelector('footer.footer');
+  if (!footer) return;
+
+  // Skip homepage – it already has the full footer in its HTML
+  const isHome = window.location.pathname === '/' || window.location.pathname.endsWith('index.html');
+  if (isHome) return;
+
+  footer.innerHTML = `
+    <section class="footer-top">
+      <div class="footer-brand">
+        <strong>ZAVORA FASHION</strong>
+        <p>Premium Streetwear.<br>Designed for the USA.</p>
+      </div>
+      <img class="footer-hero-img" src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80" alt="Zavora premium fashion campaign" loading="lazy">
+    </section>
+
+    <section class="footer-gallery" aria-label="Zavora premium lifestyle images">
+      <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle one" loading="lazy"><span>Shop Now</span></a>
+      <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle two" loading="lazy"><span>Shop Now</span></a>
+      <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle three" loading="lazy"><span>Shop Now</span></a>
+      <a class="footer-shot" href="shop.html"><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=500&q=80" alt="Zavora lifestyle four" loading="lazy"><span>Shop Now</span></a>
+    </section>
+
+    <section class="instagram-grid" aria-label="Follow Zavora Fashion">
+      <img src="https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 1" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 2" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 3" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 4" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 5" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 6" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 7" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 8" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 9" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 10" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 11" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=300&q=80" alt="Follow Zavora Fashion 12" loading="lazy">
+    </section>
+
+    <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:40px; padding:48px 4vw; border-top:1px solid #eaeaea; background:#ffffff;">
+      <div>
+        <h4 style="font-size:0.85rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;color:#111;">CONTACT SUPPORT</h4>
+        <p style="font-size:0.85rem;color:#666;margin-bottom:14px;">supports@zavorafashion.com</p>
+        <nav style="display:flex;flex-direction:column;gap:8px;font-size:0.85rem;color:#555;">
+          <a href="contact.html" style="color:#555;text-decoration:none;">Contact Us</a>
+          <a href="help-center.html" style="color:#555;text-decoration:none;">Help Center</a>
+          <a href="faq.html" style="color:#555;text-decoration:none;">FAQ</a>
+          <a href="track-order.html" style="color:#555;text-decoration:none;">Track Order</a>
+          <a href="shipping-information.html" style="color:#555;text-decoration:none;">Shipping Information</a>
+          <a href="return-refund-policy.html" style="color:#555;text-decoration:none;">Return &amp; Refund Policy</a>
+          <a href="exchange-policy.html" style="color:#555;text-decoration:none;">Exchange Policy</a>
+          <a href="style-guide.html" style="color:#555;text-decoration:none;">Size Guide</a>
+          <a href="payment-methods.html" style="color:#555;text-decoration:none;">Payment Methods</a>
+        </nav>
+      </div>
+      <div>
+        <h4 style="font-size:0.85rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;color:#111;">SHOP</h4>
+        <nav style="display:flex;flex-direction:column;gap:8px;font-size:0.85rem;">
+          <a href="new-arrivals.html" style="color:#555;text-decoration:none;">New Arrivals</a>
+          <a href="best-sellers.html" style="color:#555;text-decoration:none;">Best Sellers</a>
+          <a href="women.html" style="color:#555;text-decoration:none;">Women</a>
+          <a href="men.html" style="color:#555;text-decoration:none;">Men</a>
+          <a href="collections.html" style="color:#555;text-decoration:none;">Collections</a>
+          <a href="limited.html" style="color:#555;text-decoration:none;">Limited Edition</a>
+          <a href="trending.html" style="color:#555;text-decoration:none;">Trending Now</a>
+          <a href="lookbook.html" style="color:#555;text-decoration:none;">Lookbook</a>
+          <a href="gift-cards.html" style="color:#555;text-decoration:none;">Gift Cards</a>
+        </nav>
+      </div>
+      <div>
+        <h4 style="font-size:0.85rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;color:#111;">BRAND</h4>
+        <nav style="display:flex;flex-direction:column;gap:8px;font-size:0.85rem;">
+          <a href="about.html" style="color:#555;text-decoration:none;">Our Story</a>
+          <a href="journal.html" style="color:#555;text-decoration:none;">Fashion Journal</a>
+          <a href="sustainability.html" style="color:#555;text-decoration:none;">Sustainability</a>
+          <a href="affiliate.html" style="color:#555;text-decoration:none;">Affiliate Program</a>
+          <a href="careers.html" style="color:#555;text-decoration:none;">Careers</a>
+          <a href="press.html" style="color:#555;text-decoration:none;">Press</a>
+          <a href="store-locator.html" style="color:#555;text-decoration:none;">Store Locator</a>
+        </nav>
+      </div>
+      <div>
+        <h4 style="font-size:0.85rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;color:#111;">FOLLOW US</h4>
+        <nav style="display:flex;flex-direction:column;gap:8px;font-size:0.85rem;">
+          <a href="https://www.instagram.com/zavora_fashion/" target="_blank" rel="noopener" style="color:#555;text-decoration:none;">📷 Instagram</a>
+          <a href="https://www.facebook.com/profile.php/?id=61579777109389" target="_blank" rel="noopener" style="color:#555;text-decoration:none;">📘 Facebook</a>
+          <a href="https://x.com/zavoraoffical" target="_blank" rel="noopener" style="color:#555;text-decoration:none;">🐦 X (Twitter)</a>
+        </nav>
+        <div style="margin-top:24px;">
+          <p style="font-size:0.82rem;color:#888;margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">NEWSLETTER</p>
+          <form class="footer-newsletter" style="display:flex;gap:8px;">
+            <input type="email" placeholder="Email" aria-label="Newsletter email" style="flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:4px;font-size:0.85rem;">
+            <button type="button" style="padding:10px 16px;background:#111;color:#fff;border:none;border-radius:4px;font-weight:700;font-size:0.85rem;cursor:pointer;">Join</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="footer-bottom">
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="shop.html">Shop</a>
+        <a href="about.html">About</a>
+        <a href="journal.html">Journal</a>
+        <a href="track-order.html">Track Order</a>
+        <a href="return-refund-policy.html">Returns</a>
+        <a href="privacy-policy.html">Privacy</a>
+        <a href="terms-conditions.html">Terms</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <p class="footer-copy">
+        Follow Us:
+        <a href="https://www.facebook.com/profile.php/?id=61579777109389" target="_blank" rel="noopener" style="margin-right:8px;color:inherit;text-decoration:none;opacity:0.8;">Facebook</a>
+        <a href="https://www.instagram.com/zavora_fashion/" target="_blank" rel="noopener" style="margin-right:8px;color:inherit;text-decoration:none;opacity:0.8;">Instagram</a>
+        <a href="https://x.com/zavoraoffical" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;opacity:0.8;">X</a>
+        <br>© 2026 Zavora Fashion
+      </p>
+    </section>
+  `;
+})();
