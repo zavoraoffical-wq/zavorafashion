@@ -3398,10 +3398,7 @@ function enhanceFooter() {
 }
 
 function cleanAuthPageFooter() {
-  const pageName = window.location.pathname.split('/').pop();
-  const isHome = pageName === 'index.html' || pageName === '';
-  if (isHome) return;
-  document.querySelectorAll('.footer-top, .footer-gallery, .instagram-grid, .luxury-prefooter, .global-product-filters, .global-product-rails').forEach((section) => section.remove());
+  // No longer stripping footer sections — global footer injection handles all pages uniformly
 }
 
 function initRealtimeTracking() {
