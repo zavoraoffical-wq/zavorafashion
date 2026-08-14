@@ -277,38 +277,31 @@
             const mainImg = sanitizeApparelImg(rawImg, p.category, p.name, pId);
 
             return `
-              <article class="zavoraProductCard" style="flex: 0 0 280px; min-width: 280px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+              <article class="zavoraProductCard" style="flex: 0 0 280px; min-width: 280px; background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px; overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
                 
-                ${badgeText ? `<span style="position: absolute; top: 14px; left: 14px; background: #111111; color: #ffffff; border: 1px solid #111111; padding: 4px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px; z-index: 2;">${badgeText}</span>` : ''}
+                ${badgeText ? `<span style="position: absolute; top: 8px; left: 8px; background: #111111; color: #ffffff; border: 1px solid #111111; padding: 2px 6px; font-size: 0.65rem; font-weight: 800; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 2;">${badgeText}</span>` : ''}
                 
-                <button type="button" class="zavoraRecWishBtn" data-rec-id="${pId}" style="position: absolute; top: 14px; right: 14px; background: #ffffff; border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 2;" aria-label="Add to wishlist">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <button type="button" class="zavoraRecWishBtn" data-rec-id="${pId}" style="position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.92); border: none; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 2;" aria-label="Add to wishlist">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                 </button>
 
                 <a href="product?id=${encodeURIComponent(pId)}" style="display: block; position: relative; aspect-ratio: 4/5; overflow: hidden; background: #f9f9f9;">
                   <img class="zavoraCardImg" src="${mainImg}" alt="${pName}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width: 100%; height: 100%; object-fit: cover;">
                 </a>
 
-                <div style="padding: 16px; display: flex; flex-direction: column; flex-grow: 1;">
-                  ${p.rating ? `
-                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                      <span style="color: #f59e0b; font-size: 0.85rem;">★★★★★</span>
-                      <span style="font-size: 0.8rem; color: #666666; font-weight: 700;">${p.rating}</span>
-                    </div>
-                  ` : ''}
-
-                  <h4 style="font-size: 0.95rem; font-weight: 800; margin: 0 0 8px; line-height: 1.35; height: 40px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                <div style="padding: 10px 8px; display: flex; flex-direction: column; flex-grow: 1;">
+                  <h4 style="font-size: 0.85rem; font-weight: 700; margin: 0 0 6px; line-height: 1.25; height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                     <a href="product?id=${encodeURIComponent(pId)}" style="color: #111111; text-decoration: none;">${pName}</a>
                   </h4>
 
-                  <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 14px;">
-                    <strong style="font-size: 1.2rem; font-weight: 800; color: #111111;">$${pPrice.toFixed(2)}</strong>
-                    ${pCompareAt > pPrice ? `<s style="font-size: 0.9rem; color: #888888;">$${pCompareAt.toFixed(2)}</s>` : ''}
+                  <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px;">
+                    <strong style="font-size: 0.95rem; font-weight: 800; color: #111111;">$${pPrice.toFixed(2)}</strong>
+                    ${pCompareAt > pPrice ? `<s style="font-size: 0.8rem; color: #888888;">$${pCompareAt.toFixed(2)}</s>` : ''}
                   </div>
 
-                  <div style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button type="button" class="zavoraQuickViewBtn" data-qv-id="${pId}" style="padding: 10px; background: #ffffff; color: #111111; border: 1.5px solid #111111; border-radius: 6px; font-weight: 800; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">QUICK VIEW</button>
-                    <button type="button" class="zavoraRecAddToCartBtn" data-rec-cart-id="${pId}" style="padding: 10px; background: #111111; color: #ffffff; border: none; border-radius: 6px; font-weight: 800; font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">ADD TO BAG</button>
+                  <div style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%;">
+                    <button type="button" class="zavoraQuickViewBtn" data-qv-id="${pId}" style="padding: 8px 2px; background: #ffffff; color: #111111; border: 1px solid #ddd; border-radius: 4px; font-weight: 700; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0; text-align: center; white-space: nowrap;">VIEW</button>
+                    <button type="button" class="zavoraRecAddToCartBtn" data-rec-cart-id="${pId}" style="padding: 8px 2px; background: #111111; color: #ffffff; border: none; border-radius: 4px; font-weight: 700; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0; text-align: center; white-space: nowrap;">ADD</button>
                   </div>
                 </div>
 
