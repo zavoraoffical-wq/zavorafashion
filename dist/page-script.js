@@ -1792,31 +1792,26 @@ function swatch(color) {
 function catalogCard(item) {
   const image = item.images?.[0] || item.image || item.img || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80';
   const hoverImage = item.images?.[1] || item.alt || item.hoverImage || image;
-  const size = item.size || item.sizes?.[0] || 'M';
   const colors = Array.isArray(item.colors) && item.colors.length ? item.colors : [item.color || 'default'];
   const collections = Array.isArray(item.collection) ? item.collection.join(' ') : String(item.collection || '');
-  const stock = getProductStock(item);
-  const isLimited = String(item.badge || '').toLowerCase().includes('limited') || (item.collection || []).includes('limited');
-  const rating = Number(item.rating || (4.6 + ((Number(item.id) || 1) % 4) / 10)).toFixed(1);
   return `
-    <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-gender="${String(item.gender || '').toLowerCase()}" data-category="${item.category}" data-collection="${collections}" data-color="${colors.join(' ')}" data-size="${(item.sizes || [size]).join(' ')}" data-price="${item.price}">
-      <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" aria-label="Open ${item.name} detail page">
-        <img class="card-img-primary" src="${image}" alt="${item.name}" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80'">
-        <img class="card-img-hover" src="${hoverImage}" alt="${item.name} hover view" loading="lazy" onerror="this.style.display='none'">
+    <article class="catalog-card" data-catalog-card data-product-id="${item.id}" data-gender="${String(item.gender || '').toLowerCase()}" data-category="${item.category}" data-collection="${collections}" data-color="${colors.join(' ')}" data-price="${item.price}">
+      <div class="product-media" style="position:relative; aspect-ratio:4/5; overflow:hidden; border-radius:8px; background:#f5f5f5;">
+        <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" aria-label="Open ${item.name} detail page" style="display:block; width:100%; height:100%;">
+          <img class="card-img-primary" src="${image}" alt="${item.name}" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80'" style="width:100%; height:100%; object-fit:cover;">
+          <img class="card-img-hover" src="${hoverImage}" alt="${item.name} hover view" loading="lazy" onerror="this.style.display='none'" style="width:100%; height:100%; object-fit:cover;">
+        </a>
         ${item.badge && item.badge !== 'null' && item.badge !== 'undefined' && item.badge !== 'NULL' ? `<span class="badge">${item.badge}</span>` : ''}
         <button class="wish" type="button" data-wishlist-product="${item.id}" aria-label="Add ${item.name} to wishlist">♡</button>
-      </a>
-      <div>
-        <h3><a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}">${item.name}</a></h3>
-        <p>${item.category} / ${colors.map((color) => color === 'default' ? 'original' : color).join(', ')}${item.category === 'accessories' ? '' : ` / ${size}`}</p>
-        <div class="swatches" aria-label="Color variants">${colors.map((color) => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}</div>
-        <strong class="sale-price">${item.compareAt ? `<s>${money(item.compareAt)}</s> ` : ''}${money(item.price)}</strong>
-        <span class="catalog-rating">★ ${rating}</span>
-        <div class="catalog-card-actions">
-          <button type="button" data-card-add="${item.id}">Add to Cart</button>
-          <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}">Quick View</a>
+      </div>
+      <div style="padding:8px 2px; display:flex; flex-direction:column; gap:2px;">
+        <span style="font-size:11px; color:#888; text-transform:uppercase; font-weight:700; display:block; margin-bottom:2px;">${item.category || 'Apparel'}</span>
+        <h3 style="font-size:13px; font-weight:700; margin:0; line-height:1.25; height:32px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;"><a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" style="color:inherit; text-decoration:none;">${item.name}</a></h3>
+        <strong class="sale-price" style="font-size:14px; font-weight:800; color:#111; margin-top:2px;">${item.compareAt ? `<s style="color:#999; font-weight:400; font-size:11px; margin-right:4px;">${money(item.compareAt)}</s>` : ''}${money(item.price)}</strong>
+        <div class="catalog-card-actions" style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:6px;">
+          <button type="button" data-card-add="${item.id}" style="padding:6px 2px; background:#111; color:#fff; border:none; border-radius:4px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0; cursor:pointer; text-align:center; white-space:nowrap;">ADD</button>
+          <a href="product.html?id=${encodeURIComponent(item.id)}" data-open-product="${item.id}" style="padding:6px 2px; background:#fff; color:#111; border:1px solid #ddd; border-radius:4px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0; text-decoration:none; text-align:center; white-space:nowrap; display:flex; align-items:center; justify-content:center;">VIEW</a>
         </div>
-        ${isLimited ? `<span class="catalog-stock">${stock > 0 ? `${stock} available` : 'Out of stock'}</span>` : ''}
       </div>
     </article>
   `;
@@ -3854,6 +3849,7 @@ function initDynamicProductPage() {
 
 async function initDynamicRelatedProducts() {
   if (!isCurrentPage('product')) return;
+  if (document.getElementById('zavoraRecContainer')) return; // Managed cleanly by zavora-product-renderer.js
   if (document.querySelector('[data-smart-product-rails]')) return;
   const existingRelated = [...document.querySelectorAll('.section-title')].find((section) => section.textContent.includes('Related Products'))?.parentElement;
   const productDetail = document.querySelector('.product-detail');

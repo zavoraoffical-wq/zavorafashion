@@ -369,42 +369,35 @@ function renderProducts() {
 
 
 function productCard(product) {
-  const rawColors = (product.colors || [product.color || 'default']).filter(c => c && c !== 'default' && c !== 'original');
-  const colors = rawColors.length ? rawColors : ['black'];
-  const visibleColors = colors.slice(0, 5);
-  const extraColors = colors.length - 5;
-
-  const sizes = (product.sizes || ['S', 'M', 'L', 'XL']).filter(Boolean);
-  const visibleSizes = sizes.slice(0, 5);
-  const extraSizes = sizes.length - 5;
+  const pId = String(product.id || product.printfulId);
+  const pName = String(product.name || 'Zavora Product');
+  const pPrice = Number(product.price || 0);
+  const pCompareAt = product.compareAt ? Number(product.compareAt) : 0;
+  const pCategory = String(product.category || 'streetwear');
+  const pImg = product.img || product.image || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80';
+  const pAlt = product.alt || pImg;
 
   return `
-    <article class="product-card" data-product-id="${product.id}">
+    <article class="product-card" data-product-id="${pId}">
       <div class="product-media">
-        <img src="${product.img}" alt="${product.name}" loading="lazy" decoding="async">
-        <img class="alt" src="${product.alt || product.img}" alt="${product.name} alternate view" loading="lazy" decoding="async">
-        <span class="badge">${product.badge || 'NEW'}</span>
-        <button class="wish ${homeWishlistHas(product) ? 'active' : ''}" data-home-wishlist="${product.id}" aria-label="Add ${product.name} to wishlist">♡</button>
+        <a href="product.html?id=${encodeURIComponent(pId)}" style="display:block; width:100%; height:100%;">
+          <img src="${pImg}" alt="${pName}" loading="lazy" decoding="async">
+          <img class="alt" src="${pAlt}" alt="${pName} alternate view" loading="lazy" decoding="async">
+        </a>
+        ${product.badge ? `<span class="badge">${product.badge}</span>` : ''}
+        <button class="wish ${homeWishlistHas(product) ? 'active' : ''}" data-home-wishlist="${pId}" aria-label="Add ${pName} to wishlist">♡</button>
       </div>
       <div class="product-info">
         <div class="product-info-top">
-          <h3>${product.name}</h3>
+          <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;display:block;margin-bottom:2px;">${pCategory}</span>
+          <h3><a href="product.html?id=${encodeURIComponent(pId)}" style="color:inherit;text-decoration:none;">${pName}</a></h3>
           <div class="meta">
-            <span style="font-size:12px;color:var(--muted);text-transform:capitalize;">${product.category || 'luxury'}</span>
-            <strong class="${product.sale ? 'sale' : ''}">${product.compareAt ? `<s>${money(product.compareAt)}</s> ` : ''}${money(product.price)}</strong>
-          </div>
-          <div class="swatches" aria-label="Color variants">
-            ${visibleColors.map(color => `<span class="swatch" title="${color}" style="background:${swatch(color)}"></span>`).join('')}
-            ${extraColors > 0 ? `<span style="font-size:10px;color:#666;font-weight:600;">+${extraColors}</span>` : ''}
-          </div>
-          <div class="sizes" aria-label="Size selector">
-            ${visibleSizes.map(size => `<button class="size" type="button">${size}</button>`).join('')}
-            ${extraSizes > 0 ? `<span style="font-size:10px;color:#666;font-weight:600;">+${extraSizes}</span>` : ''}
+            <strong class="${product.sale ? 'sale' : ''}">${pCompareAt > pPrice ? `<s>${money(pCompareAt)}</s> ` : ''}${money(pPrice)}</strong>
           </div>
         </div>
         <div class="card-actions">
-          <button type="button" data-add="${product.id}">Quick add</button>
-          <button type="button" data-view="${product.id}">Quick view</button>
+          <button type="button" data-add="${pId}">ADD</button>
+          <a href="product.html?id=${encodeURIComponent(pId)}" style="background:#fff;color:#111;border:1px solid #ddd;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;">VIEW</a>
         </div>
       </div>
     </article>
