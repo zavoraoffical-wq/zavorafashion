@@ -574,12 +574,12 @@
 
           <p class="stock-note" data-stock-note style="font-size:0.78rem; font-weight:800; color:#888; letter-spacing:1px; margin:0 0 6px;">5 AVAILABLE</p>
 
-          <div class="product-actions" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%;">
-            <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="padding:16px 8px; background:#000; color:#fff; border:none; border-radius:4px; font-weight:800; font-size:0.88rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; text-align:center; white-space:nowrap; display:flex; align-items:center; justify-content:center;">ADD TO CART</button>
-            <button type="button" id="zavoraWishlistBtn" data-wishlist-product="${id}" style="padding:16px 8px; background:#fff; color:#111; border:1.5px solid #111; border-radius:4px; font-weight:800; font-size:0.88rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; text-align:center; white-space:nowrap; display:flex; align-items:center; justify-content:center;">WISHLIST</button>
+          <div class="product-actions" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; box-sizing:border-box;">
+            <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="padding:15px 6px; background:#000; color:#fff; border:none; border-radius:6px; font-weight:800; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; text-align:center; white-space:nowrap; display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box;">ADD TO BAG</button>
+            <button type="button" id="zavoraWishlistBtn" data-wishlist-product="${id}" style="padding:15px 6px; background:#fff; color:#111; border:1.5px solid #111; border-radius:6px; font-weight:800; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; text-align:center; white-space:nowrap; display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box;">WISHLIST</button>
           </div>
 
-          <button type="button" id="zavoraBuyNowBtn" style="padding:16px; background:#000; color:#fff; border:none; border-radius:4px; font-weight:800; font-size:0.92rem; text-transform:uppercase; letter-spacing:1.5px; cursor:pointer; width:100%; text-align:center; margin-top:2px;">BUY NOW</button>
+          <button type="button" id="zavoraBuyNowBtn" style="padding:16px; background:#000; color:#fff; border:none; border-radius:6px; font-weight:800; font-size:0.92rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; width:100%; text-align:center; margin-top:2px; box-sizing:border-box;">BUY NOW</button>
         </aside>
       </section>
 
