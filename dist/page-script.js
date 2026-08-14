@@ -2,10 +2,6 @@ if (typeof window !== 'undefined') {
   window.__ZAVORA_DISABLE_MAINTENANCE__ = true;
   document.documentElement.classList.remove('maintenance-mode');
 
-  ['gesturestart', 'gesturechange', 'gestureend'].forEach((eventName) => {
-    window.addEventListener(eventName, (e) => e.preventDefault(), { passive: false });
-  });
-
   document.addEventListener('focusin', (e) => {
     if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
       e.target.style.fontSize = '16px';
@@ -3938,6 +3934,7 @@ async function initDynamicRelatedProducts() {
 async function initHomepageRecommendationRails() {
   const pageName = window.location.pathname.split('/').pop() || 'index.html';
   if (pageName !== 'index.html' && pageName !== '') return;
+  if (document.querySelector('#homeProductSections')) return; // Already rendered cleanly by script.js
   if (document.querySelector('[data-home-recommendation-rails]')) return;
   const anchor = document.querySelector('.product-section') || document.querySelector('.banner.section') || document.querySelector('.footer');
   if (!anchor) return;
@@ -4577,7 +4574,7 @@ document.addEventListener('submit', (event) => {
   footer.innerHTML = `
     <section class="footer-top">
       <div class="footer-brand">
-        <strong>ZAVORA FASHION</strong>
+        <strong><img class="brand-mark" src="/assets/zavora-logo.png" alt="" aria-hidden="true">ZAVORA FASHION</strong>
         <p>Premium Streetwear.<br>Designed for the USA.</p>
       </div>
       <img class="footer-hero-img" src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80" alt="Zavora premium fashion campaign" loading="lazy">

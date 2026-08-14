@@ -43,32 +43,175 @@
     return DISTINCT_APPAREL_IMAGES[num % DISTINCT_APPAREL_IMAGES.length];
   }
 
-  const DEFAULT_CATALOG_FALLBACK = [
-    { id: 674, printfulId: 674, name: "Zavora Men's Crewneck Sweatshirt", price: 112.18, compareAt: 204.74, category: "sweatshirts", badge: "NEW", rating: 4.9, img: "https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80", description: "Zavora Men's Crewneck Sweatshirt is a premium fleece sweatshirt designed for Zavora Fashion's minimal streetwear wardrobe." },
-    { id: 826, printfulId: 826, name: "Zavora Organic Oversized Raddler 2.0 Sweatshirt", price: 127.99, compareAt: 239.36, category: "sweatshirts", badge: "BEST SELLER", rating: 4.9, img: "https://files.cdn.printful.com/products/862/22596_1743753167.jpg", description: "Crafted from 100% organic French Terry cotton (480 GSM), this boxy pullover features drop shoulders and a modern architectural silhouette." },
-    { id: 1412, printfulId: 1412, name: "Zavora Minimal Organic Streetwear Hoodie", price: 166.17, compareAt: 198.00, category: "hoodies", badge: "BEST SELLER", rating: 4.9, img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=80", description: "The Zavora Organic Hoodie is a signature minimal streetwear silhouette crafted from 480 GSM heavyweight organic French Terry cotton." },
-    { id: 411, printfulId: 411, name: "Zavora Premium Organic Sweatshirt", price: 129.73, compareAt: 155.00, category: "sweatshirts", badge: "TRENDING", rating: 4.8, img: "https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80", description: "Ultra-comfortable 480 GSM organic cotton crewneck sweatshirt built with reinforced ribbed cuffs and drop shoulders." },
-    { id: 329, printfulId: 329, name: "Zavora Avenue Cargo Tactical Pant", price: 145.00, compareAt: 170.00, category: "cargo-pants", badge: "POPULAR", rating: 5.0, img: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=700&q=80", description: "Heavy-duty organic cotton twill cargo pant built with tactical utility pockets and adjustable ankle cinch cords." },
-    { id: 934, printfulId: 934, name: "Zavora Cropped Minimalist Bomber Jacket", price: 189.00, compareAt: 220.00, category: "jackets", badge: "LIMITED", rating: 4.9, img: "https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=700&q=80", description: "Structured cropped streetwear jacket featuring matte silver hardware and weather-resistant organic canvas." },
-    { id: 501, printfulId: 501, name: "Zavora Gold Crest Oversized Tee", price: 78.50, compareAt: 95.00, category: "oversized-tees", badge: "NEW", rating: 4.9, img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=700&q=80", description: "Heavyweight 240 GSM organic combed cotton tee with signature high-density gold logo crest embroidery." },
-    { id: 502, printfulId: 502, name: "Zavora Noir Heavyweight Zip Hoodie", price: 175.00, compareAt: 210.00, category: "hoodies", badge: "MUST HAVE", rating: 5.0, img: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=700&q=80", description: "Double-layered 500 GSM fleece full-zip hoodie with custom YKK silver zipper hardware and deep lined hood." },
-    { id: 503, printfulId: 503, name: "Zavora Studio Pleated Wide Trouser", price: 155.00, compareAt: 185.00, category: "pants", badge: "TRENDING", rating: 4.8, img: "https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?auto=format&fit=crop&w=700&q=80", description: "Tailored architectural wide-leg trousers with front pleats, hidden elastic waistband, and side welt pockets." },
-    { id: 504, printfulId: 504, name: "Zavora Signature Twill Dad Cap", price: 48.00, compareAt: 60.00, category: "accessories", badge: "BEST SELLER", rating: 4.9, img: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=700&q=80", description: "6-panel washed cotton twill cap featuring metallic gold crest embroidery and custom antique brass buckle closure." },
-    { id: 505, printfulId: 505, name: "Zavora Luxury French Terry Sweatpant", price: 135.00, compareAt: 160.00, category: "sweatpants", badge: "NEW", rating: 4.9, img: "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=700&q=80", description: "Relaxed-fit 450 GSM organic French Terry sweatpants with deep zipping pockets and heavy cotton drawstrings." },
-    { id: 506, printfulId: 506, name: "Zavora Monogram Leather Crossbody Bag", price: 120.00, compareAt: 150.00, category: "accessories", badge: "LIMITED", rating: 5.0, img: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=700&q=80", description: "Compact pebbled leather crossbody pouch with engraved gold hardware and adjustable jacquard logo strap." },
-    { id: 507, printfulId: 507, name: "Zavora Boxy Vintage Wash Graphic Tee", price: 82.00, compareAt: 98.00, category: "oversized-tees", badge: "POPULAR", rating: 4.8, img: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=700&q=80", description: "Garment-dyed acid wash streetwear tee with distressed ribbing and back typographic graphic print." },
-    { id: 508, printfulId: 508, name: "Zavora Insulated Utility Puffer Vest", price: 165.00, compareAt: 195.00, category: "jackets", badge: "NEW ARRIVAL", rating: 4.9, img: "https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=700&q=80", description: "Sleeveless down-alternative puffer vest with water-repellent shell and dual chest flap utility pockets." },
-    { id: 509, printfulId: 509, name: "Zavora Oversized Heavyweight Longsleeve", price: 92.00, compareAt: 110.00, category: "oversized-tees", badge: "BEST SELLER", rating: 4.9, img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=700&q=80", description: "Drop-shoulder long sleeve top crafted from 280 GSM premium organic jersey cotton." },
-    { id: 510, printfulId: 510, name: "Zavora Essential Athletic Training Short", price: 68.00, compareAt: 85.00, category: "shorts", badge: "SALE", rating: 4.7, img: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=700&q=80", description: "5-inch inseam lightweight double-layer mesh athletic shorts with interior phone compression pocket." },
-    { id: 511, printfulId: 511, name: "Zavora Ribbed Knit Minimalist Beanie", price: 42.00, compareAt: 52.00, category: "accessories", badge: "ESSENTIAL", rating: 4.9, img: "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?auto=format&fit=crop&w=700&q=80", description: "100% merino wool rib-knit watch cap with subtle woven Zavora crest tab." },
-    { id: 512, printfulId: 512, name: "Zavora Oversized Denim Trucker Jacket", price: 210.00, compareAt: 260.00, category: "jackets", badge: "LIMITED DROP", rating: 5.0, img: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=700&q=80", description: "14oz rigid selvedge denim trucker jacket with custom branded brass shank buttons and fleece collar accent." },
-    { id: 513, printfulId: 513, name: "Zavora Minimal Organic Crop Hoodie", price: 148.00, compareAt: 175.00, category: "hoodies", badge: "TRENDING", rating: 4.9, img: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=700&q=80", description: "Raw-edge cropped organic cotton pullover hoodie with ribbed cuffs and relaxed dropped sleeves." },
-    { id: 514, printfulId: 514, name: "Zavora Tactical Nylon Shell Track Pant", price: 138.00, compareAt: 165.00, category: "pants", badge: "NEW", rating: 4.8, img: "https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=700&q=80", description: "Matte crinkle nylon track pant featuring mesh lining, zipper leg openings, and reflective piping." },
-    { id: 515, printfulId: 515, name: "Zavora Heavyweight Oversized Fleece Crew", price: 132.00, compareAt: 158.00, category: "sweatshirts", badge: "POPULAR", rating: 4.9, img: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=700&q=80", description: "Ultra-plush 480 GSM fleece crewneck with architectural seam detailing and reinforced neckline." },
-    { id: 516, printfulId: 516, name: "Zavora Crest Embroidered Socks (3-Pack)", price: 32.00, compareAt: 40.00, category: "accessories", badge: "BUNDLE", rating: 4.9, img: "https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?auto=format&fit=crop&w=700&q=80", description: "Cushioned ribbed crew socks made from combed organic cotton with gold Zavora crest embroidery." },
-    { id: 517, printfulId: 517, name: "Zavora Lightweight Summer Linen Shirt", price: 115.00, compareAt: 140.00, category: "shirts", badge: "SUMMER EDIT", rating: 4.8, img: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=700&q=80", description: "Breathable 100% European flax linen button-down short sleeve shirt with Cuban collar." },
-    { id: 518, printfulId: 518, name: "Zavora Heritage Fleece Zip Track Jacket", price: 178.00, compareAt: 215.00, category: "jackets", badge: "HOT", rating: 5.0, img: "https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=700&q=80", description: "Stand-collar fleece track jacket featuring contrast raglan striping and secure zip pockets." }
-  ];
+  const APPAREL_GROUPS = {
+    bottoms: ['pants', 'cargo-pants', 'sweatpants', 'shorts', 'wide-leg', 'joggers', 'trousers', 'bottoms'],
+    hoodies_sweaters: ['hoodies', 'sweatshirts', 'zip-hoodies', 'cropped-hoodies', 'sweater', 'knitwear', 'fleece', 'pullover', 'crewneck'],
+    tees_tops: ['oversized-tees', 'heavyweight-tees', 'baby-tees', 'tees', 'tank-tops', 'crop-tops', 'polo-shirts', 'long-sleeve-shirts', 'all-over-shirts', 'embroidered-shirts', 'three-quarter-sleeve-shirts', 't-shirt', 'shirt'],
+    outerwear: ['jackets', 'coats', 'windbreaker', 'bomber', 'outerwear', 'vest', 'puffer', 'jacket'],
+    sets_sport: ['matching-sets', 'sportswear', 'tracksuit', 'beachwear', 'athletic', 'gym'],
+    accessories: ['accessories', 'hats', 'beanies', 'caps', 'socks', 'bags']
+  };
+
+  function getApparelGroup(category = '', name = '') {
+    const text = `${category} ${name}`.toLowerCase();
+    for (const [group, tags] of Object.entries(APPAREL_GROUPS)) {
+      if (tags.some(tag => text.includes(tag.toLowerCase()))) {
+        return group;
+      }
+    }
+    return 'other';
+  }
+
+  function calculateSimilarityScore(currentProduct, candidateProduct) {
+    if (!currentProduct || !candidateProduct) return 0;
+    const currentId = String(currentProduct.id || currentProduct.printfulId || '').trim();
+    const candidateId = String(candidateProduct.id || candidateProduct.printfulId || '').trim();
+    if (currentId && candidateId && currentId === candidateId) return -9999; // Exclude current product
+
+    let score = 0;
+    const curCat = String(currentProduct.category || '').toLowerCase();
+    const candCat = String(candidateProduct.category || '').toLowerCase();
+    const curName = String(currentProduct.name || currentProduct.title || '').toLowerCase();
+    const candName = String(candidateProduct.name || candidateProduct.title || '').toLowerCase();
+    const curDesc = String(currentProduct.description || '').toLowerCase();
+    const candDesc = String(candidateProduct.description || '').toLowerCase();
+    const curGender = String(currentProduct.gender || '').toLowerCase();
+    const candGender = String(candidateProduct.gender || '').toLowerCase();
+
+    // 1. EXACT CATEGORY MATCH (+50 pts)
+    if (curCat && candCat && curCat === candCat) {
+      score += 50;
+    } else {
+      // 2. SAME APPAREL GROUP MATCH (+35 pts)
+      const curGroup = getApparelGroup(curCat, curName);
+      const candGroup = getApparelGroup(candCat, candName);
+      if (curGroup !== 'other' && curGroup === candGroup) {
+        score += 35;
+      }
+    }
+
+    // 3. GENDER MATCH (+20 pts)
+    if (curGender && candGender) {
+      if (curGender === candGender) {
+        score += 20;
+      } else if (curGender === 'unisex' || candGender === 'unisex') {
+        score += 10;
+      }
+    }
+
+    // 4. KEYWORD OVERLAP IN TITLE & DESCRIPTION (+5 pts per keyword, up to +25 pts)
+    const extractKeywords = (str) => {
+      return str.replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter(w => w.length > 3 && !['zavora', 'fashion', 'streetwear', 'premium', 'essential', 'luxury', 'cotton', 'organic', 'with', 'from', 'this', 'that', 'your'].includes(w));
+    };
+
+    const curKeywords = new Set([...extractKeywords(curName), ...extractKeywords(curDesc)]);
+    const candKeywords = [...extractKeywords(candName), ...extractKeywords(candDesc)];
+    let matchCount = 0;
+    candKeywords.forEach(word => {
+      if (curKeywords.has(word)) {
+        matchCount++;
+      }
+    });
+    score += Math.min(25, matchCount * 5);
+
+    // 5. PRICE PROXIMITY (+10 pts)
+    const curPrice = Number(currentProduct.price || 0);
+    const candPrice = Number(candidateProduct.price || 0);
+    if (curPrice > 0 && candPrice > 0) {
+      const priceDiffRatio = Math.abs(curPrice - candPrice) / curPrice;
+      if (priceDiffRatio <= 0.25) {
+        score += 10;
+      } else if (priceDiffRatio <= 0.5) {
+        score += 5;
+      }
+    }
+
+    return score;
+  }
+
+  function normalizeStoreProduct(product, index = 0) {
+    const name = String(product?.name || product?.title || product?.external_name || product?.sync_product?.name || `Zavora Product ${index + 1}`);
+    const id = product?.id || product?.printfulId || product?.printful_id || product?.template_id || product?.sync_product?.id || `${Date.now()}-${index}`;
+    const price = Number(product?.price || product?.retail_price || product?.sync_variants?.[0]?.retail_price || 0) || 0;
+    const compareAt = Number(product?.compareAt || product?.compare_at || 0);
+    const category = String(product?.category || 'streetwear');
+    const gender = String(product?.gender || 'Unisex');
+    const rawImage = product?.img || product?.image || product?.thumbnail_url || product?.files?.[0]?.preview_url || (Array.isArray(product?.images) ? product.images[0] : '');
+    const normalizedImage = sanitizeApparelImg(rawImage, category, name, id);
+    const sizes = Array.isArray(product?.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L', 'XL'];
+    const colors = Array.isArray(product?.colors) && product.colors.length ? product.colors : ['Black', 'Gray'];
+
+    return {
+      id,
+      printfulId: product?.printfulId || product?.printful_id || product?.id || id,
+      name,
+      price,
+      compareAt: compareAt > price ? compareAt : (product?.compareAt ? Number(product.compareAt) : 0),
+      category,
+      gender,
+      badge: product?.badge || (compareAt > price ? 'SALE' : ''),
+      rating: product?.rating ? Number(product.rating) : null,
+      colors,
+      sizes,
+      img: normalizedImage,
+      images: Array.isArray(product?.images) && product.images.length ? product.images : [normalizedImage],
+      description: product?.description || `${name} is a premium streetwear item designed for Zavora Fashion's minimal wardrobe.`
+    };
+  }
+
+  function getCachedCatalogProducts() {
+    try {
+      const cached = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]');
+      return Array.isArray(cached) ? cached.map((product, index) => normalizeStoreProduct(product, index)).filter(Boolean) : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function saveCachedCatalogProducts(products) {
+    try {
+      localStorage.setItem('zavora_cached_products', JSON.stringify(products));
+    } catch (error) {}
+  }
+
+  async function fetchCatalogProducts() {
+    const cached = getCachedCatalogProducts();
+    if (cached.length >= 10) return cached;
+
+    const endpoints = [
+      '/api/products?limit=120',
+      '/api/printful-products?gender=men&limit=60&page=1',
+      '/api/printful-products?gender=women&limit=60&page=1'
+    ];
+
+    const requests = endpoints.map((url) =>
+      fetch(url)
+        .then((response) => (response.ok ? response.json() : null))
+        .catch(() => null)
+    );
+    const responses = await Promise.all(requests);
+    const merged = [];
+    const seen = new Set();
+
+    responses.forEach((data) => {
+      const items = Array.isArray(data?.products) ? data.products : Array.isArray(data?.result) ? data.result : [];
+      items.forEach((item, index) => {
+        const product = normalizeStoreProduct(item, index);
+        const key = String(product.id || product.printfulId || '').trim();
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        merged.push(product);
+      });
+    });
+
+    if (merged.length) {
+      saveCachedCatalogProducts(merged);
+      return merged;
+    }
+    return cached;
+  }
 
   function getQueryParam(key) {
     const params = new URLSearchParams(window.location.search);
@@ -77,95 +220,32 @@
 
   function findProduct(id) {
     const targetId = String(id || '').trim();
+    if (!targetId) return null;
 
     try {
       const selected = JSON.parse(localStorage.getItem('zavoraSelectedProduct') || 'null');
-      if (selected && String(selected.id || selected.printfulId) === targetId) return selected;
+      if (selected && String(selected.id || selected.printfulId) === targetId) return normalizeStoreProduct(selected);
     } catch(e) {}
 
     try {
       const cached = JSON.parse(localStorage.getItem('zavora_cached_products') || '[]');
       const found = cached.find(p => String(p.id || p.printfulId) === targetId);
-      if (found) return found;
+      if (found) return normalizeStoreProduct(found);
     } catch(e) {}
 
-    const fallback = DEFAULT_CATALOG_FALLBACK.find(p => String(p.id || p.printfulId) === targetId);
-    if (fallback) return fallback;
-
-    const num = Math.abs(parseInt(targetId, 10) || 674);
-    const categories = ['sweatshirts', 'hoodies', 'oversized-tees', 'cargo-pants', 'jackets', 'accessories'];
-    const cat = categories[num % categories.length];
-
-    const names = [
-      "Zavora Fleece Pullover Sweatshirt",
-      "Zavora Women's Relaxed T-Shirt",
-      "Zavora Heavyweight French Terry Pullover",
-      "Zavora Minimal Organic Streetwear Hoodie",
-      "Zavora Avenue Cargo Tactical Pant",
-      "Zavora Cropped Minimalist Bomber Jacket"
-    ];
-    const pName = names[num % names.length] || `Zavora Organic Apparel #${targetId}`;
-    const pImg = sanitizeApparelImg('', cat, pName, num);
-
-    return {
-      id: targetId || '674',
-      printfulId: targetId || '674',
-      name: pName,
-      price: Number((89.90 + (num % 40)).toFixed(2)),
-      compareAt: Number((140.00 + (num % 50)).toFixed(2)),
-      category: cat,
-      gender: 'Unisex',
-      badge: 'NEW',
-      rating: 4.9,
-      colors: ['Black', 'Gray', 'Blue'],
-      sizes: ['2XL', '3XL', 'L', 'M', 'S', 'XL'],
-      img: pImg,
-      images: [pImg],
-      description: `${pName} is a premium streetwear item designed for Zavora Fashion's minimal wardrobe.`
-    };
-  }
-
-  async function fetchProductFromAPI(id) {
-    if (!id) return null;
-    try {
-      const res = await fetch(`/api/products?id=${encodeURIComponent(id)}`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data.ok && data.product) return data.product;
-    } catch(e) {}
     return null;
   }
 
-  // REAL STORE DATABASE PRODUCTS FETCH FROM MONGODB / SUPABASE STORE API
-  async function fetchServerRecommendations(product, limit = 24) {
-    const id = product?.id || product?.printfulId;
-    try {
-      const url = id 
-        ? `/api/products?action=recommendations&id=${encodeURIComponent(id)}&limit=${limit}`
-        : `/api/products?limit=${limit}`;
-      const res = await fetch(url);
-      if (!res.ok) return [];
-      const data = await res.json();
-      const list = data.products || data.recommendations || (Array.isArray(data) ? data : []);
-      if (Array.isArray(list) && list.length > 0) {
-        return list.map((p, idx) => {
-          const pId = p.id || p.printfulId || p.printful_id || (idx + 100);
-          const rawImg = p.img || p.image || p.thumbnail || (Array.isArray(p.images) ? p.images[0] : '');
-          return {
-            id: pId,
-            printfulId: pId,
-            name: p.name || p.title || 'Zavora Organic Apparel',
-            price: Number(p.price || 89.99),
-            compareAt: Number(p.compareAt || p.compare_at || (Number(p.price || 89.99) * 1.35)),
-            category: p.category || 'streetwear',
-            badge: p.badge || (p.compare_at > p.price ? 'SALE' : 'NEW'),
-            rating: p.rating || 4.9,
-            img: sanitizeApparelImg(rawImg, p.category, p.name, pId)
-          };
-        });
-      }
-    } catch(e) {}
-    return [];
+  async function resolveProduct(id) {
+    const targetId = String(id || '').trim();
+    const localProduct = findProduct(targetId);
+    if (localProduct) return localProduct;
+
+    const catalog = await fetchCatalogProducts();
+    if (!catalog.length) return null;
+
+    const exactMatch = catalog.find((product) => String(product.id || product.printfulId) === targetId);
+    return exactMatch || catalog[0] || null;
   }
 
   function renderDiscoverySection(sectionId, tag, title, products) {
@@ -189,11 +269,10 @@
           ${items.map(p => {
             const pId = String(p.id || p.printfulId);
             const pName = String(p.name || 'Zavora Product');
-            const pPrice = Number(p.price || 89.99);
-            const pCompareAt = p.compareAt ? Number(p.compareAt) : (pPrice * 1.25);
-            const discountPct = pCompareAt > pPrice ? Math.round(((pCompareAt - pPrice) / pCompareAt) * 100) : 0;
-            const badgeText = p.badge || (discountPct > 0 ? `${discountPct}% OFF` : 'NEW');
-            const ratingStars = p.rating || 4.9;
+            const pPrice = Number(p.price || 0);
+            const pCompareAt = p.compareAt ? Number(p.compareAt) : 0;
+            const discountPct = (pCompareAt > pPrice && pPrice > 0) ? Math.round(((pCompareAt - pPrice) / pCompareAt) * 100) : 0;
+            const badgeText = p.badge || (discountPct > 5 ? `${discountPct}% OFF` : '');
             const rawImg = p.img || p.image || (Array.isArray(p.images) ? p.images[0] : '');
             const mainImg = sanitizeApparelImg(rawImg, p.category, p.name, pId);
 
@@ -211,10 +290,12 @@
                 </a>
 
                 <div style="padding: 16px; display: flex; flex-direction: column; flex-grow: 1;">
-                  <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                    <span style="color: #f59e0b; font-size: 0.85rem;">★★★★★</span>
-                    <span style="font-size: 0.8rem; color: #666666; font-weight: 700;">${ratingStars}</span>
-                  </div>
+                  ${p.rating ? `
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                      <span style="color: #f59e0b; font-size: 0.85rem;">★★★★★</span>
+                      <span style="font-size: 0.8rem; color: #666666; font-weight: 700;">${p.rating}</span>
+                    </div>
+                  ` : ''}
 
                   <h4 style="font-size: 0.95rem; font-weight: 800; margin: 0 0 8px; line-height: 1.35; height: 40px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                     <a href="product?id=${encodeURIComponent(pId)}" style="color: #111111; text-decoration: none;">${pName}</a>
@@ -239,33 +320,48 @@
     `;
   }
 
-  function partitionProductsIntoSections(allProducts, currentProductId) {
-    const cleanId = String(currentProductId || '').trim();
-    const seen = new Set();
-    if (cleanId) seen.add(cleanId);
-
-    const fullPool = [];
-
-    (Array.isArray(allProducts) ? allProducts : []).forEach(p => {
-      const pId = String(p.id || p.printfulId);
-      if (pId && !seen.has(pId)) {
-        seen.add(pId);
-        fullPool.push(p);
-      }
+  function partitionProductsIntoSections(allProducts, currentProduct) {
+    const currentId = String(currentProduct?.id || currentProduct?.printfulId || '').trim();
+    const cleanPool = (Array.isArray(allProducts) ? allProducts : []).filter(p => {
+      const pId = String(p.id || p.printfulId || '').trim();
+      return pId && pId !== currentId;
     });
 
-    DEFAULT_CATALOG_FALLBACK.forEach(fb => {
-      const fbId = String(fb.id || fb.printfulId);
-      if (fbId && !seen.has(fbId)) {
-        seen.add(fbId);
-        fullPool.push(fb);
-      }
-    });
+    if (!cleanPool.length) {
+      return { sim: [], rec: [], tre: [], arr: [] };
+    }
 
-    const sim = fullPool.slice(0, 6);
-    const rec = fullPool.slice(6, 12);
-    const tre = fullPool.slice(12, 18);
-    const arr = fullPool.slice(18, 24);
+    // 1. Score all candidate products against current product
+    const scored = cleanPool.map(p => ({
+      product: p,
+      score: calculateSimilarityScore(currentProduct, p)
+    })).sort((a, b) => b.score - a.score);
+
+    const usedIds = new Set();
+    const takeFromScored = (filterFn, maxCount = 6) => {
+      const result = [];
+      for (const item of scored) {
+        const id = String(item.product.id || item.product.printfulId);
+        if (!usedIds.has(id) && filterFn(item)) {
+          usedIds.add(id);
+          result.push(item.product);
+          if (result.length >= maxCount) break;
+        }
+      }
+      return result;
+    };
+
+    // Similar Products: Top similarity score items (same category/group)
+    const sim = takeFromScored(item => item.score > 25, 6);
+
+    // Recommended Products: Next top relevant items (same collection / gender / style)
+    const rec = takeFromScored(item => item.score > 10, 6);
+
+    // Trending: Remaining items sorted by popularity/views
+    const tre = takeFromScored(() => true, 6);
+
+    // New Arrivals: Remaining items
+    const arr = takeFromScored(() => true, 6);
 
     return { sim, rec, tre, arr };
   }
@@ -425,7 +521,7 @@
 
     // RENDER MAIN PRODUCT & ALL 5 MIDDLE CONTENT SECTIONS
     main.innerHTML = `
-      <section class="section product-detail" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 40px; padding: 110px 20px 40px; max-width: 1200px; margin: 0 auto;">
+      <section class="section product-detail" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 40px; padding: 110px 20px 40px; width: min(1400px, calc(100% - 48px)); margin: 0 auto;">
         <!-- GALLERY SIDE -->
         <div class="product-gallery" style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
           <div class="zoom-frame" style="background:#f7f7f7; border-radius:12px; overflow:hidden; border:1px solid #e5e5e5; aspect-ratio:4/5; width:100%; display:flex; align-items:center; justify-content:center;">
@@ -621,7 +717,7 @@
     footerElem.innerHTML = `
       <section class="footer-top">
         <div class="footer-brand">
-          <strong>ZAVORA FASHION</strong>
+          <strong><img class="brand-mark" src="/assets/zavora-logo.png" alt="" aria-hidden="true">ZAVORA FASHION</strong>
           <p>Premium Streetwear.<br>Designed for the USA.</p>
         </div>
         <img class="footer-hero-img" src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1200&q=80" alt="Zavora premium fashion campaign">
@@ -750,39 +846,22 @@
 
     document.body.appendChild(footerElem);
 
-    // Initial fallback pool with unique 24-item catalog (no duplicates across sections)
-    const initialPools = partitionProductsIntoSections([], id);
-
+    // Render dynamic real catalog recommendations
     const container = document.getElementById('zavoraRecContainer');
-    if (container) {
-      container.innerHTML = `
-        ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', initialPools.sim)}
-        <div id="zavoraRecSectionInner">
-          ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', initialPools.rec)}
-        </div>
-        ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', initialPools.tre)}
-        ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', initialPools.arr)}
-      `;
-      bindRecommendationEvents([...initialPools.sim, ...initialPools.rec, ...initialPools.tre, ...initialPools.arr]);
-    }
+    
+    fetchCatalogProducts().then((catalogProducts) => {
+      const realPools = partitionProductsIntoSections(catalogProducts, product);
+      if (container) {
+        const sectionsHtml = [
+          realPools.sim.length ? renderDiscoverySection('similar', 'SIMILAR PIECES', 'Similar Products', realPools.sim) : '',
+          realPools.rec.length ? renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', realPools.rec) : '',
+          realPools.tre.length ? renderDiscoverySection('trending', 'TRENDING NOW', 'Trending Now', realPools.tre) : '',
+          realPools.arr.length ? renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', realPools.arr) : ''
+        ].filter(Boolean).join('');
 
-    // DYNAMIC FETCH OF UNIQUE REAL STORE PRODUCTS FROM API (/api/products?limit=24)
-    fetchServerRecommendations(product, 24).then(serverProducts => {
-      if (serverProducts && serverProducts.length >= 4) {
-        const dynamicPools = partitionProductsIntoSections(serverProducts, id);
-
-        if (container) {
-          container.innerHTML = `
-            ${renderDiscoverySection('similar', 'RECOMMENDED CATEGORY', 'Similar Products', dynamicPools.sim)}
-            <div id="zavoraRecSectionInner">
-              ${renderDiscoverySection('recommended', 'CURATED FOR YOU', 'Recommended Products', dynamicPools.rec)}
-            </div>
-            ${renderDiscoverySection('trending', 'HOT RIGHT NOW', 'Trending Now', dynamicPools.tre)}
-            ${renderDiscoverySection('new', 'JUST ARRIVED', 'New Arrivals', dynamicPools.arr)}
-          `;
-          const allUniquePool = [...dynamicPools.sim, ...dynamicPools.rec, ...dynamicPools.tre, ...dynamicPools.arr];
-          bindRecommendationEvents(allUniquePool);
-        }
+        container.innerHTML = sectionsHtml;
+        const allUniquePool = [...realPools.sim, ...realPools.rec, ...realPools.tre, ...realPools.arr];
+        bindRecommendationEvents(allUniquePool);
       }
     });
 
@@ -869,18 +948,10 @@
     if (!isProductPage) return;
 
     const id = getQueryParam('id') || getQueryParam('product') || getQueryParam('printfulId');
-    let product = findProduct(id);
-
+    const product = await resolveProduct(id);
+    if (!product) return;
     renderProductPageUI(product);
     if (typeof updateHeaderCartBadges === 'function') updateHeaderCartBadges();
-
-    if (id) {
-      const dbProduct = await fetchProductFromAPI(id);
-      if (dbProduct && dbProduct.name && dbProduct.img) {
-        renderProductPageUI(dbProduct);
-        if (typeof updateHeaderCartBadges === 'function') updateHeaderCartBadges();
-      }
-    }
   }
 
   if (document.readyState === 'loading') {

@@ -54,7 +54,9 @@ document.addEventListener('error', (event) => {
 }, true);
 
 const header = $('#siteHeader');
-window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 24));
+if (header) {
+  window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 24), { passive: true });
+}
 
 function money(value) {
   return `$${value.toLocaleString('en-US')}`;
