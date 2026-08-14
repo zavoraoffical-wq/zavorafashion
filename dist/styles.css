@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --black: #000;
   --white: #fff;
   --soft: #f5f5f5;
@@ -5440,4 +5440,131 @@ footer.footer,
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
   gap: 8px !important;
   width: 100% !important;
+}
+
+/* ==========================================================================
+   2 PRODUCTS PER ROW ON MOBILE (PHONE VIEW) FOR ALL SECTIONS & GRIDS
+   - Ensures exactly 2 products side-by-side on mobile devices (<= 768px)
+   - 2 products per slide on home product shelves and recommendation tracks
+   - Clean 50/50 action buttons for Add to Cart + Wishlist
+   ========================================================================== */
+
+.product-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+.product-actions > * {
+  white-space: nowrap !important;
+  text-align: center !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 768px) {
+  /* 2 Products Per Row in Grids */
+  .product-grid,
+  .catalog-grid,
+  .page-grid,
+  .category-grid,
+  #productGrid,
+  .catalog-main .catalog-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px 10px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  /* 2 Products Per View in Horizontal Sliders & Shelves */
+  .home-product-slider,
+  .product-rail-track {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: calc(50vw - 20px) !important;
+    gap: 12px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .home-product-slider .product-card,
+  .product-rail-track .catalog-card,
+  .zavoraProductCard {
+    flex: 0 0 calc(50vw - 20px) !important;
+    min-width: calc(50vw - 20px) !important;
+    max-width: calc(50vw - 20px) !important;
+    width: calc(50vw - 20px) !important;
+    scroll-snap-align: start !important;
+  }
+
+  div[id^="zavoraTrack_"] {
+    gap: 12px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Product Card Mobile Proportions */
+  .product-card,
+  .catalog-card {
+    padding: 0 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+  }
+
+  .product-card .card-media,
+  .catalog-card .catalog-media,
+  .catalog-card .catalog-img {
+    aspect-ratio: 4/5 !important;
+    width: 100% !important;
+  }
+
+  .product-card .card-title,
+  .catalog-card .catalog-title {
+    font-size: 0.82rem !important;
+    line-height: 1.25 !important;
+    height: 32px !important;
+    margin: 4px 0 !important;
+    overflow: hidden !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+  }
+
+  .product-card .card-price,
+  .catalog-card .catalog-price {
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+  }
+
+  .card-actions,
+  .catalog-card-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px !important;
+    margin-top: 6px !important;
+  }
+
+  .card-actions button,
+  .card-actions a,
+  .catalog-card-actions button,
+  .catalog-card-actions a {
+    padding: 8px 2px !important;
+    font-size: 0.68rem !important;
+    min-height: 32px !important;
+    letter-spacing: 0 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    justify-content: center !important;
+  }
+
+  /* Size Selector on Mobile */
+  .option-row button {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+    min-width: 42px !important;
+  }
 }
