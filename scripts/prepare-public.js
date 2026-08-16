@@ -87,7 +87,7 @@ function addBrandHeadTags() {
   const googleVerificationTag = '<meta name="google-site-verification" content="4AjlsEXnNoFfemeS-JvQk7talZoGEnLllMa-zfCByb8" />';
   const bingVerificationTag = '<meta name="msvalidate.01" content="CC6B9BB912CA5CABD10A850C960AE1EC" />';
 
-  const cssVersionTag = `href="styles.css?v=${Date.now()}"`;
+  const cssVersionTag = `href="/styles.css?v=${Date.now()}"`;
   const jsVersion = Date.now();
   const adminHtmlFiles = new Set(['admin.html', 'admin-login.html']);
   for (const file of walkHtmlFiles(target)) {
@@ -95,18 +95,21 @@ function addBrandHeadTags() {
     const isAdminHtml = adminHtmlFiles.has(fileName);
     let html = fs.readFileSync(file, 'utf8');
     html = removeFacebookPixel(html);
-    html = html.replace(/href=["']styles\.css(\?v=[^"']*)?["']/gi, cssVersionTag);
-    html = html.replace(/src=["']script\.js(\?v=[^"']*)?["']/gi, `src="script.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']page-script\.js(\?v=[^"']*)?["']/gi, `src="page-script.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']paypal-checkout\.js(\?v=[^"']*)?["']/gi, `src="paypal-checkout.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']admin\.js(\?v=[^"']*)?["']/gi, `src="admin.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']admin-login\.js(\?v=[^"']*)?["']/gi, `src="admin-login.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']zavora-analytics\.js(\?v=[^"']*)?["']/gi, `src="zavora-analytics.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']zavora-schema\.js(\?v=[^"']*)?["']/gi, `src="zavora-schema.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']zavora-seo\.js(\?v=[^"']*)?["']/gi, `src="zavora-seo.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']zavora-journal-engine\.js(\?v=[^"']*)?["']/gi, `src="zavora-journal-engine.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']zavora-product-renderer\.js(\?v=[^"']*)?["']/gi, `src="zavora-product-renderer.js?v=${jsVersion}"`);
-    html = html.replace(/src=["']zavora-currency-engine\.js(\?v=[^"']*)?["']/gi, `src="zavora-currency-engine.js?v=${jsVersion}"`);
+    html = html.replace(/href=["']\/?styles\.css(\?v=[^"']*)?["']/gi, cssVersionTag);
+    html = html.replace(/href=["']\/?affiliate\.css(\?v=[^"']*)?["']/gi, `href="/affiliate.css?v=${Date.now()}"`);
+    html = html.replace(/src=["']\/?script\.js(\?v=[^"']*)?["']/gi, `src="/script.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?page-script\.js(\?v=[^"']*)?["']/gi, `src="/page-script.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?paypal-checkout\.js(\?v=[^"']*)?["']/gi, `src="/paypal-checkout.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?admin\.js(\?v=[^"']*)?["']/gi, `src="/admin.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?admin-login\.js(\?v=[^"']*)?["']/gi, `src="/admin-login.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?affiliate\.js(\?v=[^"']*)?["']/gi, `src="/affiliate.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?zavora-analytics\.js(\?v=[^"']*)?["']/gi, `src="/zavora-analytics.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?zavora-schema\.js(\?v=[^"']*)?["']/gi, `src="/zavora-schema.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?zavora-seo\.js(\?v=[^"']*)?["']/gi, `src="/zavora-seo.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?zavora-journal-engine\.js(\?v=[^"']*)?["']/gi, `src="/zavora-journal-engine.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?zavora-product-renderer\.js(\?v=[^"']*)?["']/gi, `src="/zavora-product-renderer.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']\/?zavora-currency-engine\.js(\?v=[^"']*)?["']/gi, `src="/zavora-currency-engine.js?v=${jsVersion}"`);
+    html = html.replace(/src=["']assets\//gi, 'src="/assets/');
     html = optimizeImageTags(html);
     // Remove any existing Google Tag to avoid duplication
     html = html.replace(/\s*<!-- Google tag \(gtag\.js\) -->[\s\S]*?gtag\('config', 'G-8YGED71VN8'\);\s*<\/script>/gi, '');
@@ -123,19 +126,19 @@ function addBrandHeadTags() {
     html = ensureHeadTag(html, googleVerificationTag);
     html = ensureHeadTag(html, bingVerificationTag);
     if (!html.includes('zavora-analytics.js') && html.includes('</head>')) {
-      html = html.replace('</head>', `    <script src="zavora-analytics.js?v=${jsVersion}"></script>\n  </head>`);
+      html = html.replace('</head>', `    <script src="/zavora-analytics.js?v=${jsVersion}"></script>\n  </head>`);
     }
     if (!html.includes('zavora-schema.js') && html.includes('</head>')) {
-      html = html.replace('</head>', `    <script src="zavora-schema.js?v=${jsVersion}"></script>\n  </head>`);
+      html = html.replace('</head>', `    <script src="/zavora-schema.js?v=${jsVersion}"></script>\n  </head>`);
     }
     if (!html.includes('zavora-seo.js') && html.includes('</head>')) {
-      html = html.replace('</head>', `    <script src="zavora-seo.js?v=${jsVersion}"></script>\n  </head>`);
+      html = html.replace('</head>', `    <script src="/zavora-seo.js?v=${jsVersion}"></script>\n  </head>`);
     }
     if (fileName.includes('journal') && !html.includes('zavora-journal-engine.js') && html.includes('</head>')) {
-      html = html.replace('</head>', `    <script src="zavora-journal-engine.js?v=${jsVersion}"></script>\n  </head>`);
+      html = html.replace('</head>', `    <script src="/zavora-journal-engine.js?v=${jsVersion}"></script>\n  </head>`);
     }
     if (fileName.includes('product') && !html.includes('zavora-product-renderer.js') && html.includes('</head>')) {
-      html = html.replace('</head>', `    <script src="zavora-product-renderer.js?v=${jsVersion}"></script>\n  </head>`);
+      html = html.replace('</head>', `    <script src="/zavora-product-renderer.js?v=${jsVersion}"></script>\n  </head>`);
     }
     if (!html.includes('rel="icon"') && html.includes('</head>')) {
       html = html.replace('</head>', `    ${faviconTags}\n  </head>`);
@@ -193,6 +196,28 @@ function writeSeoFiles() {
   fs.writeFileSync(path.join(target, 'robots.txt'), robots);
 }
 
+function createRouteAliases() {
+  const aliases = [
+    { from: 'affiliate-login.html', to: ['affiliate/login/index.html', 'affiliate/login.html'] },
+    { from: 'affiliate-dashboard.html', to: ['affiliate/dashboard/index.html', 'affiliate/dashboard.html'] },
+    { from: 'affiliate-submitted.html', to: ['affiliate/submitted/index.html', 'affiliate/submitted.html'] },
+    { from: 'affiliate.html', to: ['affiliate/index.html'] },
+    { from: 'admin-login.html', to: ['admin/login/index.html', 'admin/login.html'] },
+    { from: 'admin.html', to: ['admin/index.html'] },
+  ];
+
+  for (const { from, to } of aliases) {
+    const srcFile = path.join(target, from);
+    if (!fs.existsSync(srcFile)) continue;
+    const content = fs.readFileSync(srcFile, 'utf8');
+    for (const destRel of to) {
+      const destFile = path.join(target, destRel);
+      fs.mkdirSync(path.dirname(destFile), { recursive: true });
+      fs.writeFileSync(destFile, content, 'utf8');
+    }
+  }
+}
+
 if (!fs.existsSync(source)) {
   throw new Error('dist folder is missing');
 }
@@ -200,6 +225,7 @@ if (!fs.existsSync(source)) {
 fs.rmSync(target, { recursive: true, force: true });
 copyDir(source, target);
 addBrandHeadTags();
+createRouteAliases();
 injectFullFooter();
 writeSeoFiles();
 console.log('Copied dist to public for Vercel static output.');
