@@ -3555,6 +3555,10 @@ function initOrderSuccessDetails() {
   const cards = document.querySelectorAll('.success-page + .section .page-card p');
   if (cards[0]) cards[0].textContent = 'Confirmed and moving to packing.';
   if (cards[2]) cards[2].textContent = `${order.method || 'PayPal'} selected. Total: ${money(order.total || 0)}.`;
+
+  if (typeof window.renderOptIn === 'function') {
+    try { window.renderOptIn(); } catch(e) {}
+  }
 }
 
 function initPaymentMethodUi() {
