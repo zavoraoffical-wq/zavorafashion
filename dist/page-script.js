@@ -199,14 +199,16 @@ async function fetchAuthSession(force = false) {
   if (authSessionLoaded && !force) return authUser;
   try {
     const response = await fetch('/api/auth-session', { credentials: 'include' });
-    if (!response.ok) {
-      authUser = null;
-    } else {
+    if (response.ok) {
       const data = await response.json();
-      authUser = data.user || null;
+      if (data && data.user) {
+        authUser = data.user;
+        saveUserAccount(data.user);
+      }
     }
-  } catch (error) {
-    authUser = null;
+  } catch (error) {}
+  if (!authUser) {
+    authUser = getUserAccount();
   }
   authSessionLoaded = true;
   updateAccountLinks();
@@ -229,13 +231,15 @@ function saveUserAccount(account) {
   if (account) {
     try {
       localStorage.setItem('zavoraUser', JSON.stringify(account));
+      localStorage.setItem('zavora_user', JSON.stringify(account));
     } catch (e) {}
   }
   updateAccountLinks();
 }
 
 function isUserLoggedIn() {
-  return !!authUser;
+  const u = authUser || getUserAccount();
+  return !!(u && (u.email || u.name));
 }
 
 function loginUser(account) {
@@ -1001,9 +1005,9 @@ function currentPageKey() {
 }
 
 async function enforceAuthState() {
-  await fetchAuthSession(true);
+  await fetchAuthSession();
   const pageName = currentPageKey();
-  const protectedCommercePages = ['checkout.html', 'wishlist.html', 'rewards.html'];
+  const protectedCommercePages = ['rewards.html'];
   if (pageName === 'logout.html') {
     await logoutUser();
     window.location.replace('login.html');
@@ -2502,7 +2506,6 @@ document.addEventListener('click', async (event) => {
     const accountTarget = rawHref.includes('dashboard.html')
       || rawHref === 'account.html'
       || rawHref === 'my-account.html'
-      || rawHref === 'wishlist.html'
       || rawHref === 'orders.html'
       || rawHref === 'order-history.html'
       || rawHref === 'addresses.html'

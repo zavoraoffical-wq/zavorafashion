@@ -36,6 +36,11 @@ async function homeAuthSession(force = false) {
   } catch (error) {
     homeAuthUser = null;
   }
+  if (!homeAuthUser) {
+    try {
+      homeAuthUser = JSON.parse(localStorage.getItem('zavoraUser') || localStorage.getItem('zavora_user') || 'null');
+    } catch(e) {}
+  }
   homeAuthChecked = true;
   return homeAuthUser;
 }
@@ -646,8 +651,7 @@ document.addEventListener('click', async (event) => {
   const checkout = event.target.closest('.checkout, a[href="checkout.html"], [data-buy-now]');
   if (checkout) {
     event.preventDefault();
-    const user = await homeAuthSession(true);
-    window.location.href = user ? 'checkout.html' : `login.html?next=${encodeURIComponent('checkout.html')}`;
+    window.location.href = 'checkout.html';
     return;
   }
   if (add) addToCart(add.dataset.add);
