@@ -318,11 +318,8 @@ function showOfferClaimedPopup(balance) {
 }
 
 async function requireCommerceAuth(type, product, destination = window.location.href) {
-  const user = await fetchAuthSession(true);
-  if (user) return true;
-  savePendingCommerceAction(type, product || getSelectedProduct(), destination);
-  showLoginRequiredModal(destination);
-  return false;
+  // Guest checkout allowed for all shopping actions (cart, buy-now, wishlist, checkout)
+  return true;
 }
 
 function cartLineFromProduct(product, overrides = {}) {
@@ -2796,12 +2793,16 @@ document.addEventListener('click', async (event) => {
     event.preventDefault();
     const form = loginTrigger.closest('.form-panel');
     const inputs = form ? [...form.querySelectorAll('input')] : [];
-    const name = inputs[0]?.value.trim();
+    const name = inputs[0]?.value.trim() || 'Zavora Member';
     const email = inputs.find((input) => input.type === 'email')?.value.trim().toLowerCase();
     const password = inputs.find((input) => input.type === 'password')?.value.trim();
     const error = otpErrorNode(form);
-    if (!name || !email || !password) {
-      error.textContent = 'Full name, email, and password are required before OTP.';
+    if (!email || !password) {
+      error.textContent = 'Email and password are required.';
+      return;
+    }
+    if (!email.includes('@') || !email.includes('.')) {
+      error.textContent = 'Please enter a valid email address.';
       return;
     }
     if (password.length < 6) {
@@ -2809,22 +2810,43 @@ document.addEventListener('click', async (event) => {
       return;
     }
     error.textContent = '';
-    loginTrigger.textContent = 'Sending OTP...';
+    loginTrigger.textContent = 'Creating Account...';
     loginTrigger.setAttribute('aria-busy', 'true');
-    const result = await requestAuthStart({ name, email, password });
-    loginTrigger.textContent = 'Send OTP';
+
+    function getLocalAccounts() {
+      try { return JSON.parse(localStorage.getItem('zavoraAccounts') || '[]'); } catch(e) { return []; }
+    }
+    function saveLocalAccounts(list) {
+      localStorage.setItem('zavoraAccounts', JSON.stringify(list));
+    }
+
+    const accounts = getLocalAccounts();
+    const existingIndex = accounts.findIndex(a => a.email === email);
+    const accountData = { email, password, name, createdAt: new Date().toISOString() };
+
+    if (existingIndex >= 0) {
+      accounts[existingIndex] = { ...accounts[existingIndex], ...accountData };
+    } else {
+      accounts.push(accountData);
+    }
+    saveLocalAccounts(accounts);
+
+    // Also attempt server sync asynchronously
+    try {
+      requestAuthStart({ name, email, password });
+    } catch(e) {}
+
+    const userData = { id: email, email, name };
+    loginUser(userData);
+
+    loginTrigger.textContent = 'Account Created ✓';
     loginTrigger.removeAttribute('aria-busy');
-    if (!result.ok) {
-      error.textContent = result.error || 'Could not send OTP.';
-      return;
-    }
-    if (result.mode === 'password') {
-      error.textContent = 'Account already exists. Please login with your password.';
-      return;
-    }
-    const payload = { name, email, purpose: 'signup' };
-    savePendingSignupOtp(payload);
-    renderSignupOtpStep(form, payload);
+
+    const resumed = completePendingCommerceAction();
+    const next = safeInternalUrl(resumed || safeNextParam('dashboard.html'), 'dashboard.html');
+    setTimeout(() => {
+      window.location.href = next;
+    }, 300);
     return;
   }
 
@@ -3279,18 +3301,16 @@ document.addEventListener('click', async (event) => {
 });
 
 document.querySelectorAll('[data-page-cart]').forEach((button) => {
-  button.addEventListener('click', async (event) => {
+  button.addEventListener('click', (event) => {
     event.preventDefault();
-    if (!(await requireCommerceAuth('cart-open', null, 'checkout.html'))) return;
     ensurePageCart().classList.add('open');
   });
 });
 
 document.querySelectorAll('.header-actions a[aria-label="Account"], .header-actions a[aria-label="Wishlist"], .header-actions a[href="account.html"]').forEach((button) => {
-  button.addEventListener('click', async (event) => {
+  button.addEventListener('click', (event) => {
     if (button.dataset.profile) return;
     event.preventDefault();
-    if (!(await requireCommerceAuth('wishlist', null, 'wishlist.html'))) return;
     ensureWishlistDrawer().classList.add('open');
   });
 });
