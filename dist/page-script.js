@@ -2806,43 +2806,21 @@ document.addEventListener('click', async (event) => {
       return;
     }
     error.textContent = '';
-    loginTrigger.textContent = 'Creating Account...';
+    loginTrigger.textContent = 'Sending 6-Digit OTP...';
     loginTrigger.setAttribute('aria-busy', 'true');
 
-    function getLocalAccounts() {
-      try { return JSON.parse(localStorage.getItem('zavoraAccounts') || '[]'); } catch(e) { return []; }
-    }
-    function saveLocalAccounts(list) {
-      localStorage.setItem('zavoraAccounts', JSON.stringify(list));
-    }
-
-    const accounts = getLocalAccounts();
-    const existingIndex = accounts.findIndex(a => a.email === email);
-    const accountData = { email, password, name, createdAt: new Date().toISOString() };
-
-    if (existingIndex >= 0) {
-      accounts[existingIndex] = { ...accounts[existingIndex], ...accountData };
-    } else {
-      accounts.push(accountData);
-    }
-    saveLocalAccounts(accounts);
-
-    // Also attempt server sync asynchronously
-    try {
-      requestAuthStart({ name, email, password });
-    } catch(e) {}
-
-    const userData = { id: email, email, name };
-    loginUser(userData);
-
-    loginTrigger.textContent = 'Account Created ✓';
+    const result = await requestAuthStart({ name, email, password, purpose: 'signup' });
+    loginTrigger.textContent = 'Send OTP';
     loginTrigger.removeAttribute('aria-busy');
 
-    const resumed = completePendingCommerceAction();
-    const next = safeInternalUrl(resumed || safeNextParam('dashboard.html'), 'dashboard.html');
-    setTimeout(() => {
-      window.location.href = next;
-    }, 300);
+    if (!result.ok) {
+      error.textContent = result.error || 'Could not send verification code. Please try again.';
+      return;
+    }
+
+    const payload = { name, email, password, purpose: 'signup', token: result.token };
+    savePendingSignupOtp(payload);
+    renderSignupOtpStep(form, payload);
     return;
   }
 
@@ -2967,17 +2945,56 @@ document.addEventListener('click', async (event) => {
       error.textContent = 'OTP session expired. Please request a new code.';
       return;
     }
-    const result = await verifyAuthOtp({ email: pending.email, otp: inputOtp, purpose: 'signup' });
-    if (!result.ok) {
-      error.textContent = result.error || 'Invalid OTP. Enter the 6-digit code sent to your email.';
+    if (!inputOtp || inputOtp.length < 6) {
+      error.textContent = 'Please enter the full 6-digit code sent to your email.';
       return;
     }
-    loginUser(result.user);
-    clearPendingSignupOtp();
-    const resumed = completePendingCommerceAction();
-    requestWelcomeEmail(pending.email, pending.name).finally(() => {
-      window.location.href = safeInternalUrl(resumed || safeNextParam('dashboard.html'), 'dashboard.html');
+
+    const verifyBtn = event.target.closest('[data-verify-signup-otp]');
+    verifyBtn.textContent = 'Verifying...';
+    verifyBtn.setAttribute('aria-busy', 'true');
+
+    const result = await verifyAuthOtp({
+      email: pending.email,
+      name: pending.name,
+      otp: inputOtp,
+      purpose: 'signup',
+      token: pending.token
     });
+
+    verifyBtn.textContent = 'Verify & Create Account';
+    verifyBtn.removeAttribute('aria-busy');
+
+    if (!result.ok) {
+      error.textContent = result.error || 'Invalid OTP. Please check your email and try again.';
+      return;
+    }
+
+    // Save registered customer locally in zavoraAccounts so Admin sees it in Customer Directory
+    try {
+      const accounts = JSON.parse(localStorage.getItem('zavoraAccounts') || '[]');
+      const accountData = {
+        email: pending.email,
+        name: pending.name || result.user?.name || 'Zavora Member',
+        password: pending.password || '',
+        createdAt: new Date().toISOString()
+      };
+      const existingIdx = accounts.findIndex(a => a.email === pending.email);
+      if (existingIdx >= 0) accounts[existingIdx] = { ...accounts[existingIdx], ...accountData };
+      else accounts.push(accountData);
+      localStorage.setItem('zavoraAccounts', JSON.stringify(accounts));
+    } catch(e) {}
+
+    const userData = result.user || { id: pending.email, email: pending.email, name: pending.name };
+    saveUserAccount(userData);
+    loginUser(userData);
+    clearPendingSignupOtp();
+
+    const resumed = completePendingCommerceAction();
+    const next = safeInternalUrl(resumed || safeNextParam('dashboard.html'), 'dashboard.html');
+    setTimeout(() => {
+      window.location.href = next;
+    }, 200);
     return;
   }
 
@@ -2990,9 +3007,13 @@ document.addEventListener('click', async (event) => {
       const note = otpErrorNode(form);
       const button = event.target.closest('[data-resend-signup-otp]');
       button.textContent = 'Sending...';
-      const result = await requestAuthStart({ name: pending.name, email: pending.email });
+      const result = await requestAuthStart({ name: pending.name, email: pending.email, password: pending.password, purpose: 'signup' });
       button.textContent = 'Resend OTP';
-      note.textContent = result.ok ? 'New OTP sent. Check inbox and spam folder.' : (result.error || 'Unable to resend OTP. Please restart signup.');
+      if (result.ok && result.token) {
+        pending.token = result.token;
+        savePendingSignupOtp(pending);
+      }
+      note.textContent = result.ok ? 'New 6-digit OTP sent to your email. Check inbox and spam.' : (result.error || 'Unable to resend OTP. Please restart signup.');
     }
     return;
   }
