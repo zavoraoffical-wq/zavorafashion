@@ -544,17 +544,24 @@ function addToCart(id, color, size, qty = 1) {
 
 function renderCart() {
   const total = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  $('#cartCount').textContent = state.cart.reduce((sum, item) => sum + item.qty, 0);
-  $('#cartTotal').textContent = money(total);
-  $('#shippingText').textContent = total >= 120 ? 'Free shipping unlocked' : `Add ${money(120 - total)} for free shipping`;
-  $('#shippingProgress').style.width = `${Math.min(100, total / 120 * 100)}%`;
-  $('#cartItems').innerHTML = state.cart.length ? state.cart.map(item => `
-    <div class="cart-item">
-      <img src="${item.img}" alt="${item.name}">
-      <div><h3>${item.name}</h3><span>${item.qty} × ${money(item.price)}</span></div>
-      <button data-remove="${item.id}" aria-label="Remove ${item.name}">×</button>
-    </div>
-  `).join('') : '<p>Your bag is ready for something iconic.</p>';
+  const countNode = $('#cartCount');
+  if (countNode) countNode.textContent = state.cart.reduce((sum, item) => sum + item.qty, 0);
+  const totalNode = $('#cartTotal');
+  if (totalNode) totalNode.textContent = money(total);
+  const shippingText = $('#shippingText');
+  if (shippingText) shippingText.textContent = total >= 120 ? 'Free shipping unlocked' : `Add ${money(120 - total)} for free shipping`;
+  const shippingProgress = $('#shippingProgress');
+  if (shippingProgress) shippingProgress.style.width = `${Math.min(100, total / 120 * 100)}%`;
+  const cartItems = $('#cartItems');
+  if (cartItems) {
+    cartItems.innerHTML = state.cart.length ? state.cart.map(item => `
+      <div class="cart-item">
+        <img src="${item.img}" alt="${item.name}">
+        <div><h3>${item.name}</h3><span>${item.qty} × ${money(item.price)}</span></div>
+        <button data-remove="${item.id}" aria-label="Remove ${item.name}">×</button>
+      </div>
+    `).join('') : '<p>Your bag is ready for something iconic.</p>';
+  }
 }
 
 function syncHomeWishlistCount() {

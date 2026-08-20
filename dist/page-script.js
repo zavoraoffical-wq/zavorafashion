@@ -193,27 +193,13 @@ function saveWishlist(items) {
 
 let authUser = null;
 let authSessionLoaded = false;
-let authDashboardData = null;
-
-async function fetchAuthSession(force = false) {
+let authDashboardData = null;async function fetchAuthSession(force = false) {
   if (authSessionLoaded && !force) return authUser;
-  try {
-    const response = await fetch('/api/auth-session', { credentials: 'include' });
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.user) {
-        authUser = data.user;
-        saveUserAccount(data.user);
-      }
-    }
-  } catch (error) {}
-  if (!authUser) {
-    authUser = getUserAccount();
-  }
+  authUser = getUserAccount();
   authSessionLoaded = true;
   updateAccountLinks();
   return authUser;
-}
+};
 
 function getUserAccount() {
   if (authUser && authUser.email) return authUser;
