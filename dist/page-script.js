@@ -383,15 +383,18 @@ function completePendingCommerceAction() {
 }
 
 async function logoutUser() {
-  try {
-    await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' });
-  } catch (error) {
-    // Session cookie will still be cleared on the next server-side logout attempt.
-  }
   authUser = null;
   authSessionLoaded = true;
+  authDashboardData = null;
+  try { localStorage.removeItem('zavoraUser'); } catch(e) {}
+  try { localStorage.removeItem('zavora_user'); } catch(e) {}
+  try { localStorage.removeItem('zavoraAuthSession'); } catch(e) {}
+  try { sessionStorage.removeItem('zavoraAuthSession'); } catch(e) {}
+  try {
+    await fetch('/api/auth-logout', { method: 'POST', credentials: 'include' });
+  } catch (error) {}
   updateAccountLinks();
-}
+};
 
 function accountHref(view = 'dashboard') {
   const target = `dashboard.html#${view}`;
@@ -442,16 +445,20 @@ function initLocalizationSelectors() {
 
 async function loadDashboardData() {
   if (!isCurrentPage('dashboard')) return null;
+  const localUser = getUserAccount();
+  if (localUser) {
+    authDashboardData = authDashboardData || { user: localUser, orders: getSavedOrders(), addresses: getSavedAddresses() };
+  }
   try {
     const response = await fetch('/api/auth-dashboard', { credentials: 'include' });
-    if (!response.ok) return null;
-    const data = await response.json();
-    authDashboardData = data;
-    if (data.user) saveUserAccount(data.user);
-    return data;
-  } catch (error) {
-    return null;
-  }
+    if (response.ok) {
+      const data = await response.json();
+      authDashboardData = data;
+      if (data.user) saveUserAccount(data.user);
+      return data;
+    }
+  } catch (error) {}
+  return authDashboardData;
 }
 
 function addWishlistProduct(product) {
