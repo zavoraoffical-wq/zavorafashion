@@ -915,7 +915,7 @@ function renderAdminCustomers() {
   try {
     orders = JSON.parse(localStorage.getItem('zavoraOrders') || '[]');
     const last = JSON.parse(localStorage.getItem('zavoraLastOrder') || 'null');
-    if (last && last.id) orders.unshift(last);
+    if (last && last.id && !orders.some(o => o.id === last.id)) orders.unshift(last);
   } catch(e) {}
 
   let wishlist = [];
@@ -923,42 +923,70 @@ function renderAdminCustomers() {
     wishlist = JSON.parse(localStorage.getItem('zavoraWishlist') || localStorage.getItem('zavora_wishlist') || '[]');
   } catch(e) {}
 
-  let user = null;
+  let registeredAccounts = [];
   try {
-    user = JSON.parse(localStorage.getItem('zavoraUser') || 'null');
+    registeredAccounts = JSON.parse(localStorage.getItem('zavoraAccounts') || '[]');
+  } catch(e) {}
+
+  let currentUser = null;
+  try {
+    currentUser = JSON.parse(localStorage.getItem('zavoraUser') || localStorage.getItem('zavora_user') || 'null');
   } catch(e) {}
 
   const customersMap = new Map();
 
-  customersMap.set('ava@example.com', { name: 'Ava Brooks', email: 'ava@example.com', phone: '+1 (555) 321-7654', address: 'Los Angeles, CA', orderCount: 12, spent: 1420.00, wishlistItems: 6 });
-  customersMap.set('noah@example.com', { name: 'Noah Stone', email: 'noah@example.com', phone: '+1 (555) 987-1234', address: 'Brooklyn, NY', orderCount: 4, spent: 480.00, wishlistItems: 2 });
-
-  if (user && user.email) {
-    customersMap.set(user.email.toLowerCase(), {
-      name: user.name || 'Priya Pandey',
-      email: user.email,
-      phone: user.phone || '+1 (555) 234-5678',
-      address: user.address || '123 USA Luxury Way, Suite 4B, New York, NY 10001',
+  // Add all real registered accounts
+  registeredAccounts.forEach((acc) => {
+    if (!acc || !acc.email) return;
+    const emailKey = String(acc.email).trim().toLowerCase();
+    customersMap.set(emailKey, {
+      name: acc.name || emailKey.split('@')[0],
+      email: emailKey,
+      phone: acc.phone || '',
+      address: acc.address || 'Registered Online Customer',
       orderCount: 0,
       spent: 0,
-      wishlistItems: wishlist.length
+      wishlistItems: wishlist.length,
+      createdAt: acc.createdAt || ''
     });
+  });
+
+  // Add current active user if not already in map
+  if (currentUser && currentUser.email) {
+    const emailKey = String(currentUser.email).trim().toLowerCase();
+    if (!customersMap.has(emailKey)) {
+      customersMap.set(emailKey, {
+        name: currentUser.name || emailKey.split('@')[0],
+        email: emailKey,
+        phone: currentUser.phone || '',
+        address: currentUser.address || 'Active Member',
+        orderCount: 0,
+        spent: 0,
+        wishlistItems: wishlist.length,
+        createdAt: ''
+      });
+    }
   }
 
+  // Aggregate orders by customer email
   orders.forEach((order) => {
-    const emailKey = String(order.email || 'zavoraoffical@gmail.com').toLowerCase();
+    if (!order) return;
+    const emailKey = String(order.email || 'guest@zavorafashion.com').trim().toLowerCase();
     const existing = customersMap.get(emailKey) || {
-      name: order.customer || 'Priya Pandey',
+      name: order.name || order.customer || emailKey.split('@')[0],
       email: emailKey,
-      phone: order.phone || '+1 (555) 234-5678',
-      address: order.address || '123 USA Luxury Way, NY',
+      phone: order.phone || '',
+      address: order.address || 'USA Customer',
       orderCount: 0,
       spent: 0,
-      wishlistItems: wishlist.length
+      wishlistItems: 0,
+      createdAt: order.date || order.createdAt || ''
     };
     existing.orderCount += 1;
     existing.spent += Number(order.total || 0);
+    if (order.phone) existing.phone = order.phone;
     if (order.address && !order.address.includes('Standard')) existing.address = order.address;
+    if (order.name || order.customer) existing.name = order.name || order.customer;
     customersMap.set(emailKey, existing);
   });
 
@@ -969,6 +997,11 @@ function renderAdminCustomers() {
 
   const wishlistEl = document.querySelector('[data-admin-total-customer-wishlist]');
   if (wishlistEl) wishlistEl.textContent = `${wishlist.length} Items`;
+
+  if (!customers.length) {
+    list.innerHTML = `<tr><td colspan="5" style="padding:28px;text-align:center;color:#666;font-size:14px;">No registered customers yet. Real customers who sign up or place orders will appear here automatically.</td></tr>`;
+    return;
+  }
 
   list.innerHTML = customers.map((c) => `
     <tr>
@@ -986,7 +1019,7 @@ function renderAdminCustomers() {
       <td>
         <div style="display:flex;gap:6px;">
           <button type="button" data-admin-view-history="${c.email}" style="padding:4px 8px;font-size:12px;background:#050505;color:#fff;border:none;border-radius:4px;cursor:pointer;">History</button>
-          <button type="button" data-toast="Customer status updated" style="padding:4px 8px;font-size:12px;background:#eee;border:1px solid #ccc;border-radius:4px;cursor:pointer;">Block</button>
+          <button type="button" data-toast="Customer status active" style="padding:4px 8px;font-size:12px;background:#eee;border:1px solid #ccc;border-radius:4px;cursor:pointer;">Active</button>
         </div>
       </td>
     </tr>
