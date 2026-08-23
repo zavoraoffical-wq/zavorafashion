@@ -33,6 +33,8 @@ async function validateFeed() {
     { name: '<g:item_group_id> present',             pass: xml.includes('<g:item_group_id>') },
     { name: '<g:title> present',                     pass: firstItem.includes('<g:title>') },
     { name: '<g:description> present',               pass: firstItem.includes('<g:description>') },
+    { name: 'Variant title includes color and size', pass: /<g:title>[^<]+White[^<]+Size 2XS<\/g:title>/.test(firstItem) },
+    { name: 'Description includes variant details',  pass: firstItem.includes('color White') && firstItem.includes('size 2XS') },
     { name: '<g:link> present',                      pass: firstItem.includes('<g:link>') },
     { name: '<g:image_link> present (CDN URL)',      pass: firstItem.includes('https://') && firstItem.includes('<g:image_link>') },
     // ── Availability & Price ─────────────────────────────────────

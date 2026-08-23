@@ -197,6 +197,60 @@ function mapGender(gender) {
   return 'unisex';
 }
 
+function genderTitle(gender) {
+  if (gender === 'male') return "Men's";
+  if (gender === 'female') return "Women's";
+  return 'Unisex';
+}
+
+function conciseMaterial(material) {
+  const value = String(material || '').trim();
+  const lower = value.toLowerCase();
+  const known = [
+    ['organic cotton', 'Organic Cotton'],
+    ['french terry', 'French Terry'],
+    ['recycled polyester', 'Recycled Polyester'],
+    ['cotton', 'Cotton'],
+    ['polyester', 'Polyester'],
+    ['fleece', 'Fleece'],
+    ['denim', 'Denim'],
+    ['nylon', 'Nylon'],
+    ['linen', 'Linen'],
+    ['wool', 'Wool'],
+  ];
+  const match = known.find(([needle]) => lower.includes(needle));
+  return match ? match[1] : '';
+}
+
+function cleanSentence(value) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  return /[.!?]$/.test(text) ? text : `${text}.`;
+}
+
+function optimizedVariantTitle({ baseTitle, gender, material, color, size }) {
+  const brandTitle = /^zavora\b/i.test(baseTitle) ? baseTitle : `Zavora ${baseTitle}`;
+  const attributes = [genderTitle(gender), conciseMaterial(material), color, `Size ${size}`]
+    .filter(Boolean)
+    .join(', ');
+  return `${brandTitle} - ${attributes}`.substring(0, 150).trim();
+}
+
+function optimizedVariantDescription({ baseDescription, title, gender, material, color, size, productType }) {
+  const details = [
+    `${genderTitle(gender)} style`,
+    color ? `color ${color}` : '',
+    size ? `size ${size}` : '',
+    material ? `material: ${String(material).trim()}` : '',
+  ].filter(Boolean).join(', ');
+  const category = String(productType || '').split('>').pop().trim();
+  return [
+    cleanSentence(baseDescription),
+    cleanSentence(`${title} is the ${details} variant${category ? ` in the ${category} category` : ''}`),
+    'Review the size selection, product images, care information, shipping details, and returns information on the product page before ordering.',
+  ].filter(Boolean).join(' ').substring(0, 5000);
+}
+
 // ─── HELPERS ───────────────────────────────────────────────────────────────────
 function escapeXml(value) {
   return String(value ?? '')
@@ -317,12 +371,29 @@ function buildVariantItems(product) {
       const variantId = `ZAV-${groupId}-${safeColor}-${safeSize}`;
       const mpn       = variantId;
 
+      const variantTitle = optimizedVariantTitle({
+        baseTitle: title,
+        gender,
+        material,
+        color,
+        size,
+      });
+      const variantDescription = optimizedVariantDescription({
+        baseDescription: description,
+        title,
+        gender,
+        material,
+        color,
+        size,
+        productType,
+      });
+
       let xml = `
     <item>
       <g:id>${escapeXml(variantId)}</g:id>
       <g:item_group_id>${escapeXml(itemGroupId)}</g:item_group_id>
-      <g:title>${escapeXml(title)}</g:title>
-      <g:description>${escapeXml(description)}</g:description>
+      <g:title>${escapeXml(variantTitle)}</g:title>
+      <g:description>${escapeXml(variantDescription)}</g:description>
       <g:link>${escapeXml(link)}</g:link>
       <g:image_link>${escapeXml(img)}</g:image_link>`;
 
@@ -452,3 +523,4 @@ module.exports.buildFeedXml = async function() {
   const built = await buildFeed();
   return built.xml;
 };
+module.exports._test = { buildVariantItems };
