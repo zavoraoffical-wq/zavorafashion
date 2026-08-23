@@ -359,36 +359,32 @@ function productMatchesCollection(product, collection) {
   return rule.match.test(text);
 }
 
-function productCopy(rule, name) {
-  const label = String(rule.label || 'Streetwear Essential').toLowerCase();
-  const category = String(rule.category || '');
-  const materialMap = {
-    'hoodies': 'Soft cotton-blend fleece with a brushed interior and structured everyday drape.',
-    'cropped-hoodies': 'Premium cotton-blend fleece with a cropped streetwear proportion.',
-    'zip-hoodies': 'Midweight fleece with a smooth zip front, ribbed trims, and a soft hand feel.',
-    'sweatshirts': 'Cotton-rich fleece built for relaxed layering and clean daily wear.',
-    'oversized-tees': 'Breathable cotton jersey with a soft touch and relaxed premium silhouette.',
-    'heavyweight-tees': 'Heavyweight cotton jersey with a substantial hand feel and clean structure.',
-    'baby-tees': 'Soft stretch jersey designed for a close, modern fit.',
-    'jackets': 'Durable outerwear shell with clean finishing and street-ready layering.',
-    'cargo-pants': 'Structured woven fabric with utility storage and easy everyday movement.',
-    'sweatpants': 'Soft fleece knit with an adjustable waist and relaxed premium fit.',
-    'shorts': 'Lightweight warm-weather fabric designed for movement and clean proportions.',
-    'accessories': 'Premium accessory construction with a clean Zavora styling language.'
-  };
+function firstVerifiedField(product, keys = []) {
+  for (const item of productPools(product)) {
+    for (const key of keys) {
+      const value = item?.[key];
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+  }
+  return '';
+}
+
+function productCopy(product, rule, name) {
+  const sourceDescription = firstVerifiedField(product, ['description', 'product_description', 'short_description']);
+  const material = firstVerifiedField(product, ['material', 'materials', 'fabric', 'fabric_composition', 'composition']);
+  const fit = firstVerifiedField(product, ['fit', 'fit_type', 'size_guide', 'sizeGuide']);
+  const modelInfo = firstVerifiedField(product, ['model_info', 'modelInfo', 'model_details', 'modelDetails']);
+  const careInstructions = firstVerifiedField(product, ['care_instructions', 'careInstructions', 'care']);
+  const featureSource = productPools(product).find(item => Array.isArray(item?.features))?.features || [];
   return {
-    description: `${name} is a premium ${label} designed for Zavora Fashion's minimal streetwear wardrobe. It balances clean proportions, everyday comfort, and USA-ready fulfillment.`,
-    material: materialMap[category] || 'Premium fabric selected for comfort, durability, and everyday luxury.',
-    features: [
-      'Premium streetwear fit',
-      'Clean minimal Zavora styling',
-      'Made on demand for lower waste',
-      'Curated for USA customers'
-    ],
-    careInstructions: 'Machine wash cold, inside out. Use mild detergent. Tumble dry low or hang dry. Do not bleach. Cool iron only when needed.',
-    sizeGuide: category === 'accessories' ? 'One-size accessory fit unless a size is shown.' : 'Choose your regular size for a relaxed fit. Size down for a cleaner fit or size up for oversized volume.',
-    shipping: 'Free shipping is available at checkout. Standard and Express delivery options are shown before payment.',
-    returnPolicy: 'Eligible unworn items may be returned according to the Zavora Fashion return policy.',
+    description: sourceDescription || `${name} product details are shown with the available catalogue images, colours, and sizes.`,
+    material,
+    features: featureSource.filter(value => typeof value === 'string' && value.trim()).slice(0, 8),
+    careInstructions,
+    sizeGuide: fit,
+    modelInfo,
+    shipping: 'Available shipping options and the current delivery estimate are shown at checkout.',
+    returnPolicy: 'Review the Zavora Fashion return and exchange policy for eligibility and timing requirements.',
     printArea: 'Print and decoration areas follow official Printful catalog specifications for this product.',
     brandInfo: 'Zavora Fashion creates premium streetwear essentials for modern everyday luxury.'
   };
@@ -592,6 +588,35 @@ function imagesFromProduct(product) {
   return urls;
 }
 
+function imageDetailsFromProduct(product) {
+  const details = [];
+  const seen = new Set();
+  const add = (asset, fallbackLabel = 'Product view') => {
+    const url = assetUrl(asset);
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    const rawLabel = typeof asset === 'object'
+      ? (asset.type || asset.placement || asset.label || asset.title || fallbackLabel)
+      : fallbackLabel;
+    const label = String(rawLabel || fallbackLabel)
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, letter => letter.toUpperCase());
+    details.push({ url, label });
+  };
+
+  productPools(product).forEach((item) => {
+    (item?.files || []).forEach(file => add(file, 'Product view'));
+    (item?.mockups || []).forEach(mockup => add(mockup, 'Product mockup'));
+    (item?.images || []).forEach(image => add(image, 'Product image'));
+  });
+  variantPools(product).forEach((variant) => {
+    (variant?.files || []).forEach(file => add(file, 'Variant view'));
+    (variant?.mockups || []).forEach(mockup => add(mockup, 'Variant mockup'));
+    (variant?.images || []).forEach(image => add(image, 'Variant image'));
+  });
+  return details.slice(0, 20);
+}
+
 function imageFromProduct(product) {
   const vImages = variantPools(product).flatMap(variantImages).filter(Boolean);
   if (vImages.length) {
@@ -720,9 +745,10 @@ function normalizeProduct(product, index, requestedGender = '') {
   const colors = colorsFromVariants(variants, `${rawName} ${name} ${product?.description || ''}`);
   const image = imageFromProduct(product);
   const images = imagesFromProduct(product);
+  const imageDetails = imageDetailsFromProduct(product);
   const variantGroups = variantGroupsFromVariants(variants, productImageUrls(product), forceColor);
   const sizes = rule.category === 'accessories' ? ['M'] : sizesFromVariants(variants);
-  const copy = productCopy(rule, name);
+  const copy = productCopy(product, rule, name);
   return {
     id: Number(product?.id || product?.template_id || product?.sync_product?.id || Date.now() + index),
     printfulId: product?.id || product?.template_id || product?.sync_product?.id || null,
@@ -738,13 +764,14 @@ function normalizeProduct(product, index, requestedGender = '') {
     basePrice: basePriceFromProduct(product, index),
     includedShippingCost: INCLUDED_SHIPPING_COST,
     price: priceFromProduct(product, index),
-    compareAt: compareAtFromProduct(product, index),
-    sale: true,
+    compareAt: null,
+    sale: false,
     popularity: 90 - (index % 10),
-    badge: index < 4 ? 'New' : rule.collection === 'limited' ? 'Limited' : 'Zavora',
+    badge: 'Zavora',
     img: image,
     alt: image,
     images,
+    imageDetails,
     variantGroups,
     stock: 5,
     variantOptions: variantOptionsFromVariants(variants, image, forceColor),
@@ -753,12 +780,13 @@ function normalizeProduct(product, index, requestedGender = '') {
     features: copy.features,
     careInstructions: copy.careInstructions,
     sizeGuide: copy.sizeGuide,
+    modelInfo: copy.modelInfo,
     shipping: copy.shipping,
     returnPolicy: copy.returnPolicy,
     printArea: copy.printArea,
     brandInfo: copy.brandInfo,
     seoTitle: `${name} | Zavora Fashion Premium Streetwear`,
-    seoDescription: `Shop ${name} from Zavora Fashion. Premium ${rule.gender.toLowerCase()} streetwear with clean fit, fast USA delivery, and luxury minimal styling.`
+    seoDescription: `Shop ${name} from Zavora Fashion. Review available product images, colours, sizes, material information, shipping options, and returns guidance.`
   };
 }
 

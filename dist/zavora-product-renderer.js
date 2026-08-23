@@ -12,6 +12,15 @@
 (function () {
   'use strict';
 
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function sanitizeApparelImg(url, category = '', name = '', id = 0) {
     const num = Math.abs(parseInt(id, 10) || 0);
 
@@ -494,23 +503,44 @@
     const id = String(product.id || product.printfulId || '674');
     const name = String(product.name || 'Zavora Fleece Pullover Sweatshirt');
     const price = Number(product.price || 94.89);
-    const compareAt = product.compareAt ? Number(product.compareAt) : Number((price * 1.77).toFixed(2));
     const badge = product.badge || 'NEW';
 
     let rawDesc = String(product.description || '');
     if (!rawDesc || rawDesc.length < 20) {
-      rawDesc = `${name} is a premium zip hoodie designed for Zavora Fashion's minimal streetwear wardrobe. It balances clean proportions, everyday comfort, and USA-ready fulfillment.`;
+      rawDesc = `${name} is shown with the product images, colours, and sizes currently available in the catalogue.`;
     }
 
     const rawImages = Array.isArray(product.images) && product.images.length > 0
       ? product.images
       : [product.img || ''];
 
-    const sanitizedImages = [...new Set(rawImages.map(img => sanitizeApparelImg(img, product.category, name, id)).filter(Boolean))];
-    const images = sanitizedImages.length > 0 ? sanitizedImages : ['https://images.unsplash.com/photo-1578681994506-b8f463449011?auto=format&fit=crop&w=700&q=80'];
+    const imageLabels = new Map((Array.isArray(product.imageDetails) ? product.imageDetails : [])
+      .filter(item => item?.url)
+      .map(item => [String(item.url), String(item.label || 'Product view')]));
 
-    let activeColor = 'Black';
-    let activeSize = 'S';
+    const sanitizedImages = [...new Set(rawImages.map(img => sanitizeApparelImg(img, product.category, name, id)).filter(Boolean))];
+    const images = sanitizedImages.length > 0 ? sanitizedImages : ['/assets/zavora-logo.png'];
+
+    const variantGroupColors = Object.values(product.variantGroups || product.variant_groups || {})
+      .map(group => group?.label || group?.color)
+      .filter(value => value && String(value).toLowerCase() !== 'default');
+    const colors = [...new Set([...(Array.isArray(product.colors) ? product.colors : []), ...variantGroupColors].filter(Boolean))];
+    const sizes = [...new Set((Array.isArray(product.sizes) ? product.sizes : []).filter(Boolean))];
+    const material = String(product.material || '').trim();
+    const fit = String(product.fit || product.sizeGuide || '').trim();
+    const modelInfo = String(product.modelInfo || product.modelDetails || '').trim();
+    const care = String(product.careInstructions || '').trim();
+    const delivery = String(product.shipping || '').trim();
+    const returns = String(product.returnPolicy || '').trim();
+    const stockCount = Number(product.stock);
+    const stockMessage = Number.isFinite(stockCount)
+      ? (stockCount > 0 ? `${stockCount} AVAILABLE` : 'CURRENTLY UNAVAILABLE')
+      : 'AVAILABILITY CONFIRMED AT CHECKOUT';
+    const safeName = escapeHtml(name);
+    const safeDescription = escapeHtml(rawDesc);
+
+    let activeColor = String(colors[0] || product.color || '');
+    let activeSize = String(sizes[0] || '');
 
     // RENDER MAIN PRODUCT & ALL 5 MIDDLE CONTENT SECTIONS
     main.innerHTML = `
@@ -518,13 +548,13 @@
         <!-- GALLERY SIDE -->
         <div class="product-gallery" style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
           <div class="zoom-frame" style="background:#f7f7f7; border-radius:12px; overflow:hidden; border:1px solid #e5e5e5; aspect-ratio:4/5; width:100%; display:flex; align-items:center; justify-content:center;">
-            <img id="zavoraMainImage" src="${images[0]}" alt="${name}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width:100%; height:100%; max-height:600px; display:block; object-fit:contain; object-position:center;">
+            <img id="zavoraMainImage" src="${images[0]}" alt="${safeName}" onerror="this.onerror=null;this.src='/assets/zavora-logo.png';" style="width:100%; height:100%; max-height:600px; display:block; object-fit:contain; object-position:center;">
           </div>
           ${images.length > 1 ? `
             <div class="zavoraThumbTrack" style="display: flex; gap: 12px; margin-top: 4px; overflow-x: auto; padding-bottom: 4px;">
               ${images.map((img, i) => `
                 <button type="button" class="zavoraThumb" data-img="${img}" style="border:${i===0?'2.5px solid #111':'1px solid #ddd'}; background:#ffffff; border-radius:8px; overflow:hidden; width:80px; height:80px; padding:0; cursor:pointer; flex-shrink:0; transition: all 0.2s ease;">
-                  <img src="${img}" alt="Thumbnail ${i+1}" onerror="this.onerror=null;this.src='https://files.cdn.printful.com/products/862/22596_1743753167.jpg';" style="width:100%; height:100%; object-fit:contain; object-position:center;">
+                  <img src="${img}" alt="${escapeHtml(imageLabels.get(rawImages[i]) || `Product view ${i + 1}`)}" onerror="this.onerror=null;this.src='/assets/zavora-logo.png';" style="width:100%; height:100%; object-fit:contain; object-position:center;">
                 </button>
               `).join('')}
             </div>
@@ -534,38 +564,30 @@
         <!-- INFO SIDE -->
         <aside class="product-buy" style="display:flex; flex-direction:column; gap:18px;">
           <p class="eyebrow" style="color:#c9a227; font-weight:800; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin:0;">${badge}</p>
-          <h1 style="font-size:2.6rem; font-family:serif; font-weight:700; line-height:1.1; margin:0; color:#111;">${name}</h1>
+          <h1 style="font-size:2.6rem; font-family:serif; font-weight:700; line-height:1.1; margin:0; color:#111;">${safeName}</h1>
           
-          <p style="font-size:0.95rem; line-height:1.6; color:#444; margin:0;">${rawDesc}</p>
+          <p style="font-size:0.95rem; line-height:1.6; color:#444; margin:0;">${safeDescription}</p>
 
           <div style="font-size:1.4rem; font-weight:800; color:#111; display:flex; align-items:center; gap:12px;">
-            <s style="color:#888; font-weight:400; font-size:1.1rem;">$${compareAt.toFixed(2)}</s>
             <span style="font-size:1.4rem; font-weight:800;">$${price.toFixed(2)}</span>
           </div>
 
           <div>
             <strong style="display:block; font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:10px; color:#111;">COLOR</strong>
             <div class="option-row" style="display:flex; gap:10px;">
-              <button class="zavoraColorBtn" data-color="Black" style="padding:10px 22px; background:#000; color:#fff; border:1px solid #000; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">Black</button>
-              <button class="zavoraColorBtn" data-color="Gray" style="padding:10px 22px; background:#fff; color:#111; border:1px solid #ddd; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">Gray</button>
-              <button class="zavoraColorBtn" data-color="Blue" style="padding:10px 22px; background:#fff; color:#111; border:1px solid #ddd; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">Blue</button>
+              ${colors.length ? colors.map((color, index) => `<button class="zavoraColorBtn" data-color="${escapeHtml(color)}" style="padding:10px 22px; background:${index === 0 ? '#000' : '#fff'}; color:${index === 0 ? '#fff' : '#111'}; border:1px solid ${index === 0 ? '#000' : '#ddd'}; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">${escapeHtml(color)}</button>`).join('') : '<span style="font-size:0.88rem;color:#666;">Colour shown in the product images.</span>'}
             </div>
           </div>
 
           <div>
             <strong style="display:block; font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:10px; color:#111;">SIZE</strong>
             <div class="option-row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-              <button class="zavoraSizeBtn" data-size="2XL" style="padding:10px 18px; background:#fff; color:#111; border:1px solid #ddd; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">2XL</button>
-              <button class="zavoraSizeBtn" data-size="3XL" style="padding:10px 18px; background:#fff; color:#111; border:1px solid #ddd; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">3XL</button>
-              <button class="zavoraSizeBtn" data-size="L" style="padding:10px 18px; background:#fff; color:#111; border:1px solid #ddd; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">L</button>
-              <button class="zavoraSizeBtn" data-size="M" style="padding:10px 18px; background:#fff; color:#111; border:1px solid #ddd; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">M</button>
-              <button class="zavoraSizeBtn active" data-size="S" style="padding:10px 18px; background:#000; color:#fff; border:1px solid #000; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">S</button>
-              <button class="zavoraSizeBtn" data-size="XL" style="padding:10px 18px; background:#fff; color:#111; border:1px solid #ddd; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">XL</button>
+              ${sizes.length ? sizes.map((size, index) => `<button class="zavoraSizeBtn${index === 0 ? ' active' : ''}" data-size="${escapeHtml(size)}" style="padding:10px 18px; background:${index === 0 ? '#000' : '#fff'}; color:${index === 0 ? '#fff' : '#111'}; border:1px solid ${index === 0 ? '#000' : '#ddd'}; border-radius:4px; font-weight:700; font-size:0.88rem; cursor:pointer;">${escapeHtml(size)}</button>`).join('') : '<span style="font-size:0.88rem;color:#666;">Select an available variant before checkout.</span>'}
               <a href="style-guide.html" style="color:#111; font-size:0.88rem; font-weight:700; text-decoration:underline; margin-left:10px;">Size Guide</a>
             </div>
           </div>
 
-          <p class="stock-note" data-stock-note style="font-size:0.78rem; font-weight:800; color:#888; letter-spacing:1px; margin:0 0 6px;">5 AVAILABLE</p>
+          <p class="stock-note" data-stock-note style="font-size:0.78rem; font-weight:800; color:#888; letter-spacing:1px; margin:0 0 6px;">${stockMessage}</p>
 
           <div class="product-actions" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; box-sizing:border-box;">
             <button type="button" id="zavoraAddToCartBtn" data-add="${id}" style="padding:15px 6px; background:#000; color:#fff; border:none; border-radius:6px; font-weight:800; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; text-align:center; white-space:nowrap; display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box;">ADD TO BAG</button>
@@ -579,16 +601,16 @@
       <!-- SECTION 1: INFO CARDS (HIGHLIGHTS) -->
       <div style="max-width:1200px; margin:30px auto 0; padding:0 20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
         <article style="background:#f9f9f9; padding:20px; border-radius:8px; border:1px solid #eee;">
-          <h3 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; margin:0 0 8px; color:#111;">📦 Free Shipping & Returns</h3>
-          <p style="font-size:0.85rem; color:#555; margin:0; line-height:1.5;">Estimated USA delivery in 3–5 business days. Free express shipping on orders over $120. Easy 14-day hassle-free returns.</p>
+          <h3 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; margin:0 0 8px; color:#111;">Shipping & Returns</h3>
+          <p style="font-size:0.85rem; color:#555; margin:0; line-height:1.5;">${escapeHtml(delivery || 'Delivery options and the current estimate are shown at checkout.')} ${escapeHtml(returns || 'Review the linked return policy before ordering.')}</p>
         </article>
         <article style="background:#f9f9f9; padding:20px; border-radius:8px; border:1px solid #eee;">
-          <h3 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; margin:0 0 8px; color:#111;">🌿 Organic & Sustainable Material</h3>
-          <p style="font-size:0.85rem; color:#555; margin:0; line-height:1.5;">100% GOTS certified organic French Terry cotton (480 GSM). Built with double-stitched seams and pre-shrunk fabric.</p>
+          <h3 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; margin:0 0 8px; color:#111;">Material</h3>
+          <p style="font-size:0.85rem; color:#555; margin:0; line-height:1.5;">${escapeHtml(material || 'Material composition has not been supplied for this product yet. Contact us before ordering if you need confirmation.')}</p>
         </article>
         <article style="background:#f9f9f9; padding:20px; border-radius:8px; border:1px solid #eee;">
-          <h3 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; margin:0 0 8px; color:#111;">🛡️ USA Quality Assurance</h3>
-          <p style="font-size:0.85rem; color:#555; margin:0; line-height:1.5;">Fulfilled directly from USA warehouses with real-time tracking updates and guaranteed delivery protection.</p>
+          <h3 style="font-size:0.95rem; font-weight:800; text-transform:uppercase; margin:0 0 8px; color:#111;">Secure Checkout & Help</h3>
+          <p style="font-size:0.85rem; color:#555; margin:0; line-height:1.5;">Complete payment through the secure checkout. Need product details first? <a href="contact.html">Contact Zavora support</a>.</p>
         </article>
       </div>
 
@@ -597,11 +619,12 @@
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:30px; background:#111; color:#fff; border-radius:12px; padding:36px;">
           <div>
             <h2 style="font-size:1.4rem; font-weight:800; text-transform:uppercase; margin:0 0 12px; color:#fff;">Product Details</h2>
-            <p style="font-size:0.92rem; line-height:1.7; color:#ddd; margin:0;">Crafted with architectural precision for Zavora Fashion's minimal streetwear drop. Features drop shoulders, heavy ribbed cuffs, and a structured silhouette designed to hold its shape wear after wear.</p>
+            <p style="font-size:0.92rem; line-height:1.7; color:#ddd; margin:0;">${safeDescription}</p>
           </div>
           <div>
             <h2 style="font-size:1.4rem; font-weight:800; text-transform:uppercase; margin:0 0 12px; color:#fff;">Fit & Sizing Info</h2>
-            <p style="font-size:0.92rem; line-height:1.7; color:#ddd; margin:0;">Signature streetwear oversized fit. We recommend ordering your true size for a relaxed, modern drape or sizing down for a closer classic fit.</p>
+            <p style="font-size:0.92rem; line-height:1.7; color:#ddd; margin:0;">${escapeHtml(fit || 'Fit guidance has not been supplied for this product. Review the available sizes and contact support if you need help choosing.')}</p>
+            <p style="font-size:0.82rem; line-height:1.6; color:#aaa; margin:10px 0 0;">${escapeHtml(modelInfo || 'Model height and worn size are not supplied for this product image.')}</p>
           </div>
         </div>
       </section>
@@ -611,15 +634,15 @@
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:24px;">
           <article style="padding:24px; border:1px solid #eaeaea; border-radius:10px; background:#fff;">
             <h3 style="font-size:1rem; font-weight:800; text-transform:uppercase; margin:0 0 10px; color:#111;">Fabric Specification</h3>
-            <p style="font-size:0.88rem; color:#555; line-height:1.6; margin:0;">480 GSM Heavyweight Organic French Terry. Smooth exterior face with soft brushed interior loops for max comfort.</p>
+            <p style="font-size:0.88rem; color:#555; line-height:1.6; margin:0;">${escapeHtml(material || 'Material composition pending manufacturer confirmation.')}</p>
           </article>
           <article style="padding:24px; border:1px solid #eaeaea; border-radius:10px; background:#fff;">
             <h3 style="font-size:1rem; font-weight:800; text-transform:uppercase; margin:0 0 10px; color:#111;">Garment Care</h3>
-            <p style="font-size:0.88rem; color:#555; line-height:1.6; margin:0;">Machine wash cold inside-out with like colors. Tumble dry low or lay flat to dry. Do not bleach or iron direct print.</p>
+            <p style="font-size:0.88rem; color:#555; line-height:1.6; margin:0;">${escapeHtml(care || 'Follow the care instructions supplied with the garment. Contact support if product-specific care information is unavailable.')}</p>
           </article>
           <article style="padding:24px; border:1px solid #eaeaea; border-radius:10px; background:#fff;">
-            <h3 style="font-size:1rem; font-weight:800; text-transform:uppercase; margin:0 0 10px; color:#111;">Ethical Production</h3>
-            <p style="font-size:0.88rem; color:#555; line-height:1.6; margin:0;">Made in certified fair-trade facilities with zero-waste water reduction systems and non-toxic organic dye baths.</p>
+            <h3 style="font-size:1rem; font-weight:800; text-transform:uppercase; margin:0 0 10px; color:#111;">Product Imagery</h3>
+            <p style="font-size:0.88rem; color:#555; line-height:1.6; margin:0;">The gallery uses available product and variant images supplied through the product catalogue. Image availability varies by product.</p>
           </article>
         </div>
       </section>
@@ -628,61 +651,40 @@
       <section style="max-width:1200px; margin:40px auto 0; padding:0 20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
           <div>
-            <span style="color:#c9a227; font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:2px;">GARMENT MEASUREMENTS</span>
-            <h2 style="font-size:1.4rem; font-weight:900; text-transform:uppercase; margin:4px 0 0; color:#111;">Size Guide & Measurements</h2>
+            <span style="color:#c9a227; font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:2px;">AVAILABLE OPTIONS</span>
+            <h2 style="font-size:1.4rem; font-weight:900; text-transform:uppercase; margin:4px 0 0; color:#111;">Size & Fit Guidance</h2>
           </div>
         </div>
-        <div style="overflow-x:auto;">
-          <table style="width:100%; border-collapse:collapse; background:#fff; border:1px solid #eee; border-radius:8px; font-size:0.88rem;">
-            <thead>
-              <tr style="background:#f5f5f5; text-align:left; border-bottom:2px solid #ddd;">
-                <th style="padding:14px 18px; font-weight:800; color:#111;">Size</th>
-                <th style="padding:14px 18px; font-weight:800; color:#111;">Chest (in)</th>
-                <th style="padding:14px 18px; font-weight:800; color:#111;">Length (in)</th>
-                <th style="padding:14px 18px; font-weight:800; color:#111;">Sleeve (in)</th>
-                <th style="padding:14px 18px; font-weight:800; color:#111;">Recommended Fit</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="border-bottom:1px solid #eee;"><td style="padding:12px 18px; font-weight:800;">S</td><td style="padding:12px 18px;">40 in</td><td style="padding:12px 18px;">26 in</td><td style="padding:12px 18px;">34 in</td><td style="padding:12px 18px; color:#666;">Clean / True Fit</td></tr>
-              <tr style="border-bottom:1px solid #eee; background:#fcfcfc;"><td style="padding:12px 18px; font-weight:800;">M</td><td style="padding:12px 18px;">42 in</td><td style="padding:12px 18px;">27 in</td><td style="padding:12px 18px;">35 in</td><td style="padding:12px 18px; color:#666;">Relaxed Fit</td></tr>
-              <tr style="border-bottom:1px solid #eee;"><td style="padding:12px 18px; font-weight:800;">L</td><td style="padding:12px 18px;">44 in</td><td style="padding:12px 18px;">28 in</td><td style="padding:12px 18px;">36 in</td><td style="padding:12px 18px; color:#666;">Signature Oversized</td></tr>
-              <tr style="border-bottom:1px solid #eee; background:#fcfcfc;"><td style="padding:12px 18px; font-weight:800;">XL</td><td style="padding:12px 18px;">46 in</td><td style="padding:12px 18px;">29 in</td><td style="padding:12px 18px;">37 in</td><td style="padding:12px 18px; color:#666;">Extra Relaxed</td></tr>
-              <tr><td style="padding:12px 18px; font-weight:800;">2XL / 3XL</td><td style="padding:12px 18px;">48-50 in</td><td style="padding:12px 18px;">30 in</td><td style="padding:12px 18px;">38 in</td><td style="padding:12px 18px; color:#666;">Max Volume Streetwear</td></tr>
-            </tbody>
-          </table>
+        <div style="padding:22px; border:1px solid #eee; border-radius:8px; background:#fff;">
+          <p style="margin:0 0 14px; color:#555; line-height:1.6;">${escapeHtml(fit || 'Product-specific measurements are not supplied yet. Please use the available size options and contact support for help before ordering.')}</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">${sizes.length ? sizes.map(size => `<span style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;font-weight:700;">${escapeHtml(size)}</span>`).join('') : '<span>Size options are shown at checkout.</span>'}</div>
+          <a href="style-guide.html" style="color:#111;font-weight:700;">Open general size guide</a>
         </div>
       </section>
 
-      <!-- SECTION 5: CUSTOMER REVIEWS -->
+      <!-- SECTION 5: CUSTOMER SUPPORT -->
       <section style="max-width:1200px; margin:40px auto 0; padding:0 20px;">
         <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px; border-bottom:2px solid #111; padding-bottom:12px;">
           <div>
-            <span style="color:#c9a227; font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:2px;">VERIFIED BUYER REVIEWS</span>
-            <h2 style="font-size:1.4rem; font-weight:900; text-transform:uppercase; margin:4px 0 0; color:#111;">Customer Reviews (4.9 / 5.0)</h2>
+            <span style="color:#c9a227; font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:2px;">SHOP WITH CLARITY</span>
+            <h2 style="font-size:1.4rem; font-weight:900; text-transform:uppercase; margin:4px 0 0; color:#111;">Need More Information?</h2>
           </div>
         </div>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
           <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-space-between;">
-            <div>
-              <div style="color:#f59e0b; margin-bottom:8px; font-size:1.1rem;">★★★★★</div>
-              <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">"Premium weight, perfect oversized drape, and the fabric depth looks high-end designer level."</p>
-            </div>
-            <span style="font-size:0.8rem; font-weight:800; color:#888;">— Amelia R. (Verified Buyer)</span>
+            <h3 style="margin:0 0 8px;">Product questions</h3>
+            <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">Ask us to confirm material, measurements, imagery, or fit before purchasing.</p>
+            <a href="contact.html">Contact support</a>
           </article>
           <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-space-between;">
-            <div>
-              <div style="color:#f59e0b; margin-bottom:8px; font-size:1.1rem;">★★★★★</div>
-              <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">"The quality feels 10/10. Holds structure after washing and fits exactly as advertised."</p>
-            </div>
-            <span style="font-size:0.8rem; font-weight:800; color:#888;">— Marcus T. (Verified Buyer)</span>
+            <h3 style="margin:0 0 8px;">Delivery information</h3>
+            <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">Review shipping options and delivery estimates before completing payment.</p>
+            <a href="shipping-information.html">Shipping information</a>
           </article>
           <article style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; display:flex; flex-direction:column; justify-space-between;">
-            <div>
-              <div style="color:#f59e0b; margin-bottom:8px; font-size:1.1rem;">★★★★★</div>
-              <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">"Fast USA shipping! Pair this with cargo pants for a clean, effortless outfit."</p>
-            </div>
-            <span style="font-size:0.8rem; font-weight:800; color:#888;">— Jordan K. (Verified Buyer)</span>
+            <h3 style="margin:0 0 8px;">Returns & exchanges</h3>
+            <p style="font-size:0.9rem; line-height:1.6; color:#333; margin:0 0 12px;">Read eligibility, condition, and timing requirements before placing your order.</p>
+            <a href="return-refund-policy.html">Return policy</a>
           </article>
         </div>
       </section>
