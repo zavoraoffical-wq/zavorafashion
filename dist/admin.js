@@ -2539,6 +2539,23 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (event.target.closest('#btnUltraOptimize10')) {
+    showImportProgressModal('Ultra Optimizing 10 Products...', 'Fetching verified Printful descriptions, size guides, placements, and supplier metadata. Prices will not change.');
+    updateImportProgress(15, 'Connecting to the authenticated Printful catalog...');
+    try {
+      const response = await fetch('/api/printful-products?action=ultra10');
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.enriched) throw new Error(result.error || 'No products were enriched');
+      updateImportProgress(90, `Saved ${result.enriched} of ${result.requested} selected products.`);
+      finishImportProgress(result.enriched, `Ultra optimization complete: ${result.enriched}/${result.requested} products updated. Selling prices were preserved.`);
+      toast(`Ultra optimized ${result.enriched} products from verified Printful data.`);
+    } catch (error) {
+      finishImportProgress(0, `Ultra optimization failed: ${error.message}`);
+      toast(`Ultra optimization failed: ${error.message}`);
+    }
+    return;
+  }
+
   const importTab = event.target.closest('[data-import-tab]');
   if (importTab) {
     document.querySelectorAll('[data-import-tab]').forEach(btn => btn.classList.remove('gold', 'active'));

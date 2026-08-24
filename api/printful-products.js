@@ -132,6 +132,76 @@ async function printfulCatalogFetch(path) {
   return body;
 }
 
+async function printfulV2Fetch(path) {
+  const result = await fetch(`${PRINTFUL_API_BASE_URL}${path}`, {
+    headers: {
+      Authorization: `Bearer ${PRINTFUL_API_KEY}`,
+      'Content-Type': 'application/json',
+      'X-PF-Language': 'en_US'
+    }
+  });
+  const body = await result.json().catch(() => ({}));
+  if (!result.ok) {
+    throw new Error(body?.error?.message || body?.message || `Printful v2 request failed: ${result.status}`);
+  }
+  return body;
+}
+
+function plainText(value) {
+  return String(value || '')
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const ULTRA_PRODUCT_IDS = ['340', '515', '791', '665', '655', '832', '108', '328', '329', '862'];
+
+async function enrichUltraProduct(productId, index) {
+  const existing = await ProductRepository.getProductById(productId);
+  if (!existing) throw new Error(`Existing product ${productId} was not found`);
+
+  const [catalogResponse, sizesResponse] = await Promise.all([
+    printfulV2Fetch(`/v2/catalog-products/${encodeURIComponent(productId)}`),
+    printfulV2Fetch(`/v2/catalog-products/${encodeURIComponent(productId)}/sizes?unit=inches`)
+  ]);
+  const catalog = catalogResponse?.data || {};
+  const sizeData = sizesResponse?.data || {};
+  const sizeDescriptions = (sizeData.size_tables || [])
+    .map(table => plainText(table?.description))
+    .filter(Boolean);
+  const catalogName = String(catalog.name || existing.name || '');
+  const verifiedGender = detectGender({
+    type_name: catalog.type,
+    main_category: catalogName
+  }, catalogName);
+
+  return {
+    ...existing,
+    id: existing.id || productId,
+    printfulId: existing.printfulId || productId,
+    description: plainText(catalog.description) || existing.description,
+    gender: verifiedGender,
+    brand: catalog.brand || existing.brand || 'Zavora',
+    supplierBrand: catalog.brand || existing.supplierBrand || '',
+    supplierModel: catalog.model || existing.supplierModel || '',
+    sizes: Array.isArray(existing.sizes) && existing.sizes.length
+      ? existing.sizes
+      : (Array.isArray(sizeData.available_sizes) ? sizeData.available_sizes : []),
+    sizeGuide: sizeDescriptions.join(' ') || existing.sizeGuide || '',
+    printfulSizeGuide: sizeData,
+    printfulPlacements: (catalog.placements || []).map(item => item?.placement).filter(Boolean),
+    compareAt: null,
+    sale: false,
+    badge: 'Zavora Select',
+    ultraOptimized: true,
+    ultraRank: index + 1,
+    updatedAt: new Date().toISOString()
+  };
+}
+
 function supabaseProductRow(product) {
   return {
     printful_id: String(product.printfulId || product.id || product.name),
@@ -955,6 +1025,29 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    const action = String(req.query.action || '').toLowerCase();
+    if (action === 'ultra10') {
+      const products = [];
+      const errors = [];
+      for (let index = 0; index < ULTRA_PRODUCT_IDS.length; index += 1) {
+        const productId = ULTRA_PRODUCT_IDS[index];
+        try {
+          products.push(await enrichUltraProduct(productId, index));
+        } catch (error) {
+          errors.push({ productId, error: error.message });
+        }
+      }
+      const db = products.length ? await saveProducts(products) : { saved: false, count: 0 };
+      return response(res, products.length ? 200 : 500, {
+        ok: products.length === ULTRA_PRODUCT_IDS.length,
+        requested: ULTRA_PRODUCT_IDS.length,
+        enriched: products.length,
+        productIds: products.map(product => String(product.printfulId || product.id)),
+        errors,
+        db
+      });
+    }
+
     const importUrl = String(req.query.url || req.query.printfulUrl || '').trim();
     const targets = detectTargetsFromUrl(importUrl, req.query.gender || 'men', req.query.category || req.query.targetCategory || '');
     const gender = targets.gender;
@@ -968,7 +1061,7 @@ module.exports = async function handler(req, res) {
       if (!productId) return response(res, 404, { ok: false, error: 'Product Not Found', products: [] });
     }
     const offset = (page - 1) * limit;
-    const storeOnly = String(req.query.action || '').toLowerCase() === 'store_products' || String(req.query.store || '') === 'true';
+    const storeOnly = action === 'store_products' || String(req.query.store || '') === 'true';
     const catalogImport = storeOnly ? await fetchStoreProducts({
       gender,
       limit,
