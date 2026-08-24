@@ -345,6 +345,51 @@ function addProductToCart(product, overrides = {}) {
   return true;
 }
 
+async function addMerchantCheckoutProductFromUrl() {
+  if (!isCurrentPage('checkout')) return false;
+  const params = new URLSearchParams(window.location.search);
+  const merchantItemId = String(params.get('item_id') || params.get('id') || '').trim();
+  if (!merchantItemId || !/^[A-Za-z0-9._:-]{1,120}$/.test(merchantItemId)) return false;
+  const feedVariant = merchantItemId.match(/^ZAV-([^-]+)-(.+)$/i);
+  const productId = feedVariant?.[1] || merchantItemId;
+
+  const requestKey = `zavoraMerchantCheckout:${merchantItemId}:${params.get('size') || ''}:${params.get('color') || ''}`;
+  if (sessionStorage.getItem(requestKey)) return false;
+
+  try {
+    const apiParams = new URLSearchParams({ id: productId, limit: '1' });
+    const apiResponse = await fetch(`/api/products?${apiParams.toString()}`, {
+      headers: { Accept: 'application/json' }
+    });
+    const payload = await apiResponse.json().catch(() => ({}));
+    const product = Array.isArray(payload?.products) ? payload.products[0] : payload?.product;
+    if (!apiResponse.ok || !product) throw new Error('Product is unavailable');
+
+    const feedSuffix = String(feedVariant?.[2] || '').toLowerCase();
+    const requestedSize = String(params.get('size') || '').trim();
+    const requestedColor = String(params.get('color') || '').trim();
+    const size = (product.sizes || []).find(item => {
+      const raw = String(item);
+      const safe = raw.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      return raw.toLowerCase() === requestedSize.toLowerCase() || (feedSuffix && feedSuffix.endsWith(`-${safe}`));
+    });
+    const color = (product.colors || []).find(item => {
+      const raw = String(item);
+      const safe = raw.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      return raw.toLowerCase() === requestedColor.toLowerCase() || (feedSuffix && feedSuffix.startsWith(`${safe}-`));
+    });
+    addProductToCart(product, { size, color });
+    sessionStorage.setItem(requestKey, 'added');
+    return true;
+  } catch (error) {
+    const summary = document.querySelector('[data-checkout-summary]');
+    if (summary && !getSavedCart().length) {
+      summary.innerHTML = '<p class="secure-note">This product could not be added automatically. Please return to the product page and choose your size.</p>';
+    }
+    return false;
+  }
+}
+
 function completePendingCommerceAction() {
   const pending = getPendingCommerceAction();
   if (!pending?.type) return '';
@@ -4307,6 +4352,7 @@ function updateHeaderCartBadges() {
 
 updateHeaderCartBadges();
 hydrateCheckoutSummary();
+addMerchantCheckoutProductFromUrl();
 initRealtimeTracking();
 initTrackOrderLookup();
 initOrderSuccessDetails();
