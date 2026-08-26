@@ -673,6 +673,7 @@ function createTestOrder(method = 'PayPal') {
       const code = String(coupon.code).toUpperCase();
       if (code === 'WELCOME10') couponDiscount = subtotal >= 49 ? 10 : 0;
       else if (code === 'SUMMER15') couponDiscount = subtotal * 0.15;
+      else if (code === 'LAUNCH20') couponDiscount = subtotal >= 100 ? 20 : 0;
     }
   } catch (e) {}
 
@@ -1712,6 +1713,8 @@ function hydrateCheckoutSummary() {
         couponDiscount = total >= 49 ? 10 : 0;
       } else if (code === 'SUMMER15') {
         couponDiscount = total * 0.15;
+      } else if (code === 'LAUNCH20') {
+        couponDiscount = total >= 100 ? 20 : 0;
       }
     }
   } catch (e) {
@@ -3139,6 +3142,7 @@ document.addEventListener('click', async (event) => {
         const code = String(coupon.code).toUpperCase();
         if (code === 'WELCOME10') couponDiscount = subtotal >= 49 ? 10 : 0;
         else if (code === 'SUMMER15') couponDiscount = subtotal * 0.15;
+        else if (code === 'LAUNCH20') couponDiscount = subtotal >= 100 ? 20 : 0;
       }
     } catch (e) {}
 
@@ -4175,8 +4179,18 @@ function initCheckoutGiftUi() {
             statusP.textContent = '✓ Coupon SUMMER15 applied (15% OFF)!';
             statusP.style.color = '#2e7d32';
             hydrateCheckoutSummary();
+          } else if (code === 'LAUNCH20') {
+            if (total < 100) {
+              statusP.textContent = 'LAUNCH20 requires a minimum order of $100.';
+              statusP.style.color = '#d9534f';
+              return;
+            }
+            localStorage.setItem('zavoraAppliedCoupon', JSON.stringify({ code: 'LAUNCH20', discount: 20 }));
+            statusP.textContent = '✓ Coupon LAUNCH20 applied ($20 OFF)!';
+            statusP.style.color = '#2e7d32';
+            hydrateCheckoutSummary();
           } else {
-            statusP.textContent = 'Invalid coupon code. Valid coupons: WELCOME10, SUMMER15.';
+            statusP.textContent = 'Invalid coupon code. Valid coupons: WELCOME10, SUMMER15, LAUNCH20.';
             statusP.style.color = '#d9534f';
           }
         };

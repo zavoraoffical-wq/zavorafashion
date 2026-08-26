@@ -132,7 +132,9 @@ async function createOrder(body) {
   const couponCode = String(body.couponCode || '').trim().toUpperCase();
   const discount = couponCode === 'WELCOME10' && subtotal >= 49
     ? 10
-    : (couponCode === 'SUMMER15' ? subtotal * 0.15 : 0);
+    : (couponCode === 'SUMMER15'
+      ? subtotal * 0.15
+      : (couponCode === 'LAUNCH20' && subtotal >= 100 ? 20 : 0));
   const total = subtotal + shipping - discount;
 
   return paypalRequest('/v2/checkout/orders', {

@@ -11,6 +11,7 @@ function zavoraCheckoutTotal() {
         const code = String(coupon.code).toUpperCase();
         if (code === 'WELCOME10') couponDiscount = subtotal >= 49 ? 10 : 0;
         else if (code === 'SUMMER15') couponDiscount = subtotal * 0.15;
+        else if (code === 'LAUNCH20') couponDiscount = subtotal >= 100 ? 20 : 0;
       }
     } catch(e) {}
 
