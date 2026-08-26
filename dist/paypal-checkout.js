@@ -43,39 +43,57 @@ function initZavoraPayPal() {
       shape: 'rect',
       label: 'paypal'
     },
-    async createOrder(data, actions) {
+    async createOrder() {
       if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackBeginCheckout(typeof getSavedCart === 'function' ? getSavedCart() : [], zavoraCheckoutTotal());
       const cart = typeof getSavedCart === 'function' ? getSavedCart() : (JSON.parse(localStorage.getItem('zavora_cart')) || []);
       if (!cart || !cart.length) {
         alert('Your bag is empty. Add a product before checkout.');
         throw new Error('Cart empty');
       }
-      return actions.order.create({
-        purchase_units: [{
-          description: 'Zavora Fashion Order',
-          amount: {
-            currency_code: 'USD',
-            value: zavoraCheckoutTotal().toFixed(2)
-          }
-        }]
+      const response = await fetch('/api/paypal?action=create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          items: cart.map(item => ({
+            id: item.id,
+            printfulId: item.printfulId,
+            qty: Number(item.qty || 1)
+          })),
+          shipping: Number(document.querySelector('input[name="shipping"]:checked')?.value || 0),
+          couponCode: (() => {
+            try { return JSON.parse(localStorage.getItem('zavoraAppliedCoupon') || 'null')?.code || ''; } catch (error) { return ''; }
+          })()
+        })
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.id) throw new Error(result.error || 'PayPal could not create the order');
+      return result.id;
     },
-    onApprove(data, actions) {
-      if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackPurchase(data.orderID || data.payerID, typeof getSavedCart === 'function' ? getSavedCart() : [], zavoraCheckoutTotal());
-      return actions.order.capture().then(async () => {
-        const order = typeof createTestOrder === 'function' ? createTestOrder('PayPal') : null;
-        if (!order) {
-          alert('Error placing order. Please try again.');
-          return;
-        }
-        order.paypalOrderId = data.orderID || '';
-        if (typeof persistOrder === 'function') await persistOrder(order);
-        if (typeof requestOrderConfirmation === 'function') requestOrderConfirmation(order);
-        window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=paypal`;
+    async onApprove(data) {
+      const response = await fetch('/api/paypal?action=capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ orderId: data.orderID })
       });
+      const capture = await response.json().catch(() => ({}));
+      if (!response.ok || capture.status !== 'COMPLETED') throw new Error(capture.error || 'PayPal capture was not completed');
+      const cart = typeof getSavedCart === 'function' ? getSavedCart() : [];
+      if (window.ZavoraAnalytics) window.ZavoraAnalytics.trackPurchase(data.orderID, cart, zavoraCheckoutTotal());
+      const order = typeof createTestOrder === 'function' ? createTestOrder('PayPal') : null;
+      if (!order) throw new Error('Could not save the completed order');
+      order.paypalOrderId = data.orderID || '';
+      if (typeof persistOrder === 'function') await persistOrder(order);
+      if (typeof requestOrderConfirmation === 'function') requestOrderConfirmation(order);
+      window.location.href = `order-success.html?order=${encodeURIComponent(order.id)}&method=paypal`;
     },
     onError(err) {
-      container.insertAdjacentHTML('beforeend', '<p class="login-error">PayPal payment could not be completed. Please try again.</p>');
+      const message = String(err?.message || 'PayPal payment could not be completed. Please try again.');
+      container.querySelectorAll('[data-paypal-error]').forEach(node => node.remove());
+      const note = document.createElement('p');
+      note.className = 'login-error';
+      note.dataset.paypalError = 'true';
+      note.textContent = message;
+      container.appendChild(note);
     }
   }).render('#paypal-button-container');
 }
@@ -162,5 +180,3 @@ window.addEventListener('load', () => {
   initZavoraPayPal();
   bindPaymentToggle();
 });
-
-
