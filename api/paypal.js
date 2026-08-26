@@ -1,4 +1,5 @@
 const { rateLimit, setSecurityHeaders } = require('../lib/security');
+const { ProductRepository } = require('../lib/local-product-engine');
 
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
@@ -6,6 +7,9 @@ const PAYPAL_API_BASE = process.env.PAYPAL_API_BASE || 'https://api-m.paypal.com
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const PRODUCTS_TABLE = process.env.SUPABASE_PRODUCTS_TABLE || process.env.PRODUCTS_TABLE || 'products';
+const STOREFRONT_ORIGIN = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : 'https://www.zavorafashion.com';
 
 function json(req, res, status, body) {
   res.statusCode = status;
@@ -71,26 +75,47 @@ async function paypalRequest(path, options = {}) {
 }
 
 async function verifiedProduct(productId) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Product database is not configured');
   const safeId = String(productId || '').trim();
   if (!/^[A-Za-z0-9._:-]{1,120}$/.test(safeId)) throw new Error('Invalid product ID');
-  const base = SUPABASE_URL.replace(/\/$/, '');
-  const table = PRODUCTS_TABLE.replace(/^\/+|\/+$/g, '');
-  const params = new URLSearchParams({
-    select: 'printful_id,store_product_id,name,price,payload',
-    or: `(printful_id.eq.${safeId},store_product_id.eq.${safeId})`,
-    limit: '1'
-  });
-  const response = await fetchWithRetry(`${base}/rest/v1/${table}?${params.toString()}`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Accept: 'application/json' }
-  }, 'Product database');
-  const rows = await response.json().catch(() => []);
-  const row = Array.isArray(rows) ? rows[0] : null;
-  if (!response.ok || !row) throw new Error(`Product ${safeId} is unavailable`);
-  const payload = row.payload && typeof row.payload === 'object' ? row.payload : {};
-  const price = Number(payload.price ?? row.price);
+  let product = null;
+  let supabaseError = null;
+  if (SUPABASE_URL && SUPABASE_KEY) {
+    try {
+      const base = SUPABASE_URL.replace(/\/$/, '');
+      const table = PRODUCTS_TABLE.replace(/^\/+|\/+$/g, '');
+      const params = new URLSearchParams({
+        select: 'printful_id,store_product_id,name,price,payload',
+        or: `(printful_id.eq.${safeId},store_product_id.eq.${safeId})`,
+        limit: '1'
+      });
+      const response = await fetchWithRetry(`${base}/rest/v1/${table}?${params.toString()}`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Accept: 'application/json' }
+      }, 'Product database');
+      const rows = await response.json().catch(() => []);
+      const row = Array.isArray(rows) ? rows[0] : null;
+      if (response.ok && row) {
+        const payload = row.payload && typeof row.payload === 'object' ? row.payload : {};
+        product = { ...row, ...payload };
+      }
+    } catch (error) {
+      supabaseError = error;
+    }
+  }
+  if (!product) {
+    try {
+      const params = new URLSearchParams({ id: safeId, limit: '1' });
+      const response = await fetchWithRetry(`${STOREFRONT_ORIGIN}/api/products?${params.toString()}`, {
+        headers: { Accept: 'application/json' }
+      }, 'Storefront catalog');
+      const body = await response.json().catch(() => ({}));
+      if (response.ok) product = body.product || body.products?.[0] || null;
+    } catch (error) {}
+  }
+  if (!product) product = await ProductRepository.getProductById(safeId).catch(() => null);
+  if (!product) throw new Error(supabaseError?.message || `Product ${safeId} is unavailable`);
+  const price = Number(product.price);
   if (!Number.isFinite(price) || price <= 0) throw new Error(`Product ${safeId} has an invalid price`);
-  return { id: safeId, name: String(payload.name || row.name || 'Zavora product').slice(0, 127), price };
+  return { id: safeId, name: String(product.name || 'Zavora product').slice(0, 127), price };
 }
 
 async function createOrder(body) {
