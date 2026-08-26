@@ -13,7 +13,6 @@ Disallow: /register.html
 Disallow: /sign-up.html
 Disallow: /forgot-password.html
 Disallow: /cart.html
-Disallow: /checkout.html
 Disallow: /payment.html
 Disallow: /order-success.html
 Disallow: /orders.html
