@@ -20,16 +20,29 @@ function requestBody(req) {
   try { return JSON.parse(req.body || '{}'); } catch (error) { return {}; }
 }
 
+async function fetchWithRetry(url, options, label) {
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await fetch(url, { ...options, signal: AbortSignal.timeout(12_000) });
+    } catch (error) {
+      lastError = error;
+      if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 250));
+    }
+  }
+  throw new Error(`${label} connection failed: ${lastError?.cause?.code || lastError?.message || 'network error'}`);
+}
+
 async function paypalAccessToken() {
   const credentials = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64');
-  const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+  const response = await fetchWithRetry(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${credentials}`,
       'Content-Type': 'application/x-www-form-urlencoded'
     },
     body: 'grant_type=client_credentials'
-  });
+  }, 'PayPal authentication');
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.access_token) throw new Error(body.error_description || 'PayPal authentication failed');
   return body.access_token;
@@ -37,7 +50,7 @@ async function paypalAccessToken() {
 
 async function paypalRequest(path, options = {}) {
   const token = await paypalAccessToken();
-  const response = await fetch(`${PAYPAL_API_BASE}${path}`, {
+  const response = await fetchWithRetry(`${PAYPAL_API_BASE}${path}`, {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -45,7 +58,7 @@ async function paypalRequest(path, options = {}) {
       'PayPal-Request-Id': options.requestId || `zavora-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       ...(options.headers || {})
     }
-  });
+  }, 'PayPal order');
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const detail = body.details?.[0]?.description || body.message || `PayPal request failed (${response.status})`;
@@ -68,9 +81,9 @@ async function verifiedProduct(productId) {
     or: `(printful_id.eq.${safeId},store_product_id.eq.${safeId})`,
     limit: '1'
   });
-  const response = await fetch(`${base}/rest/v1/${table}?${params.toString()}`, {
+  const response = await fetchWithRetry(`${base}/rest/v1/${table}?${params.toString()}`, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Accept: 'application/json' }
-  });
+  }, 'Product database');
   const rows = await response.json().catch(() => []);
   const row = Array.isArray(rows) ? rows[0] : null;
   if (!response.ok || !row) throw new Error(`Product ${safeId} is unavailable`);
